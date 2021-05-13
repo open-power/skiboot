@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0.16 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0.17" href="skiboot-6.0.17.html" />
+    <link rel="prev" title="skiboot-6.0.15" href="skiboot-6.0.15.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.17.html" title="skiboot-6.0.17"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.15.html" title="skiboot-6.0.15"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.16</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-16">
+<span id="id1"></span><h1>skiboot-6.0.16<a class="headerlink" href="#skiboot-6-0-16" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.0.16 was released on Tuesday February 5th, 2019. It replaces
+<a class="reference internal" href="skiboot-6.0.15.html#skiboot-6-0-15"><span class="std std-ref">skiboot-6.0.15</span></a> as the current stable release in the 6.0.x series.</p>
+<p>It is recommended that 6.0.16 be used instead of any previous 6.0.x version
+due to the bug fixes it contains.</p>
+<p>Bug fixes included in this release are:</p>
+<ul>
+<li><p>p9dsu: Fix p9dsu default variant</p>
+<p>Add the default when no riser_id is returned from the ipmi query.</p>
+<p>This addresses: <a class="reference external" href="https://github.com/open-power/boston-openpower/issues/1369">https://github.com/open-power/boston-openpower/issues/1369</a></p>
+<p>Allow a little more time for BMC reply and cleanup some label strings.</p>
+</li>
+<li><p>p9dsu: Fix p9dsu slot tables</p>
+<p>Set the attributes on the slot tables to account for
+builtin or pluggable etypes, this will allow pci
+enumeration to calculate subordinate buses.</p>
+<p>Update some slot label strings.</p>
+<p>Add WIO Slot5 which is standard on the ESS config.</p>
+</li>
+<li><p>phb4: Generate checkstop on AIB ECC corr/uncorr for DD2.0 parts</p>
+<p>On DD2.0 parts, PCIe ECC protection is not warranted in the response
+data path. Thus, for these parts, we need to flag any ECC errors
+detected from the adjacent AIB RX Data path so the part can be
+replaced.</p>
+<p>This patch configures the FIRs so that we escalate these AIB ECC
+errors to a checkstop so the parts can be replaced.</p>
+</li>
+<li><p>core/lock: Stop drop_my_locks() from always causing abort</p>
+<p>Fix an erroneous failure in an error path that looked like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>LOCK ERROR: Releasing lock we don&#39;t hold depth @0x30493d20 (state: 0x0000000000000001)
+[13836.000173140,0] Aborting!
+CPU 0000 Backtrace:
+ S: 0000000031c03930 R: 000000003001d840   ._abort+0x60
+ S: 0000000031c039c0 R: 000000003001a0c4   .lock_error+0x64
+ S: 0000000031c03a50 R: 0000000030019c70   .unlock+0x54
+ S: 0000000031c03af0 R: 000000003001a040   .drop_my_locks+0xf4
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.15.html"
+                        title="previous chapter">skiboot-6.0.15</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0.17.html"
+                        title="next chapter">skiboot-6.0.17</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0.16.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.17.html" title="skiboot-6.0.17"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.15.html" title="skiboot-6.0.15"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.16</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

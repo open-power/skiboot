@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Accelerator Switchboard (VAS) &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="VPD (Vital Product Data)" href="vpd.html" />
+    <link rel="prev" title="Trusted Platform Module (TPM)" href="tpm.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="vpd.html" title="VPD (Vital Product Data)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tpm.html" title="Trusted Platform Module (TPM)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Virtual Accelerator Switchboard (VAS)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="virtual-accelerator-switchboard-vas">
+<span id="device-tree-vas"></span><h1>Virtual Accelerator Switchboard (VAS)<a class="headerlink" href="#virtual-accelerator-switchboard-vas" title="Permalink to this headline">¶</a></h1>
+<p>VAS is present in P9 or later processors. In P9, each chip has one
+instance of VAS. Each instance of VAS is represented as a “platform
+device” i.e as a node in root of the device tree:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">vas</span><span class="o">@&lt;</span><span class="n">vas_addr</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>with unique VAS address which also represents the Hypervisor window
+context address for the instance of VAS.</p>
+<p>Each VAS node contains:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">compatible</span><span class="p">:</span> <span class="s2">&quot;ibm,power9-vas&quot;</span><span class="p">,</span> <span class="s2">&quot;ibm,vas&quot;</span>
+
+<span class="n">ibm</span><span class="p">,</span><span class="n">chip</span><span class="o">-</span><span class="nb">id</span><span class="p">:</span> <span class="n">Chip</span><span class="o">-</span><span class="nb">id</span> <span class="n">of</span> <span class="n">the</span> <span class="n">chip</span> <span class="n">containing</span> <span class="n">this</span> <span class="n">instance</span> <span class="n">of</span> <span class="n">VAS</span><span class="o">.</span>
+
+<span class="n">ibm</span><span class="p">,</span><span class="n">vas</span><span class="o">-</span><span class="nb">id</span><span class="p">:</span> <span class="n">unique</span> <span class="n">identifier</span> <span class="k">for</span> <span class="n">each</span> <span class="n">instance</span> <span class="n">of</span> <span class="n">VAS</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">system</span><span class="o">.</span>
+
+<span class="n">ibm</span><span class="p">,</span><span class="n">vas</span><span class="o">-</span><span class="n">port</span><span class="p">:</span> <span class="n">Port</span> <span class="n">address</span> <span class="k">for</span> <span class="n">the</span> <span class="n">interrupt</span><span class="o">.</span>
+
+<span class="n">interrupts</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">IRQ</span><span class="c1"># level&gt; for this VAS instance.</span>
+
+<span class="n">interrupt</span><span class="o">-</span><span class="n">parent</span><span class="p">:</span> <span class="n">Interrupt</span> <span class="n">controller</span> <span class="n">phandle</span><span class="o">.</span>
+
+<span class="n">reg</span><span class="p">:</span> <span class="n">contains</span> <span class="mi">8</span> <span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">fields</span><span class="o">.</span>
+
+      <span class="n">Fields</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="n">represent</span> <span class="n">the</span> <span class="n">Hypervisor</span> <span class="n">window</span> <span class="n">context</span> <span class="n">BAR</span>
+      <span class="p">(</span><span class="n">start</span> <span class="ow">and</span> <span class="n">length</span><span class="p">)</span><span class="o">.</span> <span class="n">Fields</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">and</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="n">represent</span> <span class="n">the</span> <span class="n">OS</span><span class="o">/</span><span class="n">User</span>
+      <span class="n">window</span> <span class="n">context</span> <span class="n">BAR</span> <span class="p">(</span><span class="n">start</span> <span class="ow">and</span> <span class="n">length</span><span class="p">)</span><span class="o">.</span> <span class="n">Fields</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="ow">and</span> <span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+      <span class="n">contain</span> <span class="n">the</span> <span class="n">start</span> <span class="ow">and</span> <span class="n">length</span> <span class="n">of</span> <span class="n">paste</span> <span class="n">power</span> <span class="n">bus</span> <span class="n">address</span> <span class="n">region</span>
+      <span class="k">for</span> <span class="n">this</span> <span class="n">chip</span><span class="o">.</span> <span class="n">Fields</span> <span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="ow">and</span> <span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="n">represent</span> <span class="n">the</span> <span class="n">bit</span> <span class="n">field</span> <span class="p">(</span><span class="n">start</span>
+      <span class="n">bit</span> <span class="ow">and</span> <span class="n">number</span> <span class="n">of</span> <span class="n">bits</span><span class="p">)</span> <span class="n">where</span> <span class="n">the</span> <span class="n">window</span> <span class="nb">id</span> <span class="n">of</span> <span class="n">the</span> <span class="n">window</span> <span class="n">should</span>
+      <span class="n">be</span> <span class="n">encoded</span> <span class="n">when</span> <span class="n">computing</span> <span class="n">the</span> <span class="n">paste</span> <span class="n">address</span> <span class="k">for</span> <span class="n">the</span> <span class="n">window</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tpm.html"
+                        title="previous chapter">Trusted Platform Module (TPM)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="vpd.html"
+                        title="next chapter">VPD (Vital Product Data)</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/vas.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="vpd.html" title="VPD (Vital Product Data)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tpm.html" title="Trusted Platform Module (TPM)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Virtual Accelerator Switchboard (VAS)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

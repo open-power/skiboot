@@ -1,0 +1,385 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ibm,powerpc-cpu-features Binding &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ibm,powerpc-cpu-features Design" href="design.html" />
+    <link rel="prev" title="VPD (Vital Product Data)" href="../vpd.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="design.html" title="ibm,powerpc-cpu-features Design"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../vpd.html" title="VPD (Vital Product Data)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Binding</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ibm-powerpc-cpu-features-binding">
+<h1>ibm,powerpc-cpu-features Binding<a class="headerlink" href="#ibm-powerpc-cpu-features-binding" title="Permalink to this headline">¶</a></h1>
+<p>This device tree binding describes CPU features available to software, with
+enablement, privilege, and compatibility metadata.</p>
+<p>More general description of design and implementation of this binding is
+found in design.txt, which also points to documentation of specific features.</p>
+<div class="section" id="cpus-ibm-powerpc-cpu-features-node-binding">
+<h2>/cpus/ibm,powerpc-cpu-features node binding<a class="headerlink" href="#cpus-ibm-powerpc-cpu-features-node-binding" title="Permalink to this headline">¶</a></h2>
+<p>Node: ibm,powerpc-cpu-features</p>
+<p>Description: Container of CPU feature nodes.</p>
+<p>The node name must be “ibm,powerpc-cpu-features”.</p>
+<p>It is implemented as a child of the node “/cpus”, but this must not be
+assumed by parsers.</p>
+<p>The node is optional but should be provided by new OPAL firmware.</p>
+<p>Properties:</p>
+<ul>
+<li><p>device_type</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>string</p>
+</dd>
+<dt>Definition:</dt><dd><p>“cpu-features”</p>
+</dd>
+</dl>
+</li>
+<li><p>compatible</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>string</p>
+</dd>
+<dt>Definition:</dt><dd><p>“ibm,powerpc-cpu-features”</p>
+</dd>
+</dl>
+<p>This compatibility refers to backwards compatibility of the overall
+design with parsers that behave according to these guidelines. This can
+be extended in a backward compatible manner which would not warrant a
+revision of the compatible property.</p>
+</li>
+<li><p>isa</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>isa that the CPU is currently running in. This provides instruction set
+compatibility, less the individual feature nodes. For example, an ISA v3.0
+implementation that lacks the “transactional-memory” cpufeature node
+should not use transactional memory facilities.</p>
+<p>Value corresponds to the “Power ISA Version” multiplied by 1000.
+For example, &lt;3000&gt; corresponds to Version 3.0, &lt;2070&gt; to Version 2.07.
+The minor digit is available for revisions.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="cpus-ibm-powerpc-cpu-features-example-feature-node-bindings">
+<h2>/cpus/ibm,powerpc-cpu-features/example-feature node bindings<a class="headerlink" href="#cpus-ibm-powerpc-cpu-features-example-feature-node-bindings" title="Permalink to this headline">¶</a></h2>
+<p>Each child node of cpu-features represents a CPU feature / capability.</p>
+<p>Node: A string describing an architected CPU feature, e.g., “floating-point”.</p>
+<p>Description: A feature or capability supported by the CPUs.</p>
+<p>The name of the node is a human readable string that forms the interface
+used to describe features to software. Features are currently documented
+in the code where they are implemented in skiboot/core/cpufeatures.c</p>
+<p>Presence of the node indicates the feature is available.</p>
+<p>Properties:</p>
+<ul>
+<li><p>isa</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>First level of the Power ISA that the feature appears in.
+Software should filter out features when constraining the
+environment to a particular ISA version.</p>
+<p>Value is defined similarly to /cpus/features/isa</p>
+</li>
+<li><p>usable-privilege</p>
+<dl>
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt; bit mask</p>
+</dd>
+<dt>Definition:</dt><dd><p>Bit numbers are LSB0</p>
+<dl class="simple">
+<dt>bit 0:</dt><dd><p>PR (problem state / user mode)</p>
+</dd>
+<dt>bit 1:</dt><dd><p>OS (privileged state)</p>
+</dd>
+<dt>bit 2:</dt><dd><p>HV (hypervisor state)</p>
+</dd>
+</dl>
+<p>All other bits reserved and should be zero.</p>
+</dd>
+</dl>
+<p>This property describes the privilege levels and/or software components
+that can use the feature.</p>
+<p>If bit 0 is set, then the hwcap-bit-nr property will exist.</p>
+</li>
+<li><p>hv-support</p>
+<dl>
+<dt>Usage:</dt><dd><p>optional</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt; bit mask</p>
+</dd>
+<dt>Definition:</dt><dd><p>Bit numbers are LSB0</p>
+<dl class="simple">
+<dt>bit 0:</dt><dd><p>HFSCR</p>
+</dd>
+</dl>
+<p>All other bits reserved and should be zero.</p>
+</dd>
+</dl>
+<p>This property describes the HV privilege support required to enable the
+feature to lesser privilege levels. If the property does not exist then no
+support is required.</p>
+<p>If no bits are set, the hypervisor must have explicit/custom support for
+this feature.</p>
+<p>If the HFSCR bit is set, then the hfscr-bit-nr property will exist and
+the feature may be enabled by setting this bit in the HFSCR register.</p>
+</li>
+<li><p>os-support</p>
+<dl>
+<dt>Usage:</dt><dd><p>optional</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt; bit mask</p>
+</dd>
+<dt>Definition:</dt><dd><p>Bit numbers are LSB0</p>
+<dl class="simple">
+<dt>bit 0:</dt><dd><p>FSCR</p>
+</dd>
+</dl>
+<p>All other bits reserved and should be zero.</p>
+</dd>
+</dl>
+<p>This property describes the OS privilege support required to enable the
+feature to lesser privilege levels. If the property does not exist then no
+support is required.</p>
+<p>If no bits are set, the operating system must have explicit/custom support
+for this feature.</p>
+<p>If the FSCR bit is set, then the fscr-bit-nr property will exist and
+the feature may be enabled by setting this bit in the FSCR register.</p>
+</li>
+<li><p>hfscr-bit-nr</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>optional</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+</dd>
+<dt>Definition:</dt><dd><p>HFSCR bit position (LSB0)</p>
+</dd>
+</dl>
+<p>This property exists when the hv-support property HFSCR bit is set. This
+property describes the bit number in the HFSCR register that the
+hypervisor must set in order to enable this feature.</p>
+<p>This property also exists if an HFSCR bit corresponds with this feature.
+This makes CPU feature parsing slightly simpler.</p>
+</li>
+<li><p>fscr-bit-nr</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>optional</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+</dd>
+<dt>Definition:</dt><dd><p>FSCR bit position (LSB0)</p>
+</dd>
+</dl>
+<p>This property exists when the os-support property FSCR bit is set. This
+property describes the bit number in the FSCR register that the
+operating system must set in order to enable this feature.</p>
+<p>This property also exists if an FSCR bit corresponds with this feature.
+This makes CPU feature parsing slightly simpler.</p>
+</li>
+<li><p>hwcap-bit-nr</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>optional</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+</dd>
+<dt>Definition:</dt><dd><p>Linux ELF AUX vector bit position (LSB0)</p>
+</dd>
+</dl>
+<p>This property may exist when the usable-privilege property value has PR bit set.
+This property describes the bit number that should be set in the ELF AUX
+hardware capability vectors in order to advertise this feature to userspace.
+Bits 0-31 correspond to bits 0-31 in AT_HWCAP vector. Bits 32-63 correspond
+to 0-31 in AT_HWCAP2 vector, and so on.  Missing AT_HWCAPx vectors implies
+that the feature is not enabled or can not be advertised. Operating systems
+may provide a number of unassigned hardware capability bits to allow for new
+features to be advertised.</p>
+<p>Some properties representing features created before this binding are
+advertised to userspace without a one-to-one hwcap bit number may not specify
+this bit. Operating system will handle those bits specifically.  All new
+features usable by userspace will have a hwcap-bit-nr property.</p>
+</li>
+<li><p>dependencies</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>optional</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;prop-encoded-array&gt;</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>If this property exists then it is a list of phandles to cpu feature
+nodes that must be enabled for this feature to be enabled.</p>
+</li>
+<li><p>Custom properties of the feature</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>optional</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>Particular features may define their own properties.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="err">/cpus/</span><span class="nc">ibm,powerpc-cpu-features</span> <span class="p">{</span>
+        <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;ibm,powerpc-cpu-features&quot;</span><span class="p">;</span>
+
+        <span class="nf">isa</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">3020</span><span class="p">&gt;;</span>
+
+        <span class="nc">darn</span> <span class="p">{</span>
+                <span class="nf">isa</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">3000</span><span class="p">&gt;;</span>
+                <span class="nf">usable-privilege</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">1</span> <span class="err">|</span> <span class="mi">2</span> <span class="err">|</span> <span class="mi">4</span><span class="p">&gt;;</span>
+                <span class="nf">hwcap-bit-nr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="err">xx</span><span class="p">&gt;;</span>
+        <span class="p">};</span>
+
+        <span class="nc">scv</span> <span class="p">{</span>
+                <span class="nf">isa</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">3000</span><span class="p">&gt;;</span>
+                <span class="nf">usable-privilege</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">1</span> <span class="err">|</span> <span class="mi">2</span><span class="p">&gt;;</span>
+                <span class="nf">os-support</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">0</span><span class="p">&gt;;</span>
+                <span class="nf">hwcap-bit-nr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="err">xx</span><span class="p">&gt;;</span>
+        <span class="p">};</span>
+
+        <span class="nc">stop</span> <span class="p">{</span>
+                <span class="nf">isa</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">3000</span><span class="p">&gt;;</span>
+                <span class="nf">usable-privilege</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">2</span> <span class="err">|</span> <span class="mi">4</span><span class="p">&gt;;</span>
+                <span class="nf">hv-support</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">0</span><span class="p">&gt;;</span>
+                <span class="nf">os-support</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">0</span><span class="p">&gt;;</span>
+        <span class="p">};</span>
+
+        <span class="err">vsx2</span> <span class="err">(hypothetical)</span> <span class="err">{</span>
+                <span class="nf">isa</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">3010</span><span class="p">&gt;;</span>
+                <span class="nf">usable-privilege</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">1</span> <span class="err">|</span> <span class="mi">2</span> <span class="err">|</span> <span class="mi">4</span><span class="p">&gt;;</span>
+                <span class="nf">hv-support</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">0</span><span class="p">&gt;;</span>
+                <span class="nf">os-support</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">0</span><span class="p">&gt;;</span>
+                <span class="nf">hwcap-bit-nr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="err">xx</span><span class="p">&gt;;</span>
+        <span class="p">};</span>
+
+        <span class="nc">vsx2-newinsns</span> <span class="p">{</span>
+                <span class="nf">isa</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">3020</span><span class="p">&gt;;</span>
+                <span class="nf">usable-privilege</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">1</span> <span class="err">|</span> <span class="mi">2</span> <span class="err">|</span> <span class="mi">4</span><span class="p">&gt;;</span>
+                <span class="nf">os-support</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mi">1</span><span class="p">&gt;;</span>
+                <span class="nf">fscr-bit-nr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="err">xx</span><span class="p">&gt;;</span>
+                <span class="nf">hwcap-bit-nr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="err">xx</span><span class="p">&gt;;</span>
+                <span class="nf">dependencies</span> <span class="o">=</span> <span class="p">&lt;</span><span class="o">&amp;</span>vsx2<span class="p">&gt;;</span>
+        <span class="p">};</span>
+
+<span class="err">};</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ibm,powerpc-cpu-features Binding</a><ul>
+<li><a class="reference internal" href="#cpus-ibm-powerpc-cpu-features-node-binding">/cpus/ibm,powerpc-cpu-features node binding</a></li>
+<li><a class="reference internal" href="#cpus-ibm-powerpc-cpu-features-example-feature-node-bindings">/cpus/ibm,powerpc-cpu-features/example-feature node bindings</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../vpd.html"
+                        title="previous chapter">VPD (Vital Product Data)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="design.html"
+                        title="next chapter">ibm,powerpc-cpu-features Design</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/device-tree/ibm,powerpc-cpu-features/binding.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="design.html" title="ibm,powerpc-cpu-features Design"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../vpd.html" title="VPD (Vital Product Data)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Binding</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

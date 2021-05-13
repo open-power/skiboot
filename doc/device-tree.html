@@ -1,0 +1,613 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Device Tree &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Device Tree" href="device-tree/index.html" />
+    <link rel="prev" title="Secure and Trusted Boot Library (LibSTB) Documentation" href="stb.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="device-tree/index.html" title="Device Tree"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Device Tree</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="device-tree">
+<span id="id1"></span><h1>Device Tree<a class="headerlink" href="#device-tree" title="Permalink to this headline">¶</a></h1>
+<p>General notes on the Device Tree produced by skiboot. This chapter
+<strong>needs updating</strong>.</p>
+<div class="section" id="general-comments">
+<h2>General comments<a class="headerlink" href="#general-comments" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>skiboot does not require nodes to have phandle properties, but
+if you have them then <em>all</em> nodes must have them including the
+root of the device-tree (currently a HB bug !). It is recommended
+to have them since they are needed to represent the cache levels.</p></li>
+<li><p><strong>NOTE</strong>: The example tree below only has phandle properties for
+nodes that are referenced by other nodes. This is <em>not</em> correct
+and is purely done for keeping this document smaller, make sure
+to follow the rule above.</p></li>
+<li><p>Only the “phandle” property is required. Sapphire also generates
+a “linux,phandle” for backward compatibility but doesn’t require
+it as an input</p></li>
+<li><p>Any property not specifically documented must be put in “as is”</p></li>
+<li><p>All ibm,chip-id properties contain a HW chip ID which correspond
+on P8 to the PIR value shifted right by 7 bits, ie. it’s a 6-bit
+value made of a 3-bit node number and a 3-bit chip number.</p></li>
+<li><p>Unit addresses (&#64;xxxx part of node names) should if possible use
+lower case hexadecimal to be consistent with what skiboot does
+and to help some stupid parsers out there…</p></li>
+</ul>
+</div>
+<div class="section" id="reserve-map">
+<h2>Reserve Map<a class="headerlink" href="#reserve-map" title="Permalink to this headline">¶</a></h2>
+<p>Here are the reserve map entries. They should exactly match the
+reserved-ranges property of the root node (see documentation
+of that property)</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="k">/dts-v1/;</span>
+<span class="k">/memreserve/</span>  <span class="mh">0x00000007fe600000</span> <span class="mh">0x0000000000100000</span><span class="p">;</span>
+<span class="k">/memreserve/</span>  <span class="mh">0x00000007fe200000</span> <span class="mh">0x0000000000100000</span><span class="p">;</span>
+<span class="k">/memreserve/</span>  <span class="mh">0x0000000031e00000</span> <span class="mh">0x00000000003e0000</span><span class="p">;</span>
+<span class="k">/memreserve/</span>  <span class="mh">0x0000000031000000</span> <span class="mh">0x0000000000e00000</span><span class="p">;</span>
+<span class="k">/memreserve/</span>  <span class="mh">0x0000000030400000</span> <span class="mh">0x0000000000c00000</span><span class="p">;</span>
+<span class="k">/memreserve/</span>  <span class="mh">0x0000000030000000</span> <span class="mh">0x0000000000400000</span><span class="p">;</span>
+<span class="k">/memreserve/</span>  <span class="mh">0x0000000400000000</span> <span class="mh">0x0000000000600450</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="root-node">
+<h2>Root Node<a class="headerlink" href="#root-node" title="Permalink to this headline">¶</a></h2>
+<p>Root node of device tree. There are a few required and a few optional properties
+that sit in the root node. They’re described here.</p>
+<div class="section" id="compatible">
+<h3>compatible<a class="headerlink" href="#compatible" title="Permalink to this headline">¶</a></h3>
+<p>The “compatible” properties are string lists indicating the overall
+compatibility from the more specific to the least specific.</p>
+<p>The root node compatible property <em>must</em> contain “ibm,powernv” for
+Linux to have the powernv platform match the machine.</p>
+<p>Each distinct platform <em>MUST</em> also add a more precise property (first
+in order) indicating the board type.</p>
+<p>The standard naming is “vendor,name”. For example: <cite>compatible = “goog,rhesus”,”ibm,powernv”;</cite>
+would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhesus”,”ibm,powernv”;</cite>.</p>
+<p>The bare <cite>ibm,powernv</cite> should be reserved for bringup/testing:</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="k">/dts-v1/;</span>
+<span class="k">/</span> <span class="p">{</span>
+       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,powernv&quot;</span><span class="p">;</span>
+  <span class="p">};</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="k">/dts-v1/;</span>
+<span class="k">/</span> <span class="p">{</span>
+       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,powernv&quot;</span><span class="p">;</span>
+
+       <span class="cm">/* mandatory */</span>
+       <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+       <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+
+       <span class="cm">/* User visible board name (will be shown in /proc/cpuinfo) */</span>
+       <span class="nf">model</span> <span class="o">=</span> <span class="s">&quot;Machine Name&quot;</span><span class="p">;</span>
+
+       <span class="cm">/*</span>
+<span class="cm">        * The reserved-names and reserve-names properties work hand in hand. The first one</span>
+<span class="cm">        * is a list of strings providing a &quot;name&quot; for each entry in the second one using</span>
+<span class="cm">        * the traditional &quot;vendor,name&quot; format.</span>
+<span class="cm">        *</span>
+<span class="cm">        * The reserved-ranges property contains a list of ranges, each in the form of 2 cells</span>
+<span class="cm">        * of address and 2 cells of size (64-bit x2 so each entry is 4 cells) indicating</span>
+<span class="cm">        * regions of memory that are reserved and must not be overwritten by skiboot or</span>
+<span class="cm">        * subsequently by the Linux Kernel.</span>
+<span class="cm">        *</span>
+<span class="cm">        * Corresponding entries must also be created in the &quot;reserved map&quot; part of the flat</span>
+<span class="cm">        * device-tree (which is a binary list in the header of the fdt).</span>
+<span class="cm">        *</span>
+<span class="cm">        * Unless a component (skiboot or Linux) specifically knows about a region (usually</span>
+<span class="cm">        * based on its name) and decides to change or remove it, all these regions are</span>
+<span class="cm">        * passed as-is to Linux and to subsequent kernels across kexec and are kept</span>
+<span class="cm">        * preserved.</span>
+<span class="cm">        *</span>
+<span class="cm">        * NOTE: Do *NOT* copy the entries below, they are just an example and are actually</span>
+<span class="cm">        * created by skiboot itself. They represent the SLW image as &quot;detected&quot; by reading</span>
+<span class="cm">        * the PBA BARs and skiboot own memory allocations.</span>
+<span class="cm">        *</span>
+<span class="cm">        * I would recommend that you put in there the SLW and OCC (or HOMER as one block</span>
+<span class="cm">        * if that&#39;s how you use it) and any additional memory you want to preserve such</span>
+<span class="cm">        * as FW log buffers etc...</span>
+<span class="cm">        */</span>
+
+       <span class="nf">reserved-names</span> <span class="o">=</span> <span class="s">&quot;ibm,slw-image&quot;, &quot;ibm,slw-image&quot;, &quot;ibm,firmware-stacks&quot;, &quot;ibm,firmware-data&quot;, &quot;ibm,firmware-heap&quot;, &quot;ibm,firmware-code&quot;, &quot;memory@400000000&quot;</span><span class="p">;</span>
+       <span class="nf">reserved-ranges</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x7</span> <span class="mh">0xfe600000</span> <span class="mh">0x0</span> <span class="mh">0x100000</span> <span class="mh">0x7</span> <span class="mh">0xfe200000</span> <span class="mh">0x0</span> <span class="mh">0x100000</span> <span class="mh">0x0</span> <span class="mh">0x31e00000</span> <span class="mh">0x0</span> <span class="mh">0x3e0000</span> <span class="mh">0x0</span> <span class="mh">0x31000000</span> <span class="mh">0x0</span> <span class="mh">0xe00000</span> <span class="mh">0x0</span> <span class="mh">0x30400000</span> <span class="mh">0x0</span> <span class="mh">0xc00000</span> <span class="mh">0x0</span> <span class="mh">0x30000000</span> <span class="mh">0x0</span> <span class="mh">0x400000</span> <span class="mh">0x4</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x600450</span><span class="p">&gt;;</span>
+
+       <span class="cm">/* Mandatory */</span>
+       <span class="nc">cpus</span> <span class="p">{</span>
+               <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+               <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * The following node must exist for each *core* in the system. The unit</span>
+<span class="cm">                * address (number after the @) is the hexadecimal HW CPU number (PIR value)</span>
+<span class="cm">                * of thread 0 of that core.</span>
+<span class="cm">                */</span>
+               <span class="nc">PowerPC,POWER8</span><span class="nf">@20</span> <span class="p">{</span>
+                       <span class="cm">/* mandatory/standard properties */</span>
+                       <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;cpu&quot;</span><span class="p">;</span>
+                       <span class="nf">64-bit</span><span class="p">;</span>
+                       <span class="nf">32-64-bridge</span><span class="p">;</span>
+                       <span class="nf">graphics</span><span class="p">;</span>
+                       <span class="nf">general-purpose</span><span class="p">;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * The &quot;status&quot; property indicate whether the core is functional. It&#39;s</span>
+<span class="cm">                        * a string containing &quot;okay&quot; for a good core or &quot;bad&quot; for a non-functional</span>
+<span class="cm">                        * one. You can also just ommit the non-functional ones from the DT</span>
+<span class="cm">                        */</span>
+                       <span class="nf">status</span> <span class="o">=</span> <span class="s">&quot;okay&quot;</span><span class="p">;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * This is the same value as the PIR of thread 0 of that core</span>
+<span class="cm">                        * (ie same as the @xx part of the node name)</span>
+<span class="cm">                        */</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x20</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* same as above */</span>
+                       <span class="nf">ibm,pir</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x20</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* chip ID of this core */</span>
+                       <span class="nf">ibm,chip-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * interrupt server numbers (aka HW processor numbers) of all threads</span>
+<span class="cm">                        * on that core. This should have 8 numbers and the first one should</span>
+<span class="cm">                        * have the same value as the above ibm,pir and reg properties</span>
+<span class="cm">                        */</span>
+                       <span class="nf">ibm,ppc-interrupt-server#s</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x20</span> <span class="mh">0x21</span> <span class="mh">0x22</span> <span class="mh">0x23</span> <span class="mh">0x24</span> <span class="mh">0x25</span> <span class="mh">0x26</span> <span class="mh">0x27</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * This is the &quot;architected processor version&quot; as defined in PAPR. Just</span>
+<span class="cm">                        * stick to 0x0f000004 for P8 and things will be fine</span>
+<span class="cm">                        */</span>
+                       <span class="nf">cpu-version</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0f000004</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * These are various definitions of the page sizes and segment sizes</span>
+<span class="cm">                        * supported by the MMU, those values are fine for P8 for now</span>
+<span class="cm">                        */</span>
+                       <span class="nf">ibm,processor-segment-sizes</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1c</span> <span class="mh">0x28</span> <span class="mh">0xffffffff</span> <span class="mh">0xffffffff</span><span class="p">&gt;;</span>
+                       <span class="nf">ibm,processor-page-sizes</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xc</span> <span class="mh">0x10</span> <span class="mh">0x18</span> <span class="mh">0x22</span><span class="p">&gt;;</span>
+                       <span class="nf">ibm,segment-page-sizes</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xc</span> <span class="mh">0x0</span> <span class="mh">0x3</span> <span class="mh">0xc</span> <span class="mh">0x0</span> <span class="mh">0x10</span> <span class="mh">0x7</span> <span class="mh">0x18</span> <span class="mh">0x38</span> <span class="mh">0x10</span> <span class="mh">0x110</span> <span class="mh">0x2</span> <span class="mh">0x10</span> <span class="mh">0x1</span> <span class="mh">0x18</span> <span class="mh">0x8</span> <span class="mh">0x18</span> <span class="mh">0x100</span> <span class="mh">0x1</span> <span class="mh">0x18</span> <span class="mh">0x0</span> <span class="mh">0x22</span> <span class="mh">0x120</span> <span class="mh">0x1</span> <span class="mh">0x22</span> <span class="mh">0x3</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * Similarly that might need to be reviewed later but will do for now...</span>
+<span class="cm">                        */</span>
+                       <span class="nf">ibm,pa-features</span> <span class="o">=</span> <span class="p">[</span><span class="mh">0x6</span> <span class="mh">0x0</span> <span class="mh">0xf6</span> <span class="mh">0x3f</span> <span class="mh">0xc7</span> <span class="mh">0x0</span> <span class="mh">0x80</span> <span class="mh">0xc0</span><span class="p">];</span>
+
+                       <span class="cm">/* SLB size, use as-is */</span>
+                       <span class="nf">ibm,slb-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x20</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* VSX support, use as-is */</span>
+                       <span class="nf">ibm,vmx</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* DFP support, use as-is */</span>
+                       <span class="nf">ibm,dfp</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* PURR/SPURR support, use as-is */</span>
+                       <span class="nf">ibm,purr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+                       <span class="nf">ibm,spurr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * Old-style core clock frequency. Only create this property if the frequency fits</span>
+<span class="cm">                        * in a 32-bit number. Do not create it if it doesn&#39;t</span>
+<span class="cm">                        */</span>
+                       <span class="nf">clock-frequency</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xf5552d00</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * mandatory: 64-bit version of the core clock frequency, always create this</span>
+<span class="cm">                        * property.</span>
+<span class="cm">                        */</span>
+                       <span class="nf">ibm,extended-clock-frequency</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0xf5552d00</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* Timebase freq has a fixed value, always use that */</span>
+                       <span class="nf">timebase-frequency</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1e848000</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* Same */</span>
+                       <span class="nf">ibm,extended-timebase-frequency</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x1e848000</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* Use as-is, values might need to be adjusted but that will do for now */</span>
+                       <span class="nf">reservation-granule-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x80</span><span class="p">&gt;;</span>
+                       <span class="nf">d-tlb-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x800</span><span class="p">&gt;;</span>
+                       <span class="nf">i-tlb-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+                       <span class="nf">tlb-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x800</span><span class="p">&gt;;</span>
+                       <span class="nf">d-tlb-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4</span><span class="p">&gt;;</span>
+                       <span class="nf">i-tlb-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+                       <span class="nf">tlb-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4</span><span class="p">&gt;;</span>
+                       <span class="nf">d-cache-block-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x80</span><span class="p">&gt;;</span>
+                       <span class="nf">i-cache-block-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x80</span><span class="p">&gt;;</span>
+                       <span class="nf">d-cache-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000</span><span class="p">&gt;;</span>
+                       <span class="nf">i-cache-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8000</span><span class="p">&gt;;</span>
+                       <span class="nf">i-cache-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4</span><span class="p">&gt;;</span>
+                       <span class="nf">d-cache-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8</span><span class="p">&gt;;</span>
+                       <span class="nf">performance-monitor</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x1</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * optional: phandle of the node representing the L2 cache for this core,</span>
+<span class="cm">                        * note: it can also be named &quot;next-level-cache&quot;, Linux will support both</span>
+<span class="cm">                        * and Sapphire doesn&#39;t currently use those properties, just passes them</span>
+<span class="cm">                        * along to Linux</span>
+<span class="cm">                        */</span>
+                       <span class="nf">l2-cache</span> <span class="o">=</span> <span class="p">&lt;</span> <span class="mh">0x4</span> <span class="p">&gt;;</span>
+               <span class="p">};</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * Cache nodes. Those are siblings of the processor nodes under /cpus and</span>
+<span class="cm">                * represent the various level of caches.</span>
+<span class="cm">                *</span>
+<span class="cm">                * The unit address (and reg property) is mostly free-for-all as long as</span>
+<span class="cm">                * there is no collisions. On HDAT machines we use the following encoding</span>
+<span class="cm">                * which I encourage you to also follow to limit surprises:</span>
+<span class="cm">                *</span>
+<span class="cm">                * L2   :  (0x20 &lt;&lt; 24) | PIR (PIR is PIR value of thread 0 of core)</span>
+<span class="cm">                * L3   :  (0x30 &lt;&lt; 24) | PIR</span>
+<span class="cm">                * L3.5 :  (0x35 &lt;&lt; 24) | PIR</span>
+<span class="cm">                *</span>
+<span class="cm">                * In addition, each cache points to the next level cache via its</span>
+<span class="cm">                * own &quot;l2-cache&quot; (or &quot;next-level-cache&quot;) property, so the core node</span>
+<span class="cm">                * points to the L2, the L2 points to the L3 etc...</span>
+<span class="cm">                */</span>
+
+               <span class="nc">l2-cache</span><span class="nf">@20000020</span> <span class="p">{</span>
+                       <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4</span><span class="p">&gt;;</span>
+                       <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;cache&quot;</span><span class="p">;</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x20000020</span><span class="p">&gt;;</span>
+                       <span class="nf">status</span> <span class="o">=</span> <span class="s">&quot;okay&quot;</span><span class="p">;</span>
+                       <span class="nf">cache-unified</span><span class="p">;</span>
+                       <span class="nf">d-cache-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8</span><span class="p">&gt;;</span>
+                       <span class="nf">i-cache-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8</span><span class="p">&gt;;</span>
+                       <span class="nf">d-cache-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x80000</span><span class="p">&gt;;</span>
+                       <span class="nf">i-cache-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x80000</span><span class="p">&gt;;</span>
+                       <span class="nf">l2-cache</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x5</span><span class="p">&gt;;</span>
+               <span class="p">};</span>
+
+               <span class="nc">l3-cache</span><span class="nf">@30000020</span> <span class="p">{</span>
+                       <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x5</span><span class="p">&gt;;</span>
+                       <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;cache&quot;</span><span class="p">;</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x30000020</span><span class="p">&gt;;</span>
+                       <span class="nf">status</span> <span class="o">=</span> <span class="s">&quot;bad&quot;</span><span class="p">;</span>
+                       <span class="nf">cache-unified</span><span class="p">;</span>
+                       <span class="nf">d-cache-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8</span><span class="p">&gt;;</span>
+                       <span class="nf">i-cache-sets</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8</span><span class="p">&gt;;</span>
+                       <span class="nf">d-cache-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x800000</span><span class="p">&gt;;</span>
+                       <span class="nf">i-cache-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x800000</span><span class="p">&gt;;</span>
+               <span class="p">};</span>
+
+       <span class="p">};</span>
+
+       <span class="cm">/*</span>
+<span class="cm">        * Interrupt presentation controller (ICP) nodes</span>
+<span class="cm">        *</span>
+<span class="cm">        * There is some flexibility as to how many of these are presents since</span>
+<span class="cm">        * a given node can represent multiple ICPs. When generating from HDAT we</span>
+<span class="cm">        * chose to create one per core</span>
+<span class="cm">        */</span>
+       <span class="nc">interrupt-controller</span><span class="nf">@3ffff80020000</span> <span class="p">{</span>
+               <span class="cm">/* Mandatory */</span>
+               <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;IBM,ppc-xicp&quot;, &quot;IBM,power8-icp&quot;</span><span class="p">;</span>
+               <span class="nf">interrupt-controller</span><span class="p">;</span>
+               <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+               <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;PowerPC-External-Interrupt-Presentation&quot;</span><span class="p">;</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * Range of HW CPU IDs represented by that node. In this example</span>
+<span class="cm">                * the core starting at PIR 0x20 and 8 threads, which corresponds</span>
+<span class="cm">                * to the CPU node of the example above. The property in theory</span>
+<span class="cm">                * supports multiple ranges but Linux doesn&#39;t.</span>
+<span class="cm">                */</span>
+               <span class="nf">ibm,interrupt-server-ranges</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x20</span> <span class="mh">0x8</span><span class="p">&gt;;</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * For each server in the above range, the physical address of the</span>
+<span class="cm">                * ICP register block and its size. Since the root node #address-cells</span>
+<span class="cm">                * and #size-cells properties are both &quot;2&quot;, each entry is thus</span>
+<span class="cm">                * 2 cells address and 2 cells size (64-bit each).</span>
+<span class="cm">                */</span>
+               <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x3ffff</span> <span class="mh">0x80020000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x3ffff</span> <span class="mh">0x80021000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x3ffff</span> <span class="mh">0x80022000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x3ffff</span> <span class="mh">0x80023000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x3ffff</span> <span class="mh">0x80024000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x3ffff</span> <span class="mh">0x80025000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x3ffff</span> <span class="mh">0x80026000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x3ffff</span> <span class="mh">0x80027000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span><span class="p">&gt;;</span>
+       <span class="p">};</span>
+
+       <span class="cm">/*</span>
+<span class="cm">        * The &quot;memory&quot; nodes represent physical memory in the system. They</span>
+<span class="cm">        * do not represent DIMMs, memory controllers or Centaurs, thus will</span>
+<span class="cm">        * be expressed separately.</span>
+<span class="cm">        *</span>
+<span class="cm">        * In order to be able to handle affinity properly, we require that</span>
+<span class="cm">        * a memory node is created for each range of memory that has a different</span>
+<span class="cm">        * &quot;affinity&quot;, which in practice means for each chip since we don&#39;t</span>
+<span class="cm">        * support memory interleaved across multiple chips on P8.</span>
+<span class="cm">        *</span>
+<span class="cm">        * Additionally, it is *not* required that one chip = one memory node,</span>
+<span class="cm">        * it is perfectly acceptable to break down the memory of one chip into</span>
+<span class="cm">        * multiple memory nodes (typically skiboot does that if the two MCs</span>
+<span class="cm">        * are not interlaved).</span>
+<span class="cm">        */</span>
+       <span class="nc">memory</span><span class="nf">@0</span> <span class="p">{</span>
+               <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;memory&quot;</span><span class="p">;</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * We support multiple entries in the ibm,chip-id property for</span>
+<span class="cm">                * memory nodes in case the memory is interleaved across multiple</span>
+<span class="cm">                * chips but that shouldn&#39;t happen on P8</span>
+<span class="cm">                */</span>
+               <span class="nf">ibm,chip-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+
+               <span class="cm">/* The &quot;reg&quot; property is 4 cells, as usual for a child of</span>
+<span class="cm">                * the root node, 2 cells of address and 2 cells of size</span>
+<span class="cm">                */</span>
+               <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x4</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+       <span class="p">};</span>
+
+       <span class="cm">/*</span>
+<span class="cm">        * The XSCOM node. This is the closest thing to a &quot;chip&quot; node we have.</span>
+<span class="cm">        * there must be one per chip in the system (thus a DCM has two) and</span>
+<span class="cm">        * while it represents the &quot;parent&quot; of various devices on the PIB/PCB</span>
+<span class="cm">        * that we want to expose, it is also used to store all sort of</span>
+<span class="cm">        * miscellaneous per-chip information on HDAT based systems (such</span>
+<span class="cm">        * as VPDs).</span>
+<span class="cm">        */</span>
+       <span class="nc">xscom</span><span class="nf">@3fc0000000000</span> <span class="p">{</span>
+               <span class="cm">/* standard &amp; mandatory */</span>
+               <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+               <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+               <span class="nf">scom-controller</span><span class="p">;</span>
+               <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,xscom&quot;, &quot;ibm,power8-xscom&quot;</span><span class="p">;</span>
+
+               <span class="cm">/* The chip ID as usual ... */</span>
+               <span class="nf">ibm,chip-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+
+               <span class="cm">/* The base address of xscom for that chip */</span>
+               <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x3fc00</span> <span class="mh">0x0</span> <span class="mh">0x8</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * This comes from HDAT and I *think* is the raw content of the</span>
+<span class="cm">                * module VPD eeprom (and thus doesn&#39;t have a standard ASCII keyword</span>
+<span class="cm">                * VPD format). We don&#39;t currently use it though ...</span>
+<span class="cm">                */</span>
+               <span class="nf">ibm,module-vpd</span> <span class="o">=</span> <span class="p">&lt;</span> <span class="cm">/* ... big pile of binary data ... */</span> <span class="p">&gt;;</span>
+
+               <span class="cm">/* PSI host bridge XSCOM register set */</span>
+               <span class="nc">psihb</span><span class="nf">@2010900</span> <span class="p">{</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2010900</span> <span class="mh">0x20</span><span class="p">&gt;;</span>
+                       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,power8-psihb-x&quot;, &quot;ibm,psihb-x&quot;</span><span class="p">;</span>
+               <span class="p">};</span>
+
+               <span class="cm">/* Chip TOD XSCOM register set */</span>
+               <span class="nc">chiptod</span><span class="nf">@40000</span> <span class="p">{</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x40000</span> <span class="mh">0x34</span><span class="p">&gt;;</span>
+                       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,power-chiptod&quot;, &quot;ibm,power8-chiptod&quot;</span><span class="p">;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * Create that property with no value if this chip has</span>
+<span class="cm">                        * the Primary TOD in the topology. If it has the secondary</span>
+<span class="cm">                        * one (backup master ?) use &quot;secondary&quot;.</span>
+<span class="cm">                        */</span>
+                       <span class="nf">primary</span><span class="p">;</span>
+               <span class="p">};</span>
+
+               <span class="cm">/* NX XSCOM register set */</span>
+               <span class="nc">nx</span><span class="nf">@2010000</span> <span class="p">{</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2010000</span> <span class="mh">0x4000</span><span class="p">&gt;;</span>
+                       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,power-nx&quot;, &quot;ibm,power8-nx&quot;</span><span class="p">;</span>
+               <span class="p">};</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * PCI &quot;PE Master&quot; XSCOM register set for each active PHB</span>
+<span class="cm">                *</span>
+<span class="cm">                * For now, do *not* create these if the PHB isn&#39;t connected,</span>
+<span class="cm">                * clocked, or the PHY/HSS not configured.</span>
+<span class="cm">                */</span>
+               <span class="nc">pbcq</span><span class="nf">@2012000</span> <span class="p">{</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2012000</span> <span class="mh">0x20</span> <span class="mh">0x9012000</span> <span class="mh">0x5</span> <span class="mh">0x9013c00</span> <span class="mh">0x15</span><span class="p">&gt;;</span>
+                       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,power8-pbcq&quot;</span><span class="p">;</span>
+
+                       <span class="cm">/* Indicate the PHB index on the chip, ie, 0,1 or 2 */</span>
+                       <span class="nf">ibm,phb-index</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+
+                       <span class="cm">/* Create that property to use the IBM-style &quot;A/B&quot; dual input</span>
+<span class="cm">                        * slot presence detect mechanism.</span>
+<span class="cm">                        */</span>
+                       <span class="nf">ibm,use-ab-detect</span><span class="p">;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * TBD: Lane equalization values. Not currently used by</span>
+<span class="cm">                        * skiboot but will have to be sorted out</span>
+<span class="cm">                        */</span>
+                       <span class="nf">ibm,lane_eq</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+               <span class="p">};</span>
+
+               <span class="nc">pbcq</span><span class="nf">@2012400</span> <span class="p">{</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2012400</span> <span class="mh">0x20</span> <span class="mh">0x9012400</span> <span class="mh">0x5</span> <span class="mh">0x9013c40</span> <span class="mh">0x15</span><span class="p">&gt;;</span>
+                       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,power8-pbcq&quot;</span><span class="p">;</span>
+                       <span class="nf">ibm,phb-index</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+                       <span class="nf">ibm,use-ab-detect</span><span class="p">;</span>
+                       <span class="nf">ibm,lane_eq</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+               <span class="p">};</span>
+
+               <span class="cm">/*</span>
+<span class="cm">                * Here&#39;s the LPC bus. Ideally each chip has one but in</span>
+<span class="cm">                * practice it&#39;s ok to only populate the ones actually</span>
+<span class="cm">                * used for something. This is not an exact representation</span>
+<span class="cm">                * of HW, in that case we would have eccb -&gt; opb -&gt; lpc,</span>
+<span class="cm">                * but instead we just have an lpc node and the address is</span>
+<span class="cm">                * the base of the ECCB register set for it</span>
+<span class="cm">                *</span>
+<span class="cm">                * Devices on the LPC are represented as children nodes,</span>
+<span class="cm">                * see example below for a standard UART.</span>
+<span class="cm">                */</span>
+               <span class="nc">lpc</span><span class="nf">@b0020</span> <span class="p">{</span>
+                       <span class="cm">/*</span>
+<span class="cm">                        * Empty property indicating this is the primary</span>
+<span class="cm">                        * LPC bus. It will be used for the default UART</span>
+<span class="cm">                        * if any and this is the bus that will be used</span>
+<span class="cm">                        * by Linux as the virtual 64k of IO ports</span>
+<span class="cm">                        */</span>
+                       <span class="nf">primary</span><span class="p">;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * 2 cells of address, the first one indicates the</span>
+<span class="cm">                        * address type, see below</span>
+<span class="cm">                        */</span>
+                       <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+                       <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+                       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xb0020</span> <span class="mh">0x4</span><span class="p">&gt;;</span>
+                       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,power8-lpc&quot;</span><span class="p">;</span>
+
+                       <span class="cm">/*</span>
+<span class="cm">                        * Example device: a UART on IO ports.</span>
+<span class="cm">                        *</span>
+<span class="cm">                        * LPC address have 2 cells. The first cell is the</span>
+<span class="cm">                        * address type as follow:</span>
+<span class="cm">                        *</span>
+<span class="cm">                        *   0 : LPC memory space</span>
+<span class="cm">                        *   1 : LPC IO space</span>
+<span class="cm">                        *   2:  LPC FW space</span>
+<span class="cm">                        *</span>
+<span class="cm">                        * (This corresponds to the OPAL_LPC_* arguments</span>
+<span class="cm">                        * passed to the opal_lpc_read/write functions)</span>
+<span class="cm">                        *</span>
+<span class="cm">                        * The unit address follows the old ISA convention</span>
+<span class="cm">                        * for open firmware which prefixes IO ports with &quot;i&quot;.</span>
+<span class="cm">                        *</span>
+<span class="cm">                        * (This is not critical and can be 1,3f8 if that&#39;s</span>
+<span class="cm">                        * problematic to generate)</span>
+<span class="cm">                        */</span>
+                       <span class="nc">serial</span><span class="nf">@i3f8</span> <span class="p">{</span>
+                               <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span> <span class="mh">0x3f8</span> <span class="mi">8</span><span class="p">&gt;;</span>
+                               <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ns16550&quot;, &quot;pnpPNP,501&quot;</span><span class="p">;</span>
+
+                               <span class="cm">/* Baud rate generator base frequency */</span>
+                               <span class="nf">clock-frequency</span> <span class="o">=</span> <span class="p">&lt;</span> <span class="mi">1843200</span> <span class="p">&gt;;</span>
+
+                               <span class="cm">/* Default speed to use */</span>
+                               <span class="nf">current-speed</span> <span class="o">=</span> <span class="p">&lt;</span> <span class="mi">115200</span> <span class="p">&gt;;</span>
+
+                               <span class="cm">/* Historical, helps Linux */</span>
+                               <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;serial&quot;</span><span class="p">;</span>
+
+                               <span class="cm">/*</span>
+<span class="cm">                                * Indicate which chip ID the interrupt</span>
+<span class="cm">                                * is routed to (we assume it will always</span>
+<span class="cm">                                * be the &quot;host error interrupt&quot; (aka</span>
+<span class="cm">                                * &quot;TPM interrupt&quot; of that chip).</span>
+<span class="cm">                                */</span>
+                                <span class="nf">ibm,irq-chip-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+                       <span class="p">};</span>
+               <span class="p">};</span>
+       <span class="p">};</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Device Tree</a><ul>
+<li><a class="reference internal" href="#general-comments">General comments</a></li>
+<li><a class="reference internal" href="#reserve-map">Reserve Map</a></li>
+<li><a class="reference internal" href="#root-node">Root Node</a><ul>
+<li><a class="reference internal" href="#compatible">compatible</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="stb.html"
+                        title="previous chapter">Secure and Trusted Boot Library (LibSTB) Documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="device-tree/index.html"
+                        title="next chapter">Device Tree</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/device-tree.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="device-tree/index.html" title="Device Tree"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Device Tree</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PCI Device Tree Bindings &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reserved-memory device tree nodes" href="reserved-memory.html" />
+    <link rel="prev" title="OpenCAPI Device Tree Bindings" href="opencapi.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="reserved-memory.html" title="reserved-memory device tree nodes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opencapi.html" title="OpenCAPI Device Tree Bindings"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PCI Device Tree Bindings</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pci-device-tree-bindings">
+<span id="device-tree-pci"></span><h1>PCI Device Tree Bindings<a class="headerlink" href="#pci-device-tree-bindings" title="Permalink to this headline">¶</a></h1>
+<p>The following is an example PCI host bridge and device from a POWER9 machine.</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">pciex</span><span class="nf">@600c3c0300000</span> <span class="p">{</span>
+  <span class="nf">ibm,capi-flags</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,phb-stack-index</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+  <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,power9-pciex&quot;, &quot;ibm,ioda3-phb&quot;</span><span class="p">;</span>
+  <span class="nf">ibm,opal-single-pe</span><span class="p">;</span>
+  <span class="nf">ibm,opal-num-pes</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x200</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,supported-tce-sizes</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xc</span> <span class="mh">0x10</span> <span class="mh">0x15</span> <span class="mh">0x1e</span><span class="p">&gt;;</span>
+  <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;pciex&quot;</span><span class="p">;</span>
+  <span class="nf">ibm,opal-peltv-table</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x543c0000</span> <span class="mh">0x20000</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,associativity</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x1</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,phb-diag-data-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2180</span><span class="p">&gt;;</span>
+  <span class="nf">ranges</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2000000</span> <span class="mh">0x0</span> <span class="mh">0x80000000</span> <span class="mh">0x600c1</span> <span class="mh">0x80000000</span> <span class="mh">0x0</span> <span class="mh">0x7fff0000</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,lane-eq</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x54545454</span> <span class="mh">0x54545454</span> <span class="mh">0x54545454</span> <span class="mh">0x54545454</span> <span class="mh">0x54545454</span>
+                 <span class="mh">0x54545454</span> <span class="mh">0x54545454</span> <span class="mh">0x54545454</span> <span class="mh">0x77777777</span> <span class="mh">0x77777777</span>
+                 <span class="mh">0x77777777</span> <span class="mh">0x77777777</span><span class="p">&gt;;</span>
+  <span class="nf">status</span> <span class="o">=</span> <span class="s">&quot;okay&quot;</span><span class="p">;</span>
+  <span class="nf">#interrupt-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+  <span class="nf">bus-range</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0xff</span><span class="p">&gt;;</span>
+  <span class="nf">interrupt-parent</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x126</span><span class="p">&gt;;</span>
+  <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x3</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,opal-phbid</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x3</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,opal-pest-table</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x543e2000</span> <span class="mh">0x2000</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,chip-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+  <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,opal-m64-segment-splits</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x200</span> <span class="mh">0x1</span> <span class="mh">0xc</span> <span class="mh">0x0</span> <span class="mh">0x1</span> <span class="mh">0x2</span> <span class="mh">0xc</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,opal-m64-window</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x60200</span> <span class="mh">0x0</span> <span class="mh">0x60200</span> <span class="mh">0x0</span> <span class="mh">0x40</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+  <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x617</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,phb-stack</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xd8</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,phb-index</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x3</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,phb-pec-index</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span> <span class="cm">/* skiboot-v6.2 or later */</span>
+  <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x600c3</span> <span class="mh">0xc0300000</span> <span class="mh">0x0</span> <span class="mh">0x1000</span> <span class="mh">0x600c3</span> <span class="mh">0x60000000</span> <span class="mh">0x0</span> <span class="mh">0x10000000</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,mmio-windows</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x60200</span> <span class="mh">0x0</span> <span class="mh">0x40</span> <span class="mh">0x0</span> <span class="mh">0x600c1</span> <span class="mh">0x80000000</span> <span class="mh">0x0</span> <span class="mh">0x80000000</span><span class="p">&gt;;</span>
+  <span class="nf">clock-frequency</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x200</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,xscom-bases</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4011400</span> <span class="mh">0x4011440</span> <span class="mh">0xf010800</span> <span class="mh">0xf010840</span> <span class="mh">0xf010900</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,opal-reserved-pe</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1ff</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,capp-timebase-sync</span> <span class="o">=</span> <span class="p">[</span><span class="mo">00</span><span class="p">];</span>
+  <span class="nf">ibm,opal-available-m64-ranges</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span> <span class="mh">0x1f</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,opal-rtt-table</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x54380000</span> <span class="mh">0x20000</span><span class="p">&gt;;</span>
+  <span class="nf">ibm,opal-msi-ranges</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xfc000</span> <span class="mh">0xff8</span><span class="p">&gt;;</span>
+
+  <span class="nc">pci</span><span class="nf">@0</span> <span class="p">{</span>
+    <span class="nf">device_type</span> <span class="o">=</span> <span class="s">&quot;pciex&quot;</span><span class="p">;</span>
+    <span class="nf">revision-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+    <span class="nf">ibm,pci-config-space-type</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+    <span class="nf">interrupt-map-mask</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x7</span><span class="p">&gt;;</span>
+    <span class="nf">class-code</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x60400</span><span class="p">&gt;;</span>
+    <span class="nf">ranges</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2000000</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x2000000</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0xf0000000</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+    <span class="nf">vendor-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1014</span><span class="p">&gt;;</span>
+    <span class="nf">#interrupt-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+    <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x3</span><span class="p">&gt;;</span>
+    <span class="nf">interrupt-map</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x1</span> <span class="mh">0x126</span> <span class="mh">0xfcff8</span> <span class="mh">0x1</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x2</span> <span class="mh">0x126</span>
+                     <span class="mh">0xfcff9</span> <span class="mh">0x1</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x3</span> <span class="mh">0x126</span> <span class="mh">0xfcffa</span> <span class="mh">0x1</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span>
+                     <span class="mh">0x4</span> <span class="mh">0x126</span> <span class="mh">0xfcffb</span> <span class="mh">0x1</span><span class="p">&gt;;</span>
+    <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+    <span class="nf">device-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4c1</span><span class="p">&gt;;</span>
+    <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x622</span><span class="p">&gt;;</span>
+    <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span><span class="p">&gt;;</span>
+  <span class="p">};</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opencapi.html"
+                        title="previous chapter">OpenCAPI Device Tree Bindings</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="reserved-memory.html"
+                        title="next chapter">reserved-memory device tree nodes</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/pci.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="reserved-memory.html" title="reserved-memory device tree nodes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opencapi.html" title="OpenCAPI Device Tree Bindings"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PCI Device Tree Bindings</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

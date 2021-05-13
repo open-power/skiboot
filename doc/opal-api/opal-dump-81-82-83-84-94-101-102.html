@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL Dumps &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_ELOG: Error logging" href="opal-elog-71-72-73-74-75.html" />
+    <link rel="prev" title="OPAL Console calls" href="opal-console-read-write-1-2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-elog-71-72-73-74-75.html" title="OPAL_ELOG: Error logging"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-console-read-write-1-2.html" title="OPAL Console calls"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL Dumps</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-dumps">
+<span id="id1"></span><h1>OPAL Dumps<a class="headerlink" href="#opal-dumps" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_REGISTER_DUMP_REGION            101</span>
+<span class="cp">#define OPAL_UNREGISTER_DUMP_REGION          102</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_register_dump_region</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">size</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_unregister_dump_region</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">id</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>In the event of crashes, some service processors and firmware support gathering
+a limited amount of memory from a limited number of memory regions to save into
+a debug dump that can be useful for firmware and operating system developers
+in diagnosing problems. Typically, firmware and kernel log buffers are useful to
+save in a dump.</p>
+<p>An OS can register a memory region with <a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> and should,
+when the region is no longer valid (e.g. when kexec()ing), it should unregister the
+region with <a class="reference internal" href="#opal-unregister-dump-region"><span class="std std-ref">OPAL_UNREGISTER_DUMP_REGION</span></a>.</p>
+<p>An OS will be made aware of a dump being available through <a class="reference internal" href="opal-poll-events.html#opal-event-dump-avail"><span class="std std-ref">OPAL_EVENT_DUMP_AVAIL = 0x400</span></a>
+being set from a <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> call.</p>
+<p>Retreiving dumps from a service processor can also be performed using the
+<a class="reference internal" href="#opal-dump-info"><span class="std std-ref">OPAL_DUMP_INFO</span></a>, <a class="reference internal" href="#opal-dump-info2"><span class="std std-ref">OPAL_DUMP_INFO2</span></a>, <a class="reference internal" href="#opal-dump-read"><span class="std std-ref">OPAL_DUMP_READ</span></a>,
+and <a class="reference internal" href="#opal-dump-resend"><span class="std std-ref">OPAL_DUMP_RESEND</span></a> calls. Dumps are identified by a <code class="docutils literal notranslate"><span class="pre">uint32_t</span></code>, and
+once a dump is acknowledged, this ID can be re-used.</p>
+<p>Dumps can also be initiated by OPAL through the <a class="reference internal" href="#opal-dump-init"><span class="std std-ref">OPAL_DUMP_INIT</span></a> call, which
+will request that the service processor performs the requested type of dump.</p>
+<p>A call to <a class="reference internal" href="#opal-dump-ack"><span class="std std-ref">OPAL_DUMP_ACK</span></a> indicates to the service processor that we have
+retreived/acknowledged the dump and the service processor can free up the storage
+used by it.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_INIT                               81</span>
+<span class="cp">#define OPAL_DUMP_INFO                               82</span>
+<span class="cp">#define OPAL_DUMP_READ                               83</span>
+<span class="cp">#define OPAL_DUMP_ACK                                84</span>
+<span class="cp">#define OPAL_DUMP_RESEND                             91</span>
+<span class="cp">#define OPAL_DUMP_INFO2                              94</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_dump_init</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">dump_type</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_dump_info</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_size</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_dump_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">opal_sg_list</span> <span class="o">*</span><span class="n">list</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_dump_ack</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_dump_resend_notification</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_dump_info2</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_size</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_type</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="section" id="opal-register-dump-region">
+<span id="id2"></span><h2>OPAL_REGISTER_DUMP_REGION<a class="headerlink" href="#opal-register-dump-region" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_REGISTER_DUMP_REGION            101</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_register_dump_region</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">size</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This call is used to register regions of memory for a service processor to capture
+when the host crashes.</p>
+<p>e.g. if an assert is hit in OPAL, a service processor will copy the region of
+memory into some kind of crash dump for further analysis.</p>
+<p>This is an OPTIONAL feature that may be unsupported, the host OS should use an
+<a class="reference internal" href="opal-check-token-80.html#opal-check-token"><span class="std std-ref">OPAL_CHECK_TOKEN</span></a> call to find out if <a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> is supported.</p>
+<p><a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> accepts 3 parameters:</p>
+<ul class="simple">
+<li><p>region ID</p></li>
+<li><p>address</p></li>
+<li><p>length</p></li>
+</ul>
+<p>There is a range of region IDs that can be used by the host OS. A host OS should
+start from OPAL_DUMP_REGION_HOST_END and work down if it wants to add a not well
+defined region to dump. Currently the only well defined region is for the host
+OS log buffer (e.g. dmesg on linux).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/*</span>
+ <span class="o">*</span> <span class="n">Dump</span> <span class="n">region</span> <span class="n">ID</span> <span class="nb">range</span> <span class="n">usable</span> <span class="n">by</span> <span class="n">the</span> <span class="n">OS</span>
+ <span class="o">*/</span>
+ <span class="c1">#define OPAL_DUMP_REGION_HOST_START          0x80</span>
+ <span class="c1">#define OPAL_DUMP_REGION_LOG_BUF             0x80</span>
+ <span class="c1">#define OPAL_DUMP_REGION_HOST_END            0xFF</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> will return <a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a> if the call is present but
+the system doesn’t support registering regions to be dumped.</p>
+<p>In the event of being passed an invalid region ID, <a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> will
+return <a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a>.</p>
+<p>Systems likely have a limit as to how many regions they can support being dumped. If
+this limit is reached, <a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> will return <a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a>.</p>
+<div class="section" id="bugs">
+<h3>BUGS<a class="headerlink" href="#bugs" title="Permalink to this headline">¶</a></h3>
+<p>Some skiboot versions incorrectly returned <a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a> in the case of
+<a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> being supported on a platform (so the call was present)
+but the call being unsupported for some reason (e.g. on an IBM POWER7 machine).</p>
+<p>See also: <a class="reference internal" href="#opal-unregister-dump-region"><span class="std std-ref">OPAL_UNREGISTER_DUMP_REGION</span></a></p>
+</div>
+</div>
+<div class="section" id="opal-unregister-dump-region">
+<span id="id3"></span><h2>OPAL_UNREGISTER_DUMP_REGION<a class="headerlink" href="#opal-unregister-dump-region" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_UNREGISTER_DUMP_REGION          102</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_unregister_dump_region</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">id</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>While <a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> registers a region, <a class="reference internal" href="#opal-unregister-dump-region"><span class="std std-ref">OPAL_UNREGISTER_DUMP_REGION</span></a>
+will unregister a region by region ID.</p>
+<p><a class="reference internal" href="#opal-unregister-dump-region"><span class="std std-ref">OPAL_UNREGISTER_DUMP_REGION</span></a> takes one argument: the region ID.</p>
+<p>A host OS should check <a class="reference internal" href="#opal-unregister-dump-region"><span class="std std-ref">OPAL_UNREGISTER_DUMP_REGION</span></a> is supported through a call to
+<a class="reference internal" href="opal-check-token-80.html#opal-check-token"><span class="std std-ref">OPAL_CHECK_TOKEN</span></a>.</p>
+<p>If <a class="reference internal" href="#opal-unregister-dump-region"><span class="std std-ref">OPAL_UNREGISTER_DUMP_REGION</span></a> is called on a system where the call is present but
+unsupported, it will return <a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a>.</p>
+<div class="section" id="id4">
+<h3>BUGS<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>Some skiboot versions incorrectly returned <a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a> in the case of
+<a class="reference internal" href="#opal-unregister-dump-region"><span class="std std-ref">OPAL_UNREGISTER_DUMP_REGION</span></a> being supported on a platform (so the call was present)
+but the call being unsupported for some reason (e.g. on an IBM POWER7 machine).</p>
+</div>
+</div>
+<div class="section" id="opal-dump-init">
+<span id="id5"></span><h2>OPAL_DUMP_INIT<a class="headerlink" href="#opal-dump-init" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_INIT                               81</span>
+
+<span class="cp">#define DUMP_TYPE_FSP                0x01</span>
+<span class="cp">#define DUMP_TYPE_SYS                0x02</span>
+<span class="cp">#define DUMP_TYPE_SMA                0x03</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_dump_init</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">dump_type</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Ask the service processor to initiate a dump. Currently, only <code class="docutils literal notranslate"><span class="pre">DUMP_TYPE_FSP</span></code>
+is supported.</p>
+<p>Currently only implemented on FSP based systems. Use <a class="reference internal" href="opal-check-token-80.html#opal-check-token"><span class="std std-ref">OPAL_CHECK_TOKEN</span></a> to
+ensure the call is valid.</p>
+<div class="section" id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Dump initiated</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Unsupported dump type. Currently only <code class="docutils literal notranslate"><span class="pre">DUMP_TYPE_FSP</span></code> is supported and
+only on FSP based platforms.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Failed to ask service processor to initiated dump.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-dump-info">
+<span id="id6"></span><h2>OPAL_DUMP_INFO<a class="headerlink" href="#opal-dump-info" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_INFO                               82</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_dump_info</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_size</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Obsolete, use <a class="reference internal" href="#opal-dump-info2"><span class="std std-ref">OPAL_DUMP_INFO2</span></a> instead.</p>
+<p>No upstream Linux code ever used <a class="reference internal" href="#opal-dump-info"><span class="std std-ref">OPAL_DUMP_INFO</span></a>, although early PowerKVM
+trees did. <a class="reference internal" href="#opal-dump-info"><span class="std std-ref">OPAL_DUMP_INFO</span></a> is implemented as a wrapper around
+<a class="reference internal" href="#opal-dump-info2"><span class="std std-ref">OPAL_DUMP_INFO2</span></a>.</p>
+</div>
+<div class="section" id="opal-dump-read">
+<span id="id7"></span><h2>OPAL_DUMP_READ<a class="headerlink" href="#opal-dump-read" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_READ                               83</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_dump_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">opal_sg_list</span> <span class="o">*</span><span class="n">list</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Read <code class="docutils literal notranslate"><span class="pre">dump_id</span></code> dump from the service processor into memory.</p>
+<div class="section" id="id8">
+<h3>Returns<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Invalid Dump ID or internal error.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Insuffcient space to store dump.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt><dd><p>Fetching dump, call <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> to crank the state machine,
+and call <a class="reference internal" href="#opal-dump-read"><span class="std std-ref">OPAL_DUMP_READ</span></a> again until neither <a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a>
+nor <a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a> are returned.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-partial"><span class="std std-ref">OPAL_PARTIAL</span></a></dt><dd><p>Only part of the dump was read.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Dump successfully read.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-dump-ack">
+<span id="id9"></span><h2>OPAL_DUMP_ACK<a class="headerlink" href="#opal-dump-ack" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_ACK                                84</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_dump_ack</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Acknowledge the dump to the service processor. This means the service processor
+can re-claim the storage space used by the dump. Effectively, this is an
+<code class="docutils literal notranslate"><span class="pre">unlink</span></code> style operation.</p>
+<div class="section" id="id10">
+<h3>Returns<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Dump successfully acknowledged.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Failed to acknowledge the dump, e.g. could not communicate with service
+processor.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid dump ID.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-dump-resend">
+<span id="id11"></span><h2>OPAL_DUMP_RESEND<a class="headerlink" href="#opal-dump-resend" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_RESEND                             91</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_dump_resend_notification</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Resend notification to the OS if there is a dump available. This will
+cause OPAL to check if a dump is available and set the
+<a class="reference internal" href="opal-poll-events.html#opal-event-dump-avail"><span class="std std-ref">OPAL_EVENT_DUMP_AVAIL = 0x400</span></a> bit in the next <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> call.</p>
+<div class="section" id="id12">
+<h3>Returns<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Successfully reset <a class="reference internal" href="opal-poll-events.html#opal-event-dump-avail"><span class="std std-ref">OPAL_EVENT_DUMP_AVAIL = 0x400</span></a> bit.</p>
+</dd>
+</dl>
+<p>In future, this may return other standard OPAL error codes.</p>
+</div>
+</div>
+<div class="section" id="opal-dump-info2">
+<span id="id13"></span><h2>OPAL_DUMP_INFO2<a class="headerlink" href="#opal-dump-info2" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_INFO2                              94</span>
+
+<span class="cp">#define DUMP_TYPE_FSP                0x01</span>
+<span class="cp">#define DUMP_TYPE_SYS                0x02</span>
+<span class="cp">#define DUMP_TYPE_SMA                0x03</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_dump_info2</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_size</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_type</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Retreives information about a dump, notably it’s <code class="docutils literal notranslate"><span class="pre">dump_id</span></code>, size, and type.
+Call this after the <a class="reference internal" href="opal-poll-events.html#opal-event-dump-avail"><span class="std std-ref">OPAL_EVENT_DUMP_AVAIL = 0x400</span></a> bit is set from a
+<a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> call. It will retreive the information on the <em>next</em>
+dump to be retreived and/or ACKed, even though there may be more than one dump
+available for retreiving.</p>
+<p>This call replaces <a class="reference internal" href="#opal-dump-info"><span class="std std-ref">OPAL_DUMP_INFO</span></a>.</p>
+<div class="section" id="id14">
+<h3>Returns<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Information retreived.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>No dump available or internal error.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL Dumps</a><ul>
+<li><a class="reference internal" href="#opal-register-dump-region">OPAL_REGISTER_DUMP_REGION</a><ul>
+<li><a class="reference internal" href="#bugs">BUGS</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-unregister-dump-region">OPAL_UNREGISTER_DUMP_REGION</a><ul>
+<li><a class="reference internal" href="#id4">BUGS</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-dump-init">OPAL_DUMP_INIT</a><ul>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-dump-info">OPAL_DUMP_INFO</a></li>
+<li><a class="reference internal" href="#opal-dump-read">OPAL_DUMP_READ</a><ul>
+<li><a class="reference internal" href="#id8">Returns</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-dump-ack">OPAL_DUMP_ACK</a><ul>
+<li><a class="reference internal" href="#id10">Returns</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-dump-resend">OPAL_DUMP_RESEND</a><ul>
+<li><a class="reference internal" href="#id12">Returns</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-dump-info2">OPAL_DUMP_INFO2</a><ul>
+<li><a class="reference internal" href="#id14">Returns</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-console-read-write-1-2.html"
+                        title="previous chapter">OPAL Console calls</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-elog-71-72-73-74-75.html"
+                        title="next chapter">OPAL_ELOG: Error logging</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-dump-81-82-83-84-94-101-102.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-elog-71-72-73-74-75.html" title="OPAL_ELOG: Error logging"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-console-read-write-1-2.html" title="OPAL Console calls"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL Dumps</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_GET_MSI_32 and OPAL_GET_MSI_64 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_GET_XIVE" href="opal-get-xive-20.html" />
+    <link rel="prev" title="OPAL_GET_MSG" href="opal-get-msg-85.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-get-xive-20.html" title="OPAL_GET_XIVE"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-get-msg-85.html" title="OPAL_GET_MSG"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_GET_MSI_32 and OPAL_GET_MSI_64</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-get-msi-32-and-opal-get-msi-64">
+<h1>OPAL_GET_MSI_32 and OPAL_GET_MSI_64<a class="headerlink" href="#opal-get-msi-32-and-opal-get-msi-64" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_MSI_32                              39</span>
+<span class="cp">#define OPAL_GET_MSI_64                              40</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_get_msi_32</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">mve_number</span><span class="p">,</span>
+                        <span class="kt">uint32_t</span> <span class="n">xive_num</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">msi_range</span><span class="p">,</span>
+                        <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">msi_address</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">message_data</span><span class="p">);</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_get_msi_64</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">mve_number</span><span class="p">,</span>
+                        <span class="kt">uint32_t</span> <span class="n">xive_num</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">msi_range</span><span class="p">,</span>
+                        <span class="kt">uint64_t</span> <span class="o">*</span><span class="n">msi_address</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">message_data</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="section" id="opal-get-msi-32">
+<span id="id1"></span><h2>OPAL_GET_MSI_32<a class="headerlink" href="#opal-get-msi-32" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_MSI_32                              39</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_get_msi_32</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">mve_number</span><span class="p">,</span>
+                        <span class="kt">uint32_t</span> <span class="n">xive_num</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">msi_range</span><span class="p">,</span>
+                        <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">msi_address</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">message_data</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="#opal-get-msi-64"><span class="std std-ref">OPAL_GET_MSI_64</span></a>.</p>
+</div>
+<div class="section" id="opal-get-msi-64">
+<span id="id2"></span><h2>OPAL_GET_MSI_64<a class="headerlink" href="#opal-get-msi-64" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_MSI_64                              40</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_get_msi_64</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">mve_number</span><span class="p">,</span>
+                        <span class="kt">uint32_t</span> <span class="n">xive_num</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">msi_range</span><span class="p">,</span>
+                        <span class="kt">uint64_t</span> <span class="o">*</span><span class="n">msi_address</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">message_data</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><strong>WARNING:</strong> the following documentation is from old sources, and is possibly
+not representative of OPALv3 as implemented by skiboot. This should be
+used as a starting point for full documentation.</p>
+<p>OPAL PHBs encode MVE and XIVE specifiers in MSI DMA and message data values.
+The host calls these functions to determine the PHB MSI DMA address and message
+data to program into a PE PCIE function for a particular MVE and XIVE. The
+msi_address parameter returns the MSI DMA address and the msi_data parameter
+returns the MSI DMA message data value the PE uses to signal that interrupt.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">phb_id</span></code> parameter is the value from the PHB node <code class="docutils literal notranslate"><span class="pre">ibm,opal-phbid</span></code>
+property.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mve_number</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">mve_number</span></code> is the index of an MVE used to authorize this PE to this
+MSI. For <code class="docutils literal notranslate"><span class="pre">ibm,opal-ioda2</span></code> PHBs, the MVE number argument is ignored.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">xive_number</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">xive_number</span></code> is the index of an XIVE that corresponds to a particular
+DMA address and message data value this PE will signal as an MSI ro MSI-X.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">msi_range</span></code></dt><dd><p>The msi_range parameter specifies the number of MSIs associated with the
+in put MVE and XIVE, primarily for MSI-conventional Multiple Message
+Enable &gt; 1 MSI. MSI requires consecutive MSIs per MSI address, and each
+MSI DMA address must be unique for any given consecutive power of 2 set
+of 32 message data values,. which in turn select particular PHB XIVEs.
+This value must be a power of 2 value in the range of 0 to 32. OPAL
+returns <a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a> for values outside of this range.</p>
+</dd>
+</dl>
+<p>For MSI conventional, the MSI address and message data returned apply to a
+power of 2 sequential set of XIVRs starting from the xive_number for the
+power of 2 msi_range input argument. The message data returned represents the
+power of 2 aligned starting message data value of the first interrupt number
+in that sequential range. Valid msi_range input values are from 1 to 32.
+Non-power of 2 values result in a return code of <a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a>.</p>
+<p>An msi_range value of 0 or 1 signifies that OPAL should return the message
+data and message address for exactly one MSI specified by the input XIVE
+number. For MSI conventional, the host should specify either a value of 0 or 1,
+for an MSI Capability MME value of 1 MSI. For MSI-X XIVRs, the host should
+specify a value of ‘1’ for the msi_range argument and call this function for
+each MSI-X uniquely.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_GET_MSI_32 and OPAL_GET_MSI_64</a><ul>
+<li><a class="reference internal" href="#opal-get-msi-32">OPAL_GET_MSI_32</a></li>
+<li><a class="reference internal" href="#opal-get-msi-64">OPAL_GET_MSI_64</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-get-msg-85.html"
+                        title="previous chapter">OPAL_GET_MSG</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-get-xive-20.html"
+                        title="next chapter">OPAL_GET_XIVE</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-get-msi-39-40.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-get-xive-20.html" title="OPAL_GET_XIVE"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-get-msg-85.html" title="OPAL_GET_MSG"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_GET_MSI_32 and OPAL_GET_MSI_64</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

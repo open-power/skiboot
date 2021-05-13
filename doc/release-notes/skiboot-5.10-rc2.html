@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.10-rc2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.10-rc3" href="skiboot-5.10-rc3.html" />
+    <link rel="prev" title="skiboot-5.10-rc1" href="skiboot-5.10-rc1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc3.html" title="skiboot-5.10-rc3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc1.html" title="skiboot-5.10-rc1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-10-rc2">
+<span id="id1"></span><h1>skiboot-5.10-rc2<a class="headerlink" href="#skiboot-5-10-rc2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v5.10-rc2 was released on Friday February 9th 2018. It is the second
+release candidate of skiboot 5.10, which will become the new stable release
+of skiboot following the 5.9 release, first released October 31st 2017.</p>
+<p>skiboot v5.10-rc2 contains all bug fixes as of <a class="reference internal" href="skiboot-5.9.8.html#skiboot-5-9-8"><span class="std std-ref">skiboot-5.9.8</span></a>
+and <a class="reference internal" href="skiboot-5.4.9.html#skiboot-5-4-9"><span class="std std-ref">skiboot-5.4.9</span></a> (the currently maintained stable releases). There
+may be more 5.9.x stable releases, it will depend on demand.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.10 in February, with skiboot 5.10
+being for all POWER8 and POWER9 platforms in op-build v1.21.
+This release will be targeted to early POWER9 systems.</p>
+<p>Over skiboot-5.10-rc1, we have the following changes:</p>
+<ul>
+<li><p>hw/npu2: Implement logging HMI actions</p></li>
+<li><p>opal-prd: Fix FTBFS with -Werror=format-overflow</p>
+<p>i2c.c fails to compile with gcc7 and -Werror=format-overflow used in
+Debian Unstable and Ubuntu 18.04 :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>i2c.c: In function ‘i2c_init’:
+i2c.c:211:15: error: ‘%s’ directive writing up to 255 bytes into a
+region of size 236 [-Werror=format-overflow=]
+</pre></div>
+</div>
+</li>
+<li><p>core/exception: beautify exception handler, add MCE-involved registers</p>
+<p>Print DSISR and DAR, to help with deciphering machine check exceptions,
+and improve the output a bit, decode NIP symbol, improve alignment, etc.
+Also print a specific header for machine check, because we do expect to
+see these if there is a hardware failure.</p>
+<p>Before:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[    0.005968779,3] ***********************************************
+[    0.005974102,3] Unexpected exception 200 !
+[    0.005978696,3] SRR0 : 000000003002ad80 SRR1 : 9000000000001000
+[    0.005985239,3] HSRR0: 00000000300027b4 HSRR1: 9000000030001000
+[    0.005991782,3] LR   : 000000003002ad80 CTR  : 0000000000000000
+[    0.005998130,3] CFAR : 00000000300b58bc
+[    0.006002769,3] CR   : 40000004  XER: 20000000
+[    0.006008069,3] GPR00: 000000003002ad80 GPR16: 0000000000000000
+[    0.006015170,3] GPR01: 0000000031c03bd0 GPR17: 0000000000000000
+[...]
+</pre></div>
+</div>
+<p>After:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>    <span class="mf">0.003287941</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">***********************************************</span>
+<span class="p">[</span>    <span class="mf">0.003561769</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">Fatal</span> <span class="n">MCE</span> <span class="n">at</span> <span class="mi">000000003002</span><span class="n">ad80</span>   <span class="o">.</span><span class="n">nvram_init</span><span class="o">+</span><span class="mh">0x24</span>
+<span class="p">[</span>    <span class="mf">0.003579628</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">CFAR</span> <span class="p">:</span> <span class="mi">00000000300</span><span class="n">b5964</span>
+<span class="p">[</span>    <span class="mf">0.003584268</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">SRR0</span> <span class="p">:</span> <span class="mi">000000003002</span><span class="n">ad80</span> <span class="n">SRR1</span> <span class="p">:</span> <span class="mi">9000000000001000</span>
+<span class="p">[</span>    <span class="mf">0.003590812</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HSRR0</span><span class="p">:</span> <span class="mi">00000000300027</span><span class="n">b4</span> <span class="n">HSRR1</span><span class="p">:</span> <span class="mi">9000000030001000</span>
+<span class="p">[</span>    <span class="mf">0.003597355</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">DSISR</span><span class="p">:</span> <span class="mi">00000000</span>         <span class="n">DAR</span>  <span class="p">:</span> <span class="mi">0000000000000000</span>
+<span class="p">[</span>    <span class="mf">0.003603480</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">LR</span>   <span class="p">:</span> <span class="mi">000000003002</span><span class="n">ad68</span> <span class="n">CTR</span>  <span class="p">:</span> <span class="mi">0000000030093</span><span class="n">d80</span>
+<span class="p">[</span>    <span class="mf">0.003609930</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">CR</span>   <span class="p">:</span> <span class="mi">40000004</span>         <span class="n">XER</span>  <span class="p">:</span> <span class="mi">20000000</span>
+<span class="p">[</span>    <span class="mf">0.003615698</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">GPR00</span><span class="p">:</span> <span class="mf">00000000300149e8</span> <span class="n">GPR16</span><span class="p">:</span> <span class="mi">0000000000000000</span>
+<span class="p">[</span>    <span class="mf">0.003622799</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">GPR01</span><span class="p">:</span> <span class="mi">0000000031</span><span class="n">c03bc0</span> <span class="n">GPR17</span><span class="p">:</span> <span class="mi">0000000000000000</span>
+<span class="p">[</span><span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p>core/init: manage MSR[ME] explicitly, always enable</p>
+<p>The current boot sequence inherits MSR[ME] from the IPL firmware, and
+never changes it. Some environments disable MSR[ME] (e.g., mambo), and
+others can enable it (hostboot).</p>
+<p>This has two problems. First, MSR[ME] must be disabled while in the
+process of taking over the interrupt vector from the previous
+environment.  Second, after installing our machine check handler,
+MSR[ME] should be enabled to get some useful output rather than a
+checkstop.</p>
+</li>
+<li><p>fast-reboot: occ: Re-parse the pstate table during fast-reboot</p>
+<p>OCC shares the frequency list to host by copying the pstate table to
+main memory in HOMER. This table is parsed during boot to create
+device-tree properties for frequency and pstate IDs. OCC can update
+the pstate table to present a new set of frequencies to the host. But
+host will remain oblivious to these changes unless it is re-inited
+with the updated device-tree CPU frequency properties. So this patch
+allows to re-parse the pstate table and update the device-tree
+properties during fast-reboot.</p>
+<p>OCC updates the pstate table when asked to do so using pstate-table
+bias command. And this is mainly used by WOF team for
+characterization purposes.</p>
+</li>
+<li><p>fast-reboot: move pci_reset error handling into fast-reboot code</p>
+<p>pci_reset() currently does a platform reboot if it fails. It
+should not know about fast-reboot at this level, so instead have
+it return an error, and the fast reboot caller will do the
+platform reboot.</p>
+<p>The code essentially does the same thing, but flexibility is
+improved. Ideally the fast reboot code should perform pci_reset
+and all such fail-able operations before the CPU resets itself
+and destroys its own stack. That’s not the case now, but that
+should be the goal.</p>
+</li>
+<li><p>capi: Fix the max tlbi divider and the directory size.</p>
+<p>Switch to 512KB mode (directory size) as we don’t use bit 48 of the tag
+in addressing the array. This mode is controlled by the Snoop CAPI
+Configuration Register.
+Set the maximum of the number of data polls received before signaling
+TLBI hang detect timer expired. The value of ‘0000’ is equal to 16.</p>
+</li>
+<li><p>npu2/tce: Fix page size checking</p>
+<p>The page size is encoded in the TVT data [59:63] as &#64;shift+11 but
+the tce_kill handler does not do the math right; this fixes it.</p>
+</li>
+<li><p>stb: Enforce secure boot if called before libstb initialized</p></li>
+<li><p>stb: Correctly error out when no PCR for resource</p></li>
+<li><p>core/init: move imc catalog preload init after the STB init.</p>
+<p>As a safer side move the imc catalog preload after the STB init
+to make sure the imc catalog resource get’s verified and measured
+properly during loading when both secure and trusted boot modes
+are on.</p>
+</li>
+<li><p>libstb: fix failure of calling trusted measure without STB initialization.</p>
+<p>When we load a flash resource during OPAL init, STB calls trusted measure
+to measure the given resource. There is a situation when a flash gets loaded
+before STB initialization then trusted measure cannot measure properly.</p>
+<p>So this patch fixes this issue by calling trusted measure only if the
+corresponding trusted init was done.</p>
+<p>The ideal fix is to make sure STB init done at the first place during init
+and then do the loading of flash resources, by that way STB can properly
+verify and measure the all resources.</p>
+</li>
+<li><p>libstb: fix failure of calling cvc verify without STB initialization.</p>
+<p>Currently in OPAL init time at various stages we are loading various
+PNOR partition containers from the flash device. When we load a flash
+resource STB calls the CVC verify and trusted measure(sha512) functions.
+So when we have a flash resource gets loaded before STB initialization,
+then cvc verify function fails to start the verify and enforce the boot.</p>
+<p>Below is one of the example failure where our VERSION partition gets
+loading early in the boot stage without STB initialization done.</p>
+<p>This is with secure mode off.
+STB: VERSION NOT VERIFIED, invalid param. buf=0x305ed930, len=4096 key-hash=0x0 hash-size=0</p>
+<p>In the same code path when secure mode is on, the boot process will abort.</p>
+<p>So this patch fixes this issue by calling cvc verify only if we have
+STB init was done.</p>
+<p>And also we need a permanent fix in init path to ensure STB init gets
+done at first place and then start loading all other flash resources.</p>
+</li>
+<li><p>libstb/tpm_chip: Add missing new line to print messages.</p></li>
+<li><p>libstb: increase the log level of verify/measure messages to PR_NOTICE.</p>
+<p>Currently libstb logs the verify and hash caluculation messages in
+PR_INFO level. So when there is a secure boot enforcement happens
+in loading last flash resource(Ex: BOOTKERNEL), the previous verify
+and measure messages are not logged to console, which is not clear
+to the end user which resource is verified and measured.
+So this patch fixes this by increasing the log level to PR_NOTICE.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.10-rc1.html"
+                        title="previous chapter">skiboot-5.10-rc1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.10-rc3.html"
+                        title="next chapter">skiboot-5.10-rc3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.10-rc2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc3.html" title="skiboot-5.10-rc3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc1.html" title="skiboot-5.10-rc1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0.11 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0.12" href="skiboot-6.0.12.html" />
+    <link rel="prev" title="skiboot-6.0.10" href="skiboot-6.0.10.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.12.html" title="skiboot-6.0.12"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.10.html" title="skiboot-6.0.10"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.11</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-11">
+<span id="id1"></span><h1>skiboot-6.0.11<a class="headerlink" href="#skiboot-6-0-11" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.0.11 was released on Friday November 2nd, 2018. It replaces
+<a class="reference internal" href="skiboot-6.0.10.html#skiboot-6-0-10"><span class="std std-ref">skiboot-6.0.10</span></a> as the current stable release in the 6.0.x series.</p>
+<p>It is recommended that 6.0.11 be used instead of any previous 6.0.x version
+due to the bug fixes it contains.</p>
+<p>The bug fixes are:</p>
+<ul>
+<li><p>phb4/capp: Only reset FIR bits that cause capp machine check</p>
+<p>During CAPP recovery do_capp_recovery_scoms() will reset the CAPP Fir
+register just after CAPP recovery is completed. This has an
+unintentional side effect of preventing PRD from analyzing and
+reporting this error. If PRD tries to read the CAPP FIR after opal has
+already reset it, then it logs a critical error complaining “No active
+error bits found”.</p>
+<p>To prevent this from happening we update do_capp_recovery_scoms() to
+only reset fir bits that cause CAPP machine check (local xstop). This
+is done by reading the CAPP Fir Action0/1 &amp; Mask registers and
+generating a mask which is then written on CAPP_FIR_CLEAR register.</p>
+</li>
+<li><p>phb4: Check for RX errors after link training</p>
+<p>Some PHB4 PHYs can get stuck in a bad state where they are constantly
+retraining the link. This happens transparently to skiboot and Linux
+but will causes PCIe to be slow. Resetting the PHB4 clears the
+problem.</p>
+<p>We can detect this case by looking at the RX errors count where we
+check for link stability. This patch does this by modifying the link
+optimal code to check for RX errors. If errors are occurring we
+retrain the link irrespective of the chip rev or card.</p>
+<p>Normally when this problem occurs, the RX error count is maxed out at
+255. When there is no problem, the count is 0. We chose 8 as the max
+rx errors value to give us some margin for a few errors. There is also
+a knob that can be used to set the error threshold for when we should
+retrain the link. i.e.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">phb</span><span class="o">-</span><span class="n">rx</span><span class="o">-</span><span class="n">err</span><span class="o">-</span><span class="nb">max</span><span class="o">=</span><span class="mi">8</span>
+</pre></div>
+</div>
+</li>
+<li><p>core/flash: Log return code when ffs_init() fails</p></li>
+<li><p>libflash/ipmi-hiomap: Use error codes rather than abort()</p></li>
+<li><p>libflash/ipmi-hiomap: Restore window state on window/protocol reset</p></li>
+<li><p>libflash/ipmi-hiomap: Improve event handling</p></li>
+<li><p>p9dsu: Describe platform BMC register configuration</p>
+<p>Provide the p9dsu-specific BMC configuration values required for the
+host kernel to drive the VGA display correctly.</p>
+</li>
+<li><p>p9dsu: Add HIOMAP-over-IPMI support</p></li>
+<li><p>libflash/ipmi-hiomap: Cleanup allocation on init failure</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.10.html"
+                        title="previous chapter">skiboot-6.0.10</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0.12.html"
+                        title="next chapter">skiboot-6.0.12</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0.11.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.12.html" title="skiboot-6.0.12"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.10.html" title="skiboot-6.0.10"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.11</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot 4.1.1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot 5.0" href="skiboot-5.0.html" />
+    <link rel="prev" title="skiboot 4.1" href="skiboot-4.1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.0.html" title="skiboot 5.0"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-4.1.html" title="skiboot 4.1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot 4.1.1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-4-1-1">
+<span id="id1"></span><h1>skiboot 4.1.1<a class="headerlink" href="#skiboot-4-1-1" title="Permalink to this headline">¶</a></h1>
+<p>Skiboot 4.1 was released 30th January 2015.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>fsp: Avoid NULL dereference in case of invalid class_resp bits
+CQ: SW288484</p></li>
+<li><p>Makefile: Support CROSS_COMPILE as well as CROSS</p></li>
+<li><p>Additional unit testing:</p>
+<ul>
+<li><p>Tiny hello_world kernel</p></li>
+<li><p>Will run boot tests with hello_world and (if present) petitboot
+image in the POWER8 Functional simulator (mambo) (if present)</p></li>
+<li><p>Run CCAN unit tests as part of ‘make check’</p></li>
+<li><p>Increased testing of PEL code</p></li>
+<li><p>unit test console-log</p></li>
+<li><p>skeleton libc unit tests</p></li>
+</ul>
+</li>
+<li><p>Fix compatible match for palmetto &amp; habanero
+The strings should be “tyan,…” not “ibm,…”
+(N/A for IBM systems)</p></li>
+<li><p>i2c: Unify the frequencies to calculate bit rate divisor</p></li>
+<li><p>Unlock rtc cache lock when cache isn’t valid
+Could cause IPL crash on POWER7</p></li>
+<li><p>Initial documentation for OPAL API, ABI and Specification</p></li>
+<li><p>Add Firestone platform</p></li>
+<li><p>Fix crash when one socket wasn’t populated with a CPU
+LTC-Bugzilla: 120562</p></li>
+<li><p>Bug fix in RTC state machine which possibly led to RTC not working</p></li>
+<li><p>Makefile fixes for running with some GCC 4.9 compilers</p></li>
+<li><p>Add device tree properties for pstate vdd and vcs values</p></li>
+<li><p>cpuidle: Add validated metrics for idle states
+Export residency times in device tree</p></li>
+<li><p>Revert “platforms/astbmc: Temporary reboot workaround”
+(N/A for IBM systems)</p></li>
+<li><p>Fix buffer overrun in print_* functions.
+This could cause IPL failures or conceivably other runtime problems</p></li>
+</ul>
+</div></blockquote>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-4.1.html"
+                        title="previous chapter">skiboot 4.1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.0.html"
+                        title="next chapter">skiboot 5.0</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-4.1.1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.0.html" title="skiboot 5.0"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-4.1.html" title="skiboot 4.1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot 4.1.1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL &lt;–&gt; BMC interactions &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="GCOV for skiboot" href="gcov.html" />
+    <link rel="prev" title="How to log errors on OPAL" href="error-logging.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="gcov.html" title="GCOV for skiboot"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="error-logging.html" title="How to log errors on OPAL"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL &lt;–&gt; BMC interactions</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-bmc-interactions">
+<h1>OPAL &lt;–&gt; BMC interactions<a class="headerlink" href="#opal-bmc-interactions" title="Permalink to this headline">¶</a></h1>
+<p>This document provides information about some of the user-visible interactions
+that skiboot performs with the BMC.</p>
+<div class="section" id="ipmi-sensors">
+<h2>IPMI sensors<a class="headerlink" href="#ipmi-sensors" title="Permalink to this headline">¶</a></h2>
+<p>OPAL will interact with a few IPMI sensors during the boot process. These
+are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Boot Count [type 0xc3: OEM reserved]</p></li>
+<li><p>FW Boot progress [type 0x0f: System Firmware Progress]</p></li>
+</ul>
+</div></blockquote>
+<p>Boot Count: assertion type. When OPAL reaches a late stage of boot, it sets the
+boot count sensor to 0x02. This is intended to allow the BMC detect a failed
+or aborted boot, for switching to a known-good firmware image.</p>
+<p>FW Boot Progress: assertion type. During boot, skiboot will update this sensor
+to one of the IPMI-defined progress codes. The codes use by skiboot are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>PCI Resource configuration (0x01)</dt><dd><ul>
+<li><p>asserted as the PCI devices have been probed and resources allocated</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Motherboard init (0x14)</dt><dd><ul>
+<li><p>asserted as the platform-specific components have been initialised</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>OS boot (0x13)</dt><dd><ul>
+<li><p>asserted after skiboot has loaded the PAYLOAD image, and is about to
+boot it.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="chassis-control-messages">
+<h2>Chassis control messages<a class="headerlink" href="#chassis-control-messages" title="Permalink to this headline">¶</a></h2>
+<p>OPAL uses chassis control messages to instruct the BMC to remove power from
+the host. These messages are sent during graceful reboot and shutdown processes
+initiated by the host.</p>
+<p>For a BMC-initiated graceful power-down (or reboot), the BMC is expected to send
+an OEM-defined SEL message, using a SMS_ATN to trigger a BMC-to-host
+notification. This SEL has a type of 0xc0, and command of 0x04. The data0 field
+of the SEL indicates shutdown (0x0) or reboot (0x1).</p>
+</div>
+<div class="section" id="watchdog-support">
+<h2>Watchdog support<a class="headerlink" href="#watchdog-support" title="Permalink to this headline">¶</a></h2>
+<p>OPAL supports a BMC watchdog during the boot process. This will be disabled
+before entering the OS.</p>
+</div>
+<div class="section" id="real-time-clock">
+<h2>Real-time clock<a class="headerlink" href="#real-time-clock" title="Permalink to this headline">¶</a></h2>
+<p>On platforms where a real-time-clock is not available, skiboot may use the
+IPMI SEL Time as a real-time-clock device.</p>
+</div>
+<div class="section" id="sbe-validation">
+<h2>SBE validation<a class="headerlink" href="#sbe-validation" title="Permalink to this headline">¶</a></h2>
+<p>On some P8 platforms with an AMI or SMC BMC (ie. astbmc) SBE validation is done
+by a tool on the BMC. This is done to inspect the SBE and detect if a malicious
+host has written to the SBE, especially in multi-tenant
+“Bare-Metal-As-A-Service” scenarios.</p>
+<p>To complicate this the SBE validation occurs at host-runtime and reads the SBE
+SEEPROM over I2C using the FSI master which will conflict with anything the
+host may be doing at the same time. To avoid this Skiboot will pause boot until
+the validation is complete.
+If SBE validation is required the BMC will communicate this to Skiboot by
+setting an IPMI System Boot Option with OEM parameter 0x62. When this flag is
+set Skiboot will pause and wait for the validation to complete and the flag to
+be cleared. This ensures the validation completes before the execution is passed
+to Petitboot and the host operating system and any conflicts could occur. During
+this process Skiboot will print:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SBE</span> <span class="n">validation</span> <span class="n">required</span><span class="p">,</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">completion</span>
+<span class="n">System</span> <span class="n">will</span> <span class="n">be</span> <span class="n">powered</span> <span class="n">off</span> <span class="k">if</span> <span class="n">validation</span> <span class="n">fails</span>
+</pre></div>
+</div>
+<p>to the console with an update every minute until complete.</p>
+<p>Unfortunately the validation performed by the BMC leaves the SBE in a bad
+state. Once the validation is complete Skiboot will reboot to reset everything
+to a good state and normal booting can resume. No such reboot is required if
+the flag is not set and validation doesn’t occur.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL &lt;–&gt; BMC interactions</a><ul>
+<li><a class="reference internal" href="#ipmi-sensors">IPMI sensors</a></li>
+<li><a class="reference internal" href="#chassis-control-messages">Chassis control messages</a></li>
+<li><a class="reference internal" href="#watchdog-support">Watchdog support</a></li>
+<li><a class="reference internal" href="#real-time-clock">Real-time clock</a></li>
+<li><a class="reference internal" href="#sbe-validation">SBE validation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="error-logging.html"
+                        title="previous chapter">How to log errors on OPAL</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gcov.html"
+                        title="next chapter">GCOV for skiboot</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/bmc.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="gcov.html" title="GCOV for skiboot"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="error-logging.html" title="How to log errors on OPAL"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL &lt;–&gt; BMC interactions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

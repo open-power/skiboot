@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0.5 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0.6" href="skiboot-6.0.6.html" />
+    <link rel="prev" title="skiboot-6.0.4" href="skiboot-6.0.4.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.6.html" title="skiboot-6.0.6"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.4.html" title="skiboot-6.0.4"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.5</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-5">
+<span id="id1"></span><h1>skiboot-6.0.5<a class="headerlink" href="#skiboot-6-0-5" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.0.5 was released on Wednesday July 11th, 2018. It replaces
+<a class="reference internal" href="skiboot-6.0.4.html#skiboot-6-0-4"><span class="std std-ref">skiboot-6.0.4</span></a> as the current stable release in the 6.0.x series.</p>
+<p>It is recommended that 6.0.5 be used instead of any previous 6.0.x version.</p>
+<p>Over <a class="reference internal" href="skiboot-6.0.4.html#skiboot-6-0-4"><span class="std std-ref">skiboot-6.0.4</span></a> we have several bug fixes, including important ones
+for NVLINK2 and NX.</p>
+<div class="section" id="pci-phb4">
+<h2>PCI/PHB4<a class="headerlink" href="#pci-phb4" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>phb4: Delay training till after PERST is deasserted</p>
+<p>This helps some cards train on the second PERST (ie fast-reboot). The
+reason is not clear why but it helps, so YOLO!</p>
+</li>
+<li><p>pci: Fix PCI_DEVICE_ID()</p>
+<p>The vendor ID is 16 bits not 8. This error leaves the top of the vendor
+ID in the bottom bits of the device ID, which resulted in e.g. a failure
+to run the PCI quirk for the AST VGA device.</p>
+<p>Fixes: 2b841bf0ef1b (present in v5.7-rc1)</p>
+</li>
+</ul>
+</div>
+<div class="section" id="phb4-capi">
+<h2>PHB4/CAPI<a class="headerlink" href="#phb4-capi" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>phb4/capp: Calculate STQ/DMA read engines based on link-width for PEC</p>
+<p>Presently in CAPI mode the number of STQ/DMA-read engines allocated on
+PEC2 for CAPP is fixed to 6 and 0-30 respectively irrespective of the
+PCI link width. These values are only suitable for x8 cards and
+quickly run out if a x16 card is plugged to a PEC2 attached slot. This
+usually manifests as CAPP reporting TLBI timeout due to these messages
+getting stalled due to insufficient STQs.</p>
+<p>To fix this we update enable_capi_mode() to check if PEC2 chiplet is
+in x16 mode and if yes then we allocate 4/0-47 STQ/DMA-read engines
+for the CAPP traffic.</p>
+</li>
+<li><p>capi: Select the correct IODA table entry for the mbt cache.</p>
+<p>With the current code, the capi mmio window is not correctly configured
+in the IODA table entry. The first entry (generally the non-prefetchable
+BAR) is overwrriten.
+This patch sets the capi window bar at the right place.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="sensors">
+<h2>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>occ: sensors: Fix the size of the phandle array ‘sensors’ in DT</p>
+<p>Fixes: 99505c03f493 (present in v5.10-rc4)</p>
+</li>
+</ul>
+</div>
+<div class="section" id="npu2-nvlink2">
+<h2>NPU2/NVLINK2<a class="headerlink" href="#npu2-nvlink2" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>npu2/hw-procedures: Fence bricks via NTL instead of MISC</p>
+<p>There are a couple of places we can set/unset fence for a brick:</p>
+<ol class="arabic simple">
+<li><p>MISC register: NPU2_MISC_FENCE_STATE</p></li>
+<li><p>NTL register for the brick: NPU2_NTL_MISC_CFG1(ndev)</p></li>
+</ol>
+<p>Recent testing of ATS in combination with GPU reset has exposed a side
+effect of using (1); if fence is set for all six bricks, it triggers a
+sticky nmmu latch which prevents the NPU from getting ATR responses.
+This manifests as a hang in the tests.</p>
+<p>We have npu2_dev_fence_brick() which uses (1), and only two calls to it.
+Replace the call which sets fence with a write to (2). Remove the
+corresponding unset call entirely. It’s unneeded because the procedures
+already do a progression from full fence to half to idle using (2).</p>
+</li>
+<li><p>opal/hmi: Display correct chip id while printing NPU FIRs.</p>
+<p>HMIs for NPU xstops are broadcasted to all chips. All cores on all the
+chips receive HMI. HMI handler correctly identifies and extracts the
+NPU FIR details from affected chip, but while printing FIR data it
+prints chip id and location code details of this_cpu()-&gt;chip_id which
+may not be correct. This patch fixes this issue.</p>
+<p>Fixes: 7bcbc78c (present in v6.0.1)</p>
+</li>
+</ul>
+</div>
+<div class="section" id="vpd">
+<h2>VPD<a class="headerlink" href="#vpd" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>vpd: Add vendor property to processor node</p>
+<p>Processor FRU vpd doesn’t contain vendor detail. We have to parse
+module VPD to get vendor detail.</p>
+</li>
+<li><p>vpd: Sanitize VPD data</p>
+<p>On OpenPower system, VPD keyword size tells us the maximum size of the data.
+But they fill trailing end with space (0x20) instead of NULL. Also spec
+doesn’t stop user to have space (0x20) within actual data.</p>
+<p>This patch discards trailing spaces before populating device tree.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="nx-vas-for-power9">
+<h2>NX/VAS for POWER9<a class="headerlink" href="#nx-vas-for-power9" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>NX: Add NX coprocessor init opal call</p>
+<p>The read offset (4:11) in Receive FIFO control register is incremented
+by FIFO size whenever CRB read by NX. But the index in RxFIFO has to
+match with the corresponding entry in FIFO maintained by VAS in kernel.
+VAS entry is reset to 0 when opening the receive window during driver
+initialization. So when NX842 is reloaded or in kexec boot, possibility
+of mismatch between RxFIFO control register and VAS entries in kernel.
+It could cause CRB failure / timeout from NX.</p>
+<p>This patch adds nx_coproc_init opal call for kernel to initialize
+readOffset (4:11) and Queued (15:23) in RxFIFO control register.</p>
+<p>Fixes: 3b3c5962f432 (present in v5.8-rc1)</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-6.0.5</a><ul>
+<li><a class="reference internal" href="#pci-phb4">PCI/PHB4</a></li>
+<li><a class="reference internal" href="#phb4-capi">PHB4/CAPI</a></li>
+<li><a class="reference internal" href="#sensors">Sensors</a></li>
+<li><a class="reference internal" href="#npu2-nvlink2">NPU2/NVLINK2</a></li>
+<li><a class="reference internal" href="#vpd">VPD</a></li>
+<li><a class="reference internal" href="#nx-vas-for-power9">NX/VAS for POWER9</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.4.html"
+                        title="previous chapter">skiboot-6.0.4</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0.6.html"
+                        title="next chapter">skiboot-6.0.6</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0.5.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.6.html" title="skiboot-6.0.6"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.4.html" title="skiboot-6.0.4"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.5</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

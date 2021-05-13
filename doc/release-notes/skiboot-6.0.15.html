@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0.15 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0.16" href="skiboot-6.0.16.html" />
+    <link rel="prev" title="skiboot-6.0.14" href="skiboot-6.0.14.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.16.html" title="skiboot-6.0.16"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.14.html" title="skiboot-6.0.14"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.15</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-15">
+<span id="id1"></span><h1>skiboot-6.0.15<a class="headerlink" href="#skiboot-6-0-15" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.0.15 was released on Monday December 17th, 2018. It replaces
+<a class="reference internal" href="skiboot-6.0.14.html#skiboot-6-0-14"><span class="std std-ref">skiboot-6.0.14</span></a> as the current stable release in the 6.0.x series.</p>
+<p>It is recommended that 6.0.15 be used instead of any previous 6.0.x version
+due to the bug fixes it contains.</p>
+<p>Bug fixes included in this release are:</p>
+<ul>
+<li><p>i2c: Fix i2c request hang during opal init if timers are not checked</p>
+<p>If an i2c request cannot go through the first time, because the bus is
+found in error and need a reset or it’s locked by the OCC for example,
+the underlying i2c implementation is using timers to manage the
+request. However during opal init, opal pollers may not be called, it
+depends in the context in which the i2c request is made. If the
+pollers are not called, the timers are not checked and we can end up
+with an i2c request which will not move foward and skiboot hangs.</p>
+<p>Fix it by explicitly checking the timers if we are waiting for an i2c
+request to complete and it seems to be taking a while.</p>
+</li>
+<li><p>opal-prd: hservice: Enable hservice-&gt;wakeup() in BMC</p>
+<p>This patch enables HBRT to use HYP special wakeup register in openBMC
+which until now was only used in FSP based machines.</p>
+<p>This patch also adds a capability check for opal-prd so that HBRT can
+decide if the host special wakeup register can be used.</p>
+</li>
+<li><p>npu2: Advertise correct TCE page size</p>
+<p>The P9 NPU workbook says that only 4K/64K/16M/256M page size are supported
+and in fact npu2_map_pe_dma_window() supports just these but in absence of
+the “ibm,supported-tce-sizes” property Linux assumes the default P9 PHB4
+page sizes - 4K/64K/2M/1G - so when Linux tries 2M/1G TCEs, we get lots of
+“Unexpected TCE size” from npu2_tce_kill().</p>
+<p>This advertises TCE page sizes so Linux could handle it correctly, i.e.
+fall back to 4K/64K TCEs.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.14.html"
+                        title="previous chapter">skiboot-6.0.14</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0.16.html"
+                        title="next chapter">skiboot-6.0.16</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0.15.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.16.html" title="skiboot-6.0.16"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.14.html" title="skiboot-6.0.14"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.15</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

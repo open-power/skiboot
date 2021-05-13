@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.9.1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.9.2" href="skiboot-5.9.2.html" />
+    <link rel="prev" title="skiboot-5.9-rc5" href="skiboot-5.9-rc5.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9.2.html" title="skiboot-5.9.2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9-rc5.html" title="skiboot-5.9-rc5"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-9-1">
+<span id="id1"></span><h1>skiboot-5.9.1<a class="headerlink" href="#skiboot-5-9-1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 5.9.1 was released on Tuesday November 14th, 2017. It replaces
+<a class="reference internal" href="skiboot-5.9.html#skiboot-5-9"><span class="std std-ref">skiboot-5.9</span></a> as the current stable release in the 5.9.x series.</p>
+<p>Over <a class="reference internal" href="skiboot-5.9.html#skiboot-5-9"><span class="std std-ref">skiboot-5.9</span></a>, we have two NPU2 (NVLink2) fixes and two XIVE
+bug fixes:</p>
+<ul>
+<li><p>npu2: hw-procedures: Refactor reset_ntl procedure</p>
+<p>Change the implementation of reset_ntl to match the latest programming
+guide documentation.</p>
+</li>
+<li><p>npu2: hw-procedures: Add phy_rx_clock_sel()</p>
+<p>Change the RX clk mux control to be done by software instead of HW. This
+avoids glitches caused by changing the mux setting.</p>
+</li>
+<li><p>xive: Fix ability to clear some EQ flags</p>
+<p>We could never clear “unconditional notify” and “escalate”</p>
+</li>
+<li><p>xive: Update inits for DD2.0</p>
+<p>This updates some inits based on information from the HW
+designers. This includes enabling some new DD2.0 features
+that we don’t yet exploit.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.9-rc5.html"
+                        title="previous chapter">skiboot-5.9-rc5</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.9.2.html"
+                        title="next chapter">skiboot-5.9.2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.9.1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9.2.html" title="skiboot-5.9.2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9-rc5.html" title="skiboot-5.9-rc5"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

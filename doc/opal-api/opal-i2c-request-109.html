@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_I2C_REQUEST &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_IMC_COUNTERS_INIT" href="opal-imc-counters.html" />
+    <link rel="prev" title="OPAL_HANDLE_INTERRUPT" href="opal-handle-interrupt.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-imc-counters.html" title="OPAL_IMC_COUNTERS_INIT"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-handle-interrupt.html" title="OPAL_HANDLE_INTERRUPT"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_I2C_REQUEST</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-i2c-request">
+<span id="id1"></span><h1>OPAL_I2C_REQUEST<a class="headerlink" href="#opal-i2c-request" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_REQUEST                     109</span>
+
+<span class="cm">/* OPAL I2C request */</span>
+<span class="k">struct</span> <span class="nc">opal_i2c_request</span> <span class="p">{</span>
+             <span class="kt">uint8_t</span> <span class="n">type</span><span class="p">;</span>
+<span class="cp">#define OPAL_I2C_RAW_READ    0</span>
+<span class="cp">#define OPAL_I2C_RAW_WRITE   1</span>
+<span class="cp">#define OPAL_I2C_SM_READ     2</span>
+<span class="cp">#define OPAL_I2C_SM_WRITE    3</span>
+             <span class="kt">uint8_t</span> <span class="n">flags</span><span class="p">;</span>
+<span class="cp">#define OPAL_I2C_ADDR_10     0x01    </span><span class="cm">/* Not supported yet */</span><span class="cp"></span>
+             <span class="kt">uint8_t</span> <span class="n">subaddr_sz</span><span class="p">;</span>             <span class="cm">/* Max 4 */</span>
+             <span class="kt">uint8_t</span> <span class="n">reserved</span><span class="p">;</span>
+             <span class="n">__be16</span> <span class="n">addr</span><span class="p">;</span>                    <span class="cm">/* 7 or 10 bit address */</span>
+             <span class="n">__be16</span> <span class="n">reserved2</span><span class="p">;</span>
+             <span class="n">__be32</span> <span class="n">subaddr</span><span class="p">;</span>         <span class="cm">/* Sub-address if any */</span>
+             <span class="n">__be32</span> <span class="n">size</span><span class="p">;</span>                    <span class="cm">/* Data size */</span>
+             <span class="n">__be64</span> <span class="n">buffer_ra</span><span class="p">;</span>               <span class="cm">/* Buffer real address */</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">opal_i2c_request</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">async_token</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">bus_id</span><span class="p">,</span>
+                     <span class="k">struct</span> <span class="nc">opal_i2c_request</span> <span class="o">*</span><span class="n">oreq</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Initiate I2C request using i2c master that OPAL controls.</p>
+<div class="section" id="return-codes">
+<h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
+<p>Most return codes will come through as part of async completion.</p>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid request pointer, or bus ID.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Unsupported operation. e.g. 10 bit addresses not yet supported.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-no-mem"><span class="std std-ref">OPAL_NO_MEM</span></a></dt><dd><p>Not enough free memory in OPAL to initiate request.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt><dd><p>Operation will complete asynchronously.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-timeout"><span class="std std-ref">OPAL_I2C_TIMEOUT</span></a></dt><dd><p>I2C operation initiated successfully, but timed out.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-invalid-cmd"><span class="std std-ref">OPAL_I2C_INVALID</span></a></dt><dd><p>Invalid i2c Command.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-lbus-parity"><span class="std std-ref">OPAL_I2C_LBUS_PARITY</span></a></dt><dd><p>I2C LBUS Parity error</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-bkend-overrun"><span class="std std-ref">OPAL_I2C_BKEND_OVERRUN</span></a></dt><dd><p>I2C Backend overrun.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-bkend-access"><span class="std std-ref">OPAL_I2C_BKEND_ACCESS</span></a></dt><dd><p>I2C Backend Access error.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-arbt-lost"><span class="std std-ref">OPAL_I2C_ARBT_LOST</span></a></dt><dd><p>I2C Bus Arbitration lost.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-nack-rcvd"><span class="std std-ref">OPAL_I2C_NACK_RCVD</span></a></dt><dd><p>I2C NACK received.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-i2c-stop-err"><span class="std std-ref">OPAL_I2C_STOP_ERR</span></a></dt><dd><p>I2C STOP error.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>I2C operation completed successfully. Typically only as part of
+async completion.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_I2C_REQUEST</a><ul>
+<li><a class="reference internal" href="#return-codes">Return Codes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-handle-interrupt.html"
+                        title="previous chapter">OPAL_HANDLE_INTERRUPT</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-imc-counters.html"
+                        title="next chapter">OPAL_IMC_COUNTERS_INIT</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-i2c-request-109.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-imc-counters.html" title="OPAL_IMC_COUNTERS_INIT"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-handle-interrupt.html" title="OPAL_HANDLE_INTERRUPT"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_I2C_REQUEST</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

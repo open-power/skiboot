@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ibm,opal/power-mgt/occ device tree entries &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="power-mgt/powercap" href="powercap.html" />
+    <link rel="prev" title="ibm,opal/power-mgt device tree entries" href="../power-mgt.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="powercap.html" title="power-mgt/powercap"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../power-mgt.html" title="ibm,opal/power-mgt device tree entries"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../power-mgt.html" accesskey="U">ibm,opal/power-mgt device tree entries</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal/power-mgt/occ device tree entries</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ibm-opal-power-mgt-occ-device-tree-entries">
+<h1>ibm,opal/power-mgt/occ device tree entries<a class="headerlink" href="#ibm-opal-power-mgt-occ-device-tree-entries" title="Permalink to this headline">¶</a></h1>
+<p>This node exports the per-chip pstate table properties to kernel.</p>
+<p>Example:</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">occ</span><span class="nf">@7ffddf8000</span> <span class="p">{</span>
+       <span class="nf">ibm,pstate-vdds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">45</span> <span class="mi">45</span> <span class="mi">46</span> <span class="mi">46</span> <span class="mi">46</span> <span class="mi">47</span> <span class="mi">48</span> <span class="mi">49</span> <span class="mi">4</span><span class="err">a</span> <span class="mi">4</span><span class="err">b</span> <span class="mi">4</span><span class="err">c</span> <span class="mi">4</span><span class="err">d</span> <span class="mi">4</span><span class="err">f</span> <span class="mi">50</span> <span class="mi">51</span> <span class="mi">52</span> <span class="mi">53</span> <span class="mi">54</span> <span class="mi">55</span> <span class="mi">57</span> <span class="mi">58</span> <span class="mi">59</span> <span class="mi">5</span><span class="err">a</span> <span class="mi">5</span><span class="err">b</span> <span class="mi">5</span><span class="err">c</span> <span class="mi">5</span><span class="err">d</span> <span class="mi">5</span><span class="err">e</span> <span class="mi">5</span><span class="err">f</span> <span class="mi">5</span><span class="err">f</span> <span class="mi">60</span> <span class="mi">61</span> <span class="mi">62</span> <span class="mi">63</span> <span class="mi">64</span> <span class="mi">65</span> <span class="mi">65</span> <span class="mi">66</span> <span class="mi">67</span> <span class="mi">68</span> <span class="mi">69</span> <span class="mi">6</span><span class="err">a</span> <span class="mi">6</span><span class="err">a</span> <span class="mi">6</span><span class="err">b</span> <span class="mi">6</span><span class="err">c</span> <span class="mi">6</span><span class="err">d</span> <span class="mi">6</span><span class="err">e</span> <span class="mi">6</span><span class="err">f</span> <span class="mi">70</span> <span class="mi">70</span> <span class="mi">71</span><span class="p">];</span>
+       <span class="nf">ibm,chip-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+       <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x100003b8</span><span class="p">&gt;;</span>
+       <span class="nf">ibm,pstate-vcss</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="err">b</span> <span class="mi">3</span><span class="err">d</span> <span class="mi">3</span><span class="err">f</span> <span class="mi">41</span> <span class="mi">42</span> <span class="mi">44</span> <span class="mi">45</span> <span class="mi">46</span> <span class="mi">47</span> <span class="mi">48</span> <span class="mi">49</span> <span class="mi">4</span><span class="err">a</span> <span class="mi">4</span><span class="err">b</span> <span class="mi">4</span><span class="err">c</span> <span class="mi">4</span><span class="err">d</span> <span class="mi">4</span><span class="err">e</span> <span class="mi">4</span><span class="err">f</span> <span class="mi">50</span> <span class="mi">50</span> <span class="mi">51</span> <span class="mi">52</span> <span class="mi">53</span> <span class="mi">54</span> <span class="mi">55</span> <span class="mi">56</span> <span class="mi">56</span> <span class="mi">57</span> <span class="mi">57</span> <span class="mi">58</span> <span class="mi">58</span> <span class="mi">59</span> <span class="mi">59</span> <span class="mi">5</span><span class="err">a</span> <span class="mi">5</span><span class="err">a</span> <span class="mi">5</span><span class="err">b</span> <span class="mi">5</span><span class="err">b</span> <span class="mi">5</span><span class="err">c</span> <span class="mi">5</span><span class="err">c</span> <span class="mi">5</span><span class="err">d</span> <span class="mi">5</span><span class="err">d</span> <span class="mi">5</span><span class="err">e</span> <span class="mi">5</span><span class="err">e</span> <span class="mi">5</span><span class="err">f</span> <span class="mi">5</span><span class="err">f</span> <span class="mi">60</span> <span class="mi">60</span> <span class="mi">61</span> <span class="mi">61</span> <span class="mi">62</span> <span class="mi">62</span><span class="p">];</span>
+       <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x7f</span> <span class="mh">0xfddf8000</span> <span class="mh">0xb98</span><span class="p">&gt;;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<div class="section" id="ibm-chip-id">
+<h2>ibm,chip-id<a class="headerlink" href="#ibm-chip-id" title="Permalink to this headline">¶</a></h2>
+<p>This property denotes the ID of chip to which OCC belongs to.</p>
+</div>
+<div class="section" id="reg">
+<h2>reg<a class="headerlink" href="#reg" title="Permalink to this headline">¶</a></h2>
+<p>This tuple gives the statring address of the OPAL data in HOMER and
+the size of the OPAL data.</p>
+<p>The top-level /ibm,opal/power-mgt contains :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#size-cells = &lt;1&gt;</span>
+<span class="c1">#address-cells = &lt;2&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ibm-pstate-vcss-ibm-pstate-vdds">
+<h2>ibm,pstate-vcss ibm,pstate-vdds<a class="headerlink" href="#ibm-pstate-vcss-ibm-pstate-vdds" title="Permalink to this headline">¶</a></h2>
+<p>These properties list a voltage-identifier of each of the pstates listed in
+ibm,pstate-ids for the Vcs and Vdd values used for that pstate in that chip.
+Each VID is a single byte.</p>
+</div>
+<div class="section" id="ibm-opal-power-mgt-freq-domain-mask">
+<h2>ibm,opal/power-mgt/freq-domain-mask<a class="headerlink" href="#ibm-opal-power-mgt-freq-domain-mask" title="Permalink to this headline">¶</a></h2>
+<p>This property is a bitmask which will have different value depending upon the
+generation of the processor. Frequency domain would indicate group of CPUs
+which would share same frequency. Bitwise AND is taken between this bitmask
+value and PIR of cpu. All the CPUs lying in the same frequency domain will have
+same result for AND. Thus frequency management can be done based on frequency
+domain. A frequency domain may be a core or a quad, etc depending upon the
+generation of the processor.</p>
+<p>For example, for POWER8 0xFFF8 indicates core wide frequency domain. Taking AND
+with the PIR of CPUs will yield us a frequency domain which is core wide
+distribution as last 3 bits have been masked which represent the threads.</p>
+<p>For POWER9, 0xFFF0 indicates quad wide frequency domain. Taking AND with
+the PIR of CPUs will yield us frequency domain which is quad wise
+distribution as last 4 bits have been masked which represent the cores.</p>
+</div>
+<div class="section" id="ibm-opal-power-mgt-domain-runs-at">
+<h2>ibm,opal/power-mgt/domain-runs-at<a class="headerlink" href="#ibm-opal-power-mgt-domain-runs-at" title="Permalink to this headline">¶</a></h2>
+<p>There are two strategies in which the OCC can change the frequency of the cores
+in the quad on P9.
+1) FREQ_MAX_IN_DOMAIN : the OCC sets the frequency of the quad to the maximum
+of the latest frequency requested by each of the component cores.
+2) FREQ_MOST_RECENTLY_SET : the OCC sets the frequency of the quad to the most
+recent frequency value requested by the CPUs in the quad</p>
+<p>In case of P8, the domain is the core and the strategy by default is
+FREQ_MOST_RECENTLY_SET since the PMCRs of the threads in the core are mirrored.
+However on P9, the domain is quad and the strategy is FREQ_MAX_IN_DOMAIN since
+each core has its own PMCR.</p>
+<p>domain-runs-at denotes the strategy which OCC is using to change the frequency
+of a frequency domain.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ibm,opal/power-mgt/occ device tree entries</a><ul>
+<li><a class="reference internal" href="#ibm-chip-id">ibm,chip-id</a></li>
+<li><a class="reference internal" href="#reg">reg</a></li>
+<li><a class="reference internal" href="#ibm-pstate-vcss-ibm-pstate-vdds">ibm,pstate-vcss ibm,pstate-vdds</a></li>
+<li><a class="reference internal" href="#ibm-opal-power-mgt-freq-domain-mask">ibm,opal/power-mgt/freq-domain-mask</a></li>
+<li><a class="reference internal" href="#ibm-opal-power-mgt-domain-runs-at">ibm,opal/power-mgt/domain-runs-at</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../power-mgt.html"
+                        title="previous chapter">ibm,opal/power-mgt device tree entries</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="powercap.html"
+                        title="next chapter">power-mgt/powercap</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/device-tree/ibm,opal/power-mgt/occ.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="powercap.html" title="power-mgt/powercap"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../power-mgt.html" title="ibm,opal/power-mgt device tree entries"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../power-mgt.html" >ibm,opal/power-mgt device tree entries</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal/power-mgt/occ device tree entries</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

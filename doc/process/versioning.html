@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Versioning Scheme of skiboot &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SkiBoot Console Log" href="../console-log.html" />
+    <link rel="prev" title="Skiboot stable tree rules and releases" href="stable-skiboot-rules.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../console-log.html" title="SkiBoot Console Log"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="stable-skiboot-rules.html" title="Skiboot stable tree rules and releases"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Versioning Scheme of skiboot</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="versioning-scheme-of-skiboot">
+<span id="versioning"></span><h1>Versioning Scheme of skiboot<a class="headerlink" href="#versioning-scheme-of-skiboot" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="history">
+<h2>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
+<p>For roughly the first six months of public life, skiboot just presented a
+git SHA1 as a version “number”. This was “user visible” in two places:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/sys/firmware/opal/msglog</span></code>
+the familiar <code class="docutils literal notranslate"><span class="pre">SkiBoot</span> <span class="pre">71664fd-dirty</span> <span class="pre">starting...</span></code> message</p></li>
+<li><p>device tree:
+<code class="docutils literal notranslate"><span class="pre">/proc/device-tree/ibm,opal/firmware/git-id</span></code></p></li>
+</ol>
+<p>Builds were also referred to by date and by corresponding PowerKVM release.
+Clearly, this was unlikely to be good practice going forward.</p>
+<p>As of skiboot-4.0, this scheme has changed and we now present a version
+string instead. This better addresses the needs of everybody who is building
+OpenPower systems.</p>
+</div>
+<div class="section" id="current-practice">
+<h2>Current practice<a class="headerlink" href="#current-practice" title="Permalink to this headline">¶</a></h2>
+<p>The version string is constructed from a few places and is designed to
+be <em>highly</em> informative about what you’re running. For the most part,
+it should be automatically constructed by the skiboot build system. The
+only times you need to do something is if you are a) making an upstream
+skiboot release or b) building firmware to release for your platform(s).</p>
+<p>OPAL/skiboot has several consumers, for example:</p>
+<ul class="simple">
+<li><p>IBM shipping POWER8 systems with an FSP (FW810.XX and future)</p></li>
+<li><p>OpenPower</p></li>
+<li><p>OpenPower partners manufacturing OpenPower systems</p></li>
+<li><p>developers, test and support needing to understand what code a system
+is running</p></li>
+</ul>
+<p>and there are going to be several concurrent maintained releases in the wild,
+likely build by different teams of people at different companies.</p>
+<p>tl;dr; is you’re likely going to see version numbers like this (for the
+hypothetical platforms ‘ketchup’ and ‘mustard’):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">skiboot-4.0-ketchup-0</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">skiboot-4.0-ketchup-1</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">skiboot-4.1-mustard-4</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">skiboot-4.1-ketchup-0</span></code></p></li>
+</ul>
+<p>If you see <em>extra</em> things on the end of the version, then you’re running
+a custom build from a developer
+(e.g. <code class="docutils literal notranslate"><span class="pre">skiboot-4.0-1-g23f147e-stewart-dirty-f42fc40</span></code> means something to
+us - explained below).</p>
+<p>If you see less, for example <code class="docutils literal notranslate"><span class="pre">skiboot-4.0</span></code>, then you’re running a build
+directly out of the main git tree. Those producing OPAL builds for users
+must <em>not</em> ship like this, even if the tree is identical.</p>
+<p>Here are the components of the version string from master:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>skiboot-4.0-1-g23f147e-debug-occ-stewart-dirty-f42fc40
+^       ^^^ ^  ^^^^^^^ ^-------^    ^      ^   ^^^^^^^
+|        |  |     |        |        |      |      |
+|        |  |     |        |         \    /        - &#39;git diff|sha1sum&#39;
+|        |  |     |        |          \  /
+|        |  |     |        |            - built from a dirty tree of $USER
+|        |  |     |        |
+|        |  |     |         - $EXTRA_VERSION (optional)
+|        |  |     |
+|        |  |      - git SHA1 of commit built
+|        |  |
+|        |   - commits head of skiboot-4.0 tag
+|        |
+|         - skiboot version number ---\
+|                                      &gt;--  from  the &#39;skiboot-4.0&#39; git tag
+ - product name (always skiboot)   ---/
+</pre></div>
+</div>
+<p>When doing a release for a particular platform, you are expected to create
+and tag a branch from master. For the (hypothetical) ketchup platform which
+is going to do a release based on skiboot-4.0, you would create a tag
+‘skiboot-4.0-ketchup-0’ pointing to the same revision as the ‘skiboot-4.0’ tag
+and then make any additional modifications to skiboot that were not in the 4.0
+release. So, you could ship a skiboot with the following version string:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">skiboot</span><span class="o">-</span><span class="mf">4.0</span><span class="o">-</span><span class="n">ketchup</span><span class="o">-</span><span class="mi">1</span>
+<span class="o">^</span>       <span class="o">^^^</span> <span class="o">^</span>       <span class="o">^</span>
+<span class="o">|</span>        <span class="o">|</span>  <span class="o">|</span>       <span class="o">|</span>
+<span class="o">|</span>        <span class="o">|</span>  <span class="o">|</span>        <span class="o">-</span> <span class="n">revision</span> <span class="k">for</span> <span class="n">this</span> <span class="n">platform</span>
+<span class="o">|</span>        <span class="o">|</span>  <span class="o">|</span>
+<span class="o">|</span>        <span class="o">|</span>  <span class="o">|</span>
+<span class="o">|</span>        <span class="o">|</span>   <span class="o">-</span> <span class="n">Platform</span> <span class="n">name</span><span class="o">/</span><span class="n">version</span>
+<span class="o">|</span>        <span class="o">|</span>
+<span class="o">|</span>         <span class="o">-</span> <span class="n">skiboot</span> <span class="n">version</span> <span class="n">number</span>
+<span class="o">|</span>
+ <span class="o">-</span> <span class="n">product</span> <span class="n">name</span> <span class="p">(</span><span class="n">always</span> <span class="n">skiboot</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This version string tells your users to expect what is in skiboot-4.0 plus
+some revisions for your platform.</p>
+</div>
+<div class="section" id="practical-considerations">
+<h2>Practical Considerations<a class="headerlink" href="#practical-considerations" title="Permalink to this headline">¶</a></h2>
+<p>You MUST correctly tag your git tree for sensible version numbers to be
+generated. Look at the (generated) version.c file to confirm you’re building
+the correct version number. You will need annotated tags (git tag -a).</p>
+<p>If your build infrastructure does <em>not</em> build skiboot from a git tree, you
+should specify SKIBOOT_VERSION as an environment variable (following this
+versioning scheme), otherwise the build will fail.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Versioning Scheme of skiboot</a><ul>
+<li><a class="reference internal" href="#history">History</a></li>
+<li><a class="reference internal" href="#current-practice">Current practice</a></li>
+<li><a class="reference internal" href="#practical-considerations">Practical Considerations</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="stable-skiboot-rules.html"
+                        title="previous chapter">Skiboot stable tree rules and releases</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../console-log.html"
+                        title="next chapter">SkiBoot Console Log</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/process/versioning.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../console-log.html" title="SkiBoot Console Log"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="stable-skiboot-rules.html" title="Skiboot stable tree rules and releases"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Versioning Scheme of skiboot</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

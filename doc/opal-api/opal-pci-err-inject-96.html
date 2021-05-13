@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_ERR_INJECT &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_GET_HUB_DIAG_DATA" href="opal-pci-get-hub-diag-data-50.html" />
+    <link rel="prev" title="OPAL_PCI_EEH_FREEZE_STATUS" href="opal-pci-eeh-freeze-status-23.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-get-hub-diag-data-50.html" title="OPAL_PCI_GET_HUB_DIAG_DATA"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-eeh-freeze-status-23.html" title="OPAL_PCI_EEH_FREEZE_STATUS"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_ERR_INJECT</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-err-inject">
+<span id="id1"></span><h1>OPAL_PCI_ERR_INJECT<a class="headerlink" href="#opal-pci-err-inject" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_ERR_INJECT                  96</span>
+
+<span class="k">enum</span> <span class="n">OpalErrinjectType</span> <span class="p">{</span>
+     <span class="n">OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR</span>        <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64</span>      <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="k">enum</span> <span class="n">OpalErrinjectFunc</span> <span class="p">{</span>
+     <span class="cm">/* IOA bus specific errors */</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_ADDR</span>    <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_DATA</span>    <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_LD_IO_ADDR</span>     <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_LD_IO_DATA</span>     <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_ADDR</span>    <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_DATA</span>    <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_ADDR</span>    <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_DATA</span>    <span class="o">=</span> <span class="mi">7</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_ST_IO_ADDR</span>     <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_ST_IO_DATA</span>     <span class="o">=</span> <span class="mi">9</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_ST_CFG_ADDR</span>    <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_ST_CFG_DATA</span>    <span class="o">=</span> <span class="mi">11</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_ADDR</span>    <span class="o">=</span> <span class="mi">12</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_DATA</span>    <span class="o">=</span> <span class="mi">13</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_MASTER</span>  <span class="o">=</span> <span class="mi">14</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_TARGET</span>  <span class="o">=</span> <span class="mi">15</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_ADDR</span>    <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_DATA</span>    <span class="o">=</span> <span class="mi">17</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_MASTER</span>  <span class="o">=</span> <span class="mi">18</span><span class="p">,</span>
+     <span class="n">OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_TARGET</span>  <span class="o">=</span> <span class="mi">19</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_err_inject</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span>
+                            <span class="kt">uint32_t</span> <span class="n">type</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">func</span><span class="p">,</span>
+                            <span class="kt">uint64_t</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">mask</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Inject an error, used to test OS and OPAL EEH handling.</p>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Error injected successfully.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid argument.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>PHB doesn’t support error injection or the specific error attempting to
+be injected.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_PCI_ERR_INJECT</a><ul>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-eeh-freeze-status-23.html"
+                        title="previous chapter">OPAL_PCI_EEH_FREEZE_STATUS</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-get-hub-diag-data-50.html"
+                        title="next chapter">OPAL_PCI_GET_HUB_DIAG_DATA</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-err-inject-96.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-get-hub-diag-data-50.html" title="OPAL_PCI_GET_HUB_DIAG_DATA"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-eeh-freeze-status-23.html" title="OPAL_PCI_EEH_FREEZE_STATUS"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_ERR_INJECT</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

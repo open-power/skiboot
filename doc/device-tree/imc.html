@@ -1,0 +1,238 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IMC Device Tree Bindings &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="P9 memory hierarchy" href="memory-hierarchy.html" />
+    <link rel="prev" title="ibm,secureboot" href="ibm%2Csecureboot.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="memory-hierarchy.html" title="P9 memory hierarchy"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Csecureboot.html" title="ibm,secureboot"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">IMC Device Tree Bindings</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="imc-device-tree-bindings">
+<span id="device-tree-imc"></span><h1>IMC Device Tree Bindings<a class="headerlink" href="#imc-device-tree-bindings" title="Permalink to this headline">¶</a></h1>
+<p>See <a class="reference internal" href="../imc.html#imc"><span class="std std-ref">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</span></a> for general In-Memory Collection (IMC) counter information.</p>
+<div class="section" id="imc-counters-top-level-node">
+<h2>imc-counters top-level node<a class="headerlink" href="#imc-counters-top-level-node" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">imc-counters</span> <span class="p">{</span>
+  <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-in-memory-counters&quot;</span><span class="p">;</span>
+  <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+  <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+  <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1000023a</span><span class="p">&gt;;</span>
+  <span class="nf">version-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xd</span><span class="p">&gt;;</span>
+  <span class="cm">/* Denote IMC Events Catalog version used to build this DTS file. */</span>
+
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="imc-device-units-bindings">
+<h2>IMC device/units bindings<a class="headerlink" href="#imc-device-units-bindings" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">mcs3</span> <span class="p">{</span>
+        <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,imc-counters&quot;</span><span class="p">;</span>
+        <span class="nf">events-prefix</span> <span class="o">=</span> <span class="s">&quot;PM_MCS3_&quot;</span><span class="p">;</span> <span class="cm">/* denotes event name to be prefixed to get complete event name supported by this device */</span>
+
+        <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000241</span><span class="p">&gt;;</span>
+        <span class="nf">events</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000242</span><span class="p">&gt;;</span> <span class="cm">/* phandle of the events node supported by this device */</span>
+
+        <span class="nf">unit</span> <span class="o">=</span> <span class="s">&quot;MiB&quot;</span><span class="p">;</span>
+        <span class="nf">scale</span> <span class="o">=</span> <span class="s">&quot;4&quot;</span><span class="p">;</span> <span class="cm">/* unit and scale for all the events for this device */</span>
+
+        <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x118</span> <span class="mh">0x8</span><span class="p">&gt;;</span> <span class="cm">/* denotes base address for device event updates */</span>
+        <span class="nf">type</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10</span><span class="p">&gt;;</span>
+        <span class="nf">size</span> <span class="o">=</span> <span class="mh">0x40000</span><span class="p">;</span>
+        <span class="nf">offset</span> <span class="o">=</span> <span class="mh">0x180000</span><span class="p">;</span>
+        <span class="nf">base_addr</span> <span class="o">=</span> <span class="p">&lt;</span><span class="err">Base</span> <span class="err">address</span> <span class="err">of</span> <span class="err">the</span> <span class="err">counter</span> <span class="err">in</span> <span class="err">reserve</span> <span class="err">memory</span><span class="p">&gt;</span>
+        <span class="cm">/* This is per-chip memory field and OPAL files it based on the no of chip in the system */</span>
+        <span class="cm">/* base_addr property also indicates (or hints) kernel whether to memory */</span>
+        <span class="cm">/* should be mmapped or allocated at system start for the counters */</span>
+        <span class="err">chipids</span> <span class="err">=</span> <span class="p">&lt;</span><span class="err">chip-id</span> <span class="err">for</span> <span class="err">the</span> <span class="err">base_addr</span> <span class="p">&gt;</span>
+<span class="err">}</span><span class="p">;</span>
+
+<span class="nc">trace</span><span class="nf">@0</span> <span class="p">{</span>
+         <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,imc-counters&quot;</span><span class="p">;</span>
+         <span class="nf">events-prefix</span> <span class="o">=</span> <span class="s">&quot;trace_&quot;</span><span class="p">;</span>
+         <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x8</span><span class="p">&gt;;</span>
+         <span class="nf">events</span> <span class="o">=</span> <span class="p">&lt;</span> <span class="o">&amp;</span>TRACE_IMC <span class="p">&gt;;</span>
+         <span class="nf">type</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+         <span class="nf">size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x40000</span><span class="p">&gt;;</span>
+ <span class="p">};</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="imc-device-event-bindings">
+<h2>IMC device event bindings<a class="headerlink" href="#imc-device-event-bindings" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">nest-mcs-events</span> <span class="p">{</span>
+        <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+        <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+        <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000242</span><span class="p">&gt;;</span>
+
+        <span class="nc">event</span><span class="nf">@98</span> <span class="p">{</span>
+              <span class="nf">desc</span> <span class="o">=</span> <span class="s">&quot;Total Write Bandwidth seen on both MCS&quot;</span><span class="p">;</span> <span class="cm">/* event description */</span>
+
+              <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1000023d</span><span class="p">&gt;;</span>
+              <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x98</span> <span class="mh">0x8</span><span class="p">&gt;;</span> <span class="cm">/* event offset,when added with (nest-offset-address + device reg) will point to actual counter memory */</span>
+
+              <span class="nf">event-name</span> <span class="o">=</span> <span class="s">&quot;DOWN_128B_DATA_XFER&quot;</span><span class="p">;</span> <span class="cm">/* denotes the actual event name */</span>
+
+        <span class="p">};</span>
+
+        <span class="cm">/* List of events supported */</span>
+
+<span class="p">};</span>
+
+<span class="nl">TRACE_IMC:</span> <span class="nc">trace-events</span> <span class="p">{</span>
+      <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+      <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
+
+      <span class="nc">event</span><span class="nf">@10200000</span> <span class="p">{</span>
+            <span class="nf">event-name</span> <span class="o">=</span> <span class="s">&quot;cycles&quot;</span> <span class="p">;</span> <span class="cm">/* For trace node, we only have cycles event now */</span>
+            <span class="nf">reg</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10200000</span> <span class="mh">0x8</span><span class="p">&gt;;</span>
+            <span class="nf">desc</span> <span class="o">=</span> <span class="s">&quot;Reference cycles&quot;</span> <span class="p">;</span>
+      <span class="p">};</span>
+ <span class="p">};</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="trace-mode-scom">
+<h2>Trace-mode SCOM<a class="headerlink" href="#trace-mode-scom" title="Permalink to this headline">¶</a></h2>
+<p>Trace scom is a 64 bit value which contains the event information for
+IMC-trace mode. Following is the trace-scom layout.</p>
+<p><strong>TRACE_IMC_SCOM bit representation</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">0-1</dt>
+<dd class="field-odd"><p>SAMPSEL</p>
+</dd>
+<dt class="field-even">2-33</dt>
+<dd class="field-even"><p>CPMC_LOAD</p>
+</dd>
+<dt class="field-odd">34-40</dt>
+<dd class="field-odd"><p>CPMC1SEL</p>
+</dd>
+<dt class="field-even">41-47</dt>
+<dd class="field-even"><p>CPMC2SEL</p>
+</dd>
+<dt class="field-odd">48-50</dt>
+<dd class="field-odd"><p>BUFFERSIZE</p>
+</dd>
+<dt class="field-even">51-63</dt>
+<dd class="field-even"><p>RESERVED</p>
+</dd>
+</dl>
+<p><em>CPMC_LOAD</em> contains the sampling duration. <em>SAMPSEL</em> and <em>CPMC*SEL</em>
+determines the event to count. <em>BUFFRSIZE</em> indicates the memory range.</p>
+<p><em>BUFFERSIZE</em> can be</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>b’000’ - 4K entries * 64 per entry = 256K
+b’001’ - 8K entries * 64 per entry = 512K
+b’010’ - 16K entries * 64 per entry = 1M
+b’011’ - 32K entries * 64 per entry = 2M
+b’100’ - 64K entries * 64 per entry = 4M
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">IMC Device Tree Bindings</a><ul>
+<li><a class="reference internal" href="#imc-counters-top-level-node">imc-counters top-level node</a></li>
+<li><a class="reference internal" href="#imc-device-units-bindings">IMC device/units bindings</a></li>
+<li><a class="reference internal" href="#imc-device-event-bindings">IMC device event bindings</a></li>
+<li><a class="reference internal" href="#trace-mode-scom">Trace-mode SCOM</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ibm%2Csecureboot.html"
+                        title="previous chapter">ibm,secureboot</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="memory-hierarchy.html"
+                        title="next chapter">P9 memory hierarchy</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/imc.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="memory-hierarchy.html" title="P9 memory hierarchy"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Csecureboot.html" title="ibm,secureboot"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">IMC Device Tree Bindings</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

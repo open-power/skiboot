@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0.9 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.1" href="skiboot-6.1.html" />
+    <link rel="prev" title="skiboot-6.0.8" href="skiboot-6.0.8.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.1.html" title="skiboot-6.1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.8.html" title="skiboot-6.0.8"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.9</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-9">
+<span id="id1"></span><h1>skiboot-6.0.9<a class="headerlink" href="#skiboot-6-0-9" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.0.9 was released on Friday October 12th, 2018. It replaces
+<a class="reference internal" href="skiboot-6.0.8.html#skiboot-6-0-8"><span class="std std-ref">skiboot-6.0.8</span></a> as the current stable release in the 6.0.x series.</p>
+<p>It is recommended that 6.0.9 be used instead of any previous 6.0.x version
+due to the bug fixes it contains.</p>
+<p>The bug fixes are:</p>
+<ul>
+<li><p>opal/hmi: Ignore debug trigger inject core FIR.</p>
+<p>Core FIR[60] is a side effect of the work around for the CI Vector Load
+issue in DD2.1. Usually this gets delivered as HMI with HMER[17] where
+Linux already ignores it. But it looks like in some cases we may happen
+to see CORE_FIR[60] while we are already in Malfunction Alert HMI
+(HMER[0]) due to other reasons e.g. CAPI recovery or NPU xstop. If that
+happens then just ignore it instead of crashing kernel as not recoverable.</p>
+</li>
+<li><p>opal/hmi: Handle early HMIs on thread0 when secondaries are still in OPAL.</p>
+<p>When primary thread receives a CORE level HMI for timer facility errors
+while secondaries are still in OPAL, thread 0 ends up in rendez-vous
+waiting for secondaries to get into hmi handling. This is because OPAL
+runs with MSR(EE=0) and hence HMIs are delayed on secondary threads until
+they are given to Linux OS. Fix this by adding a check for secondary
+state and force them in hmi handling by queuing job on secondary threads.</p>
+<p>I have tested this by injecting HDEC parity error very early during Linux
+kernel boot. Recovery works fine for non-TB errors. But if TB is bad at
+this very eary stage we already doomed.</p>
+<p>Without this patch we see:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">285.046347408</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0843</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0843</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">285.051160609</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0844</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0844</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">285.055359021</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x0840000000000000</span>
+<span class="p">[</span>  <span class="mf">285.055361439</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">U78D3</span><span class="o">.</span><span class="n">ND1</span><span class="o">.</span><span class="n">WZS004A</span><span class="o">-</span><span class="n">P1</span><span class="o">-</span><span class="n">C48</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">8</span> <span class="n">C</span><span class="p">:</span><span class="mi">17</span> <span class="n">T</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span> <span class="n">TFMR</span><span class="p">(</span><span class="mf">2e12002870</span><span class="n">e14000</span><span class="p">)</span> <span class="n">Timer</span> <span class="n">Facility</span> <span class="n">Error</span>
+<span class="p">[</span>  <span class="mf">286.232183823</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">1</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc1</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">287.409002056</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">2</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc1</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">289.073820164</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">3</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc1</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">290.250638683</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">1</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc2</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">291.427456821</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">2</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc2</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">293.092274807</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">3</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc2</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">294.269092904</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">1</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc3</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">295.445910944</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">2</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc3</span><span class="p">)</span>
+<span class="p">[</span>  <span class="mf">297.110728970</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Rendez</span><span class="o">-</span><span class="n">vous</span> <span class="n">stage</span> <span class="mi">1</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CPU</span> <span class="mh">0x844</span> <span class="n">waiting</span> <span class="k">for</span> <span class="n">thread</span> <span class="mi">3</span> <span class="p">(</span><span class="n">sptr</span><span class="o">=</span><span class="mi">0000</span><span class="n">ccc3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After this patch:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">259.401719351</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0841</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0841</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">259.406259572</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0842</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0842</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">259.410615534</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0843</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0843</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">259.415444519</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0844</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0844</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">259.419641401</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x0840000000000000</span>
+<span class="p">[</span>  <span class="mf">259.419644124</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">U78D3</span><span class="o">.</span><span class="n">ND1</span><span class="o">.</span><span class="n">WZS004A</span><span class="o">-</span><span class="n">P1</span><span class="o">-</span><span class="n">C48</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">8</span> <span class="n">C</span><span class="p">:</span><span class="mi">17</span> <span class="n">T</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span> <span class="n">TFMR</span><span class="p">(</span><span class="mf">2e12002870</span><span class="n">e04000</span><span class="p">)</span> <span class="n">Timer</span> <span class="n">Facility</span> <span class="n">Error</span>
+<span class="p">[</span>  <span class="mf">259.419650678</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Sending</span> <span class="n">hmi</span> <span class="n">job</span> <span class="n">to</span> <span class="n">thread</span> <span class="mi">1</span>
+<span class="p">[</span>  <span class="mf">259.419652744</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Sending</span> <span class="n">hmi</span> <span class="n">job</span> <span class="n">to</span> <span class="n">thread</span> <span class="mi">2</span>
+<span class="p">[</span>  <span class="mf">259.419653051</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x0840000000000000</span>
+<span class="p">[</span>  <span class="mf">259.419654725</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Sending</span> <span class="n">hmi</span> <span class="n">job</span> <span class="n">to</span> <span class="n">thread</span> <span class="mi">3</span>
+<span class="p">[</span>  <span class="mf">259.419654916</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x0840000000000000</span>
+<span class="p">[</span>  <span class="mf">259.419658025</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x0840000000000000</span>
+<span class="p">[</span>  <span class="mf">259.419658406</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">U78D3</span><span class="o">.</span><span class="n">ND1</span><span class="o">.</span><span class="n">WZS004A</span><span class="o">-</span><span class="n">P1</span><span class="o">-</span><span class="n">C48</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">8</span> <span class="n">C</span><span class="p">:</span><span class="mi">17</span> <span class="n">T</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span> <span class="n">TFMR</span><span class="p">(</span><span class="mf">2e12002870</span><span class="n">e04000</span><span class="p">)</span> <span class="n">Timer</span> <span class="n">Facility</span> <span class="n">Error</span>
+<span class="p">[</span>  <span class="mf">259.419663095</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">U78D3</span><span class="o">.</span><span class="n">ND1</span><span class="o">.</span><span class="n">WZS004A</span><span class="o">-</span><span class="n">P1</span><span class="o">-</span><span class="n">C48</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">8</span> <span class="n">C</span><span class="p">:</span><span class="mi">17</span> <span class="n">T</span><span class="p">:</span><span class="mi">3</span><span class="p">:</span> <span class="n">TFMR</span><span class="p">(</span><span class="mf">2e12002870</span><span class="n">e04000</span><span class="p">)</span> <span class="n">Timer</span> <span class="n">Facility</span> <span class="n">Error</span>
+<span class="p">[</span>  <span class="mf">259.419655234</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">U78D3</span><span class="o">.</span><span class="n">ND1</span><span class="o">.</span><span class="n">WZS004A</span><span class="o">-</span><span class="n">P1</span><span class="o">-</span><span class="n">C48</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">8</span> <span class="n">C</span><span class="p">:</span><span class="mi">17</span> <span class="n">T</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span> <span class="n">TFMR</span><span class="p">(</span><span class="mf">2e12002870</span><span class="n">e04000</span><span class="p">)</span> <span class="n">Timer</span> <span class="n">Facility</span> <span class="n">Error</span>
+<span class="p">[</span>  <span class="mf">259.425109779</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0845</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0845</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">259.429870681</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0846</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0846</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+<span class="p">[</span>  <span class="mf">259.434549250</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">OPAL</span><span class="p">:</span> <span class="n">Start</span> <span class="n">CPU</span> <span class="mh">0x0847</span> <span class="p">(</span><span class="n">PIR</span> <span class="mh">0x0847</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mh">0x000000000000a83c</span>
+</pre></div>
+</div>
+</li>
+<li><p>hw/bt.c: quieten all the noisy BT/IPMI messages</p></li>
+<li><p>npu2: Use correct kill type for TCE invalidation</p>
+<p>kill_type is enum of OPAL_PCI_TCE_KILL_PAGES, OPAL_PCI_TCE_KILL_PE,
+OPAL_PCI_TCE_KILL_ALL and phb4_tce_kill() gets it right but
+npu2_tce_kill() uses OPAL_PCI_TCE_KILL which is an OPAL API token.</p>
+</li>
+<li><p>hw/npu2-opencapi: Fix setting of supported OpenCAPI templates</p>
+<p>In opal_npu_tl_set(), we made a typo that means the OPAL_NPU_TL_SET call
+may not clear the enable bits for templates that were previously enabled
+but are now disabled.</p>
+<p>Fix the typo so we clear NPU2_OTL_CONFIG1_TX_TEMP2_EN as well as
+TEMP{1,3}_EN.</p>
+</li>
+<li><p>phb4: Workaround PHB errata with CFG write UR/CA errors</p>
+<p>If the PHB encounters a UR or CA status on a CFG write, it will
+incorrectly freeze the wrong PE. Instead of using the PE# specified
+in the CONFIG_ADDRESS register, it will use the PE# of whatever
+MMIO occurred last.</p>
+<p>Work around this disabling freeze on such errors</p>
+</li>
+<li><p>phb4: Handle allocation errors in phb4_eeh_dump_regs()</p>
+<p>If the zalloc fails (and it can be a rather large allocation),
+we will overwite memory at 0 instead of failing.</p>
+</li>
+<li><p>phb4: Don’t try to access non-existent PEST entries</p>
+<p>In a POWER9 chip, some PHB4s have 256 PEs, some have 512.</p>
+<p>Currently, the diagnostics code retrieves 512 unconditionally,
+which is wrong and causes us to incorrectly report bogus values
+for the “high” PEs on the small PHBs.</p>
+<p>Use the actual number of implemented PEs instead</p>
+</li>
+<li><p>phb4: Don’t probe a PHB if its garded</p>
+<p>Presently phb4_probe_stack() causes an exception while trying to probe
+a PHB if its garded. This causes skiboot to go into a reboot loop with
+following exception log:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>***********************************************
+Fatal MCE at 000000003006ecd4   .probe_phb4+0x570
+CFAR : 00000000300b98a0
+&lt;snip&gt;
+Aborting!
+CPU 0018 Backtrace:
+S: 0000000031cc37e0 R: 000000003001a51c   ._abort+0x4c
+S: 0000000031cc3860 R: 0000000030028170   .exception_entry+0x180
+S: 0000000031cc3a40 R: 0000000000001f10 *
+S: 0000000031cc3c20 R: 000000003006ecb0   .probe_phb4+0x54c
+S: 0000000031cc3e30 R: 0000000030014ca4   .main_cpu_entry+0x5b0
+S: 0000000031cc3f00 R: 0000000030002700   boot_entry+0x1b8
+</pre></div>
+</div>
+<p>This is caused as phb4_probe_stack() will ignore all xscom read/write
+errors to enable PHB Bars and then tries to perform an mmio to read
+PHB Version registers that cause the fatal MCE.</p>
+<p>We fix this by ignoring the PHB probe if the first xscom_write() to
+populate the PHB Bar register fails, which indicates that there is
+something wrong with the PHB.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.8.html"
+                        title="previous chapter">skiboot-6.0.8</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.1.html"
+                        title="next chapter">skiboot-6.1</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0.9.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.1.html" title="skiboot-6.1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.8.html" title="skiboot-6.0.8"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.9</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

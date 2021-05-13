@@ -1,0 +1,569 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.8-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.9" href="skiboot-5.9.html" />
+    <link rel="prev" title="skiboot-5.8" href="skiboot-5.8.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9.html" title="skiboot-5.9"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.8.html" title="skiboot-5.8"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.8-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-8-rc1">
+<span id="id1"></span><h1>skiboot-5.8-rc1<a class="headerlink" href="#skiboot-5-8-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v5.8-rc1 was released on Tuesday August 22nd 2017. It is the first
+release candidate of skiboot 5.8, which will become the new stable release
+of skiboot following the 5.7 release, first released 25th July 2017.</p>
+<p>skiboot v5.8-rc1 contains all bug fixes as of <a class="reference internal" href="skiboot-5.4.6.html#skiboot-5-4-6"><span class="std std-ref">skiboot-5.4.6</span></a>
+and <a class="reference internal" href="skiboot-5.1.20.html#skiboot-5-1-20"><span class="std std-ref">skiboot-5.1.20</span></a> (the currently maintained stable releases). We
+do not currently expect to do any 5.7.x stable releases.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.8 by August 25th, with skiboot 5.8
+being for all POWER8 and POWER9 platforms in op-build v1.19 (Due August 25th).
+This is a short cycle as this release is mainly targetted towards POWER9
+bringup efforts.</p>
+<p>Over skiboot-5.7, we have the following changes:</p>
+<div class="section" id="new-features">
+<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>sensors: occ: Add support to clear sensor groups</p>
+<p>Adds a generic API to clear sensor groups. OCC inband sensor groups
+such as CSM, Profiler and Job Scheduler can be cleared using this API.
+It will clear the min/max of all sensors belonging to OCC sensor
+groups.</p>
+</li>
+<li><p>sensors: occ: Add CSM_{min/max} sensors</p>
+<p>HWMON’s lowest/highest attribute is used by CSM agent, so map min/max
+device-tree properties “sensor-data-min” and “sensor-data-max” to
+the min/max of CSM.</p>
+</li>
+<li><p>sensors: occ: Add support for OCC inband sensors</p>
+<p>Add support to parse and export OCC inband sensors which are copied
+by OCC to main memory in P9. Each OCC writes three buffers which
+includes one names buffer for sensor meta data and two buffers for
+sensor readings. While OCC writes to one buffer the sensor values
+can be read from the other buffer. The sensors are updated every
+100ms.</p>
+<p>This patch adds power, temperature, current and voltage sensors to
+<code class="docutils literal notranslate"><span class="pre">/ibm,opal/sensors</span></code> device-tree node which can be exported by the
+ibmpowernv-hwmon driver in Linux.</p>
+</li>
+<li><p>psr: occ: Add support to change power-shifting-ratio</p>
+<p>Add support to set the CPU-GPU power shifting ratio which is used by
+the OCC power capping algorithm. PSR value of 100 takes all power away
+from CPU first and a PSR value of 0 caps GPU first.</p>
+</li>
+<li><p>powercap: occ: Add a generic powercap framework</p>
+<p>This patch adds a generic powercap framework and exports OCC powercap
+sensors using which system powercap can be set inband through OPAL-OCC
+command-response interface.</p>
+</li>
+<li><p>phb4: Enable PCI peer-to-peer</p>
+<p>P9 supports PCI peer-to-peer: a PCI device can write directly to the
+mmio space of another PCI device. It completely by-passes the CPU.</p>
+<p>It requires some configuration on the PHBs involved:</p>
+<ol class="arabic simple">
+<li><p>on the initiating side, the address for the read/write operation is
+in the mmio space of the target, i.e. well outside the range normally
+allowed. So we disable range-checking on the TVT entry in bypass mode.</p></li>
+<li><p>on the target side, we need to explicitly enable p2p by setting a
+bit in a configuration register. It has the side-effect of reserving
+an outbound (as seen from the CPU) store queue for p2p. Therefore we
+only enable p2p on the PHBs using it, as we don’t want to waste the
+resource if we don’t have to.</p></li>
+</ol>
+<p>P9 supports p2p mmio writes. Reads are currently only supported if the
+two devices are under the same PHB but that is expected to change in
+the future, and it raises questions about intermediate switches
+configuration, so we report an error for the time being.</p>
+<p>The patch adds a new OPAL call to allow the OS to declare a p2p
+(initiator, target) pair.</p>
+</li>
+<li><p>NX 842 and GZIP support on POWER9</p></li>
+</ul>
+</div>
+<div class="section" id="power9-dd2">
+<h2>POWER9 DD2<a class="headerlink" href="#power9-dd2" title="Permalink to this headline">¶</a></h2>
+<p>Further support for POWER9 DD2 revision chips. Notable changes include:</p>
+<ul>
+<li><p>xscom: Grab P9 DD2 revision level</p></li>
+<li><p>vas: Set mmio enable bits in DD2</p>
+<p>POWER9 DD2 added some new “enable” bits that must be set for VAS to
+work. These bits were unused in DD1.</p>
+</li>
+<li><p>hdat: Add POWER9 DD2.0 specific pa_features</p>
+<p>Same as the default but with TM off.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="power9">
+<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Base NPU2 support on POWER9 DD2</p></li>
+<li><p>hdata/i2c: Work around broken I2C array version</p>
+<p>Work around a bug in the I2C devices array that shows the
+array version as being v2 when only the v1 data is populated.</p>
+</li>
+<li><p>Recognize the 2s2u zz platform</p>
+<p>OPAL currently doesn’t know about the 2s2u zz. It recognizes such a
+box as a generic BMC machine and fails to boot. Add the 2s2u as a
+supported platform.</p>
+<p>There will subsequently be a 2s2u-L system which may have a different
+compatible property, which will need to be handled later.</p>
+</li>
+<li><p>hdata/spira: POWER9 NX isn’t software compatible with P7/P8 NX, don’t claim so</p></li>
+<li><p>NX: Add P9 NX support for gzip compression engine</p>
+<p>Power 9 introduces NX gzip compression engine. This patch adds gzip
+compression support in NX. Virtual Accelerator Switch (VAS) is used to
+access NX gzip engine and the channel configuration will be done with
+the receive FIFO. So RxFIFO address, logical partition ID (lpid),
+process ID (pid) and thread ID (tid) are used to configure RxFIFO.
+P9 NX supports high and normal priority FIFOS. Skiboot configures User
+Mode Access Control (UMAC) noitify match register with these values and
+also enables other registers to enable / disable the engine.</p>
+<p>Creates the following device-tree entries to provide RxFIFO address,
+RxFIFO size, Fifo priority, lpid, pid and tid values so that kernel
+can drive P9 NX gzip engine.</p>
+<dl>
+<dt>The following nodes are located under an xscom node: ::</dt><dd><blockquote>
+<div><p>/xscom&#64;&lt;xscom_addr&gt;/nx&#64;&lt;nx_addr&gt;</p>
+<p>/ibm,gzip-high-fifo          : High priority gzip RxFIFO
+/ibm,gzip-normal-fifo        : Normal priority gzip RxFIFO</p>
+</div></blockquote>
+<p>Each RxFIFO node contain:s</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">compatible</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">ibm,p9-nx-gzip</span></code></p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">priority</span></code></dt><dd><p>High or Normal</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rx-fifo-address</span></code></dt><dd><p>RxFIFO address</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rx-fifo-size</span></code></dt><dd><p>RxFIFO size</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lpid</span></code></dt><dd><p>0xfff (1’s for 12 bits in UMAC notify match register)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pid</span></code></dt><dd><p>gzip coprocessor type</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tid</span></code></dt><dd><p>counter for gzip</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><p>NX: Add P9 NX support for 842 compression engine</p>
+<p>This patch adds changes needed for 842 compression engine on power 9.
+Virtual Accelerator Switch (VAS) is used to access NX 842 engine on P9
+and the channel setup will be done with receive FIFO. So RxFIFO
+address, logical partition ID (lpid), process ID (pid) and thread ID
+(tid) are used for this setup. p9 NX supports high and normal priority
+FIFOs. skiboot is not involved to process data with 842 engine, but
+configures User Mode Access Control (UMAC) noitify match register with
+these values and export them to kernel with device-tree entries.</p>
+<p>Also configure registers to setup and enable / disable the engine with
+the appropriate registers. Creates the following device-tree entries to
+provide RxFIFO address, RxFIFO size, Fifo priority, lpid, pid and tid
+values so that kernel can drive P9 NX 842 engine.</p>
+<blockquote>
+<div><p>The following nodes are located under an xscom node:
+<code class="docutils literal notranslate"><span class="pre">/xscom&#64;&lt;xscom_addr&gt;/nx&#64;&lt;nx_addr&gt;</span></code></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/ibm,842-high-fifo</span></code></dt><dd><p>High priority 842 RxFIFO</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">/ibm,842-normal-fifo</span></code></dt><dd><p>Normal priority 842 RxFIFO</p>
+</dd>
+</dl>
+<p>Each RxFIFO node contains:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">compatible</span></code></dt><dd><p>ibm,p9-nx-842</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">priority</span></code></dt><dd><p>High or Normal</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rx-fifo-address</span></code></dt><dd><p>RxFIFO address</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rx-fifo-size</span></code></dt><dd><p>RXFIFO size</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lpid</span></code></dt><dd><p>0xfff (1’s for 12 bits set in UMAC notify match register)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pid</span></code></dt><dd><p>842 coprocessor type</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tid</span></code></dt><dd><p>Counter for 842</p>
+</dd>
+</dl>
+</div></blockquote>
+</li>
+<li><p>vas: Create MMIO device tree node</p>
+<p>Create a device tree node for VAS and add properties that Linux
+will need to configure/use VAS.</p>
+</li>
+<li><p>opal: Extract sw checkstop fir address from HDAT.</p>
+<p>Extract sw checkstop fir address info from HDAT and populate device tree
+node ibm,sw-checkstop-fir.</p>
+<p>This patch is required for OPAL_CEC_REBOOT2 OPAL call to work as expected
+on p9.</p>
+<p>With this patch a device property ‘ibm,sw-checkstop-fir’ is now properly
+populated:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># lsprop ibm,sw-checkstop-fir</span>
+<span class="n">ibm</span><span class="p">,</span><span class="n">sw</span><span class="o">-</span><span class="n">checkstop</span><span class="o">-</span><span class="n">fir</span>
+                 <span class="mi">05012000</span> <span class="mi">0000001</span><span class="n">f</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="phb4">
+<h2>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>hdat: Fix PCIe GEN4 lane-eq setting for DD2</p>
+<p>For PCIe GEN4, DD2 uses only 1 byte per PCIe lane for the lane-eq
+settings (DD1 uses 2 bytes)</p>
+</li>
+<li><p>pci: Wait for CRS and switch link when restoring bus numbers</p>
+<p>When a complete reset occurs, after the PHB recovers it propagates a
+reset down the wire to every device.  At the same time, skiboot talks to
+every device in order to restore the state of devices to what they were
+before the reset.</p>
+<p>In some situations, such as devices that recovered slowly and/or were
+behind a switch, skiboot attempted to access config space of the device
+before the link was up and the device could respond.</p>
+<p>Fix this by retrying CRS until the device responds correctly, and for
+devices behind a switch, making sure the switch has its link up first.</p>
+</li>
+<li><p>pci: Track whether a PCI device is a virtual function</p>
+<p>This can be checked from config space, but we will need to know this when
+restoring the PCI topology, and it is not always safe to access config
+space during this period.</p>
+</li>
+<li><p>phb4: Enhanced PCIe training tracing</p>
+<p>This add more details to the PCI training tracing (aka Rick Mata
+mode). It enables the PCIe Link Training and Status State
+Machine (LTSSM) tracing and details on speed and link width.</p>
+<p>Output now looks like this when enabled (via nvram):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>    <span class="mf">1.096995141</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x0000001101000000  0ms          GEN1:x16:detect</span>
+<span class="p">[</span>    <span class="mf">1.102849137</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x0000102101000000 11ms presence GEN1:x16:polling</span>
+<span class="p">[</span>    <span class="mf">1.104341838</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x0000182101000000 14ms training GEN1:x16:polling</span>
+<span class="p">[</span>    <span class="mf">1.104357444</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x00001c5101000000 14ms training GEN1:x16:recovery</span>
+<span class="p">[</span>    <span class="mf">1.104580394</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x00001c5103000000 14ms training GEN3:x16:recovery</span>
+<span class="p">[</span>    <span class="mf">1.123259359</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x00001c5104000000 51ms training GEN4:x16:recovery</span>
+<span class="p">[</span>    <span class="mf">1.141737656</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x0000144104000000 87ms presence GEN4:x16:L0</span>
+<span class="p">[</span>    <span class="mf">1.141752318</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE:0x0000154904000000 87ms trained  GEN4:x16:L0</span>
+<span class="p">[</span>    <span class="mf">1.141757964</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000[0:0]: TRACE: Link trained.</span>
+<span class="p">[</span>    <span class="mf">1.096834019</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000  0ms          GEN1:x16:detect</span>
+<span class="p">[</span>    <span class="mf">1.105578525</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000 17ms presence GEN1:x16:polling</span>
+<span class="p">[</span>    <span class="mf">1.112763075</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000183101000000 31ms training GEN1:x16:config</span>
+<span class="p">[</span>    <span class="mf">1.112778956</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5081000000 31ms training GEN1:x08:recovery</span>
+<span class="p">[</span>    <span class="mf">1.113002083</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5083000000 31ms training GEN3:x08:recovery</span>
+<span class="p">[</span>    <span class="mf">1.114833873</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000144083000000 35ms presence GEN3:x08:L0</span>
+<span class="p">[</span>    <span class="mf">1.114848832</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000154883000000 35ms trained  GEN3:x08:L0</span>
+<span class="p">[</span>    <span class="mf">1.114854650</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE: Link trained.</span>
+</pre></div>
+</div>
+</li>
+<li><p>phb4: Fix reading wrong size registers in EEH dump</p>
+<p>These registers are supposed to be 16bit, and it makes part of the
+register dump misleading.</p>
+</li>
+<li><p>phb4: Ignore slot state if performing complete reset</p>
+<p>If a PHB is being completely reset, its state is about to be blown away
+anyway, so if it’s not in an appropriate state, creset it regardless.</p>
+</li>
+<li><p>phb4: Prepare for link down when creset called from kernel</p>
+<p>phb4_creset() is typically called by functions that prepare the link
+to go down.  In cases where creset() is called directly by the kernel,
+this isn’t the case and it can cause issues.  Prepare for link down in
+creset, just like we do in freset and hreset.</p>
+</li>
+<li><p>phb4: Skip attempting to fix PHBs broken on boot</p>
+<p>If a PHB is marked broken it didn’t work on boot, and if it didn’t work
+on boot then there’s no point trying to recover it later</p>
+</li>
+<li><p>phb4: Fix duplicate in EEH register dump</p></li>
+<li><p>phb4: Be more conservative on link presence timeout</p>
+<p>In this patch we tuned our link timing to be more agressive:
+<code class="docutils literal notranslate"><span class="pre">cf960e2884</span> <span class="pre">phb4:</span> <span class="pre">Improve</span> <span class="pre">reset</span> <span class="pre">and</span> <span class="pre">link</span> <span class="pre">training</span> <span class="pre">timing</span></code></p>
+<p>Cards should take only 32ms but unfortunately we’ve seen some take
+up to 440ms. Hence bump our timer up to 1000ms.</p>
+<p>This can hurt boot times on systems where slots indicate a hotplug
+status but no electrical link is present (which we’ve seen). Since we
+have to wait 1 second between PERST and touching config space anyway,
+it shouldn’t hurt too much.</p>
+</li>
+<li><p>phb4: Assert PERST before PHB reset</p>
+<p>Currently we don’t assert PERST before issuing a PHB reset. This means
+any link issues while resetting the PHB will be logged as errors.</p>
+<p>This asserts PERST before we start resetting the PHB to avoid this.</p>
+</li>
+<li><p>Revert “phb4: Read PERST signal rather than assuming it’s asserted”</p>
+<p>This reverts commit b42ff2b904165addf32e77679cebb94a08086966</p>
+<p>The original patch assumes that PERST has been asserted well before (&gt;
+250ms) we hit here (ie. during hostboot).</p>
+<p>In a subesquent patch this will no longer be the case as we need to
+assert PERST during PHB reset, which may only be a few milliseconds
+before we hit this code.</p>
+<p>Hence revert this patch. Go back to the software mechanism using
+skip_perst to determine if PERST should be asserted or not. This
+allows us to keep the speed optimisation on boot.</p>
+</li>
+<li><p>phb4: Set REGB error enables based on link state</p>
+<p>Currently we always set these enables when initing the PHB. If the
+link is already down, we shouldn’t set them as it may cause spurious
+errors.</p>
+<p>This changes the code to only sets them if the link is up.</p>
+</li>
+<li><p>phb4: Mark PHB as fenced on creset</p>
+<p>If we have to inject an error to trigger recover, we end up not
+marking the PHB as fenced in the PHB struct. This fixes that.</p>
+</li>
+<li><p>phb4: Clear errors before deasserting reset</p>
+<p>During reset we may have logged some errors (eg. due to the link going
+down).</p>
+<p>Hence before we deassert PERST or Hot Reset, we need to clear these
+errors. This ensures that once link training starts, only new errors
+are logged.</p>
+</li>
+<li><p>phb4: Disable device config space access when fenced</p>
+<p>On DD2 you can’t access device config space when fenced, so just
+disable access whenever we are fenced.</p>
+</li>
+<li><p>phb4: Dump devctl and devstat registers</p>
+<p>Dump devctl and devstat registers.  These would have been useful when
+debugging the MPS issue.</p>
+</li>
+<li><p>phb4: Only clear some PHB config space registers on errors</p>
+<p>Currently on error we clear the entire PHB config space.  This is a
+problem as the PCIe Maximum Payload Size (MPS) negotiation may have
+already occurred. Clearing MPS in the PHB back to a default of 128
+bytes will result an error for a device which already has a larger MPS
+configured.</p>
+<p>This will manifest itself as error due to a malformed TLP packet. ie.
+<code class="docutils literal notranslate"><span class="pre">phbPblErrorStatus</span> <span class="pre">bit</span> <span class="pre">41</span>&#160; <span class="pre">=</span> <span class="pre">&quot;Malformed</span> <span class="pre">TLP</span> <span class="pre">error&quot;</span></code></p>
+<p>This has been seen after kexec on with some adapters.</p>
+<p>This fixes the problem by only clearing a subset of registers on a phb
+error.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>external/xscom-utils: Add <code class="docutils literal notranslate"><span class="pre">--list-bits</span></code></p>
+<p>When using getscom/putscom it’s helpful to know what bits are set in the
+register. This patch adds an option to print out which bits are set
+along with the value that was read/written to the register. Note that
+this output indicates which bits are set using the IBM bit ordering
+since that’s what the XSCOM documentation uses.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="opal-prd">
+<h2>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>opal-prd: Do not pass pnor file while starting daemon.</p>
+<p>This change to the included systemd init file means opal-prd can
+start and run on IBM FSP based systems.</p>
+<p>We do not have pnor support on all the system. Also we have logic to
+autodetect PNOR. Hence do not pass <code class="docutils literal notranslate"><span class="pre">--pnor</span></code> by default.</p>
+</li>
+<li><p>opal-prd: Disable pnor access interface on FSP system</p>
+<p>On FSP system host does not have access to PNOR. Hence disable PNOR
+access interfaces.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="opal-sensors">
+<h2>OPAL Sensors<a class="headerlink" href="#opal-sensors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>sensor-groups : occ: Add ‘ops’ DT property</p>
+<p>Add new device-tree property ‘ops’ to define different operations
+supported on each sensor-group.</p>
+</li>
+<li><p>OCC: Map OCC sensor to a chip-id</p>
+<p>Parse device tree to get chip-id for OCC sensor.</p>
+</li>
+<li><p>HDAT: Add chip-id property to ipmi sensors</p>
+<p>Presently we do not have a way to map sensor to chip id. Hence we are
+always passing chip id 0 for occ_reset request (see occ_sensor_id_to_chip()).</p>
+<p>This patch adds chip-id property to sensors (whenever its available) so that
+we can map occ sensor to chip-id and pass valid chip-id to occ_reset request.</p>
+</li>
+<li><p>xive: Check for valid PIR index when decoding</p>
+<p>This fixes an unlikely but possible assert() fail on kdump.</p>
+</li>
+<li><p>sensors: occ: Skip the deconfigured core sensors</p>
+<p>This patch skips the deconfigured cores from the core sensors while
+parsing the sensor names in the main memory as these sensor values are
+not updated by OCC.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>hdata_to_dt: use a realistic PVR and chip revision</p></li>
+<li><p>nx: PR_INFO that NX RNG and Crypto not yet supported on POWER9</p></li>
+<li><p>external/pflash: Add tests</p></li>
+<li><p>external/pflash: Reinstate the progress bars</p>
+<p>Recent work did some optimising which unfortunately removed some of the
+progress bars in pflash.</p>
+<p>It turns out that there’s only one thing people prefer to correctly
+programmed flash chips, it is the ability to watch little equals
+characters go across their screens for potentially minutes.</p>
+</li>
+<li><p>external/pflash: Correct erase alignment checks</p>
+<p>pflash should check the alignment of addresses and sizes when asked to
+erase. There are two possibilities:</p>
+<ol class="arabic simple">
+<li><p>The user has specified sizes manually in which case pflash should
+be as flexible as possible, blocklevel_smart_erase() permits this. To
+prevent possible mistakes pflash will require –force to perform a
+manual erase of unaligned sizes.</p></li>
+<li><p>The user used -P to specify a partition, partitions aren’t
+necessarily erase granule aligned anymore, blocklevel_smart_erase() can
+handle. In this it doesn’t make sense to warn/error about misalignment
+since the misalignment is inherent to the FFS partition and not really
+user input.</p></li>
+</ol>
+</li>
+<li><p>external/pflash: Check the result of strtoul</p>
+<p>Also add 0x in front of –info output to avoid a copy and paste mistake.</p>
+</li>
+<li><p>libflash/file: Break up MTD erase ioctl() calls</p>
+<p>Unfortunately not all drivers are created equal and several drivers on
+which pflash relies block in the kernel for quite some time and ignore
+signals.</p>
+<p>This is really only a problem if pflash is to perform large erases. So
+don’t, perform these ops in small chunks.</p>
+<p>An in kernel fix is possible in most cases but it takes time and systems
+will be running older drivers for quite some time. Since sector erases
+aren’t significantly slower than whole chip erases there isn’t much of a
+performance penalty to breaking up the erase ioctl()s.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="general">
+<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>opal-msg: Increase the max-async completion count by max chips possible</p></li>
+<li><p>occ: Add support for OPAL-OCC command/response interface</p>
+<p>This patch adds support for a shared memory based command/response
+interface between OCC and OPAL. In HOMER, there is an OPAL command
+buffer and an OCC response buffer which is used to send inband
+commands to OCC.</p>
+</li>
+<li><p>HDAT/device-tree: only add lid-type on pre-POWER9 systems</p>
+<p>Largely a relic of back when we had multiple entry points into OPAL depending
+on which mechanism on an FSP we were using to get loaded, this isn’t needed
+on modern P9 as we only have one entry point (we don’t do the PHYP LID hack).</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.8-rc1</a><ul>
+<li><a class="reference internal" href="#new-features">New Features</a></li>
+<li><a class="reference internal" href="#power9-dd2">POWER9 DD2</a></li>
+<li><a class="reference internal" href="#power9">POWER9</a></li>
+<li><a class="reference internal" href="#phb4">PHB4</a></li>
+<li><a class="reference internal" href="#utilities">Utilities</a></li>
+<li><a class="reference internal" href="#opal-prd">opal-prd</a></li>
+<li><a class="reference internal" href="#opal-sensors">OPAL Sensors</a></li>
+<li><a class="reference internal" href="#tests">Tests</a></li>
+<li><a class="reference internal" href="#general">General</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.8.html"
+                        title="previous chapter">skiboot-5.8</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.9.html"
+                        title="next chapter">skiboot-5.9</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.8-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9.html" title="skiboot-5.9"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.8.html" title="skiboot-5.8"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.8-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1012 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.7-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.7-rc2" href="skiboot-5.7-rc2.html" />
+    <link rel="prev" title="skiboot-5.7" href="skiboot-5.7.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.7-rc2.html" title="skiboot-5.7-rc2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.7.html" title="skiboot-5.7"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.7-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-7-rc1">
+<span id="id1"></span><h1>skiboot-5.7-rc1<a class="headerlink" href="#skiboot-5-7-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v5.7-rc1 was released on Monday July 3rd 2017. It is the first
+release candidate of skiboot 5.7, which will become the new stable release
+of skiboot following the 5.6 release, first released 24th May 2017.</p>
+<p>skiboot v5.7-rc1 contains all bug fixes as of <a class="reference internal" href="skiboot-5.4.6.html#skiboot-5-4-6"><span class="std std-ref">skiboot-5.4.6</span></a>
+and <a class="reference internal" href="skiboot-5.1.19.html#skiboot-5-1-19"><span class="std std-ref">skiboot-5.1.19</span></a> (the currently maintained stable releases). We
+do not currently expect to do any 5.6.x stable releases.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.7 by July 12th, with skiboot 5.7
+being for all POWER8 and POWER9 platforms in op-build v1.18 (Due July 12th).
+This is a short cycle as this release is mainly targetted towards POWER9
+bringup efforts.</p>
+<p>This is the second release using the new regular six week release cycle,
+similar to op-build, but slightly offset to allow for a short stabilisation
+period. Expected release dates and contents are tracked using GitHub milestone
+and issues: <a class="reference external" href="https://github.com/open-power/skiboot/milestones">https://github.com/open-power/skiboot/milestones</a></p>
+<p>Over skiboot-5.6, we have the following changes:</p>
+<div class="section" id="new-features">
+<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<p>New features in this release for POWER9 systems:</p>
+<ul class="simple">
+<li><p>In Memory Counters (IMC) (See <a class="reference internal" href="../imc.html#imc"><span class="std std-ref">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</span></a> for details)</p></li>
+<li><p>phb4: Activate shared PCI slot on witherspoon (see <a class="reference internal" href="#shared-slot-5-7-rc1-rn"><span class="std std-ref">Shared Slot</span></a>)</p></li>
+<li><p>phb4 capi (i.e. CAPI2): Enable capi mode for PHB4 (see <a class="reference internal" href="#capi2-5-7-rc1-rn"><span class="std std-ref">CAPI on PHB4</span></a>)</p></li>
+</ul>
+<p>New feature for IBM FSP based systems:</p>
+<ul>
+<li><p>fsp/tpo: Provide support for disabling TPO alarm</p>
+<p>This patch adds support for disabling a preconfigured
+Timed-Power-On(TPO) alarm on FSP based systems. Presently once a TPO alarm
+is configured from the kernel it will be triggered even if its
+subsequently disabled.</p>
+<p>With this patch a TPO alarm can be disabled by passing
+y_m_d==hr_min==0 to fsp_opal_tpo_write(). A branch is added to the
+function to handle this case by sending FSP_CMD_TPO_DISABLE message to
+the FSP instead of usual FSP_CMD_TPO_WRITE message. The kernel is
+expected to call opal_tpo_write() with y_m_d==hr_min==0 to request
+opal to disable TPO alarm.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="power9">
+<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<p>Development on POWER9 systems continues in earnest.</p>
+<p>This release includes the first support for POWER9 DD2 chips. Future releases
+will likely contain more bug fixes, this release has booted on real hardware.</p>
+<ul>
+<li><p>hdata: Reserve Trace Areas</p>
+<p>When hostboot is configured to setup in memory tracing it will reserve
+some memory for use by the hardware tracing facility. We need to mark
+these areas as off limits to the operating system and firmware.</p>
+</li>
+<li><p>hdata: Make out-of-range idata print at PR_DEBUG</p>
+<p>Some fields just aren’t populated on some systems.</p>
+</li>
+<li><p>hdata: Ignore unnamed memory reservations.</p>
+<p>Hostboot should name any and all memory reservations that it provides.
+Currently some hostboots export a broken reservation covering the first
+256MB of memory and this causes the system to crash at boot due to an
+invalid free because this overlaps with the static “ibm,os-reserve”
+region (which covers the first 768MB of memory).</p>
+<p>According to the hostboot team unnamed reservations are invalid and can
+be ignored.</p>
+</li>
+<li><p>hdata: Check the Host I2C devices array version</p>
+<p>Currently this is not populated on FSP machines which causes some
+obnoxious errors to appear in the boot log. We also only want to
+parse version 1 of this structure since future versions will completely
+change the array item format.</p>
+</li>
+<li><p>Ensure P9 DD1 workarounds apply only to Nimbus</p>
+<p>The workarounds for P9 DD1 are only needed for Nimbus. P9 Cumulus will
+be DD1 but don’t need these same workarounds.</p>
+<p>This patch ensures the P9 DD1 workarounds only apply to Nimbus. It
+also renames some things to make clear what’s what.</p>
+</li>
+<li><p>cpu: Cleanup AMR and IAMR when re-initializing CPUs</p>
+<p>There’s a bug in current Linux kernels leaving crap in those registers
+accross kexec and not sanitizing them on boot. This breaks kexec under
+some circumstances (such as booting a hash kernel from a radix one
+on P9 DD2.0).</p>
+<p>The long term fix is in Linux, but this workaround is a reasonable
+way of “sanitizing” those SPRs when Linux calls opal_reinit_cpus()
+and shouldn’t have adverse effects.</p>
+<p>We could also use that same mechanism to cleanup other things as
+well such as restoring some other SPRs to their default value in
+the future.</p>
+</li>
+<li><p>Set POWER9 RPR SPR to 0x00000103070F1F3F.  Same value as P8.</p>
+<p>Without this, thread priorities inside a core don’t work.</p>
+</li>
+<li><p>cpu: Support setting HID[RADIX] and set it by default on P9</p>
+<p>This adds new opal_reinit_cpus() flags to setup radix or hash
+mode in HID[8] on POWER9.</p>
+<p>By default HID[8] will be set. On P9 DD1.0, Linux will change
+it as needed. On P9 DD2.0 hash works in radix mode (radix is
+really “dual” mode) so KVM won’t break and existing kernels
+will work.</p>
+<p>Newer kernels built for hash will call this to clear the HID bit
+and thus get the full size of the TLB as an optimization.</p>
+</li>
+<li><p>Add “cleanup_global_tlb” for P9 and later</p>
+<p>Uses broadcast TLBIE’s to cleanup the TLB on all cores and on
+the nest MMU</p>
+</li>
+<li><p>xive: DD2.0 updates</p>
+<p>Add support for StoreEOI, fix StoreEOI MMIO offset in ESB page,
+and other cleanups</p>
+</li>
+<li><p>Update default TSCR value for P9 as recommended by HW folk.</p></li>
+<li><p>xive: Fix initialisation of xive_cpu_state struct</p>
+<p>When using XIVE emulation with DEBUG=1, we run into crashes in log_add()
+due to the xive_cpu_state-&gt;log_pos being uninitialised (and thus, with
+DEBUG enabled, initialised to the poison value of 0x99999999).</p>
+</li>
+</ul>
+<div class="section" id="occ-power-management">
+<h3>OCC/Power Management<a class="headerlink" href="#occ-power-management" title="Permalink to this headline">¶</a></h3>
+<p>With this release, it’s possible to boot POWER9 systems with the OCC
+enabled and change CPU frequencies. Doing so does require other firmware
+components to also support this (otherwise the frequency will not be set).</p>
+<ul>
+<li><p>occ: Skip setting cores to nominal frequency in P9</p>
+<p>In P9, once OCC is up, it is supposed to setup the cores to nominal
+frequency. So skip this step in OPAL.</p>
+</li>
+<li><p>occ: Fix Pstate ordering for P9</p>
+<p>In P9 the pstate values are positive. They are continuous set of
+unsigned integers [0 to +N] where Pmax is 0 and Pmin is N. The
+linear ordering of pstates for P9 has changed compared to P8.
+P8 has neagtive pstate values advertised as [0 to -N] where Pmax
+is 0 and Pmin is -N. This patch adds helper routines to abstract
+pstate comparison with pmax and adds sanity pstate limit checks.
+This patch also fixes pstate arithmetic by using labs().</p>
+</li>
+<li><p>p8-i2c: occ: Add support for OCC to use I2C engines</p>
+<p>This patch adds support to share the I2C engines with host and OCC.
+OCC uses I2C engines to read DIMM temperatures and to communicate with
+GPU. OCC Flag register is used for locking between host and OCC. Host
+requests for the bus by setting a bit in OCC Flag register. OCC sends
+an interrupt to indicate the change in ownership.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="opal-prd-prd">
+<h3>opal-prd/PRD<a class="headerlink" href="#opal-prd-prd" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>opal-prd: Handle SBE passthrough message passing</p>
+<p>This patch adds support to send SBE pass through command to HBRT.</p>
+</li>
+<li><p>SBE: Add passthrough command support</p>
+<p>SBE sends passthrough command. We have to capture this interrupt and
+send event to HBRT via opal-prd (user space daemon).</p>
+</li>
+<li><p>opal-prd: hook up reset_pm_complex</p>
+<p>This change provides the facility to invoke HBRT’s reset_pm_complex, in
+the same manner is done with process_occ_reset previously.</p>
+<p>We add a control command for <cite>opal-prd pm-complex reset</cite>, which is just
+an alias for occ_reset at this stage.</p>
+</li>
+<li><p>prd: Implement firmware side of opaque PRD channel</p>
+<p>This change introduces the firmware side of the opaque HBRT &lt;–&gt; OPAL
+message channel. We define a base message format to be shared with HBRT
+(in include/prd-fw-msg.h), and allow firmware requests and responses to
+be sent over this channel.</p>
+<p>We don’t currently have any notifications defined, so have nothing to do
+for firmware_notify() at this stage.</p>
+</li>
+<li><p>opal-prd: Add firmware_request &amp; firmware_notify implementations</p>
+<p>This change adds the implementation of firmware_request() and
+firmware_notify(). To do this, we need to add a message queue, so that
+we can properly handle out-of-order messages coming from firmware.</p>
+</li>
+<li><p>opal-prd: Add support for variable-sized messages</p>
+<p>With the introductuion of the opaque firmware channel, we want to
+support variable-sized messages. Rather than expecting to read an
+entire ‘struct opal_prd_msg’ in one read() call, we can split this
+over mutiple reads, potentially expanding our message buffer.</p>
+</li>
+<li><p>opal-prd: Sync hostboot interfaces with HBRT</p>
+<p>This change adds new callbacks defined for p9, and the base thunks for
+the added calls.</p>
+</li>
+<li><p>opal-prd: interpret log level prefixes from HBRT</p>
+<p>Interpret the (optional) *_MRK log prefixes on HBRT messages, and set
+the syslog log priority to suit.</p>
+</li>
+<li><p>opal-prd: Add occ reset to usage text</p></li>
+<li><p>opal-prd: allow different chips for occ control actions</p>
+<p>The <cite>occ reset</cite> and <cite>occ error</cite> actions can both take a chip id
+argument, but we’re currently just using zero. This change changes the
+control message format to pass the chip ID from the control process to
+the opal-prd daemon.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pci-phb4">
+<h3>PCI/PHB4<a class="headerlink" href="#pci-phb4" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>phb4: Fix number of index bits in IODA tables</p>
+<p>On PHB4 the number of index bits in the IODA table address register
+was bumped to 10 bits to accomodate for 1024 MSIs and 1024 TVEs (DD2).</p>
+<p>However our macro only defined the field to be 9 bits, thus causing
+“interesting” behaviours on some systems.</p>
+</li>
+<li><p>phb4: Harden init with bad PHBs</p>
+<p>Currently if we read all 1’s from the EEH or IRQ capabilities, we end
+up train wrecking on some other random code (eg. an assert() in xive).</p>
+<p>This hardens the PHB4 code to look for these bad reads and more
+gracefully fails the init for that PHB alone.  This allows the rest of
+the system to boot and ignore those bad PHBs.</p>
+</li>
+<li><p>phb4 capi (i.e. CAPI2): Handle HMI events</p>
+<p>Find the CAPP on the chip associated with the HMI event for PHB4.
+The recovery mode (re-initialization of the capp, resume of functional
+operations) is only available with P9 DD2. A new patch will be provided
+to support this feature.</p>
+</li>
+</ul>
+<ul id="capi2-5-7-rc1-rn">
+<li><p>phb4 capi (i.e. CAPI2): Enable capi mode for PHB4</p>
+<p>Enable the Coherently attached processor interface. The PHB is used as
+a CAPI interface.
+CAPI Adapters can be connected to either PEC0 or PEC2. Single port
+CAPI adapter can be connected to either PEC0 or PEC2, but Dual-Port
+Adapter can be only connected to PEC2
+* CAPP0 attached to PHB0(PEC0 - single port)
+* CAPP1 attached to PHB3(PEC2 - single or dual port)</p>
+</li>
+<li><p>hw/phb4: Rework phb4_get_presence_state()</p>
+<p>There are two issues in current implementation: It should return errcode
+visibile to Linux, which has prefix OPAL_*. The code isn’t very obvious.</p>
+<p>This returns OPAL_HARDWARE when the PHB is broken. Otherwise, OPAL_SUCCESS
+is always returned. In the mean while, It refactors the code to make it
+obvious: OPAL_PCI_SLOT_PRESENT is returned when the presence signal (low active)
+or PCIe link is active. Otherwise, OPAL_PCI_SLOT_EMPTY is returned.</p>
+</li>
+<li><p>phb4: Error injection for config space</p>
+<p>Implement CFG (config space) error injection.</p>
+<p>This works the same as PHB3.  MMIO and DMA error injection require a
+rewrite, so they’re unsupported for now.</p>
+<p>While it’s not feature complete, this at least provides an easy way to
+inject an error that will trigger EEH.</p>
+</li>
+<li><p>phb4: Error clear implementation</p></li>
+<li><p>phb4: Mask link down errors during reset</p>
+<p>During a hot reset the PCI link will drop, so we need to mask link down
+events to prevent unnecessary errors.</p>
+</li>
+<li><p>phb4: Implement root port initialization</p>
+<p>phb4_root_port_init() was a NOP before, so fix that.</p>
+</li>
+<li><p>phb4: Complete reset implementation</p>
+<p>This implements complete reset (creset) functionality for POWER9 DD1.</p>
+<p>Only partially tested and contends with some DD1 errata, but it’s a start.</p>
+</li>
+</ul>
+<ul id="shared-slot-5-7-rc1-rn">
+<li><p>phb4: Activate shared PCI slot on witherspoon</p>
+<p>Witherspoon systems come with a ‘shared’ PCI slot: physically, it
+looks like a x16 slot, but it’s actually two x8 slots connected to two
+PHBs of two different chips. Taking advantage of it requires some
+logic on the PCI adapter. Only the Mellanox CX5 adapter is known to
+support it at the time of this writing.</p>
+<p>This patch enables support for the shared slot on witherspoon if a x16
+adapter is detected. Each x8 slot has a presence bit, so both bits
+need to be set for the activation to take place. Slot sharing is
+activated through a gpio.</p>
+<p>Note that there’s no easy way to be sure that the card is indeed a
+shared-slot compatible PCI adapter and not a normal x16 card. Plugging
+a normal x16 adapter on the shared slot should be avoided on
+witherspoon, as the link won’t train on the second slot, resulting in
+a timeout and a longer boot time. Only the first slot is usable and
+the x16 adapter will end up using only half the lines.</p>
+<p>If the PCI card plugged on the physical slot is only x8 (or less),
+then the presence bit of the second slot is not set, so this patch
+does nothing. The x8 (or less) adapter should work like on any other
+physical slot.</p>
+</li>
+<li><p>phb4: Block D-state power management on direct slots</p>
+<p>As current revisions of PHB4 don’t properly handle the resulting
+L1 link transition.</p>
+</li>
+<li><p>phb4: Call pci config filters</p></li>
+<li><p>phb4: Mask out write-1-to-clear registers in RC cfg</p>
+<p>The root complex config space only supports 4-byte accesses. Thus, when
+the client requests a smaller size write, we do a read-modify-write to
+the register.</p>
+<p>However, some register have bits defined as “write 1 to clear”.</p>
+<p>If we do a RMW cycles on such a register and such bits are 1 in the
+part that the client doesn’t intend to modify, we will accidentally
+write back those 1’s and clear the corresponding bit.</p>
+<p>This avoids it by masking out those magic bits from the “old” value
+read from the register.</p>
+</li>
+<li><p>phb4: Properly mask out link down errors during reset</p></li>
+<li><p>phb3/4: Silence a useless warning</p>
+<p>PHB’s don’t have base location codes on non-FSP systems and it’s
+normal.</p>
+</li>
+<li><p>phb4: Workaround bug in spec 053</p>
+<p>Wait for DLP PGRESET to clear <em>after</em> lifting the PCIe core reset</p>
+</li>
+<li><p>phb4: DD2.0 updates</p>
+<p>Support StoreEOI, full complements of PEs (twice as big TVT)
+and other updates.</p>
+<p>Also renumber init steps to match spec 063</p>
+</li>
+</ul>
+</div>
+<div class="section" id="npu2">
+<h3>NPU2<a class="headerlink" href="#npu2" title="Permalink to this headline">¶</a></h3>
+<p>Note that currently NPU2 support is limited to POWER9 DD1 hardware.</p>
+<ul>
+<li><p>platforms/astbmc/witherspoon.c: Add NPU2 slot mappings</p>
+<p>For NVLink2 to function PCIe devices need to be associated with the right
+NVLinks. This association is supposed to be passed down to Skiboot via HDAT but
+those fields are still not correctly filled out. To work around this we add slot
+tables for the NVLinks similar to what we have for P8+.</p>
+</li>
+<li><p>hw/npu2.c: Fix device aperture calculation</p>
+<p>The POWER9 NPU2 implements an address compression scheme to compress 56-bit P9
+physical addresses to 47-bit GPU addresses. System software needs to know both
+addresses, unfortunately the calculation of the compressed address was
+incorrect. Fix it here.</p>
+</li>
+<li><p>hw/npu2.c: Change MCD BAR allocation order</p>
+<p>MCD BARs need to be correctly aligned to the size of the region. As GPU
+memory is allocated from the top of memory down we should start allocating
+from the highest GPU memory address to the lowest to ensure correct
+alignment.</p>
+</li>
+<li><p>NPU2: Add flag to nvlink config space indicating DL reset state</p>
+<p>Device drivers need to be able to determine if the DL is out of reset or
+not so they can safely probe to see if links have already been trained.
+This patch adds a flag to the vendor specific config space indicating if
+the DL is out of reset.</p>
+</li>
+<li><p>hw/npu2.c: Hardcode MSR_SF when setting up npu XTS contexts</p>
+<p>We don’t support anything other than 64-bit mode for address translations so we
+can safely hardcode it.</p>
+</li>
+<li><p>hw/npu2-hw-procedures.c: Add nvram option to override zcal calculations</p>
+<p>In some rare cases the zcal state machine may fail and flag an error. According
+to hardware designers it is sometimes ok to ignore this failure and use nominal
+values for the calculations. In this case we add a nvram variable
+(nv_zcal_override) which will cause skiboot to ignore the failure and use the
+nominal value specified in nvram.</p>
+</li>
+<li><p>npu2: Fix npu2_{read,write}_4b()</p>
+<p>When writing or reading 4-byte values, we need to use the upper half of
+the 64-bit SCOM register.</p>
+<p>Fix npu2_{read,write}_4b() and their callers to use uint32_t, and
+appropriately shift the value being written or returned.</p>
+</li>
+<li><p>hw/npu2.c: Fix opal_npu_map_lpar to search for existing BDF</p></li>
+<li><p>hw/npu2-hw-procedures.c: Fix running of zcal procedure</p>
+<blockquote>
+<div><p>The zcal procedure should only be run once per obus (ie. once per group of 3
+links). Clean up the code and fix the potential buffer overflow due to a typo.
+Also updates the zcal settings to their proper values.</p>
+</div></blockquote>
+</li>
+<li><p>hw/npu2.c: Add memory coherence directory programming</p>
+<p>The memory coherence directory (MCD) needs to know which system memory addresses
+belong to the GPU. This amounts to setting a BAR and a size in the MCD to cover
+the addresses assigned to each of the GPUs. To ease assignment we assume GPUs
+are assigned memory in a contiguous block per chip.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="pflash-libflash">
+<h2>pflash/libflash<a class="headerlink" href="#pflash-libflash" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>libflash/libffs: Zero checksum words</p>
+<p>On writing ffs entries to flash libffs doesn’t zero checksum words
+before calculating the checksum across the entire structure. This causes
+an inaccurate calculation of the checksum as it may calculate a checksum
+on non-zero checksum bytes.</p>
+</li>
+<li><p>libffs: Fix ffs_lookup_part() return value</p>
+<p>It would return success when the part wasn’t found</p>
+</li>
+<li><p>libflash/libffs: Correctly update the actual size of the partition</p>
+<p>libffs has been updating FFS partition information in the wrong place
+which leads to incomplete erases and corruption.</p>
+</li>
+<li><p>libflash: Initialise entries list earlier</p>
+<p>In the bail-out path we call ffs_close() to tear down the partially
+initialised ffs_handle. ffs_close() expects the entries list to be
+initialised so we need to do that earlier to prevent a null pointer
+dereference.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="mbox-flash">
+<h2>mbox-flash<a class="headerlink" href="#mbox-flash" title="Permalink to this headline">¶</a></h2>
+<p>mbox-flash is the emerging standard way of talking to host PNOR flash
+on POWER9 systems.</p>
+<ul>
+<li><p>libflash/mbox-flash: Implement MARK_WRITE_ERASED mbox call</p>
+<p>Version two of the mbox-flash protocol defines a new command:
+MARK_WRITE_ERASED.</p>
+<p>This command provides a simple way to mark a region of flash as all 0xff
+without the need to go and write all 0xff. This is an optimisation as
+there is no need for an erase before a write, it is the responsibility of
+the BMC to deal with the flash correctly, however in v1 it was ambiguous
+what a client should do if the flash should be erased but not actually
+written to. This allows of a optimal path to resolve this problem.</p>
+</li>
+<li><p>libflash/mbox-flash: Update to V2 of the protocol</p>
+<p>Updated version 2 of the protocol can be found at:
+<a class="reference external" href="https://github.com/openbmc/mboxbridge/blob/master/Documentation/mbox_protocol.md">https://github.com/openbmc/mboxbridge/blob/master/Documentation/mbox_protocol.md</a></p>
+<p>This commit changes mbox-flash such that it will preferentially talk
+version 2 to any capable daemon but still remain capable of talking to
+v1 daemons.</p>
+<p>Version two changes some of the command definitions for increased
+consistency and usability.
+Version two includes more attention bits - these are now dealt with at a
+simple level.</p>
+</li>
+<li><p>libflash/mbox-flash: Implement MARK_WRITE_ERASED mbox call</p>
+<p>Version two of the mbox-flash protocol defines a new command:
+MARK_WRITE_ERASED.</p>
+<p>This command provides a simple way to mark a region of flash as all 0xff
+without the need to go and write all 0xff. This is an optimisation as
+there is no need for an erase before a write, it is the responsibility of
+the BMC to deal with the flash correctly, however in v1 it was ambiguous
+what a client should do if the flash should be erased but not actually
+written to. This allows of a optimal path to resolve this problem.</p>
+</li>
+<li><p>libflash/mbox-flash: Update to V2 of the protocol</p>
+<p>Updated version 2 of the protocol can be found at:
+<a class="reference external" href="https://github.com/openbmc/mboxbridge/blob/master/Documentation/mbox_protocol.md">https://github.com/openbmc/mboxbridge/blob/master/Documentation/mbox_protocol.md</a></p>
+<p>This commit changes mbox-flash such that it will preferentially talk
+version 2 to any capable daemon but still remain capable of talking to
+v1 daemons.</p>
+<p>Version two changes some of the command definitions for increased
+consistency and usability.
+Version two includes more attention bits - these are now dealt with at a
+simple level.</p>
+</li>
+<li><p>hw/lpc-mbox: Use message registers for interrupts</p>
+<p>Currently the BMC raises the interrupt using the BMC control register.
+It does so on all accesses to the 16 ‘data’ registers meaning that when
+the BMC only wants to set the ATTN (on which we have interrupts enabled)
+bit we will also get a control register based interrupt.</p>
+<p>The solution here is to mask that interrupt permanantly and enable
+interrupts on the protocol defined ‘response’ data byte.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="general-fixes">
+<h2>General fixes<a class="headerlink" href="#general-fixes" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Reduce log level on non-error log messages</p>
+<p>90% of what we print isn’t useful to a normal user. This
+dramatically reduces the amount of messages printed by
+OPAL in normal circumstances.</p>
+</li>
+<li><p>init: Silence messages and call ourselves “OPAL”</p></li>
+<li><p>psi: Switch to ESB mode later</p>
+<p>There’s an errata, if we switch to ESB mode before setting up
+the various ESB mode related registers, a pending interrupts
+can go wrong.</p>
+</li>
+<li><p>lpc: Enable “new” SerIRQ mode</p></li>
+<li><p>hw/ipmi/ipmi-sel: missing newline in prlog warning</p></li>
+<li><p>p8-i2c OCC lock: fix locking in p9_i2c_bus_owner_change</p></li>
+<li><p>Convert important polling loops to spin at lowest SMT priority</p>
+<p>The pattern of calling cpu_relax() inside a polling loop does
+not suit the powerpc SMT priority instructions. Prefrred is to
+set a low priority then spin until break condition is reached,
+then restore priority.</p>
+</li>
+<li><p>Improve cpu_idle when PM is disabled</p>
+<p>Split cpu_idle() into cpu_idle_delay() and cpu_idle_job() rather than
+requesting the idle type as a function argument. Have those functions
+provide a default polling (non-PM) implentation which spin at the
+lowest SMT priority.</p>
+</li>
+<li><p>core/fdt: Always add a reserve map</p>
+<p>Currently we skip adding the reserved ranges block to the generated
+FDT blob if we are excluding the root node. This can result in a DTB
+that dtc will barf on because the reserved memory ranges overlap with
+the start of the dt_struct block. As an example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ fdtdump broken.dtb -d
+/dts-v1/;
+// magic:               0xd00dfeed
+// totalsize:           0x7f3 (2035)
+// off_dt_struct:       0x30  &lt;----\
+// off_dt_strings:      0x7b8       | this is bad!
+// off_mem_rsvmap:      0x30  &lt;----/
+// version:             17
+// last_comp_version:   16
+// boot_cpuid_phys:     0x0
+// size_dt_strings:     0x3b
+// size_dt_struct:      0x788
+
+/memreserve/ 0x100000000 0x300000004;
+/memreserve/ 0x3300000001 0x169626d2c;
+/memreserve/ 0x706369652d736c6f 0x7473000000000003;
+        *continues*
+</pre></div>
+</div>
+<p>With this patch:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ fdtdump working.dtb -d
+/dts-v1/;
+// magic:               0xd00dfeed
+// totalsize:           0x803 (2051)
+// off_dt_struct:       0x40
+// off_dt_strings:      0x7c8
+// off_mem_rsvmap:      0x30
+// version:             17
+// last_comp_version:   16
+// boot_cpuid_phys:     0x0
+// size_dt_strings:     0x3b
+// size_dt_struct:      0x788
+
+// 0040: tag: 0x00000001 (FDT_BEGIN_NODE)
+/ {
+// 0048: tag: 0x00000003 (FDT_PROP)
+// 07fb: string: phandle
+// 0054: value
+    phandle = &lt;0x00000001&gt;;
+        *continues*
+</pre></div>
+</div>
+</li>
+<li><p>hw/lpc-mbox: Use message registers for interrupts</p>
+<p>Currently the BMC raises the interrupt using the BMC control register.
+It does so on all accesses to the 16 ‘data’ registers meaning that when
+the BMC only wants to set the ATTN (on which we have interrupts enabled)
+bit we will also get a control register based interrupt.</p>
+<p>The solution here is to mask that interrupt permanantly and enable
+interrupts on the protocol defined ‘response’ data byte.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pci">
+<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>pci: Wait 20ms before checking presence detect on PCIe</p>
+<p>As the PHB presence logic has a debounce timer that can take
+a while to settle.</p>
+</li>
+<li><p>phb3+iov: Fixup support for config space filters</p>
+<p>The filter should be called before the HW access and its
+return value control whether to perform the access or not</p>
+</li>
+<li><p>core/pci: Use PCI slot’s power facality in pci_enable_bridge()</p>
+<p>The current implmentation has incorrect assumptions: there is
+always a PCI slot associated with root port and PCIe switch
+downstream port and all of them are capable to change its
+power state by register PCICAP_EXP_SLOTCTL. Firstly, there
+might not a PCI slot associated with the root port or PCIe
+switch downstream port. Secondly, the power isn’t controlled
+by standard config register (PCICAP_EXP_SLOTCTL). There are
+I2C slave devices used to control the power states on Tuleta.</p>
+<p>In order to use the PCI slot’s methods to manage the power
+states, this does:</p>
+<ul class="simple">
+<li><p>Introduce PCI_SLOT_FLAG_ENFORCE, indicates the request operation
+is enforced to be applied.</p></li>
+<li><p>pci_enable_bridge() is split into 3 functions: pci_bridge_power_on()
+to power it on; pci_enable_bridge() as a place holder and
+pci_bridge_wait_link() to wait the downstream link to come up.</p></li>
+<li><p>In pci_bridge_power_on(), the PCI slot’s specific power management
+methods are used if there is a PCI slot associated with the PCIe
+switch downstream port or root port.</p></li>
+</ul>
+</li>
+<li><p>platforms/astbmc/slots.c: Allow comparison of bus numbers when matching slots</p>
+<p>When matching devices on multiple down stream PLX busses we need to compare more
+than just the device-id of the PCIe BDFN, so increase the mask to do so.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="tests-and-simulators">
+<h2>Tests and simulators<a class="headerlink" href="#tests-and-simulators" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>boot-tests: add OpenBMC support</p></li>
+<li><p>boot_test.sh: Add SMC BMC support</p>
+<p>Your BMC needs a special debug image flashed to use this, the exact
+image and methods aren’t something I can publish here, but if you work
+for IBM or SMC you can find out from the right sources.</p>
+<p>A few things are needed to move around to be able to flash to a SMC BMC.</p>
+<p>For a start, the SSH daemon will only accept connections after a special
+incantation (which I also can’t share), but you should put that in the
+~/.skiboot_boot_tests file along with some other default login information
+we don’t publicise too broadly (because Security Through Obscurity is
+<em>obviously</em> a good idea….)</p>
+<p>We also can’t just directly “ssh /bin/true”, we need an expect script,
+and we can’t scp, but we can anonymous rsync!</p>
+<p>You also need a pflash binary to copy over.</p>
+</li>
+<li><p>hdata_to_dt: Add PVR overrides to the usage text</p></li>
+<li><p>mambo: Add a reservation for the initramfs</p>
+<p>On most systems the initramfs is loaded inside the part of memory
+reserved for the OS [0x0-0x30000000] and skiboot will never touch it.
+On mambo it’s loaded at 0x80000000 and if you’re unlucky skiboot can
+allocate over the top of it and corrupt the initramfs blob.</p>
+<p>There might be the downside that the kernel cannot re-use the initramfs
+memory since it’s marked as reserved, but the kernel might also free it
+anyway.</p>
+</li>
+<li><p>mambo: Update P9 PVR to reflect Scale out 24 core chips</p>
+<p>The P9 PVR bits 48:51 don’t indicate a revision but instead different
+configurations.  From BookIV we have:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 83%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Bits</p></th>
+<th class="head"><p>Configuration</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>Scale out 12 cores</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>Scale out 24 cores</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>Scale up 12 cores</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>Scale up 24 cores</p></td>
+</tr>
+</tbody>
+</table>
+<p>Skiboot will mostly the use “Scale out 24 core” configuration
+(ie. SMT4 not SMT8) so reflect this in mambo.</p>
+</li>
+<li><p>core: Move enable_mambo_console() into chip initialisation</p>
+<p>Rather than having a wart in main_cpu_entry() that initialises the mambo
+console, we can move it into init_chips() which is where we discover that we’re
+on mambo.</p>
+</li>
+<li><p>mambo: Create multiple chips when we have multiple CPUs</p>
+<p>Currently when we boot mambo with multiple CPUs, we create multiple CPU nodes in
+the device tree, and each claims to be on a separate chip.</p>
+<p>However we don’t create multiple xscom nodes, which means skiboot only knows
+about a single chip, and all CPUs end up on it. At the moment mambo is not able
+to create multiple xscom controllers. We can create fake ones, just by faking
+the device tree up, but that seems uglier than this solution.</p>
+<p>So create a mambo-chip for each CPU other than 0, to tell skiboot we want a
+separate chip created. This then enables Linux to see multiple chips:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">smp</span><span class="p">:</span> <span class="n">Brought</span> <span class="n">up</span> <span class="mi">2</span> <span class="n">nodes</span><span class="p">,</span> <span class="mi">2</span> <span class="n">CPUs</span>
+<span class="n">numa</span><span class="p">:</span> <span class="n">Node</span> <span class="mi">0</span> <span class="n">CPUs</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">numa</span><span class="p">:</span> <span class="n">Node</span> <span class="mi">1</span> <span class="n">CPUs</span><span class="p">:</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+<li><p>chip: Add support for discovering chips on mambo</p>
+<p>Currently the only way for skiboot to discover chips is by looking for xscom
+nodes. But on mambo it’s currently not possible to create multiple xscom nodes,
+which means we can only simulate a single chip system.</p>
+<p>However it seems we can fairly cleanly add support for a special mambo chip
+node, and use that to instantiate multiple chips.</p>
+<p>Add a check in init_chip() that we’re not clobbering an already initialised
+chip, now that we have two places that initialise chips.</p>
+</li>
+<li><p>mambo: Make xscom claim to be DD 2.0</p>
+<p>In the mambo tcl we set the CPU version to DD 2.0, because mambo is not
+bug compatible with DD 1.</p>
+<p>But in xscom_read_cfam_chipid() we have a hard coded value, to work
+around the lack of the f000f register, which claims to be P9 DD 1.0.</p>
+<p>This doesn’t seem to cause crashes or anything, but at boot we do see:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>    <span class="mf">0.003893084</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">XSCOM</span><span class="p">:</span> <span class="n">chip</span> <span class="mh">0x0</span> <span class="n">at</span> <span class="mh">0x1a0000000000</span> <span class="p">[</span><span class="n">P9N</span> <span class="n">DD1</span><span class="mf">.0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>So fix it to claim that the xscom is also DD 2.0 to match the CPU.</p>
+</li>
+<li><p>mambo: Match whole string when looking up symbols with linsym/skisym</p>
+<p>linsym/skisym use a regex to match the symbol name, and accepts a
+partial match against the entry in the symbol map, which can lead to
+somewhat confusing results, eg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>systemsim % linsym early_setup
+0xc000000000027890
+systemsim % linsym early_setup$
+0xc000000000aa8054
+systemsim % linsym early_setup_secondary
+0xc000000000027890
+</pre></div>
+</div>
+<p>I don’t think that’s the behaviour we want, so append a $ to the name so
+that the symbol has to match against the whole entry, eg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">systemsim</span> <span class="o">%</span> <span class="n">linsym</span> <span class="n">early_setup</span>
+<span class="mh">0xc000000000aa8054</span>
+</pre></div>
+</div>
+</li>
+<li><p>Disable nap on P8 Mambo, public release has bugs</p></li>
+<li><p>mambo: Allow loading multiple CPIOs</p>
+<p>Currently we have support for loading a single CPIO and telling Linux to
+use it as the initrd. But the Linux code actually supports having
+multiple CPIOs contiguously in memory, between initrd-start and end, and
+will unpack them all in order. That is a really nice feature as it means
+you can have a base CPIO with your root filesystem, and then tack on
+others as you need for various tests etc.</p>
+<p>So expand the logic to handle SKIBOOT_INITRD, and treat it as a comma
+separated list of CPIOs to load. I chose comma as it’s fairly rare in
+filenames, but we could make it space, colon, whatever. Or we could add
+a new environment variable entirely. The code also supports trimming
+whitespace from the values, so you can have “cpio1, cpio2”.</p>
+</li>
+<li><p>hdata/test: Add memory reservations to hdata_to_dt</p>
+<p>Currently memory reservations are parsed, but since they are not
+processed until mem_region_init() they don’t appear in the output
+device tree blob. Several bugs have been found with memory reservations
+so we want them to be part of the test output.</p>
+<p>Add them and clean up several usages of printf() since we want only the
+dtb to appear in standard out.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="ibm-fsp-systems">
+<h2>IBM FSP systems<a class="headerlink" href="#ibm-fsp-systems" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>FSP/CONSOLE: Fix possible NULL dereference</p></li>
+<li><p>platforms/ibm-fsp/firenze: Fix PCI slot power-off pattern</p>
+<p>When powering off the PCI slot, the corresponding bits should
+be set to 0bxx00xx00 instead of 0bxx11xx11. Otherwise, the
+specified PCI slot can’t be put into power-off state. Fortunately,
+it didn’t introduce any side-effects so far.</p>
+</li>
+<li><p>FSP/CONSOLE: Workaround for unresponsive ipmi daemon</p>
+<p>We use TCE mapped area to write data to console. Console header
+(fsp_serbuf_hdr) is modified by both FSP and OPAL (OPAL updates
+next_in pointer in fsp_serbuf_hdr and FSP updates next_out pointer).</p>
+<p>Kernel makes opal_console_write() OPAL call to write data to console.
+OPAL write data to TCE mapped area and sends MBOX command to FSP.
+If our console becomes full and we have data to write to console,
+we keep on waiting until FSP reads data.</p>
+<p>In some corner cases, where FSP is active but not responding to
+console MBOX message (due to buggy IPMI) and we have heavy console
+write happening from kernel, then eventually our console buffer
+becomes full. At this point OPAL starts sending OPAL_BUSY_EVENT to
+kernel. Kernel will keep on retrying. This is creating kernel soft
+lockups. In some extreme case when every CPU is trying to write to
+console, user will not be able to ssh and thinks system is hang.</p>
+<p>If we reset FSP or restart IPMI daemon on FSP, system recovers and
+everything becomes normal.</p>
+<p>This patch adds workaround to above issue by returning OPAL_HARDWARE
+when cosole is full. Side effect of this patch is, we may endup dropping
+latest console data. But better to drop console data than system hang.</p>
+</li>
+<li><p>FSP: Set status field in response message for timed out message</p>
+<p>For timed out FSP messages, we set message status as “fsp_msg_timeout”.
+But most FSP driver users (like surviellance) are ignoring this field.
+They always look for FSP returned status value in callback function
+(second byte in word1). So we endup treating timed out message as success
+response from FSP.</p>
+<p>Sample output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mf">69902.432509048</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">SURV</span><span class="p">:</span> <span class="n">Sending</span> <span class="n">the</span> <span class="n">heartbeat</span> <span class="n">command</span> <span class="n">to</span> <span class="n">FSP</span>
+<span class="p">[</span><span class="mf">70023.226860117</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">Response</span> <span class="kn">from</span> <span class="nn">FSP</span> <span class="n">timed</span> <span class="n">out</span><span class="p">,</span> <span class="n">word0</span> <span class="o">=</span> <span class="n">d66a00d7</span><span class="p">,</span> <span class="n">word1</span> <span class="o">=</span> <span class="mi">0</span> <span class="n">state</span><span class="p">:</span> <span class="mi">3</span>
+<span class="o">....</span>
+<span class="p">[</span><span class="mf">70023.226901445</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">SURV</span><span class="p">:</span> <span class="n">Received</span> <span class="n">heartbeat</span> <span class="n">acknowledge</span> <span class="kn">from</span> <span class="nn">FSP</span>
+<span class="p">[</span><span class="mf">70023.226903251</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">fsp_trigger_reset</span><span class="p">()</span> <span class="n">entry</span>
+</pre></div>
+</div>
+<p>Here SURV code thought it got valid response from FSP. But actually we didn’t
+receive response from FSP.</p>
+<p>This patch fixes above issue by updating status field in response structure.</p>
+</li>
+<li><p>FSP: Improve timeout message</p></li>
+<li><p>FSP/RTC: Fix possible FSP R/R issue in rtc write path</p></li>
+<li><p>hw/fsp/rtc: read/write cached rtc tod on fsp hir.</p>
+<p>Currently fsp-rtc reads/writes the cached RTC TOD on an fsp
+reset. Use latest fsp_in_rr() function to properly read the cached rtc
+value when fsp reset initiated by the hir.</p>
+<p>Below is the kernel trace when we set hw clock, when hir process starts.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mf">1727.775824</span><span class="p">]</span> <span class="n">NMI</span> <span class="n">watchdog</span><span class="p">:</span> <span class="n">BUG</span><span class="p">:</span> <span class="n">soft</span> <span class="n">lockup</span> <span class="o">-</span> <span class="n">CPU</span><span class="c1">#57 stuck for 23s! [hwclock:7688]</span>
+<span class="p">[</span> <span class="mf">1727.775856</span><span class="p">]</span> <span class="n">Modules</span> <span class="n">linked</span> <span class="ow">in</span><span class="p">:</span> <span class="n">vmx_crypto</span> <span class="n">ibmpowernv</span> <span class="n">ipmi_powernv</span> <span class="n">uio_pdrv_genirq</span> <span class="n">ipmi_devintf</span> <span class="n">powernv_op_panel</span> <span class="n">uio</span> <span class="n">ipmi_msghandler</span> <span class="n">powernv_rng</span> <span class="n">leds_powernv</span> <span class="n">ip_tables</span> <span class="n">x_tables</span> <span class="n">autofs4</span> <span class="n">ses</span> <span class="n">enclosure</span> <span class="n">scsi_transport_sas</span> <span class="n">crc32c_vpmsum</span> <span class="n">lpfc</span> <span class="n">ipr</span> <span class="n">tg3</span> <span class="n">scsi_transport_fc</span>
+<span class="p">[</span> <span class="mf">1727.775883</span><span class="p">]</span> <span class="n">CPU</span><span class="p">:</span> <span class="mi">57</span> <span class="n">PID</span><span class="p">:</span> <span class="mi">7688</span> <span class="n">Comm</span><span class="p">:</span> <span class="n">hwclock</span> <span class="n">Not</span> <span class="n">tainted</span> <span class="mf">4.10.0</span><span class="o">-</span><span class="mi">14</span><span class="o">-</span><span class="n">generic</span> <span class="c1">#16-Ubuntu</span>
+<span class="p">[</span> <span class="mf">1727.775883</span><span class="p">]</span> <span class="n">task</span><span class="p">:</span> <span class="n">c000000fdfdc8400</span> <span class="n">task</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span> <span class="n">c000000fdfef4000</span>
+<span class="p">[</span> <span class="mf">1727.775884</span><span class="p">]</span> <span class="n">NIP</span><span class="p">:</span> <span class="n">c00000000090540c</span> <span class="n">LR</span><span class="p">:</span> <span class="n">c0000000000846f4</span> <span class="n">CTR</span><span class="p">:</span> <span class="mi">000000003006</span><span class="n">dd70</span>
+<span class="p">[</span> <span class="mf">1727.775885</span><span class="p">]</span> <span class="n">REGS</span><span class="p">:</span> <span class="n">c000000fdfef79a0</span> <span class="n">TRAP</span><span class="p">:</span> <span class="mi">0901</span>   <span class="n">Not</span> <span class="n">tainted</span>  <span class="p">(</span><span class="mf">4.10.0</span><span class="o">-</span><span class="mi">14</span><span class="o">-</span><span class="n">generic</span><span class="p">)</span>
+<span class="p">[</span> <span class="mf">1727.775886</span><span class="p">]</span> <span class="n">MSR</span><span class="p">:</span> <span class="mi">9000000000009033</span> <span class="o">&lt;</span><span class="n">SF</span><span class="p">,</span><span class="n">HV</span><span class="p">,</span><span class="n">EE</span><span class="p">,</span><span class="n">ME</span><span class="p">,</span><span class="n">IR</span><span class="p">,</span><span class="n">DR</span><span class="p">,</span><span class="n">RI</span><span class="p">,</span><span class="n">LE</span><span class="o">&gt;</span>
+<span class="p">[</span> <span class="mf">1727.775889</span><span class="p">]</span>   <span class="n">CR</span><span class="p">:</span> <span class="mi">28024442</span>  <span class="n">XER</span><span class="p">:</span> <span class="mi">20000000</span>
+<span class="p">[</span> <span class="mf">1727.775890</span><span class="p">]</span> <span class="n">CFAR</span><span class="p">:</span> <span class="n">c00000000008472c</span> <span class="n">SOFTE</span><span class="p">:</span> <span class="mi">1</span>
+               <span class="n">GPR00</span><span class="p">:</span> <span class="mi">0000000030005128</span> <span class="n">c000000fdfef7c20</span> <span class="n">c00000000144c900</span> <span class="n">fffffffffffffff4</span>
+               <span class="n">GPR04</span><span class="p">:</span> <span class="mi">0000000028024442</span> <span class="n">c00000000090540c</span> <span class="mi">9000000000009033</span> <span class="mi">0000000000000000</span>
+               <span class="n">GPR08</span><span class="p">:</span> <span class="mi">0000000000000000</span> <span class="mi">0000000031</span><span class="n">fc4000</span> <span class="n">c000000000084710</span> <span class="mi">9000000000001003</span>
+               <span class="n">GPR12</span><span class="p">:</span> <span class="n">c0000000000846e8</span> <span class="n">c00000000fba0100</span>
+<span class="p">[</span> <span class="mf">1727.775897</span><span class="p">]</span> <span class="n">NIP</span> <span class="p">[</span><span class="n">c00000000090540c</span><span class="p">]</span> <span class="n">opal_set_rtc_time</span><span class="o">+</span><span class="mh">0x4c</span><span class="o">/</span><span class="mh">0xb0</span>
+<span class="p">[</span> <span class="mf">1727.775899</span><span class="p">]</span> <span class="n">LR</span> <span class="p">[</span><span class="n">c0000000000846f4</span><span class="p">]</span> <span class="n">opal_return</span><span class="o">+</span><span class="mh">0xc</span><span class="o">/</span><span class="mh">0x48</span>
+<span class="p">[</span> <span class="mf">1727.775899</span><span class="p">]</span> <span class="n">Call</span> <span class="n">Trace</span><span class="p">:</span>
+<span class="p">[</span> <span class="mf">1727.775900</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7c20</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000090540c</span><span class="p">]</span> <span class="n">opal_set_rtc_time</span><span class="o">+</span><span class="mh">0x4c</span><span class="o">/</span><span class="mh">0xb0</span> <span class="p">(</span><span class="n">unreliable</span><span class="p">)</span>
+<span class="p">[</span> <span class="mf">1727.775901</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7c60</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000000900828</span><span class="p">]</span> <span class="n">rtc_set_time</span><span class="o">+</span><span class="mh">0xb8</span><span class="o">/</span><span class="mh">0x1b0</span>
+<span class="p">[</span> <span class="mf">1727.775903</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7ca0</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000000902364</span><span class="p">]</span> <span class="n">rtc_dev_ioctl</span><span class="o">+</span><span class="mh">0x454</span><span class="o">/</span><span class="mh">0x630</span>
+<span class="p">[</span> <span class="mf">1727.775904</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7d40</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000035b1f4</span><span class="p">]</span> <span class="n">do_vfs_ioctl</span><span class="o">+</span><span class="mh">0xd4</span><span class="o">/</span><span class="mh">0x8c0</span>
+<span class="p">[</span> <span class="mf">1727.775906</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7de0</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000035bab4</span><span class="p">]</span> <span class="n">SyS_ioctl</span><span class="o">+</span><span class="mh">0xd4</span><span class="o">/</span><span class="mh">0xf0</span>
+<span class="p">[</span> <span class="mf">1727.775907</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7e30</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000000b184</span><span class="p">]</span> <span class="n">system_call</span><span class="o">+</span><span class="mh">0x38</span><span class="o">/</span><span class="mh">0xe0</span>
+<span class="p">[</span> <span class="mf">1727.775908</span><span class="p">]</span> <span class="n">Instruction</span> <span class="n">dump</span><span class="p">:</span>
+<span class="p">[</span> <span class="mf">1727.775909</span><span class="p">]</span> <span class="n">f821ffc1</span> <span class="mi">39200000</span> <span class="mi">7</span><span class="n">c832378</span> <span class="mi">91210028</span> <span class="mi">38</span><span class="n">a10020</span> <span class="mi">39200000</span> <span class="mi">38810028</span> <span class="n">f9210020</span>
+<span class="p">[</span> <span class="mf">1727.775911</span><span class="p">]</span> <span class="mi">4</span><span class="n">bfffe6d</span> <span class="n">e8810020</span> <span class="mi">80610028</span> <span class="mi">4</span><span class="n">b77f61d</span> <span class="o">&lt;</span><span class="mi">60000000</span><span class="o">&gt;</span> <span class="mi">7</span><span class="n">c7f1b78</span> <span class="mi">3860000</span><span class="n">a</span> <span class="mi">2</span><span class="n">fbffff4</span>
+</pre></div>
+</div>
+<p>This is found when executing the testcase
+<a class="reference external" href="https://github.com/open-power/op-test-framework/blob/master/testcases/fspresetReload.py">https://github.com/open-power/op-test-framework/blob/master/testcases/fspresetReload.py</a></p>
+<p>With this fix ran fsp hir torture testcase in the above test
+which is working fine.</p>
+</li>
+<li><p>occ: Set return variable to correct value</p>
+<p>When entering this section of code rc will be zero. If fsp_mkmsg() fails
+the code responsible for printing an error message won’t be set.
+Resetting rc should allow for the error case to trigger if fsp_mkmsg
+fails.</p>
+</li>
+<li><p>capp: Fix hang when CAPP microcode LID is missing on FSP machine</p>
+<p>When the LID is absent, we fail early with an error from
+start_preload_resource. In that case, capp_ucode_info.load_result
+isn’t set properly causing a subsequent capp_lid_download() to
+call wait_for_resource_loaded() on something that isn’t being
+loaded, thus hanging.</p>
+</li>
+<li><p>FSP: Add check to detect FSP R/R inside fsp_sync_msg()</p>
+<p>OPAL sends MBOX message to FSP and updates message state from fsp_msg_queued
+-&gt; fsp_msg_sent. fsp_sync_msg() queues message and waits until we get response
+from FSP. During FSP R/R we move outstanding MBOX messages from msgq to rr_queue
+including inflight message (fsp_reset_cmdclass()). But we are not resetting
+inflight message state.</p>
+<p>In extreme croner case where we sent message to FSP via fsp_sync_msg() path
+and FSP R/R happens before getting respose from FSP, then we will endup waiting
+in fsp_sync_msg() until everything becomes normal.</p>
+<dl class="simple">
+<dt>This patch adds fsp_in_rr() check to fsp_sync_msg() and return error to caller</dt><dd><p>if FSP is in R/R.</p>
+</dd>
+</dl>
+</li>
+<li><p>FSP: Add check to detect FSP R/R inside fsp_sync_msg()</p>
+<p>OPAL sends MBOX message to FSP and updates message state from fsp_msg_queued
+-&gt; fsp_msg_sent. fsp_sync_msg() queues message and waits until we get response
+from FSP. During FSP R/R we move outstanding MBOX messages from msgq to rr_queue
+including inflight message (fsp_reset_cmdclass()). But we are not resetting
+inflight message state.</p>
+<p>In extreme croner case where we sent message to FSP via fsp_sync_msg() path
+and FSP R/R happens before getting respose from FSP, then we will endup waiting
+in fsp_sync_msg() until everything becomes normal.</p>
+<dl class="simple">
+<dt>This patch adds fsp_in_rr() check to fsp_sync_msg() and return error to caller</dt><dd><p>if FSP is in R/R.</p>
+</dd>
+</dl>
+</li>
+<li><p>capp: Fix hang when CAPP microcode LID is missing on FSP machine</p>
+<p>When the LID is absent, we fail early with an error from
+start_preload_resource. In that case, capp_ucode_info.load_result
+isn’t set properly causing a subsequent capp_lid_download() to
+call wait_for_resource_loaded() on something that isn’t being
+loaded, thus hanging.</p>
+</li>
+<li><p>FSP/CONSOLE: Do not free fsp_msg in error path</p>
+<p>as we reuse same msg to send next output message.</p>
+</li>
+<li><p>platform/zz: Acknowledge OCC_LOAD mbox message in ZZ</p>
+<p>In P9 FSP box, OCC image is pre-loaded. So do not handle the load
+command and send SUCCESS to FSP on recieving OCC_LOAD mbox message.</p>
+</li>
+<li><p>FSP/RTC: Improve error log</p></li>
+</ul>
+</div>
+<div class="section" id="astbmc-systems">
+<h2>astbmc systems<a class="headerlink" href="#astbmc-systems" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>platforms/astbmc: Don’t validate model on palmetto</p>
+<p>The platform isn’t compatible with palmetto until the root device-tree
+node’s “model” property is NULL or “palmetto”. However, we could have
+“TN71-BP012” for the property on palmetto.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">linux</span><span class="c1"># cat /proc/device-tree/model</span>
+<span class="n">TN71</span><span class="o">-</span><span class="n">BP012</span>
+</pre></div>
+</div>
+<p>This skips the validation on root device-tree node’s “model” property
+on palmetto, meaning we check the “compatible” property only.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.7-rc1</a><ul>
+<li><a class="reference internal" href="#new-features">New Features</a></li>
+<li><a class="reference internal" href="#power9">POWER9</a><ul>
+<li><a class="reference internal" href="#occ-power-management">OCC/Power Management</a></li>
+<li><a class="reference internal" href="#opal-prd-prd">opal-prd/PRD</a></li>
+<li><a class="reference internal" href="#pci-phb4">PCI/PHB4</a></li>
+<li><a class="reference internal" href="#npu2">NPU2</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pflash-libflash">pflash/libflash</a></li>
+<li><a class="reference internal" href="#mbox-flash">mbox-flash</a></li>
+<li><a class="reference internal" href="#general-fixes">General fixes</a></li>
+<li><a class="reference internal" href="#pci">PCI</a></li>
+<li><a class="reference internal" href="#tests-and-simulators">Tests and simulators</a></li>
+<li><a class="reference internal" href="#ibm-fsp-systems">IBM FSP systems</a></li>
+<li><a class="reference internal" href="#astbmc-systems">astbmc systems</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.7.html"
+                        title="previous chapter">skiboot-5.7</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.7-rc2.html"
+                        title="next chapter">skiboot-5.7-rc2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.7-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.7-rc2.html" title="skiboot-5.7-rc2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.7.html" title="skiboot-5.7"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.7-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

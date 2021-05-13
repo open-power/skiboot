@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sysparams &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ibm,secureboot" href="../ibm%2Csecureboot.html" />
+    <link rel="prev" title="ibm,opal/sensors/ device tree nodes" href="sensors.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../ibm%2Csecureboot.html" title="ibm,secureboot"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sensors.html" title="ibm,opal/sensors/ device tree nodes"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" accesskey="U">ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">sysparams</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sysparams">
+<span id="device-tree-ibm-opal-sysparams"></span><h1>sysparams<a class="headerlink" href="#sysparams" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* System parameter permission */</span>
+<span class="k">enum</span> <span class="n">OpalSysparamPerm</span> <span class="p">{</span>
+     <span class="n">OPAL_SYSPARAM_READ</span>  <span class="o">=</span> <span class="mh">0x1</span><span class="p">,</span>
+     <span class="n">OPAL_SYSPARAM_WRITE</span> <span class="o">=</span> <span class="mh">0x2</span><span class="p">,</span>
+     <span class="n">OPAL_SYSPARAM_RW</span>    <span class="o">=</span> <span class="p">(</span><span class="n">OPAL_SYSPARAM_READ</span> <span class="o">|</span> <span class="n">OPAL_SYSPARAM_WRITE</span><span class="p">),</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">sysparams</span> <span class="p">{</span>
+             <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-sysparams&quot;</span><span class="p">;</span>
+             <span class="nf">param-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0xf0000001</span> <span class="mh">0xf0000003</span> <span class="mh">0xf0000012</span> <span class="mh">0xf0000016</span> <span class="mh">0xf000001d</span> <span class="mh">0xf0000023</span> <span class="mh">0xf0000024</span> <span class="mh">0xf0000025</span> <span class="mh">0xf0000026</span> <span class="mh">0xf0000027</span><span class="p">&gt;;</span>
+             <span class="nf">param-name</span> <span class="o">=</span> <span class="s">&quot;surveillance&quot;, &quot;hmc-management&quot;, &quot;cupd-policy&quot;, &quot;plat-hmc-managed&quot;, &quot;fw-license-policy&quot;, &quot;world-wide-port-num&quot;, &quot;default-boot-device&quot;, &quot;next-boot-device&quot;, &quot;console-select&quot;, &quot;boot-device-path&quot;</span><span class="p">;</span>
+             <span class="nf">param-perm</span> <span class="o">=</span> <span class="p">[</span><span class="mo">03</span> <span class="mo">01</span> <span class="mo">03</span> <span class="mo">03</span> <span class="mo">03</span> <span class="mo">02</span> <span class="mo">03</span> <span class="mo">03</span> <span class="mo">03</span> <span class="mo">03</span><span class="p">];</span>
+             <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000032</span><span class="p">&gt;;</span>
+             <span class="nf">param-len</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4</span> <span class="mh">0x4</span> <span class="mh">0x4</span> <span class="mh">0x4</span> <span class="mh">0x4</span> <span class="mh">0xc</span> <span class="mh">0x1</span> <span class="mh">0x1</span> <span class="mh">0x1</span> <span class="mh">0x30</span><span class="p">&gt;;</span>
+             <span class="nf">linux,phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000032</span><span class="p">&gt;;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Device tree node for system parameters accessible through the
+<a class="reference internal" href="../../opal-api/opal-param-89-90.html#opal-sysparams"><span class="std std-ref">Get/Set System Parameters</span></a> calls <a class="reference internal" href="../../opal-api/opal-param-89-90.html#opal-get-param"><span class="std std-ref">OPAL_GET_PARAM</span></a> and <a class="reference internal" href="../../opal-api/opal-param-89-90.html#opal-set-param"><span class="std std-ref">OPAL_SET_PARAM</span></a>.</p>
+<p>While many systems and platforms will support parameters and configuration via
+either nvram or over IPMI, some platforms may have parameters that need to be
+set a different way.</p>
+<p>Some parameters may be set Read Only, so the <cite>param-perm</cite> property indicates
+permissions.</p>
+<p>Currently, this is only something that exists on FSP based systems.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sensors.html"
+                        title="previous chapter">ibm,opal/sensors/ device tree nodes</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../ibm%2Csecureboot.html"
+                        title="next chapter">ibm,secureboot</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/device-tree/ibm,opal/sysparams.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../ibm%2Csecureboot.html" title="ibm,secureboot"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sensors.html" title="ibm,opal/sensors/ device tree nodes"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">sysparams</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

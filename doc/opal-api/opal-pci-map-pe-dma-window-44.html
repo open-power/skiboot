@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_MAP_PE_DMA_WINDOW &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_MAP_PE_DMA_WINDOW_REAL" href="opal-pci-map-pe-dma-window-real-45.html" />
+    <link rel="prev" title="OPAL_PCI_GET_PBCQ_TUNNEL_BAR" href="opal-pci-get-set-pbcq-tunnel-bar-164-165.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-map-pe-dma-window-real-45.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW_REAL"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-get-set-pbcq-tunnel-bar-164-165.html" title="OPAL_PCI_GET_PBCQ_TUNNEL_BAR"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_DMA_WINDOW</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-map-pe-dma-window">
+<span id="id1"></span><h1>OPAL_PCI_MAP_PE_DMA_WINDOW<a class="headerlink" href="#opal-pci-map-pe-dma-window" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_MAP_PE_DMA_WINDOW           44</span>
+
+<span class="k">static</span> <span class="kt">int64_t</span> <span class="nf">opal_pci_map_pe_dma_window</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
+                                          <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span>
+                                          <span class="kt">uint16_t</span> <span class="n">window_id</span><span class="p">,</span>
+                                          <span class="kt">uint16_t</span> <span class="n">tce_levels</span><span class="p">,</span>
+                                          <span class="kt">uint64_t</span> <span class="n">tce_table_addr</span><span class="p">,</span>
+                                          <span class="kt">uint64_t</span> <span class="n">tce_table_size</span><span class="p">,</span>
+                                          <span class="kt">uint64_t</span> <span class="n">tce_page_size</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><strong>WARNING:</strong> following documentation is from old sources, and is possibly
+not representative of OPALv3 as implemented by skiboot. This should be
+used as a starting point for full documentation.</p>
+<p>The host calls this function to create a DMA window and map it to a PE. This
+call returns the address in PCI memory that corresponds to the specified DMA
+window, which in part may depend on the particular PHB DMA window used. An
+address that is all zeros in the upper 32 bits reflects a DMA window enabled
+for 32-bit DMA addresses.</p>
+<p>The overall size of the DMA window in PCI memory is determined by the number
+of tce_levels times the tce_table_size times the tce_page_size.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>is the value from the PHB node <code class="docutils literal notranslate"><span class="pre">ibm,opal-phbid</span></code> property.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dma_window_number</span></code></dt><dd><p>specifies the DMA window</p>
+</dd>
+</dl>
+<p>For ibm,opal-ioda PHBs the dma_window_number is an index from 0 to the PHB
+total number of windows minus 1. For ibm,opal-ioda2 PHBs the DMA window_number
+is an index from 0 to n-1, where n is the number of windows per window set,
+within the window set associated with the specified PE number.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">pe_number</span></code></dt><dd><p>is the index of the PE that is authorized to DMA to this window
+address space in PCI memory,</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tce_levels</span></code></dt><dd><p>is the number of TCE table levels in the translation hiearchy,
+from 1 to ibm,opal-dmawins property &lt;translation levels&gt;.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tce_table_addr</span></code></dt><dd><p>is the 64-bit system real address of the first level (root,
+for mult-level) TCE table in the translation hiearchy.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tce_table_size</span></code></dt><dd><p>is the size, in bytes, of each TCE table in the translation
+hierarchy. A value of ‘0’ indicates to disable this DMA window.</p>
+</dd>
+</dl>
+<p>For ibm,opal-ioda, this must be a value in the range from
+128MB / tce_page_size to 256TB / tce_page_size, and must be in the format and
+matching a value in the tce_table ranges property that is minimally 256KB for
+4K pages.</p>
+<p>A particular PE may be mapped to multiple DMA windows, each spanning a DMA
+window size corresponding to the win_size32 or win_size_64 specified in the
+ibm,opal-dmawins&lt;&gt; property. However, the TCE table base address must be
+unique for each window unless it is intended that the same page address in
+each DMA window is mapped through the same TCE table entry. Generally, when
+mapping the same PE to multiple DMA windows, so as to create a larger overall
+DMA window, it is recommended to use consecutive DMA windows and each DMA
+window should use a TCE table address that is offset by the win_size value of
+predecessor DMA window.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">tce_page_size</span></code></dt><dd><p>is the size of PCI memory pages mapped to system real pages
+through all TCE tables in the translation hierarchy. This must be the
+same format as and match a value from the ibm,opal-dmawins property
+&lt;dma-page-sizes&gt;. This page size applies to all TCE tables in the
+translation hierarchy.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pci_start_addr</span></code></dt><dd><p>returns the starting address in PCI memory that corresponds
+to this DMA window based on the input translation parameter values.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pci_mem_type</span></code></dt><dd><p>selects whether this DMA window should be created in 32-bit
+or 64-bit PCI memory. The input values correspond to the same PCI memory
+space locators as MMIO spaces in the ranges&lt;&gt; property – 0x2 indicated
+32-bit PCI memory and 0x3 indicates 64-bit memory.</p>
+</dd>
+</dl>
+<p>Window 0 for both ibm,opal-ioda and ibm,opal-ioda2 PHBs must be within 32-bit
+PCI memory and this call return opal_parameter for calls that specify window
+0 in 64-bit PCI memory.</p>
+<p>The DMA win_size property for 32 bit DMA windows limits the number of
+ibm,opal-ioda PHB windows that can map32-bit address space. For example, with
+a win_size_32 = 256MB, only 16 DMA windows (and therefore no more than 16
+distinct PEs) can map the 4GB of 32-bit PCI memory for DMA. OPAL does not
+police this limitation.</p>
+<p>Return value:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OPAL_PARAMETER</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">map_pe_dma_window</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OPAL_UNSUPPORTED</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-get-set-pbcq-tunnel-bar-164-165.html"
+                        title="previous chapter">OPAL_PCI_GET_PBCQ_TUNNEL_BAR</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-map-pe-dma-window-real-45.html"
+                        title="next chapter">OPAL_PCI_MAP_PE_DMA_WINDOW_REAL</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-map-pe-dma-window-44.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-map-pe-dma-window-real-45.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW_REAL"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-get-set-pbcq-tunnel-bar-164-165.html" title="OPAL_PCI_GET_PBCQ_TUNNEL_BAR"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_DMA_WINDOW</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

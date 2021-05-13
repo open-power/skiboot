@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Update on FSP based machine &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_CONFIG_CPU_IDLE_STATE" href="opal-config-cpu-idle-state-99.html" />
+    <link rel="prev" title="OPAL_CHECK_TOKEN" href="opal-check-token-80.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-config-cpu-idle-state-99.html" title="OPAL_CONFIG_CPU_IDLE_STATE"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-check-token-80.html" title="OPAL_CHECK_TOKEN"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Code Update on FSP based machine</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="code-update-on-fsp-based-machine">
+<h1>Code Update on FSP based machine<a class="headerlink" href="#code-update-on-fsp-based-machine" title="Permalink to this headline">¶</a></h1>
+<p>There are three OPAL calls for code update. These are currently only
+implemented on FSP based machines.</p>
+<div class="section" id="opal-flash-validate">
+<span id="id1"></span><h2>OPAL_FLASH_VALIDATE<a class="headerlink" href="#opal-flash-validate" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_FLASH_VALIDATE  76</span>
+
+<span class="kt">int64_t</span> <span class="nf">fsp_opal_validate_flash</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">size</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">result</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Validate new image is valid for this platform or not. We do below
+validation in OPAL:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>We do below sys parameters validation to confirm inband
+update is allowed.
+- Platform is managed by HMC or not?.
+- Code update policy (inband code update allowed?).</p></li>
+<li><p>We parse candidate image header (first 4k bytes) to perform
+below validations.
+- Image magic number.
+- Image version to confirm image is valid for this platform.</p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="input">
+<h3>Input<a class="headerlink" href="#input" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt>buffer</dt><dd><p>First 4k bytes of new image</p>
+</dd>
+<dt>size</dt><dd><p>Input buffer size</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt>buffer</dt><dd><p>Output result (current and new image version details)</p>
+</dd>
+<dt>size</dt><dd><p>Output buffer size</p>
+</dd>
+<dt>result</dt><dd><p>Token to identify what will happen if update is attempted
+See hw/fsp/fsp-codeupdate.h for token values.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="return-value">
+<h3>Return value<a class="headerlink" href="#return-value" title="Permalink to this headline">¶</a></h3>
+<p>Validation status</p>
+</div>
+</div>
+<div class="section" id="opal-flash-manage">
+<span id="id2"></span><h2>OPAL_FLASH_MANAGE<a class="headerlink" href="#opal-flash-manage" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_FLASH_MANAGE    77</span>
+
+<span class="kt">int64_t</span> <span class="nf">fsp_opal_manage_flash</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">op</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Commit/Reject image.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>We can commit new image (T -&gt; P), if system is running with T side image.</p></li>
+<li><p>We can reject T side image, if system is running with P side image.</p></li>
+</ul>
+</div></blockquote>
+<p><strong>Note:</strong> If a platform is running from a T side image when an update is to be
+applied, then the platform may automatically commit the current T side
+image to the P side to allow the new image to be updated to the
+temporary image area.</p>
+<div class="section" id="id3">
+<h3>Input<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt>op</dt><dd><p>Operation (1 : Commit /0 : Reject)</p>
+</dd>
+<dt>Return value</dt><dd><p>Commit operation status (0 : Success)</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-flash-update">
+<span id="id4"></span><h2>OPAL_FLASH_UPDATE<a class="headerlink" href="#opal-flash-update" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_FLASH_UPDATE   78</span>
+
+<span class="kt">int64_t</span> <span class="nf">fsp_opal_update_flash</span><span class="p">(</span><span class="k">struct</span> <span class="nc">opal_sg_list</span> <span class="o">*</span><span class="n">list</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Update new image. It only sets the flag, actual update happens
+during system reboot/shutdown.</p>
+<p>Host splits FW image to scatter/gather list and sends it to OPAL.
+OPAL parse the image to get indivisual LID and passes it to FSP
+via MBOX command.</p>
+<p>FW update flow :</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>if (running side == T)</dt><dd><p>Swap P &amp; T side</p>
+</dd>
+</dl>
+</li>
+<li><p>Start code update</p></li>
+<li><p>Delete T side LIDs</p></li>
+<li><p>Write LIDs</p></li>
+<li><p>Code update complete</p></li>
+<li><p>Deep IPL</p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="id5">
+<h3>Input<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt>list</dt><dd><p>Real address of image scatter/gather list of the FW image</p>
+</dd>
+<dt>Return value:</dt><dd><p>Update operation status (0: update requested)</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Code Update on FSP based machine</a><ul>
+<li><a class="reference internal" href="#opal-flash-validate">OPAL_FLASH_VALIDATE</a><ul>
+<li><a class="reference internal" href="#input">Input</a></li>
+<li><a class="reference internal" href="#output">Output</a></li>
+<li><a class="reference internal" href="#return-value">Return value</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-flash-manage">OPAL_FLASH_MANAGE</a><ul>
+<li><a class="reference internal" href="#id3">Input</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-flash-update">OPAL_FLASH_UPDATE</a><ul>
+<li><a class="reference internal" href="#id5">Input</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-check-token-80.html"
+                        title="previous chapter">OPAL_CHECK_TOKEN</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-config-cpu-idle-state-99.html"
+                        title="next chapter">OPAL_CONFIG_CPU_IDLE_STATE</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-code-update-76-77-78.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-config-cpu-idle-state-99.html" title="OPAL_CONFIG_CPU_IDLE_STATE"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-check-token-80.html" title="OPAL_CHECK_TOKEN"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Code Update on FSP based machine</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

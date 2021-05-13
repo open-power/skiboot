@@ -1,0 +1,1380 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.5.0-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.5.0-rc2" href="skiboot-5.5.0-rc2.html" />
+    <link rel="prev" title="skiboot-5.5.0" href="skiboot-5.5.0.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.5.0-rc2.html" title="skiboot-5.5.0-rc2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.5.0.html" title="skiboot-5.5.0"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-5-0-rc1">
+<span id="id1"></span><h1>skiboot-5.5.0-rc1<a class="headerlink" href="#skiboot-5-5-0-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.5.0-rc1 was released on Tuesday March 28th 2017. It is the first
+release candidate of skiboot 5.5, which will become the new stable release
+of skiboot following the 5.4 release, first released November 11th 2016.</p>
+<p>skiboot-5.5.0-rc1 contains all bug fixes as of <a class="reference internal" href="skiboot-5.4.3.html#skiboot-5-4-3"><span class="std std-ref">skiboot-5.4.3</span></a>
+and <a class="reference internal" href="skiboot-5.1.19.html#skiboot-5-1-19"><span class="std std-ref">skiboot-5.1.19</span></a> (the currently maintained stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.5.0 by April 8th, with skiboot 5.5.0
+being for all POWER8 and POWER9 platforms in op-build v1.16 (Due April 12th).
+This is a short cycle as this release is mainly targetted towards POWER9
+bringup efforts.</p>
+<p>Following skiboot-5.5.0, we will move to a regular six week release cycle,
+similar to op-build, but slightly offset to allow for a short stabilisation
+period. Expected release dates and contents are tracked using GitHub milestone
+and issues: <a class="reference external" href="https://github.com/open-power/skiboot/milestones">https://github.com/open-power/skiboot/milestones</a></p>
+<p>Over skiboot-5.4, we have the following changes:</p>
+<div class="section" id="new-platforms">
+<h2>New Platforms<a class="headerlink" href="#new-platforms" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>SuperMicro’s (SMC) P8DNU: An astbmc based POWER8 platform</p></li>
+<li><p>Add a generic platform to help with bringup of new systems.</p></li>
+<li><p>Four POWER9 based systems (NOTE: All POWER9 systems should be considered
+for bringup use only at this point):</p>
+<ul>
+<li><p>Romulus</p></li>
+<li><p>Witherspoon (a POWER9 system with NVLink2 attached GPUs)</p></li>
+<li><p>Zaius (OpenCompute platform, also known as “Barreleye 2”)</p></li>
+<li><p>ZZ (FSP based system)</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="new-features">
+<h2>New features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>System reset IPI facility and Mambo implementation
+Add an opal call <a class="reference internal" href="../opal-api/opal-signal-system-reset-145.html#opal-signal-system-reset"><span class="std std-ref">OPAL_SIGNAL_SYSTEM_RESET</span></a> which allows system reset
+exceptions to be raised on other CPUs and act as an NMI IPI. There
+is an initial simple Mambo implementation, but allowances are made
+for a more complex hardware implementation.</p>
+<p>The Mambo implementation is based on the RFC implementation for POWER8
+hardware (see <a class="reference external" href="https://patchwork.ozlabs.org/patch/694794/">https://patchwork.ozlabs.org/patch/694794/</a>) which we hope
+makes it into a future release.</p>
+<p>This implements an in-band NMI equivalent.</p>
+</li>
+<li><p>add CONTRIBUTING.md, ensuring that people new to the project have a one-stop
+place to find out how to get started.</p></li>
+<li><p>interrupts: Add optional name for OPAL interrupts</p>
+<p>This adds the infrastructure for an interrupt source to provide
+a name for an interrupt directed toward OPAL. Those names will
+be put into an “opal-interrupts-names” property which is a
+standard DT string list corresponding 1:1 with the “opal-interrupts”
+property. PSI interrupts get names, and this is visible in Linux
+through /proc/interrupts</p>
+</li>
+<li><p>platform: add OPAL_REBOOT_FULL_IPL reboot type</p>
+<p>There may be circumstances in which a user wants to force a full IPL reboot
+rather than using fast reboot. Add a new reboot type, OPAL_REBOOT_FULL_IPL,
+that disables fast reboot. On platforms which don’t support fast reboot,
+this will be equivalent to a normal reboot.</p>
+</li>
+<li><p>phb3: Trick to allow control of the PCIe link width and speed</p>
+<p>This implements a hook inside OPAL that catches 16 and 32 bit writes
+to the link status register of the PHB.</p>
+<p>It allows you to write a new speed or a new width, and OPAL will then
+cause the PHB to renegociate.</p>
+<p>Example:</p>
+<blockquote>
+<div><p>First read the link status on PHB4:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">setpci</span> <span class="o">-</span><span class="n">s</span> <span class="mi">0004</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mf">00.0</span> <span class="mh">0x5a</span><span class="o">.</span><span class="n">w</span>
+<span class="n">a103</span>
+</pre></div>
+</div>
+<p>It’s at x16 Gen3 speed (8GT/s)</p>
+<p>bits 0x0ff0 are the width and 0x000f the speed. The width can be
+1 to 16 and the speed 1 to 3 (2.5, 5 and 8GT/s)</p>
+<p>Then try to bring it down to 1x Gen1 :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">setpci</span> <span class="o">-</span><span class="n">s</span> <span class="mi">0004</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mf">00.0</span> <span class="mh">0x5a</span><span class="o">.</span><span class="n">w</span><span class="o">=</span><span class="mh">0xa011</span>
+</pre></div>
+</div>
+<p>Observe the result in the PHB:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span> <span class="c1"># lspci -s 0004:00:00.0 -vv</span>
+<span class="mi">0004</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mf">00.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">IBM</span> <span class="n">Device</span> <span class="mi">03</span><span class="n">dc</span> <span class="p">(</span><span class="n">prog</span><span class="o">-</span><span class="k">if</span> <span class="mi">00</span> <span class="p">[</span><span class="n">Normal</span> <span class="n">decode</span><span class="p">])</span>
+<span class="o">.../...</span>
+<span class="n">LnkSta</span><span class="p">:</span> <span class="n">Speed</span> <span class="mf">2.5</span><span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">,</span> <span class="n">Width</span> <span class="n">x1</span><span class="p">,</span> <span class="n">TrErr</span><span class="o">-</span> <span class="n">Train</span><span class="o">-</span> <span class="n">SlotClk</span><span class="o">-</span> <span class="n">DLActive</span><span class="o">+</span> <span class="n">BWMgmt</span><span class="o">-</span> <span class="n">ABWMgmt</span><span class="o">+</span>
+</pre></div>
+</div>
+<p>And in the device:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span> <span class="c1"># lspci -s 0004:01:00.0 -vv</span>
+<span class="o">.../...</span>
+<span class="n">LnkSta</span><span class="p">:</span> <span class="n">Speed</span> <span class="mf">2.5</span><span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">,</span> <span class="n">Width</span> <span class="n">x1</span><span class="p">,</span> <span class="n">TrErr</span><span class="o">-</span> <span class="n">Train</span><span class="o">-</span> <span class="n">SlotClk</span><span class="o">+</span> <span class="n">DLActive</span><span class="o">-</span> <span class="n">BWMgmt</span><span class="o">-</span> <span class="n">ABWMgmt</span><span class="o">-</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>core/init: Add hdat-map property to OPAL node.</p>
+<p>Exports the HDAT heap to the OS. This allows the OS to view the HDAT heap
+directly.  This allows us to view the HDAT area without having to use
+getmemproc.</p>
+</li>
+<li><p>Add a generic platform: If /bmc in device tree, attempt to init one
+For the most part, this gets us somewhere on some OpenPOWER systems
+before there’s a platform file for that machine.</p>
+<p>Useful in bringup only, and marked as such with scary looking log
+messages.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="core">
+<h2>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>asm: Don’t try to set LPCR:LPES1 on P8 and P9, the bit doesn’t exist.</p></li>
+<li><p>pci: Add a framework for quirks</p>
+<p>In future we may want to be able to do fixups for specific PCI devices in
+skiboot, so add a small framework for doing this.</p>
+<p>This is not intended for the same purposes as quirks in the Linux kernel,
+as the PCI devices that quirks can match for in skiboot are not properly
+configured.  This is intended to enable having a custom path to make
+changes that don’t directly interact with the PCI device, for example
+adding device tree entries.</p>
+</li>
+<li><p>hw/slw: fix possible NULL dereference</p></li>
+<li><p>slw: Print enabled stop states on boot</p></li>
+<li><p>uart: Fix Linux pass-through policy, provide NVRAM override option</p></li>
+<li><p>libc/stdio/vsnprintf.c: add explicit fallthrough, this silences a recent
+(GCC 7.x) warning</p></li>
+<li><p>init: print the FDT blob size in decimal</p></li>
+<li><p>init: Print some more info before booting linux</p>
+<p>The kernel command line from nvram and the stdout-path are
+useful to know when debugging console related problems.</p>
+</li>
+<li><p>Makefile: Disable stack protector due to gcc problems</p>
+<p>Depending on how it was built, gcc will use the canary from a global
+(works for us) or from the TLS (doesn’t work for us and accesses
+random stuff instead).</p>
+<p>Fixing that would be tricky. There are talks of adding a gcc option
+to force use of globals, but in the meantime, disable the stack
+protector.</p>
+</li>
+<li><p>Stop using 3-operand cmp[l][i] for latest binutils
+Since a5721ba270, binutils does not support 3-operand cmp[l][i].
+This adds (previously optional) parameter L.</p></li>
+<li><p>buddy: Add a simple generic buddy allocator</p></li>
+<li><p>stack: Don’t recurse into __stack_chk_fail</p></li>
+<li><p>Makefile: Use -ffixed-r13
+We use r13 for our own stuff, make sure it’s properly fixed</p></li>
+<li><p>Always set ibm,occ-functional-state correctly</p></li>
+<li><p>psi: fix the xive registers initialization on P8, which seems to be fine
+for real HW but causes a lof of pain under qemu</p></li>
+<li><p>slw: Set PSSCR value for idle states</p></li>
+<li><p>Limit number of “Poller recursion detected” errors to display</p>
+<p>In some error conditions, we could spiral out of control on this
+and spend all of our time printing the exact same backtrace.</p>
+<p>Limit it to 16 times, because 16 is a nice number.</p>
+</li>
+<li><p>slw: do SLW timer testing while holding xscom lock</p>
+<p>We add some routines that let a caller get the xscom lock once and
+then do a bunch of xscoms while holding it.
+In some situations without this, it could take long enough to get
+the xscom lock that the 1ms timeout would expire and we’d falsely
+think the SLW timer didn’t work when in fact it did.</p>
+</li>
+<li><p>wait_for_resource_loaded: don’t needlessly sleep for 5ms</p></li>
+<li><p>run pollers in cpu_process_local_jobs() if running job synchonously</p></li>
+<li><p>fsp: Don’t recurse pollers in ibm_fsp_terminate</p></li>
+<li><p>chiptod: More hardening against -1 chip ID</p></li>
+<li><p>interrupts: Rewrite/correct doc for opal_set/get_xive</p></li>
+<li><p>cpu: Don’t enable nap mode/PM mode on non-P8</p></li>
+<li><p>platform: Call generic platform probe and init UART there</p></li>
+<li><p>psi: Don’t register more interrupts than the HW supports</p></li>
+<li><p>psi: Add DT option to disable LPC interrupts</p></li>
+</ul>
+</div>
+<div class="section" id="i2c-and-tpm">
+<h2>I2C and TPM<a class="headerlink" href="#i2c-and-tpm" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>p8i2c: Use calculated poll_interval when booting OPAL
+Otherwise we’d default to 2seconds (TIMER_POLL) during boot on
+chips with a functional i2c interrupt, leading to slow i2c
+during boot (or hitting timeouts instead).</p></li>
+<li><p>i2c: Add i2c_run_req() to crank the state machine for a request</p></li>
+<li><p>tpm_i2c_nuvoton: work out the polling time using mftb()</p></li>
+<li><p>tpm_i2c_nuvoton: handle errors after reading the tpm fifo</p></li>
+<li><p>tpm_i2c_nuvoton: cleanup variables in tpm_read_fifo()</p></li>
+<li><p>tpm_i2c_nuvoton: handle errors after writting the tpm fifo</p></li>
+<li><p>tpm_i2c_nuvoton: cleanup variables in tpm_write_fifo()</p></li>
+<li><p>tpm_i2c_nuvoton: handle errors after writing sts.commandReady in step 5</p></li>
+<li><p>tpm_i2c_nuvoton: handle errors after writing sts.go</p></li>
+<li><p>tpm_i2c_nuvoton: handle errors after checking the tpm fifo status</p></li>
+<li><p>tpm_i2c_nuvoton: return burst_count in tpm_read_burst_count()</p></li>
+<li><p>tpm_i2c_nuvoton: isolate the code that handles the TPM_TIMEOUT_D timeout</p></li>
+<li><p>tpm_i2c_nuvoton: handle errors after reading sts.commandReady</p></li>
+<li><p>tpm_i2c_nuvoton: add tpm_status_read_byte()</p></li>
+<li><p>tpm_i2c_nuvoton: add tpm_check_status()</p></li>
+<li><p>tpm_i2c_nuvoton: rename defines to shorter names</p></li>
+<li><p>tpm_i2c_interface: decouple rc from being done with i2c request</p></li>
+<li><p>tpm_i2c_interface: set timeout before each request</p></li>
+<li><p>i2c: Add nuvoton quirk, disallowing i2cdetect as it locks TPM</p>
+<p>p8-i2c reset things manually in some error conditions</p>
+</li>
+<li><p>stb: create-container and wrap skiboot in Secure/Trusted Boot container</p>
+<p>We produce <strong>UNSIGNED</strong> skiboot.lid.stb and skiboot.lid.xz.stb as build
+artifacts.</p>
+<p>These are suitable blobs for flashing onto Trusted Boot enabled op-build
+builds <em>WITH</em> the secure boot jumpers <em>ON</em> (i.e. <em>NOT</em> in secure mode).
+It’s just enough of the Secure and Trusted Boot container format to
+make Hostboot behave.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pci">
+<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>core/pci: Support SRIOV VFs</p>
+<p>Currently, skiboot can’t see SRIOV VFs. It introduces some troubles
+as I can see: The device initialization logic (phb-&gt;ops-&gt;device_init())
+isn’t applied to VFs, meaning we have to maintain same and duplicated
+mechanism in kernel for VFs only. It introduces difficulty to code
+maintaining and prone to lose sychronization.</p>
+<p>This was motivated by bug reported by Carol: The VF’s Max Payload
+Size (MPS) isn’t matched with PF’s on Mellanox’s adapter even kernel
+tried to make them same. It’s caused by readonly PCIECAP_EXP_DEVCTL
+register on VFs. The skiboot would be best place to emulate this bits
+to eliminate the gap as I can see.</p>
+<p>This supports SRIOV VFs. When the PF’s SRIOV capability is populated,
+the number of maximal VFs (struct pci_device) are instanciated, but
+but not usable yet. In the mean while, PCI config register filter is
+registered against PCIECAP_SRIOV_CTRL_VFE to capture the event of
+enabling or disabling VFs. The VFs are initialized, put into the PF’s
+children list (pd-&gt;children), populate its PCI capabilities, and
+register PCI config register filter against PCICAP_EXP_DEVCTL. The
+filter’s handler caches what is written to MPS field and returns
+the cached value on read, to eliminate the gap mentioned as above.</p>
+</li>
+<li><p>core/pci: Avoid hreset after freset</p>
+<p>Commit 5ac71c9 (“pci: Avoid hot resets at boot time”) missed to
+avoid hot reset after fundamental reset for PCIe common slots.</p>
+<p>This fixes it.</p>
+</li>
+<li><p>core/pci: Enforce polling PCIe link in hot-add path</p>
+<p>In surprise hot-add path, the power state isn’t changed on hardware.
+Instead, we set the cached power state (&#64;slot-&gt;power_state) and
+return OPAL_SUCCESS. The upper layer starts the PCI probing immediately
+when receiving OPAL_SUCCESS. However, the PCIe link behind the PCI
+slot is likely down. Nothing will be probed from the PCI slot even
+we do have PCI adpater connected to the slot.</p>
+<p>This fixes the issue by returning OPAL_ASYNC_COMPLETION to force
+upper layer to poll the PCIe link before probing the PCI devices
+behind the slot in surprise and managed hot-add paths.</p>
+</li>
+<li><dl>
+<dt>hw/phb3: fix error handling in complete reset</dt><dd><p>During a complete reset, when we get a timeout waiting for pending
+transaction in state PHB3_STATE_CRESET_WAIT_CQ, we mark the PHB as
+permanently broken.</p>
+<p>Set the state to PHB3_STATE_FENCED so that the kernel can retry the
+complete reset.</p>
+</dd>
+</dl>
+</li>
+<li><p>phb3: Lock the PHB on set_xive callbacks</p></li>
+</ul>
+</div>
+<div class="section" id="p8dnu-platform">
+<h2>p8dnu platform<a class="headerlink" href="#p8dnu-platform" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>astbmc/p8dnu: Enable PCI slot’s power supply on PEX9733 in hot-add path</p></li>
+<li><p>astbmc/p8dnu: Enable PCI slot’s power supply on PEX8718 in hot-add path</p></li>
+<li><p>core/pci: Mark broken PDC on slots without surprise hotplug capability</p>
+<p>We has to support surprise hotplug on PCI slots that don’t support
+it on hardware. So we’re fully utilizing the PCIe link state change
+event to detect the events (hot-remove and hot-add). The PDC (Presence
+Detection Change) event isn’t reliable for the purpose. For example,
+PEX8718 on superMicro’s machines.</p>
+<p>This adds another PCI slot property “ibm,slot-broken-pdc” in the
+device-tree, to indicate the PDC isn’t reliable on those (software
+claimed) surprise pluggable slots.</p>
+</li>
+<li><p>core/pci: Fix PCIe slot’s presence</p>
+<p>According to PCIe spec, the presence bit is hardcoded to 1 if PCIe
+switch downstream port doesn’t support slot capability. The register
+used for the check in pcie_slot_get_presence_state() is wrong. It
+should be PCIe capability register instead of PCIe slot capability
+register. Otherwise, we always have present bit on the PCI topology.
+The issue is found on Supermicro’s p8dtu2u machine:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="c1"># lspci -t</span>
+ <span class="o">-+-</span><span class="p">[</span><span class="mi">0022</span><span class="p">:</span><span class="mi">00</span><span class="p">]</span><span class="o">---</span><span class="mf">00.0</span><span class="o">-</span><span class="p">[</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span><span class="p">]</span><span class="o">----</span><span class="mf">00.0</span><span class="o">-</span><span class="p">[</span><span class="mi">02</span><span class="o">-</span><span class="mi">08</span><span class="p">]</span><span class="o">--+-</span><span class="mf">01.0</span><span class="o">-</span><span class="p">[</span><span class="mi">03</span><span class="p">]</span><span class="o">----</span><span class="mf">00.0</span>
+  <span class="o">|</span>                                           \<span class="o">-</span><span class="mf">02.0</span><span class="o">-</span><span class="p">[</span><span class="mi">04</span><span class="o">-</span><span class="mi">08</span><span class="p">]</span><span class="o">--</span>
+ <span class="c1"># cat /sys/bus/pci/slots/S002204/adapter</span>
+ <span class="mi">1</span>
+ <span class="c1"># lspci -vvs 0022:02:02.0</span>
+ <span class="c1"># lspci -vvs 0022:02:02.0</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">02.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">8718</span> <span class="mi">16</span><span class="o">-</span><span class="n">Lane</span><span class="p">,</span> \
+ <span class="mi">5</span><span class="o">-</span><span class="n">Port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">ab</span><span class="p">)</span> <span class="p">(</span><span class="n">prog</span><span class="o">-</span><span class="k">if</span> <span class="mi">00</span> <span class="p">[</span><span class="n">Normal</span> <span class="n">decode</span><span class="p">])</span>
+    <span class="p">:</span>
+ <span class="n">Capabilities</span><span class="p">:</span> <span class="p">[</span><span class="mi">68</span><span class="p">]</span> <span class="n">Express</span> <span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="n">Downstream</span> <span class="n">Port</span> <span class="p">(</span><span class="n">Slot</span><span class="o">+</span><span class="p">),</span> <span class="n">MSI</span> <span class="mi">00</span>
+    <span class="p">:</span>
+    <span class="n">SltSta</span><span class="p">:</span>    <span class="n">Status</span><span class="p">:</span> <span class="n">AttnBtn</span><span class="o">-</span> <span class="n">PowerFlt</span><span class="o">-</span> <span class="n">MRL</span><span class="o">-</span> <span class="n">CmdCplt</span><span class="o">-</span> <span class="n">PresDet</span><span class="o">-</span> <span class="n">Interlock</span><span class="o">-</span>
+               <span class="n">Changed</span><span class="p">:</span> <span class="n">MRL</span><span class="o">-</span> <span class="n">PresDet</span><span class="o">-</span> <span class="n">LinkState</span><span class="o">-</span>
+
+<span class="n">This</span> <span class="n">fixes</span> <span class="n">the</span> <span class="n">issue</span> <span class="n">by</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">correct</span> <span class="n">register</span> <span class="p">(</span><span class="n">PCIe</span> <span class="n">capability</span><span class="p">)</span><span class="o">.</span>
+<span class="n">Also</span><span class="p">,</span> <span class="n">the</span> <span class="n">register</span><span class="s1">&#39;s value is cached in advance as we did for slot and</span>
+<span class="n">link</span> <span class="n">capability</span><span class="o">.</span>
+</pre></div>
+</div>
+</li>
+<li><p>core/pci: More reliable way to update PCI slot power state</p>
+<p>The power control bit (SLOT_CTL, offset: PCIe cap + 0x18) isn’t
+reliable enough to reflect the PCI slot’s power state. Instead,
+the power indication bits are more reliable comparatively. This
+leads to mismatch between the cached power state and PCI slot’s
+presence state, resulting in the hotplug driver in kernel refuses
+to unplug the devices properly on the request. The issue was
+found on below NVMe card on “supermicro,p8dtu2u” machine. We don’t
+have this issue on the integrated PLX 8718 switch.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="c1"># lspci</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mf">00.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+              <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">01.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+              <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">04.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+              <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">05.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+              <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">06.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+              <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">07.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+              <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mf">00.0</span> <span class="n">Non</span><span class="o">-</span><span class="n">Volatile</span> <span class="n">memory</span> <span class="n">controller</span><span class="p">:</span> <span class="n">Device</span> <span class="mf">19e5</span><span class="p">:</span><span class="mi">0123</span> <span class="p">(</span><span class="n">rev</span> <span class="mi">45</span><span class="p">)</span>
+
+<span class="n">This</span> <span class="n">updates</span> <span class="n">the</span> <span class="n">cached</span> <span class="n">PCI</span> <span class="n">slot</span><span class="s1">&#39;s power state using the power</span>
+<span class="n">indication</span> <span class="n">bits</span> <span class="n">instead</span> <span class="n">of</span> <span class="n">power</span> <span class="n">control</span> <span class="n">bit</span><span class="p">,</span> <span class="n">to</span> <span class="n">fix</span> <span class="n">above</span> <span class="n">issue</span><span class="o">.</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>opal-prd: Direct systemd to always restart opal-prd
+Always restart the opal-prd daemon, irrespective of why it stopped.</p></li>
+<li><p>external/ffspart: Simple C program to be able to make an FFS partition</p></li>
+<li><p>getscom: Add chip info for P9.</p></li>
+<li><p>gard: Fix make dist target</p></li>
+<li><p>pflash/libflash: arch_flash_arm: Don’t assume mtd labels are short</p></li>
+</ul>
+</div>
+<div class="section" id="libffs">
+<h2>libffs<a class="headerlink" href="#libffs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>libffs: Understand how to create FFS partition TOCs and entries.</p></li>
+</ul>
+</div>
+<div class="section" id="bmc-based-systems">
+<h2>BMC Based systems<a class="headerlink" href="#bmc-based-systems" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>platforms/astbmc: Support PCI slots for palmetto</p></li>
+<li><p>habanero/slottable: Remove Network Mezz(2, 0) from PHB1.</p></li>
+<li><p>BMC/PCI: Check slot tables against detected devices
+On BMC machines, we have slot tables of built in PHBs, slots and devices
+that are physically present in the system (such as the BMC itself). We
+can use these tables to check what we <em>detected</em> against what <em>should</em>
+be in the system and throw an error if they differ.</p>
+<p>We have seen this occur a couple of times while still booting, giving the
+user just an empty petitboot screen and not much else to go on. This
+patch helps in that we get a skiboot error message, and at some point
+in the future when we pump them up to the OS we could get a big friendly
+error message telling you you’re having a bad day.</p>
+</li>
+<li><p>pci/quirk: Populate device tree for AST2400 VGA</p>
+<p>Adding these properties enables the kernel to function in the same way
+that it would if it could no longer access BMC configuration registers
+through a backdoor, which may become the default in future.</p>
+<p>The comments describe how isolating the host from the BMC could be
+achieved in skiboot, assuming all kernels that the system boots
+support this.  Isolating the BMC and the host from each other is
+important if they are owned by different parties; for example, a cloud
+provider renting machines “bare metal”.</p>
+</li>
+<li><p>astbmc/pnor: Use mbox-flash for flash accesses</p>
+<p>If the BMC is MBOX protocol aware, request flash reads/writes over the
+MBOX regs. This inits the blocklevel for pnor access with mbox-flash.</p>
+</li>
+<li><p>ast: Account for differences between 2400 vs 2500</p></li>
+<li><p>platform: set default bmc_platform
+The bmc_platform pointer is set to NULL by default and on non-AMI BMC
+platforms. As a result a few places in hw/ipmi/ipmi-sel.c will blindly
+dereference a NULL pointer.</p></li>
+</ul>
+</div>
+<div class="section" id="power9">
+<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>external: Update xscom utils for type 1 indirect accesses</p></li>
+<li><p>xscom: Harden indirect writes</p></li>
+<li><p>xscom: Add POWER9 scom reset</p></li>
+<li><p>homer : Enable HOMER region reservation for POWER9</p></li>
+<li><p>slw: Define stop idle states for P9 DD1</p></li>
+<li><p>slw: Fix parsing of supported STOP states</p></li>
+<li><p>slw: only enable supported STOP states</p></li>
+<li><p>dts: add support for p9 cores</p></li>
+<li><p>asm: Add POWER9 case to init_shared_sprs</p>
+<p>For now, setup the HID and HMEER. We’ll add more as we get
+good default values from HW.</p>
+</li>
+<li><p>xive/psi/lpc: Handle proper clearing of LPC SerIRQ latch on POWER9 DD1</p></li>
+<li><p>lpc: Mark the power9 LPC bus as compatible with power8</p></li>
+<li><p>Fix typo in PIR mask for POWER9. Fixes booting multi-chip.</p></li>
+<li><p>vpd: add vpd_valid() to check keyword VPD blobs</p>
+<p>Adds a function to check whether a blob is a valid IBM ASCII keyword
+VPD blob. This allows us to recognise when we do and do not have a VPD
+blob and act accordingly.</p>
+</li>
+<li><p>core/cpu.c: Use a device-tree node to detect nest mmu presence
+The nest mmu address scom was hardcoded which could lead to boot
+failure on POWER9 systems without a nest mmu. For example Mambo
+doesn’t model the nest mmu which results in  failure when
+calling opal_nmmu_set_ptcr() during kernel load.</p></li>
+<li><p>psi: Fix P9 BAR setup on multi-chips</p></li>
+</ul>
+<p>PHB4:</p>
+<blockquote>
+<div><ul>
+<li><p>phb4: Fix TVE encoding for start address</p></li>
+<li><p>phb4: Always assign powerbus BARs</p>
+<p>HostBoot configure them with weird values that confuse us, instead
+let’s just own the assignment. This is temporary, I will centralize
+memory map management next but this gets us going.</p>
+</li>
+<li><p>phb4: Fix endian issue with link control2/status2 registers
+Fixes training at larger than PCIe Gen1 speeds.</p></li>
+<li><p>phb4: Add ability to log config space access
+Useful for debugging</p></li>
+<li><p>phb4: Change debug prints
+Currently we print “PHB4” and mean either “PHB version 4” or “PHB
+number 4” which can be quite confusing.</p></li>
+<li><p>phb4: Fix config space enable bits on DD1</p></li>
+<li><p>phb4: Fix location of EEH enable bits</p></li>
+<li><p>phb4: Fix setting of max link speed</p></li>
+<li><p>phb4: Updated inits as of PHB4 spec 0.52</p></li>
+</ul>
+</div></blockquote>
+<p>HDAT fixes:</p>
+<blockquote>
+<div><ul>
+<li><p>hdat: Parse BMC nodes much earlier</p>
+<p>This moves the parsing of the BMC and LPC details to the start of the
+HDAT parsing. This allows us to enable the Skiboot log console earlier
+so we can get debug output while parsing the rest of the HDAT.</p>
+</li>
+<li><p>astbmc: Don’t do P8 PSI or DT fixups on P9</p>
+<p>Previously the HDAT format was only ever used with IBM hardware so it
+would store vital product data (VPD) blobs in the IBM ASCII Keyword VPD
+format. With P9 HDAT is used on OpenPower machines which use Industry
+Standard DIMMs that provide their product data through a “Serial Present
+Detect” EEPROM mounted on the DIMM.</p>
+<p>The SPD blob has a different format and is exported in the device-tree
+under the “spd” property rather than the “ibm,vpd” property. This patch
+adds support for recognising these blobs and placing them in the
+appropriate DT property.</p>
+</li>
+<li><p>hdat: Add __packed to all HDAT structures and workaround HB reserve</p>
+<p>Some HDAT structures aren’t properly aligned. We were using __packed
+on some but not others and got at least one wrong (HB reserve). This
+adds it everywhere to avoid such problems.</p>
+<p>However this then triggers another problem where HB gives us a
+crazy range (0.256M) to reserve with no label, which triggers an
+assertion failure later on in mem_regions.c.</p>
+<p>So also add a test to skip any region starting at 0 until we can
+undertand that better and have it fixed one way or another.</p>
+</li>
+<li><p>hdat: Ignore broken memory reserves</p>
+<p>Ignore HDAT memory reserves &gt; 512MB.  These are considered bogus and
+workaround known HDAT bugs.</p>
+</li>
+<li><p>hdat: Add BMC device-tree node for P9 OpenPOWER systems</p></li>
+<li><p>hdat: Fix interrupt &amp; device_type of UART node</p>
+<p>The interrupt should use a standard “interrupts” property. The UART
+node also need a device_type=”serial” property for historical reasons
+otherwise Linux won’t pick it up.</p>
+</li>
+<li><p>parse and export STOP levels</p></li>
+<li><p>add new sppcrd_chip_info fields</p></li>
+<li><p>add radix-AP-encodings</p></li>
+<li><p>stop using proc_int_line in favor of pir</p></li>
+<li><p>rename add_icp() to add_xics_icp()</p></li>
+<li><p>Add support for PHB4</p></li>
+<li><p>create XIVE nodes under each xscom node</p></li>
+<li><p>Add P9 compatible property</p></li>
+<li><p>Parse hostboot memory reservations from HDAT</p></li>
+<li><p>Add new fields to IPL params structure and update sys family for p9.</p></li>
+<li><p>Fix ibm,pa-features for all CPU types</p></li>
+<li><p>Fix XSCOM nodes for P9</p></li>
+<li><p>Remove deprecated ‘ibm, mem-interleave-scope’ from DT on POWER9</p></li>
+<li><p>Grab system model name from HDAT when available</p></li>
+<li><p>Grab vendor information from HDAT when available</p></li>
+<li><p>SPIRA-H/S changes for P9</p></li>
+<li><p>Add BMC and LPC IOPATH support</p></li>
+<li><p>handle ISDIMM SPD blobs</p></li>
+<li><p>make HDIF_child() print more useful errors</p></li>
+<li><p>Add PSI HB xscom details</p></li>
+<li><p>Add new fields to proc_init_data structure</p></li>
+<li><p>Add processor version check for hs service ntuple</p></li>
+<li><p>add_iplparams_serial - Validate HDIF_get_iarray_size() return value</p></li>
+</ul>
+</div></blockquote>
+<p>XIVE:</p>
+<p>The list of XIVE fixes and updates is extensive. Below is only a portion of
+the changes that have gone into skiboot 5.5.0-rc1 for the new XIVE hardware
+that is present in POWER9:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>xive: Enable backlog on queues</p></li>
+<li><p>xive: Use for_each_present_cpu() for setting up XIVE</p></li>
+<li><p>xive: Fix logic in opal_xive_get_xirr()</p></li>
+<li><p>xive: Properly initialize new VP and EQ structures</p></li>
+<li><p>xive: Improve/fix EOI of LSIs</p></li>
+<li><p>xive: Add FIXME comments about mask/umask races</p></li>
+<li><p>xive: Fix memory barrier in opal_xive_get_xirr()</p></li>
+<li><p>xive: Don’t try to find a target EQ for prio 0xff</p></li>
+<li><p>xive: Bump table sizes in direct mode</p></li>
+<li><p>xive: Properly register escalation interrupts</p></li>
+<li><p>xive: Split the OPAL irq flags from the internal ones</p></li>
+<li><p>xive: Don’t touch ESB masks unless masking/unmasking</p></li>
+<li><p>xive: Fix xive_get_ir_targetting()</p></li>
+<li><p>xive: Cleanup escalation PQ on queue change</p></li>
+<li><p>xive: Add <em>any chip</em> for allocating interrupts</p></li>
+<li><p>xive: Add chip_id to get_vp_info</p></li>
+<li><p>xive: Add opal_xive_get/set_vp_info</p></li>
+<li><p>xive: Add VP alloc/free OPAL functions</p></li>
+<li><p>xive: Workaround for bad DD1 checker</p></li>
+<li><p>xive: Add more checks for exploitation mode</p></li>
+<li><p>xive: Add support for EOIs via OPAL</p></li>
+<li><p>xive/phb4: Work around broken LSI control on P9 DD1</p></li>
+<li><p>xive: Forward interrupt names callback</p></li>
+<li><p>xive: Export opal_xive_reset() arguments in OPAL API</p></li>
+<li><p>xive: Add interrupt allocator</p></li>
+<li><p>xive: Implement xive_reset</p></li>
+<li><p>xive: Don’t assert if xive_get_vp() fails</p></li>
+<li><p>xive: Expose exploitation mode DT properties</p></li>
+<li><p>xive: Use a constant for max# of chips</p></li>
+<li><p>xive: Keep track of which interrupts were ever enabled
+In order to speed up xive reset</p></li>
+<li><p>xive: Implement internal VP allocator</p></li>
+<li><p>xive: Add xive_get/set_queue_info</p></li>
+<li><p>xive: Add helpers to encode and decode VP numbers</p></li>
+<li><p>xive: Add API to donate pages in indirect mode</p></li>
+<li><p>xive: Add asynchronous cache updates and update irq targetting</p></li>
+<li><p>xive: Split xive_provision_cpu() and use cache watch for VP</p></li>
+<li><p>xive: Add cache scrub to push watch updates to memory</p></li>
+<li><p>xive: Mark XIVE owned EQs with a specific flag</p></li>
+<li><p>xive: Use an allocator for EQDs</p></li>
+<li><p>xive: Break assumption that block ID == chip ID</p></li>
+<li><p>xive/phb4: Handle bad ESB offsets in PHB4 DD1</p></li>
+<li><p>xive: Implement get/set_irq_config APIs</p></li>
+<li><p>xive: Rework xive_set_eq_info() to store all info even when masking</p></li>
+<li><p>xive: Implement cache watch and use it for EQs</p></li>
+<li><p>xive: Add locking to some API calls</p></li>
+<li><p>xive: Add opal_xive_get_irq_info()</p></li>
+<li><p>xive: Add CPU node “interrupts” properties representing the IPIs</p></li>
+<li><p>xive: Add basic opal_xive_reset() call and exploitation mode</p></li>
+<li><p>xive: Add support for escalation interrupts</p></li>
+<li><p>xive: OPAL API update</p></li>
+<li><p>xive: Add some dump facility for debugging</p></li>
+<li><p>xive: Document exploitation mode
+(Pretty much work in progress)</p></li>
+<li><p>xive: Indirect table entries must have top bits “type” set</p></li>
+<li><p>xive: Remove unused field and clarify comment</p></li>
+<li><p>xive: Provide a way to override some IPI sources</p></li>
+<li><p>xive: Add helper to retrieve an IPI trigger port</p></li>
+<li><p>xive: Fix IPI EOI logic in opal_xive_eoi()</p></li>
+<li><p>xive: Don’t try to EOI a masked source</p></li>
+<li><p>xive: Fix comments in xive_source_set_xive()</p></li>
+<li><p>xive: Fix comments in xive_get_ive()</p></li>
+<li><p>xive: Configure forwarding ports</p></li>
+<li><p>xive: Fix mangling of interrupt server# in opal_get/set_xive()</p></li>
+<li><p>xive: Fix interrupt number mangling</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="fast-reboot">
+<h2>Fast-reboot<a class="headerlink" href="#fast-reboot" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>fast-reboot: creset PHBs on fast reboot
+On fast reboot, perform a creset of all PHBs. This ensures that any PHBs
+that are fenced will be working after the reboot.</p></li>
+<li><p>fast-reboot: Enable fast reboot with CAPI adapters in CAPI mode
+CAPI mode is disabled as part of OPAL_SYNC_HOST_REBOOT.</p></li>
+<li><p>opal/fast-reboot: set fw_progress sensor status with IPMI_FW_PCI_INIT.</p></li>
+</ul>
+</div>
+<div class="section" id="capi">
+<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>hmi: Print CAPP FIR information when handling CAPP malfunction alerts</p></li>
+</ul>
+</div>
+<div class="section" id="fsp-based-systems">
+<h2>FSP based systems<a class="headerlink" href="#fsp-based-systems" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>hw/fsp: Do not queue SP and SPCN class messages during reset/reload
+This could cause soft lockups if FSP reset reload was done while in OPAL
+During FSP R/R, the FSP is inaccessible and will lose state. Messages to the
+FSP are generally queued for sending later.</p></li>
+</ul>
+</div>
+<div class="section" id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><dl class="simple">
+<dt>core/test/run-trace: Reduce number of samples when running under valgrind</dt><dd><p>This reduces ‘make check’ run time by ~10 seconds on my laptop,
+and just the run-trace test itself takes 15 seconds less (under valgrind).</p>
+</dd>
+</dl>
+</li>
+<li><p>test/sreset_world: Kind of like Hello World, but from the SRESET vector.
+A regression test for the mambo implementation of OPAL_SIGNAL_SYSTEM_RESET.</p></li>
+<li><dl>
+<dt>nvram-format: Fix endian issues</dt><dd><p>NVRAM formats are always BE, so let’s use the sparse annotation to catch
+any issues (and correct said issues).</p>
+<p>On LE platforms, the test was erroneously passing as with building the
+nvram-format code on LE we were produces an incorrect NVRAM image.</p>
+</dd>
+</dl>
+</li>
+<li><p>test/hello_world: use P9MAMBO to differentiate from P8</p></li>
+<li><p>hdata_to_dt: Specify PVR on command line</p></li>
+<li><p>hdata/test: Add DTS output for the test cases</p></li>
+<li><p>hdata/test: strip blobs from the DT output</p></li>
+<li><p>mambo: add mprintf()</p>
+<blockquote>
+<div><p>mprintf() is printf(), but it goes straight to the mambo console. This
+allows it to be independent of Skiboot’s actual console infrastructure
+so it can be used for debugging the console drivers and for debugging
+code that runs before the console is setup.</p>
+</div></blockquote>
+</li>
+<li><p>generate-fwts-olog: add support for parsing prerror()</p></li>
+<li><dl class="simple">
+<dt>Add bitmap test</dt><dd><p>The worst test suite ever</p>
+</dd>
+</dl>
+</li>
+<li><p>mambo_utils: add ascii output to hexdump</p></li>
+<li><p>mambo_utils: add p_str &lt;addr&gt; [limit]</p></li>
+<li><p>mambo_utils: make p return a value</p></li>
+<li><p>hello_world: print out full path of missing MAMBO_BINARY</p></li>
+<li><p>print-stb-container: Fix build on centos7</p></li>
+<li><p>Travis-ci improvements:
+- install expect on ubuntu 12.04, disable qemu on 16.04/latest
+- build and test more on centos7
+- hello_world: run p9 mambo tests
+- install systemsim-p8 on centos7
+- install systemsim-p8 on centos6
+- install systemsim-p9
+- enable fedora25
+- always pull new docker image
+- add fedora rawhide</p></li>
+<li><p>Add fwts annotation for duplicate DT node entries.</p>
+<blockquote>
+<div><p>Reference bug: <a class="reference external" href="https://github.com/open-power/op-build/issues/751">https://github.com/open-power/op-build/issues/751</a></p>
+</div></blockquote>
+</li>
+<li><p>external/fwts: Add ‘last-tag’ to FWTS olog output
+This isn’t so useful at the moment, but this will make cleaning out
+crufty old error definitions much easier.</p></li>
+<li><p>external/fwts: Add FWTS olog merge script
+A script to merge olog error definitions from multiple skiboot versions
+into a single olog JSON file. Will prompt when conflicting patterns are
+found to update the pattern, or add both.</p></li>
+<li><p>mambo: fake NVRAM support</p></li>
+<li><p>mambo: Add Fake NVRAM driver</p></li>
+<li><p>external/mambo: add shortcut to print all GPRs</p></li>
+</ul>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<p>Processed 363 csets from 28 developers.
+A total of 18105 lines added, 16499 removed (delta 1606)</p>
+<div class="section" id="developers-with-the-most-changesets">
+<h3>Developers with the most changesets<a class="headerlink" href="#developers-with-the-most-changesets" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>138</p></td>
+<td><p>(38.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>56</p></td>
+<td><p>(15.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>47</p></td>
+<td><p>(12.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>18</p></td>
+<td><p>(5.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>15</p></td>
+<td><p>(4.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
+<td><p>14</p></td>
+<td><p>(3.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>11</p></td>
+<td><p>(3.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>11</p></td>
+<td><p>(3.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>11</p></td>
+<td><p>(3.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>5</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cédric Le Goater</p></td>
+<td><p>5</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>5</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
+<td><p>4</p></td>
+<td><p>(1.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Nicholas Piggin</p></td>
+<td><p>4</p></td>
+<td><p>(1.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>3</p></td>
+<td><p>(0.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>2</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jack Miller</p></td>
+<td><p>2</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chris Smart</p></td>
+<td><p>2</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Matt Brown</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Ellerman</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Frederic Barrat</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hank Chang</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Willie Liauw</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Werner Fischer</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Patrick Williams</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Joel Stanley</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alexey Kardashevskiy</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-changed-lines">
+<h3>Developers with the most changed lines<a class="headerlink" href="#developers-with-the-most-changed-lines" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 13%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>17961</p></td>
+<td><p>(56.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>5509</p></td>
+<td><p>(17.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>2801</p></td>
+<td><p>(8.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>1649</p></td>
+<td><p>(5.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>653</p></td>
+<td><p>(2.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
+<td><p>489</p></td>
+<td><p>(1.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Willie Liauw</p></td>
+<td><p>361</p></td>
+<td><p>(1.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>340</p></td>
+<td><p>(1.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>315</p></td>
+<td><p>(1.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>240</p></td>
+<td><p>(0.8%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
+<td><p>228</p></td>
+<td><p>(0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Nicholas Piggin</p></td>
+<td><p>219</p></td>
+<td><p>(0.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>207</p></td>
+<td><p>(0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Russell Currey</p></td>
+<td><p>158</p></td>
+<td><p>(0.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jack Miller</p></td>
+<td><p>127</p></td>
+<td><p>(0.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
+<td><p>126</p></td>
+<td><p>(0.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Chris Smart</p></td>
+<td><p>95</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hank Chang</p></td>
+<td><p>56</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>47</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>39</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Matt Brown</p></td>
+<td><p>29</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Ellerman</p></td>
+<td><p>3</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alexey Kardashevskiy</p></td>
+<td><p>2</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Frederic Barrat</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Werner Fischer</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Jeremy Kerr</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Patrick Williams</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Joel Stanley</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-lines-removed">
+<h3>Developers with the most lines removed<a class="headerlink" href="#developers-with-the-most-lines-removed" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 13%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>8810</p></td>
+<td><p>(53.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>98</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>9</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Ellerman</p></td>
+<td><p>3</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Werner Fischer</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-signoffs">
+<h3>Developers with the most signoffs<a class="headerlink" href="#developers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
+<p>Total 322</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>307</p></td>
+<td><p>(95.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>6</p></td>
+<td><p>(1.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>3</p></td>
+<td><p>(0.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>2</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hank Chang</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jack Miller</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-reviews">
+<h3>Developers with the most reviews<a class="headerlink" href="#developers-with-the-most-reviews" title="Permalink to this headline">¶</a></h3>
+<p>Total: 45</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>10</p></td>
+<td><p>(22.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>9</p></td>
+<td><p>(20.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>6</p></td>
+<td><p>(13.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
+<td><p>5</p></td>
+<td><p>(11.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>4</p></td>
+<td><p>(8.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>3</p></td>
+<td><p>(6.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>2</p></td>
+<td><p>(4.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>2</p></td>
+<td><p>(4.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Frederic Barrat</p></td>
+<td><p>2</p></td>
+<td><p>(4.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>1</p></td>
+<td><p>(2.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>1</p></td>
+<td><p>(2.2%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-test-credits">
+<h3>Developers with the most test credits<a class="headerlink" href="#developers-with-the-most-test-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 11</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Willie Liauw</p></td>
+<td><p>4</p></td>
+<td><p>(36.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
+<td><p>3</p></td>
+<td><p>(27.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>1</p></td>
+<td><p>(9.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>1</p></td>
+<td><p>(9.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1</p></td>
+<td><p>(9.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chris Smart</p></td>
+<td><p>1</p></td>
+<td><p>(9.1%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-who-gave-the-most-tested-by-credits">
+<h3>Developers who gave the most tested-by credits<a class="headerlink" href="#developers-who-gave-the-most-tested-by-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 11</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 13%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>4</p></td>
+<td><p>(36.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>4</p></td>
+<td><p>(36.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Chris Smart</p></td>
+<td><p>1</p></td>
+<td><p>(9.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
+<td><p>1</p></td>
+<td><p>(9.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>1</p></td>
+<td><p>(9.1%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-report-credits">
+<h3>Developers with the most report credits<a class="headerlink" href="#developers-with-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 7</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Hank Chang</p></td>
+<td><p>4</p></td>
+<td><p>(57.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Guilherme G. Piccoli</p></td>
+<td><p>1</p></td>
+<td><p>(14.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Colin Ian King</p></td>
+<td><p>1</p></td>
+<td><p>(14.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pradipta Ghosh</p></td>
+<td><p>1</p></td>
+<td><p>(14.3%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-who-gave-the-most-report-credits">
+<h3>Developers who gave the most report credits<a class="headerlink" href="#developers-who-gave-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 7</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>5</p></td>
+<td><p>(71.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>1</p></td>
+<td><p>(14.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>1</p></td>
+<td><p>(14.3%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.5.0-rc1</a><ul>
+<li><a class="reference internal" href="#new-platforms">New Platforms</a></li>
+<li><a class="reference internal" href="#new-features">New features</a></li>
+<li><a class="reference internal" href="#core">Core</a></li>
+<li><a class="reference internal" href="#i2c-and-tpm">I2C and TPM</a></li>
+<li><a class="reference internal" href="#pci">PCI</a></li>
+<li><a class="reference internal" href="#p8dnu-platform">p8dnu platform</a></li>
+<li><a class="reference internal" href="#utilities">Utilities</a></li>
+<li><a class="reference internal" href="#libffs">libffs</a></li>
+<li><a class="reference internal" href="#bmc-based-systems">BMC Based systems</a></li>
+<li><a class="reference internal" href="#power9">POWER9</a></li>
+<li><a class="reference internal" href="#fast-reboot">Fast-reboot</a></li>
+<li><a class="reference internal" href="#capi">CAPI</a></li>
+<li><a class="reference internal" href="#fsp-based-systems">FSP based systems</a></li>
+<li><a class="reference internal" href="#tests">Tests</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a><ul>
+<li><a class="reference internal" href="#developers-with-the-most-changesets">Developers with the most changesets</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-changed-lines">Developers with the most changed lines</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-lines-removed">Developers with the most lines removed</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-signoffs">Developers with the most signoffs</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-reviews">Developers with the most reviews</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-test-credits">Developers with the most test credits</a></li>
+<li><a class="reference internal" href="#developers-who-gave-the-most-tested-by-credits">Developers who gave the most tested-by credits</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-report-credits">Developers with the most report credits</a></li>
+<li><a class="reference internal" href="#developers-who-gave-the-most-report-credits">Developers who gave the most report credits</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.5.0.html"
+                        title="previous chapter">skiboot-5.5.0</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.5.0-rc2.html"
+                        title="next chapter">skiboot-5.5.0-rc2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.5.0-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.5.0-rc2.html" title="skiboot-5.5.0-rc2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.5.0.html" title="skiboot-5.5.0"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

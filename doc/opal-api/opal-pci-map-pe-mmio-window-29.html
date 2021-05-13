@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_MAP_PE_MMIO_WINDOW &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_MSI_EOI" href="opal-pci-msi-eoi-63.html" />
+    <link rel="prev" title="OPAL_PCI_MAP_PE_DMA_WINDOW_REAL" href="opal-pci-map-pe-dma-window-real-45.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-msi-eoi-63.html" title="OPAL_PCI_MSI_EOI"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-map-pe-dma-window-real-45.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW_REAL"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_MMIO_WINDOW</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-map-pe-mmio-window">
+<span id="id1"></span><h1>OPAL_PCI_MAP_PE_MMIO_WINDOW<a class="headerlink" href="#opal-pci-map-pe-mmio-window" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_MAP_PE_MMIO_WINDOW          29</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_map_pe_mmio_window</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
+                                    <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span>
+                                    <span class="kt">uint16_t</span> <span class="n">window_type</span><span class="p">,</span>
+                                    <span class="kt">uint16_t</span> <span class="n">window_num</span><span class="p">,</span>
+                                    <span class="kt">uint16_t</span> <span class="n">segment_num</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Appears to be POWER7 p7ioc specific. Likely to be removed soon.</p>
+</div>
+<p><strong>WARNING:</strong> following documentation is from old sources, and is possibly
+not representative of OPALv3 as implemented by skiboot. This should be
+used as a starting point for full documentation.</p>
+<p>The host calls this function to map a segment of MMIO address space to a PE.</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">window_type</span></code></dt><dd><p>specifies 32-bit or 64-bit PCI memory</p>
+<p>‘0’ selects PCI IO Space. ibm,opal-ioda2 PHBs do not support IO space,
+and OPAL returns opal_unsupported if called for IO windows.</p>
+<p>‘1’ selects 32-bit PCI memory space</p>
+<p>‘2’ selects 64 bit PCI memory space</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">window_num</span></code></dt><dd><p>is the MMIO window number within the specified PCI memory space</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">segment_num</span></code></dt><dd><p>is an index from 0 to the number of segments minus 1 defined
+or this window, and selects a particular segment within the specified
+window.</p>
+</dd>
+</dl>
+<p>Return value:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OPAL_PARAMETER</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">map_pe_mmio_window</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OPAL_UNSUPPORTED</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-map-pe-dma-window-real-45.html"
+                        title="previous chapter">OPAL_PCI_MAP_PE_DMA_WINDOW_REAL</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-msi-eoi-63.html"
+                        title="next chapter">OPAL_PCI_MSI_EOI</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-map-pe-mmio-window-29.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-msi-eoi-63.html" title="OPAL_PCI_MSI_EOI"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-map-pe-dma-window-real-45.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW_REAL"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_MMIO_WINDOW</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

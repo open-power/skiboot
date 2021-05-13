@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skiboot edk2-compatible Secure Variable Backend &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Skiboot edk2-compatible Secure Variable Backend</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-edk2-compatible-secure-variable-backend">
+<span id="secvar-edk2"></span><h1>Skiboot edk2-compatible Secure Variable Backend<a class="headerlink" href="#skiboot-edk2-compatible-secure-variable-backend" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The edk2 secure variable backend for skiboot borrows from edk2 concepts
+such as the three key hierarchy (PK, KEK, and db), and a similar
+structure. In general, variable updates must be signed with a key
+of a higher level. So, updates to the db must be signed with a key stored
+in the KEK; updates to the KEK must be signed with the PK. Updates to the
+PK must be signed with the previous PK (if any).</p>
+<p>Variables are stored in the efi signature list format, and updates are a
+signed variant that includes an authentication header.</p>
+<p>If no PK is currently enrolled, the system is considered to be in “Setup
+Mode”. Any key can be enrolled without signature checks. However, once a
+PK is enrolled, the system switches to “User Mode”, and each update must
+now be signed according to the hierarchy. Furthermore, when in “User
+Mode”, the backend initialized the <code class="docutils literal notranslate"><span class="pre">os-secure-mode</span></code> device tree flag,
+signaling to the kernel that we are in secure mode.</p>
+<p>Updates are processed sequentially, in the order that they were provided
+in the update queue. If any update fails to validate, appears to be
+malformed, or any other error occurs, NO updates will not be applied.
+This includes updates that may have successfully applied prior to the
+error. The system will continue in an error state, reporting the error
+reason via the <code class="docutils literal notranslate"><span class="pre">update-status</span></code> device tree property.</p>
+</div>
+<div class="section" id="p9-special-case-for-the-platform-key">
+<h2>P9 Special Case for the Platform Key<a class="headerlink" href="#p9-special-case-for-the-platform-key" title="Permalink to this headline">¶</a></h2>
+<p>Due to the powerful nature of the platform key and the lack of lockable
+flash, the edk2 backend will store the PK in TPM NV rather than PNOR on
+P9 systems. (TODO expand on this)</p>
+</div>
+<div class="section" id="update-status-return-codes">
+<h2>Update Status Return Codes<a class="headerlink" href="#update-status-return-codes" title="Permalink to this headline">¶</a></h2>
+<p>TODO, edk2 driver needs to actually return these properly first</p>
+</div>
+<div class="section" id="device-tree-bindings">
+<h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Skiboot edk2-compatible Secure Variable Backend</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#p9-special-case-for-the-platform-key">P9 Special Case for the Platform Key</a></li>
+<li><a class="reference internal" href="#update-status-return-codes">Update Status Return Codes</a></li>
+<li><a class="reference internal" href="#device-tree-bindings">Device Tree Bindings</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/secvar/edk2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Skiboot edk2-compatible Secure Variable Backend</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

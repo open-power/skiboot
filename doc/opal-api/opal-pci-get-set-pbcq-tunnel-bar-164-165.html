@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_GET_PBCQ_TUNNEL_BAR &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_MAP_PE_DMA_WINDOW" href="opal-pci-map-pe-dma-window-44.html" />
+    <link rel="prev" title="OPAL_PCI_GET_PRESENCE_STATE" href="opal-pci-get-presence-state-119.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-map-pe-dma-window-44.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-get-presence-state-119.html" title="OPAL_PCI_GET_PRESENCE_STATE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_GET_PBCQ_TUNNEL_BAR</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-get-pbcq-tunnel-bar">
+<span id="id1"></span><h1>OPAL_PCI_GET_PBCQ_TUNNEL_BAR<a class="headerlink" href="#opal-pci-get-pbcq-tunnel-bar" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_GET_PBCQ_TUNNEL_BAR 164</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_get_pbcq_tunnel_bar</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="o">*</span><span class="n">addr</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The host calls this function to read the address out of the PBCQ Tunnel
+Bar register.</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>The value from the PHB node ibm,opal-phbid property for the device.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">addr</span></code></dt><dd><p>A pointer to where the address stored in the PBCQ Tunnel Bar register
+will be copied.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="return-values">
+<h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Operation was successful</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid PHB or addr parameter</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Not supported by hardware</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-pci-set-pbcq-tunnel-bar">
+<span id="id2"></span><h1>OPAL_PCI_SET_PBCQ_TUNNEL_BAR<a class="headerlink" href="#opal-pci-set-pbcq-tunnel-bar" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_PBCQ_TUNNEL_BAR 165</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_set_pbcq_tunnel_bar</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">addr</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The host calls this function to set the PBCQ Tunnel Bar register.</p>
+<div class="section" id="id3">
+<h2>Parameters<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt><cite>phb_id</cite></dt><dd><p>The value from the PHB node ibm,opal-phbid property for the device.</p>
+</dd>
+<dt><cite>addr</cite></dt><dd><p>The value of the address chosen for the PBCQ Tunnel Bar register.
+If the address is 0, then the PBCQ Tunnel Bar register will be reset.
+It the address is non-zero, then the PBCQ Tunnel Bar register will be
+set with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Bit</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">42</span><span class="p">]</span>      <span class="n">Bit</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">50</span><span class="p">]</span> <span class="n">of</span> <span class="n">the</span> <span class="n">address</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div>
+<div class="section" id="id4">
+<h2>Return Values<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Operation was successful</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid PHB or addr parameter</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Not supported by hardware</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_PCI_GET_PBCQ_TUNNEL_BAR</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#return-values">Return Values</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-pci-set-pbcq-tunnel-bar">OPAL_PCI_SET_PBCQ_TUNNEL_BAR</a><ul>
+<li><a class="reference internal" href="#id3">Parameters</a></li>
+<li><a class="reference internal" href="#id4">Return Values</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-get-presence-state-119.html"
+                        title="previous chapter">OPAL_PCI_GET_PRESENCE_STATE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-map-pe-dma-window-44.html"
+                        title="next chapter">OPAL_PCI_MAP_PE_DMA_WINDOW</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-get-set-pbcq-tunnel-bar-164-165.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-map-pe-dma-window-44.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-get-presence-state-119.html" title="OPAL_PCI_GET_PRESENCE_STATE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_GET_PBCQ_TUNNEL_BAR</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

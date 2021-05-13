@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_MESSAGE &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL MPIPL APIs" href="opal-mpipl-173-174.html" />
+    <link rel="prev" title="OPAL_LPC_READ" href="opal-lpc-read-write-67-68.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-mpipl-173-174.html" title="OPAL MPIPL APIs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_MESSAGE</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-message">
+<span id="opal-messages"></span><h1>OPAL_MESSAGE<a class="headerlink" href="#opal-message" title="Permalink to this headline">¶</a></h1>
+<p>The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The
+messages are defined by enum opal_msg_type. The host is notified of there
+being messages to be consumed by the OPAL_EVENT_MSG_PENDING bit being set.</p>
+<p>An opal_msg is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">opal_msg</span> <span class="p">{</span>
+      <span class="n">__be32</span> <span class="n">msg_type</span><span class="p">;</span>
+      <span class="n">__be32</span> <span class="n">size</span><span class="p">;</span>
+      <span class="n">__be64</span> <span class="n">params</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The data structure is ALWAYS at least this size (4+4+8*8 = 72 bytes). Some
+messages define fewer than eight parameters. For messages that do not
+define all eight parameters, the value in the undefined parameters is
+undefined, although can safely be memcpy()d or otherwise moved.</p>
+<p>In the device tree, there’s an opal-msg-size property of the OPAL node that
+says the size of a struct opal-msg. Kernel will use this property to allocate
+memory for opal_msg structure. See <code class="docutils literal notranslate"><span class="pre">OPAL_GET_MESSAGE</span></code> documentation for
+details.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span> <span class="p">{</span>
+          <span class="n">opal</span><span class="o">-</span><span class="n">msg</span><span class="o">-</span><span class="n">size</span> <span class="o">=</span> <span class="o">&lt;</span><span class="mh">0x48</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="opal-msg-async-comp">
+<h2>OPAL_MSG_ASYNC_COMP<a class="headerlink" href="#opal-msg-async-comp" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">token</span>
+<span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">rc</span>
+</pre></div>
+</div>
+<p>Additional parameters are function-specific.</p>
+</div>
+<div class="section" id="opal-msg-mem-err">
+<h2>OPAL_MSG_MEM_ERR<a class="headerlink" href="#opal-msg-mem-err" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="opal-msg-epow">
+<span id="id1"></span><h2>OPAL_MSG_EPOW<a class="headerlink" href="#opal-msg-epow" title="Permalink to this headline">¶</a></h2>
+<p>Used by OPAL to issue environmental and power warnings to host OS for
+conditions requiring an earlier poweroff. A few examples of these are high
+ambient temperature or system running on UPS power with low UPS battery.
+Host OS can query OPAL via <a class="reference internal" href="opal-get-epow-status-56.html#opal-get-epow-status"><span class="std std-ref">OPAL_GET_EPOW_STATUS</span></a> API to obtain information about
+EPOW conditions present. Refer include/opal-api.h for description of
+all supported EPOW events. OPAL_SYSPOWER_CHNG, OPAL_SYSPOWER_FAIL and
+OPAL_SYSPOWER_INC events don’t require system poweroff.</p>
+<p>Host OS should look for ‘ibm,opal-v3-epow’ string as compatible property
+for ‘epow’ node under OPAL device-tree to determine epow support.</p>
+</div>
+<div class="section" id="opal-msg-shutdown">
+<h2>OPAL_MSG_SHUTDOWN<a class="headerlink" href="#opal-msg-shutdown" title="Permalink to this headline">¶</a></h2>
+<p>Used by OPAL to inform the host OS it must imitate a graceful shutdown. Uses
+the first parameter to indicate weather the system is going down for shutdown
+or a reboot.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x01</span> <span class="n">reboot</span><span class="p">,</span> <span class="mh">0x00</span> <span class="n">shutdown</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-msg-hmi-evt">
+<span id="id2"></span><h2>OPAL_MSG_HMI_EVT<a class="headerlink" href="#opal-msg-hmi-evt" title="Permalink to this headline">¶</a></h2>
+<p>Used by OPAL to sends the OPAL HMI Event to the host OS that reports a
+summary of HMI error and whether it was successfully recovered or not.</p>
+<p>HMI is a Hypervisor Maintenance Interrupt usually reports error related
+to processor recovery/checkstop, NX checkstop and Timer facility. Hypervisor
+then takes this opportunity to analyze and recover from some of these errors.
+Hypervisor takes assistance from OPAL layer to handle and recover from
+HMI. After handling HMI, OPAL layer sends the summary of error report and
+status of recovery action using HMI event structure shown below.</p>
+<p>The HMI event structure uses version numbering to allow future enhancement
+to accommodate additional members. The version start from V1 onward.
+Version 0 is invalid version and unsupported.</p>
+<p>The current version of HMI event structure V2 and is backward compatible
+to V1 version.</p>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>When adding new structure to the union in future, the version number
+must be bumped.</p></li>
+<li><p>All future versions must be backward compatible to all its older versions.</p></li>
+<li><p>Size of this structure should not exceed that of struct opal_msg.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">OpalHMIEvent</span> <span class="p">{</span>
+     <span class="n">uint8_t</span>         <span class="n">version</span><span class="p">;</span>        <span class="o">/*</span> <span class="mh">0x00</span> <span class="o">*/</span>
+     <span class="n">uint8_t</span>         <span class="n">severity</span><span class="p">;</span>       <span class="o">/*</span> <span class="mh">0x01</span> <span class="o">*/</span>
+     <span class="n">uint8_t</span>         <span class="nb">type</span><span class="p">;</span>           <span class="o">/*</span> <span class="mh">0x02</span> <span class="o">*/</span>
+     <span class="n">uint8_t</span>         <span class="n">disposition</span><span class="p">;</span>    <span class="o">/*</span> <span class="mh">0x03</span> <span class="o">*/</span>
+     <span class="n">uint8_t</span>         <span class="n">reserved_1</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>  <span class="o">/*</span> <span class="mh">0x04</span> <span class="o">*/</span>
+
+     <span class="n">__be64</span>          <span class="n">hmer</span><span class="p">;</span>
+     <span class="o">/*</span> <span class="n">TFMR</span> <span class="n">register</span><span class="o">.</span> <span class="n">Valid</span> <span class="n">only</span> <span class="k">for</span> <span class="n">TFAC</span> <span class="ow">and</span> <span class="n">TFMR_PARITY</span> <span class="n">error</span> <span class="nb">type</span><span class="o">.</span> <span class="o">*/</span>
+     <span class="n">__be64</span>          <span class="n">tfmr</span><span class="p">;</span>
+
+     <span class="o">/*</span> <span class="n">version</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">later</span> <span class="o">*/</span>
+     <span class="n">union</span> <span class="p">{</span>
+             <span class="o">/*</span>
+              <span class="o">*</span> <span class="n">checkstop</span> <span class="n">info</span> <span class="p">(</span><span class="n">Core</span><span class="o">/</span><span class="n">NX</span><span class="p">)</span><span class="o">.</span>
+              <span class="o">*</span> <span class="n">Valid</span> <span class="k">for</span> <span class="n">OpalHMI_ERROR_MALFUNC_ALERT</span><span class="o">.</span>
+              <span class="o">*/</span>
+             <span class="n">struct</span> <span class="p">{</span>
+                     <span class="n">uint8_t</span> <span class="n">xstop_type</span><span class="p">;</span>     <span class="o">/*</span> <span class="n">enum</span> <span class="n">OpalHMI_XstopType</span> <span class="o">*/</span>
+                     <span class="n">uint8_t</span> <span class="n">reserved_1</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+                     <span class="n">__be32</span> <span class="n">xstop_reason</span><span class="p">;</span>
+                     <span class="n">union</span> <span class="p">{</span>
+                             <span class="n">__be32</span> <span class="n">pir</span><span class="p">;</span>       <span class="o">/*</span> <span class="k">for</span> <span class="n">CHECKSTOP_TYPE_CORE</span> <span class="o">*/</span>
+                             <span class="n">__be32</span> <span class="n">chip_id</span><span class="p">;</span> <span class="o">/*</span> <span class="k">for</span> <span class="n">CHECKSTOP_TYPE_NX</span> <span class="o">*/</span>
+                     <span class="p">}</span> <span class="n">u</span><span class="p">;</span>
+             <span class="p">}</span> <span class="n">xstop_error</span><span class="p">;</span>
+     <span class="p">}</span> <span class="n">u</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-msg-dpo">
+<span id="id3"></span><h2>OPAL_MSG_DPO<a class="headerlink" href="#opal-msg-dpo" title="Permalink to this headline">¶</a></h2>
+<p>Delayed poweroff where OPAL informs host OS that a poweroff has been
+requested and a forced shutdown will happen in future. Host OS can use
+OPAL_GET_DPO_STATUS API to query OPAL the number of seconds remaining
+before a forced poweroff will occur.</p>
+</div>
+<div class="section" id="opal-msg-prd">
+<span id="id4"></span><h2>OPAL_MSG_PRD<a class="headerlink" href="#opal-msg-prd" title="Permalink to this headline">¶</a></h2>
+<p>This message is a OPAL-to-HBRT notification, and contains a
+struct opal_prd_msg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">enum</span> <span class="n">opal_prd_msg_type</span> <span class="p">{</span>
+        <span class="n">OPAL_PRD_MSG_TYPE_INIT</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>     <span class="o">/*</span> <span class="n">HBRT</span> <span class="o">--&gt;</span> <span class="n">OPAL</span> <span class="o">*/</span>
+        <span class="n">OPAL_PRD_MSG_TYPE_FINI</span><span class="p">,</span>         <span class="o">/*</span> <span class="n">HBRT</span> <span class="o">--&gt;</span> <span class="n">OPAL</span> <span class="o">*/</span>
+        <span class="n">OPAL_PRD_MSG_TYPE_ATTN</span><span class="p">,</span>         <span class="o">/*</span> <span class="n">HBRT</span> <span class="o">&lt;--</span> <span class="n">OPAL</span> <span class="o">*/</span>
+        <span class="n">OPAL_PRD_MSG_TYPE_ATTN_ACK</span><span class="p">,</span>     <span class="o">/*</span> <span class="n">HBRT</span> <span class="o">--&gt;</span> <span class="n">OPAL</span> <span class="o">*/</span>
+        <span class="n">OPAL_PRD_MSG_TYPE_OCC_ERROR</span><span class="p">,</span>    <span class="o">/*</span> <span class="n">HBRT</span> <span class="o">&lt;--</span> <span class="n">OPAL</span> <span class="o">*/</span>
+        <span class="n">OPAL_PRD_MSG_TYPE_OCC_RESET</span><span class="p">,</span>    <span class="o">/*</span> <span class="n">HBRT</span> <span class="o">&lt;--</span> <span class="n">OPAL</span> <span class="o">*/</span>
+<span class="p">};</span>
+
+<span class="n">struct</span> <span class="n">opal_prd_msg</span> <span class="p">{</span>
+        <span class="n">uint8_t</span>         <span class="nb">type</span><span class="p">;</span>
+        <span class="n">uint8_t</span>         <span class="n">pad</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+        <span class="n">__be32</span>          <span class="n">token</span><span class="p">;</span>
+        <span class="n">union</span> <span class="p">{</span>
+                <span class="n">struct</span> <span class="p">{</span>
+                        <span class="n">__be64</span>  <span class="n">version</span><span class="p">;</span>
+                        <span class="n">__be64</span>  <span class="n">ipoll</span><span class="p">;</span>
+                <span class="p">}</span> <span class="n">init</span><span class="p">;</span>
+                <span class="n">struct</span> <span class="p">{</span>
+                        <span class="n">__be64</span>  <span class="n">proc</span><span class="p">;</span>
+                        <span class="n">__be64</span>  <span class="n">ipoll_status</span><span class="p">;</span>
+                        <span class="n">__be64</span>  <span class="n">ipoll_mask</span><span class="p">;</span>
+                <span class="p">}</span> <span class="n">attn</span><span class="p">;</span>
+                <span class="n">struct</span> <span class="p">{</span>
+                        <span class="n">__be64</span>  <span class="n">proc</span><span class="p">;</span>
+                        <span class="n">__be64</span>  <span class="n">ipoll_ack</span><span class="p">;</span>
+                <span class="p">}</span> <span class="n">attn_ack</span><span class="p">;</span>
+                <span class="n">struct</span> <span class="p">{</span>
+                        <span class="n">__be64</span>  <span class="n">chip</span><span class="p">;</span>
+                <span class="p">}</span> <span class="n">occ_error</span><span class="p">;</span>
+                <span class="n">struct</span> <span class="p">{</span>
+                        <span class="n">__be64</span>  <span class="n">chip</span><span class="p">;</span>
+                <span class="p">}</span> <span class="n">occ_reset</span><span class="p">;</span>
+        <span class="p">};</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Responses from the kernel use the same message format, but are passed
+through the <a class="reference internal" href="opal-prd-msg-113.html#opal-prd-msg"><span class="std std-ref">OPAL_PRD_MSG</span></a> call.</p>
+</div>
+<div class="section" id="opal-msg-occ">
+<h2>OPAL_MSG_OCC<a class="headerlink" href="#opal-msg-occ" title="Permalink to this headline">¶</a></h2>
+<p>This is used by OPAL to inform host about OCC events like OCC reset,
+OCC load and throttle status change by OCC which can indicate the
+host the reason for frequency throttling/unthrottling.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define OCC_RESET                     0</span>
+<span class="c1">#define OCC_LOAD                      1</span>
+<span class="c1">#define OCC_THROTTLE                  2</span>
+<span class="c1">#define OCC_MAX_THROTTLE_STATUS               5</span>
+<span class="o">/*</span>
+ <span class="o">*</span> <span class="n">struct</span> <span class="n">opal_occ_msg</span><span class="p">:</span>
+ <span class="o">*</span> <span class="nb">type</span><span class="p">:</span> <span class="n">OCC_RESET</span><span class="p">,</span> <span class="n">OCC_LOAD</span><span class="p">,</span> <span class="n">OCC_THROTTLE</span>
+ <span class="o">*</span> <span class="n">chip</span><span class="p">:</span> <span class="n">chip</span> <span class="nb">id</span>
+ <span class="o">*</span> <span class="n">throttle</span> <span class="n">status</span><span class="p">:</span> <span class="n">Indicates</span> <span class="n">the</span> <span class="n">reason</span> <span class="n">why</span> <span class="n">OCC</span> <span class="n">may</span> <span class="n">have</span> <span class="n">limited</span>
+ <span class="o">*</span> <span class="n">the</span> <span class="nb">max</span> <span class="n">Pstate</span> <span class="n">of</span> <span class="n">the</span> <span class="n">chip</span><span class="o">.</span>
+ <span class="o">*</span> <span class="mh">0x00</span> <span class="o">=</span> <span class="n">No</span> <span class="n">throttle</span>
+ <span class="o">*</span> <span class="mh">0x01</span> <span class="o">=</span> <span class="n">Power</span> <span class="n">Cap</span>
+ <span class="o">*</span> <span class="mh">0x02</span> <span class="o">=</span> <span class="n">Processor</span> <span class="n">Over</span> <span class="n">Temperature</span>
+ <span class="o">*</span> <span class="mh">0x03</span> <span class="o">=</span> <span class="n">Power</span> <span class="n">Supply</span> <span class="n">Failure</span> <span class="p">(</span><span class="n">currently</span> <span class="ow">not</span> <span class="n">used</span><span class="p">)</span>
+ <span class="o">*</span> <span class="mh">0x04</span> <span class="o">=</span> <span class="n">Over</span> <span class="n">current</span> <span class="p">(</span><span class="n">currently</span> <span class="ow">not</span> <span class="n">used</span><span class="p">)</span>
+ <span class="o">*</span> <span class="mh">0x05</span> <span class="o">=</span> <span class="n">OCC</span> <span class="n">Reset</span> <span class="p">(</span><span class="ow">not</span> <span class="n">reliable</span> <span class="k">as</span> <span class="n">some</span> <span class="n">failures</span> <span class="n">will</span> <span class="ow">not</span> <span class="n">allow</span> <span class="k">for</span>
+ <span class="o">*</span> <span class="n">OCC</span> <span class="n">to</span> <span class="n">update</span> <span class="n">throttle</span> <span class="n">status</span><span class="p">)</span>
+ <span class="o">*/</span>
+<span class="n">struct</span> <span class="n">opal_occ_msg</span> <span class="p">{</span>
+      <span class="n">__be64</span> <span class="nb">type</span><span class="p">;</span>
+      <span class="n">__be64</span> <span class="n">chip</span><span class="p">;</span>
+      <span class="n">__be64</span> <span class="n">throttle_status</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Host should read opal_occ_msg.chip and opal_occ_msg.throttle_status
+only when <code class="docutils literal notranslate"><span class="pre">opal_occ_msg.type</span> <span class="pre">=</span> <span class="pre">OCC_THROTTLE</span></code>.
+If host receives <code class="docutils literal notranslate"><span class="pre">OCC_THROTTLE</span></code> after an <code class="docutils literal notranslate"><span class="pre">OCC_RESET</span></code> then this throttle
+message will have a special meaning which indicates that all the OCCs
+have become active after a reset. In such cases <code class="docutils literal notranslate"><span class="pre">opal_occ_msg.chip</span></code> and
+<code class="docutils literal notranslate"><span class="pre">opal_occ_msg.throttle_status</span></code> will be set to 0 and host should not use
+these values.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">opal_occ_msg.type</span> <span class="pre">&gt;</span> <span class="pre">2</span></code> then host should ignore the message for now,
+new events can be defined for <code class="docutils literal notranslate"><span class="pre">opal_occ_msg.type</span></code> in the future versions
+of OPAL.</p>
+</div>
+<div class="section" id="opal-msg-prd2">
+<h2>OPAL_MSG_PRD2<a class="headerlink" href="#opal-msg-prd2" title="Permalink to this headline">¶</a></h2>
+<p>This message is a OPAL-to-HBRT notification. Its same as OPAL_MSG_PRD except
+this one supports passing more than 64bytes (8*8) of data.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_MESSAGE</a><ul>
+<li><a class="reference internal" href="#opal-msg-async-comp">OPAL_MSG_ASYNC_COMP</a></li>
+<li><a class="reference internal" href="#opal-msg-mem-err">OPAL_MSG_MEM_ERR</a></li>
+<li><a class="reference internal" href="#opal-msg-epow">OPAL_MSG_EPOW</a></li>
+<li><a class="reference internal" href="#opal-msg-shutdown">OPAL_MSG_SHUTDOWN</a></li>
+<li><a class="reference internal" href="#opal-msg-hmi-evt">OPAL_MSG_HMI_EVT</a></li>
+<li><a class="reference internal" href="#opal-msg-dpo">OPAL_MSG_DPO</a></li>
+<li><a class="reference internal" href="#opal-msg-prd">OPAL_MSG_PRD</a></li>
+<li><a class="reference internal" href="#opal-msg-occ">OPAL_MSG_OCC</a></li>
+<li><a class="reference internal" href="#opal-msg-prd2">OPAL_MSG_PRD2</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-lpc-read-write-67-68.html"
+                        title="previous chapter">OPAL_LPC_READ</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-mpipl-173-174.html"
+                        title="next chapter">OPAL MPIPL APIs</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-messages.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-mpipl-173-174.html" title="OPAL MPIPL APIs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_MESSAGE</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_SET_P2P &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_SET_PE" href="opal-pci-set-pe-31.html" />
+    <link rel="prev" title="OPAL_PCI_SET_MVE_ENABLE" href="opal-pci-set-mve-enable-34.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-pe-31.html" title="OPAL_PCI_SET_PE"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-mve-enable-34.html" title="OPAL_PCI_SET_MVE_ENABLE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_P2P</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-set-p2p">
+<span id="id1"></span><h1>OPAL_PCI_SET_P2P<a class="headerlink" href="#opal-pci-set-p2p" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_P2P                     157</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_set_p2p</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phbid_init</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">phbid_target</span><span class="p">,</span>
+                             <span class="kt">uint64_t</span> <span class="n">desc</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">pe_number</span><span class="p">);</span>
+
+<span class="cm">/* PCI p2p descriptor */</span>
+<span class="cp">#define OPAL_PCI_P2P_ENABLE          0x1</span>
+<span class="cp">#define OPAL_PCI_P2P_LOAD            0x2</span>
+<span class="cp">#define OPAL_PCI_P2P_STORE           0x4</span>
+</pre></div>
+</div>
+<p>The host calls this function to enable PCI peer-to-peer on the PHBs.</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phbid_init</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property for the device initiating the p2p operation</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phbid_target</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property for the device targeted by the p2p operation</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">desc</span></code></dt><dd><p>tells whether the p2p operation is a store (OPAL_PCI_P2P_STORE) or load (OPAL_PCI_P2P_LOAD). Can be both.
+OPAL_PCI_P2P_ENABLE enables/disables the setting</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pe_number</span></code></dt><dd><p>PE number for the initiating device</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="return-values">
+<h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Configuration was successful</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid PHB or mode parameter</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Not supported by hardware</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_PCI_SET_P2P</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#return-values">Return Values</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-set-mve-enable-34.html"
+                        title="previous chapter">OPAL_PCI_SET_MVE_ENABLE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-set-pe-31.html"
+                        title="next chapter">OPAL_PCI_SET_PE</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-set-p2p-157.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-pe-31.html" title="OPAL_PCI_SET_PE"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-mve-enable-34.html" title="OPAL_PCI_SET_MVE_ENABLE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_P2P</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

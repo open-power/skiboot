@@ -1,0 +1,1646 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.10-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.10-rc2" href="skiboot-5.10-rc2.html" />
+    <link rel="prev" title="skiboot-5.10" href="skiboot-5.10.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc2.html" title="skiboot-5.10-rc2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.html" title="skiboot-5.10"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-10-rc1">
+<span id="id1"></span><h1>skiboot-5.10-rc1<a class="headerlink" href="#skiboot-5-10-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v5.10-rc1 was released on Tuesday February 6th 2018. It is the first
+release candidate of skiboot 5.10, which will become the new stable release
+of skiboot following the 5.9 release, first released October 31st 2017.</p>
+<p>skiboot v5.10-rc1 contains all bug fixes as of <a class="reference internal" href="skiboot-5.9.8.html#skiboot-5-9-8"><span class="std std-ref">skiboot-5.9.8</span></a>
+and <a class="reference internal" href="skiboot-5.4.9.html#skiboot-5-4-9"><span class="std std-ref">skiboot-5.4.9</span></a> (the currently maintained stable releases). There
+may be more 5.9.x stable releases, it will depend on demand.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.10 in February, with skiboot 5.10
+being for all POWER8 and POWER9 platforms in op-build v1.21.
+This release will be targeted to early POWER9 systems.</p>
+<p>Over skiboot-5.9, we have the following changes:</p>
+<div class="section" id="new-features">
+<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>hdata: Parse IPL FW feature settings</p>
+<p>Add parsing for the firmware feature flags in the HDAT. This
+indicates the settings of various parameters which are set at IPL time
+by firmware.</p>
+</li>
+<li><p>opal/xstop: Use nvram option to enable/disable sw checkstop.</p>
+<p>Add a mechanism to enable/disable sw checkstop by looking at nvram option
+opal-sw-xstop=&lt;enable/disable&gt;.</p>
+<p>For now this patch disables the sw checkstop trigger unless explicitly
+enabled through nvram option ‘opal-sw-xstop=enable’i for p9. This will allow
+an opportunity to get host kernel in panic path or xmon for unrecoverable
+HMIs or MCE, to be able to debug the issue effectively.</p>
+<p>To enable sw checkstop in opal issue following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">opal</span><span class="o">-</span><span class="n">sw</span><span class="o">-</span><span class="n">xstop</span><span class="o">=</span><span class="n">enable</span>
+</pre></div>
+</div>
+<p><strong>NOTE:</strong> This is a workaround patch to disable sw checkstop by default to gain
+control in host kernel for better checkstop debugging. Once we have most of
+the checkstop issues stabilized/resolved, revisit this patch to enable sw
+checkstop by default.</p>
+<p>For p8 platform it will remain enabled by default unless explicitly disabled.</p>
+<p>To disable sw checkstop on p8 issue following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">opal</span><span class="o">-</span><span class="n">sw</span><span class="o">-</span><span class="n">xstop</span><span class="o">=</span><span class="n">disable</span>
+</pre></div>
+</div>
+</li>
+<li><p>hdata: Parse SPD data</p>
+<blockquote>
+<div><p>Parse SPD data and populate device tree.</p>
+<p>list of properties parsing from SPD:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@ltc</span><span class="o">-</span><span class="n">wspoon</span> <span class="n">dimm</span><span class="nd">@d00f</span><span class="p">]</span><span class="c1"># lsprop .</span>
+<span class="n">memory</span><span class="o">-</span><span class="nb">id</span>        <span class="mi">0000000</span><span class="n">c</span> <span class="p">(</span><span class="mi">12</span><span class="p">)</span>      <span class="c1"># DIMM type</span>
+<span class="n">product</span><span class="o">-</span><span class="n">version</span>  <span class="mi">00000032</span> <span class="p">(</span><span class="mi">50</span><span class="p">)</span>      <span class="c1"># Module Revision Code</span>
+<span class="n">device_type</span>      <span class="s2">&quot;memory-dimm-ddr4&quot;</span>
+<span class="n">serial</span><span class="o">-</span><span class="n">number</span>    <span class="mi">15</span><span class="n">d9acb6</span> <span class="p">(</span><span class="mi">366587062</span><span class="p">)</span>
+<span class="n">status</span>           <span class="s2">&quot;okay&quot;</span>
+<span class="n">size</span>             <span class="mi">00004000</span> <span class="p">(</span><span class="mi">16384</span><span class="p">)</span>
+<span class="n">phandle</span>          <span class="mi">000000</span><span class="n">bd</span> <span class="p">(</span><span class="mi">189</span><span class="p">)</span>
+<span class="n">ibm</span><span class="p">,</span><span class="n">loc</span><span class="o">-</span><span class="n">code</span>     <span class="s2">&quot;UOPWR.0000000-Node0-DIMM7&quot;</span>
+<span class="n">part</span><span class="o">-</span><span class="n">number</span>      <span class="s2">&quot;36ASF2G72PZ-2G6B2   &quot;</span>
+<span class="n">reg</span>              <span class="mi">0000</span><span class="n">d007</span> <span class="p">(</span><span class="mi">53255</span><span class="p">)</span>
+<span class="n">name</span>             <span class="s2">&quot;dimm&quot;</span>
+<span class="n">manufacturer</span><span class="o">-</span><span class="nb">id</span>  <span class="mi">0000802</span><span class="n">c</span> <span class="p">(</span><span class="mi">32812</span><span class="p">)</span>  <span class="c1"># Vendor ID, we can get vendor name from this ID</span>
+</pre></div>
+</div>
+<p>Also update documentation.</p>
+</div></blockquote>
+</li>
+<li><p>hdata: Add memory hierarchy under xscom node</p>
+<p>We have memory to chip mapping but doesn’t have complete memory hierarchy.
+This patch adds memory hierarchy under xscom node. This is specific to
+P9 system as these hierarchy may change between processor generation.</p>
+<dl class="simple">
+<dt>It uses memory controller ID details and populates nodes like:</dt><dd><p>xscom&#64;&lt;addr&gt;/mcbist&#64;&lt;mcbist_id&gt;/mcs&#64;&lt;mcs_id&gt;/mca&#64;&lt;mca_id&gt;/dimm&#64;&lt;resource_id&gt;</p>
+</dd>
+</dl>
+<p>Also this patch adds few properties under dimm node.
+Finally make sure xscom nodes created before calling memory_parse().</p>
+</li>
+</ul>
+<div class="section" id="fast-reboot-and-quiesce">
+<h3>Fast Reboot and Quiesce<a class="headerlink" href="#fast-reboot-and-quiesce" title="Permalink to this headline">¶</a></h3>
+<p>We have a preliminary fast reboot implementation for POWER9 systems, which
+we look to enabling by default in the next release.</p>
+<p>The OPAL Quiesce calls are designed to improve reliability and debuggability
+around reboot and error conditions. See the full API documentation for details:
+<a class="reference internal" href="../opal-api/opal-quiesce-158.html#opal-quiesce"><span class="std std-ref">OPAL_QUIESCE</span></a>.</p>
+<ul>
+<li><p>fast-reboot: bare bones fast reboot implementation for POWER9</p>
+<p>This is an initial fast reboot implementation for p9 which has only been
+tested on the Witherspoon platform, and without the use of NPUs, NX/VAS,
+etc.</p>
+<p>This has worked reasonably well so far, with no failures in about 100
+reboots. It is hidden behind the traditional fast-reboot experimental
+nvram option, until more platforms and configurations are tested.</p>
+</li>
+<li><p>fast-reboot: move boot CPU clean-up logically together with secondaries</p>
+<p>Move the boot CPU clean-up and state transition to active, logically
+together with secondaries. Don’t release secondaries from fast reboot
+hold until everyone has cleaned up and transitioned to active.</p>
+<p>This is cosmetic, but it is helpful to run the fast reboot state machine
+the same way on all CPUs.</p>
+</li>
+<li><p>fast-reboot: improve failure error messages</p>
+<p>Change existing failure error messages to PR_NOTICE so they get
+printed to the console, and add some new ones. It’s not a more
+severe class because it falls back to IPL on failure.</p>
+</li>
+<li><p>fast-reboot: quiesce opal before initiating a fast reboot</p>
+<p>Switch fast reboot to use quiescing rather than “wait for a while”.</p>
+<p>If firmware can not be quiesced, then fast reboot is skipped. This
+significantly improves the robustness of fast reboot in the face of
+bugs or unexpected latencies.</p>
+<p>Complexity of synchronization in fast-reboot is reduced, because we
+are guaranteed to be single-threaded when quiesce succeeds, so locks
+can be removed.</p>
+<p>In the case that firmware can be quiesced, then it will generally
+reduce fast reboot times by nearly 200ms, because quiescing usually
+takes very little time.</p>
+</li>
+<li><p>core: Add support for quiescing OPAL</p>
+<p>Quiescing is ensuring all host controlled CPUs (except the current
+one) are out of OPAL and prevented from entering. This can be use in
+debug and shutdown paths, particularly with system reset sequences.</p>
+<p>This patch adds per-CPU entry and exit tracking for OPAL calls, and
+adds logic to “hold” or “reject” at entry time, if OPAL is quiesced.</p>
+<p>An OPAL call is added, to expose the functionality to Linux, where it
+can be used for shutdown, kexec, and before generating sreset IPIs for
+debugging (so the debug code does not recurse into OPAL).</p>
+</li>
+<li><p>dctl: p9 increase thread quiesce timeout</p>
+<p>We require all instructions to be completed before a thread is
+considered stopped, by the dctl interface. Long running instructions
+like cache misses and CI loads may take a significant amount of time
+to complete, and timeouts have been observed in stress testing.</p>
+<p>Increase the timeout significantly, to cover this. The workbook
+just says to poll, but we like to have timeouts to avoid getting
+stuck in firmware.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="power9-power-saving">
+<h3>POWER9 power saving<a class="headerlink" href="#power9-power-saving" title="Permalink to this headline">¶</a></h3>
+<p>There is much improved support for deeper sleep/idle (stop) states on POWER9.</p>
+<ul>
+<li><p>OCC: Increase max pstate check on P9 to 255</p>
+<p>This has changed from P8, we can now have &gt; 127 pstates.</p>
+<p>This was observed on Boston during WoF bring up.</p>
+</li>
+<li><p>SLW: Add idle state stop5 for DD2.0 and above</p>
+<p>Adding stop5 idle state with rough residency and latency numbers.</p>
+</li>
+<li><p>SLW: Add p9_stop_api calls for IMC</p>
+<p>Add p9_stop_api for EVENT_MASK and PDBAR scoms. These scoms are lost on
+wakeup from stop11.</p>
+</li>
+<li><p>SCOM restore for DARN and XIVE</p>
+<p>While waking up from stop11, we want NCU_DARN_BAR to have enable bit set.
+Without this stop_api call, the value restored is without enable bit set.
+We loose NCU_SPEC_BAR when the quad goes into stop11, stop_api will
+restore while waking up from stop11.</p>
+</li>
+<li><p>SLW: Call p9_stop_api only if deep_states are enabled</p>
+<p>All init time p9_stop_api calls have been isolated to slw_late_init. If
+p9_stop_api fails, then the deep states can be excluded from device tree.</p>
+<p>For p9_stop_api called after device-tree for cpuidle is created ,
+has_deep_states will be used to check if this call is even required.</p>
+</li>
+<li><p>Better handle errors in setting up sleep states (p9_stop_api)</p>
+<p>We won’t put affected stop states in the device tree if the wakeup
+engine is not present or has failed.</p>
+</li>
+<li><p>SCOM Restore: Increased the EQ SCOM restore limit.</p>
+<p>Commit increases the SCOM restore limit from 16 to 31.</p>
+</li>
+<li><p>hw/dts: retry special wakeup operation if core still gated</p>
+<p>It has been observed that in some cases the special wakeup
+operation can “succeed” but the core is still in a gated/offline
+state.</p>
+<p>Check for this state after attempting to wakeup a core and retry
+the wakeup if necessary.</p>
+</li>
+<li><p>core/direct-controls: add function to read core gated state</p></li>
+<li><p>core/direct-controls: wait for core special wkup bit cleared</p>
+<p>When clearing special wakeup bit on a core, wait until the
+bit is actually cleared by the hardware in the status register
+until returning success.</p>
+<p>This may help avoid issues with back-to-back reads where the
+special wakeup request is cleared but the firmware is still
+processing the request and the next attempt to set the bit
+reads an immediate success from the previous operation.</p>
+</li>
+<li><p>p9_stop_api: PM: Added support for version control in SCOM restore entries.</p>
+<ul class="simple">
+<li><p>adds version info in SCOM restore entry header</p></li>
+<li><p>adds version specific details in SCOM restore entry header</p></li>
+<li><p>retains old behaviour of SGPE Hcode’s base version</p></li>
+</ul>
+</li>
+<li><p>p9_stop_api: EQ SCOM Restore: Introduced version control in SCOM restore entry.</p>
+<ul class="simple">
+<li><p>introduces version control in header of SCOM restore entry</p></li>
+<li><p>ensures backward compatibility</p></li>
+<li><p>introduces flexibility to handle any number of SCOM restore entry.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="secure-and-trusted-boot-for-power9">
+<h3>Secure and Trusted Boot for POWER9<a class="headerlink" href="#secure-and-trusted-boot-for-power9" title="Permalink to this headline">¶</a></h3>
+<p>We introduce support for Secure and Trusted Boot for POWER9 systems, with equal
+functionality that we have on POWER8 systems, that is, we have the mechanisms in
+place to boot to petitboot (i.e. to BOOTKERNEL).</p>
+<p>See the <a class="reference internal" href="../stb.html#stb-overview"><span class="std std-ref">Secure and Trusted Boot Library (LibSTB) Documentation</span></a> for full documentation of OPAL secure and trusted boot.</p>
+<ul>
+<li><p>allow secure boot if not enforcing it</p>
+<p>We check the secure boot containers no matter what, only <em>enforcing</em>
+secure boot if we’re booting in secure mode. This gives us an extra
+layer of checking firmware is legit even when secure mode isn’t enabled,
+as well as being really useful for testing.</p>
+</li>
+<li><p>libstb/(create|print)-container: Sync with sb-signing-utils</p>
+<p>The sb-signing-utils project has improved upon the skeleton
+create-container tool that existed in skiboot, including
+being able to (quite easily) create <em>signed</em> images.</p>
+<p>This commit brings in that code (and makes it build in the
+skiboot build environment) and updates our skiboot.*.stb
+generating code to use the development keys. This means that by
+default, skiboot build process will let you build firmware that can
+do a secure boot with <em>development</em> keys.</p>
+<p>See <a class="reference internal" href="../stb.html#signing-firmware-code"><span class="std std-ref">Signing Firmware Code</span></a> for details on firmware signing.</p>
+<p>We also update print-container as well, syncing it with the
+upstream project.</p>
+<p>Derived from github.com:open-power/sb-signing-utils.git
+at v0.3-5-gcb111c03ad7f
+(Some discussion ongoing on the changes, another sync will come shortly)</p>
+</li>
+<li><p>doc: update libstb documentation with POWER9 changes.
+See: <a class="reference internal" href="../stb.html#stb-overview"><span class="std std-ref">Secure and Trusted Boot Library (LibSTB) Documentation</span></a>.</p>
+<p>POWER9 changes reflected in the libstb:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>bumped ibm,secureboot node to v2</p></li>
+<li><p>added ibm,cvc node</p></li>
+<li><p>hash-algo superseded by hw-key-hash-size</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>libstb/cvc: update memory-region to point to /reserved-memory</p>
+<p>The linux documentation, reserved-memory.txt, says that memory-region is
+a phandle that pairs to a children of /reserved-memory.</p>
+<dl class="simple">
+<dt>This updates /ibm,secureboot/ibm,cvc/memory-region to point to</dt><dd><p>/reserved-memory/secure-crypt-algo-code instead of
+/ibm,hostboot/reserved-memory/secure-crypt-algo-code.</p>
+</dd>
+</dl>
+</li>
+<li><p>libstb: add support for ibm,secureboot-v2</p>
+<p>ibm,secureboot-v2 changes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The Container Verification Code is represented by the ibm,cvc node.</p></li>
+<li><p>Each ibm,cvc child describes a CVC service.</p></li>
+<li><p>hash-algo is superseded by hw-key-hash-size.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>hdata/tpmrel.c: add ibm, cvc device tree node</p>
+<p>In P9, the Container Verification Code is stored in a hostboot reserved
+memory and the list of provided CVC services is stored in the
+TPMREL_IDATA_HASH_VERIF_OFFSETS idata array. Each CVC service has an
+offset and version.</p>
+<p>This adds the ibm,cvc device tree node and its documentation.</p>
+</li>
+<li><p>hdata/tpmrel.c: add firmware event log info to the tpm node</p>
+<p>This parses the firmware event log information from the
+secureboot_tpm_info HDAT structure and add it to the tpm device tree
+node.</p>
+<p>There can be multiple secureboot_tpm_info entries with each entry
+corresponding to a master processor that has a tpm device, however,
+multiple tpm is not supported.</p>
+</li>
+<li><p>hdata/spira: add ibm,secureboot node in P9</p>
+<p>In P9, skiboot builds the device tree from the HDAT. These are the
+“ibm,secureboot” node changes compared to P8:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The Container-Verification-Code (CVC), a.k.a. ROM code, is no longer
+stored in a secure ROM with static address. In P9, it is stored in a
+hostboot reserved memory and each service provided also has a version,
+not only an offset.</p></li>
+<li><p>The hash-algo property is not provided via HDAT, instead it provides
+the hw-key-hash-size, which is indeed the information required by the
+CVC to verify containers.</p></li>
+</ul>
+</div></blockquote>
+<p>This parses the iplparams_sysparams HDAT structure and creates the
+“ibm,secureboot”, which is bumped to “ibm,secureboot-v2”.</p>
+<p>In “ibm,secureboot-v2”:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>hash-algo property is superseded by hw-key-hash-size.</p></li>
+<li><p>container verification code is explicitly described by a child node.
+Added in a subsequent patch.</p></li>
+</ul>
+</div></blockquote>
+<p>See <a class="reference internal" href="../device-tree/ibm%2Csecureboot.html#device-tree-ibm-secureboot"><span class="std std-ref">ibm,secureboot</span></a> for documentation.</p>
+</li>
+<li><p>libstb/tpm_chip.c: define pr_fmt and fix messages logged</p>
+<p>This defines pr_fmt and also fix messages logged:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>EV_SEPARATOR instead of 0xFFFFFFFF</p></li>
+<li><p>when an event is measured it also prints the tpm id, event type and
+event log length</p></li>
+</ul>
+</div></blockquote>
+<p>Now we can filter the messages logged by libstb and its
+sub-modules by running:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">grep</span> <span class="n">STB</span> <span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">firmware</span><span class="o">/</span><span class="n">opal</span><span class="o">/</span><span class="n">msglog</span>
+</pre></div>
+</div>
+</li>
+<li><p>libstb/tss: update the list of event types supported</p>
+<p>Skiboot, precisely the tpmLogMgr, initializes the firmware event log by
+calculating its length so that a new event can be recorded without
+exceeding the log size. In order to calculate the size, it walks through
+the log until it finds a specific event type. However, if the log has
+an unknown event type, the tpmLogMgr will not be able to reach the end
+of the log.</p>
+<p>This updates the list of event types with all of those supported by
+hostboot. Thus, skiboot can properly calculate the event log length.</p>
+</li>
+<li><p>tpm_i2c_nuvoton: add nuvoton, npct601 to the compatible property</p>
+<p>The linux kernel doesn’t have a driver compatible with
+“nuvoton,npct650”, but it does have for “nuvoton,npct601”, which should
+also be compatible with npct650.</p>
+<p>This adds “nuvoton,npct601” to the compatible devtree property.</p>
+</li>
+<li><p>libstb/trustedboot.c: import stb_final() from stb.c</p>
+<p>The stb_final() primary goal is to measure the event EV_SEPARATOR
+into PCR[0-7] when trusted boot is about to exit the boot services.</p>
+<p>This imports the stb_final() from stb.c into trustedboot.c, but making
+the following changes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Rename it to trustedboot_exit_boot_services().</p></li>
+<li><p>As specified in the TCG PC Client specification, EV_SEPARATOR events must
+be logged with the name 0xFFFFFF.</p></li>
+<li><p>Remove the ROM driver clean-up call.</p></li>
+<li><p>Don’t allow code to be measured in skiboot after
+trustedboot_exit_boot_services() is called.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>libstb/cvc.c: import softrom behaviour from drivers/sw_driver.c</p>
+<p>Softrom is used only for testing with mambo. By setting
+compatible=”ibm,secureboot-v1-softrom” in the “ibm,secureboot” node,
+firmware images can be properly measured even if the
+Container-Verification-Code (CVC) is not available. In this case, the
+mbedtls_sha512() function is used to calculate the sha512 hash of the
+firmware images.</p>
+<p>This imports the softrom behaviour from libstb/drivers/sw_driver.c code
+into cvc.c, but now softrom is implemented as a flag. When the flag is
+set, the wrappers for the CVC services work the same way as in
+sw_driver.c.</p>
+</li>
+<li><p>libstb/trustedboot.c: import tb_measure() from stb.c</p>
+<p>This imports tb_measure() from stb.c, but now it calls the CVC sha512
+wrapper to calculate the sha512 hash of the firmware image provided.</p>
+<p>In trustedboot.c, the tb_measure() is renamed to trustedboot_measure().</p>
+<p>The new function, trustedboot_measure(), no longer checks if the
+container payload hash calculated at boot time matches with the hash
+found in the container header. A few reasons:</p>
+<ul>
+<li><p>If the system admin wants the container header to be
+checked/validated, the secure boot jumper must be set. Otherwise,
+the container header information may not be reliable.</p></li>
+<li><p>The container layout is expected to change over time. Skiboot
+would need to maintain a parser for each container layout
+change.</p></li>
+<li><p>Skiboot could be checking the hash against a container version that
+is not supported by the Container-Verification-Code (CVC).</p>
+<p>The tb_measure() calls are updated to trustedboot_measure() in a
+subsequent patch.</p>
+</li>
+</ul>
+</li>
+<li><p>libstb/secureboot.c: import sb_verify() from stb.c</p>
+<p>This imports the sb_verify() function from stb.c, but now it calls the
+CVC verify wrapper in order to verify signed firmware images. The
+hw-key-hash and hw-key-hash-size initialized in secureboot.c are passed
+to the CVC verify function wrapper.</p>
+<p>In secureboot.c, the sb_verify() is renamed to secureboot_verify(). The
+sb_verify() calls are updated in a subsequent patch.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="xive">
+<h2>XIVE<a class="headerlink" href="#xive" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>xive: Don’t bother cleaning up disabled EQs in reset</p>
+<p>Additionally, warn if we find an enabled one that isn’t one
+of the firmware built-in queues.</p>
+</li>
+<li><p>xive: Warn on valid VPs found in abnormal cases</p>
+<p>If an allocated VP is left valid at xive_reset() or Linux tries
+to free a valid (enabled) VP block, print errors. The former happens
+occasionally if kdump’ing while KVM is running so keep it as a debug
+message. The latter is a programming error in Linux so use a an
+error log level.</p>
+</li>
+<li><p>xive: Properly reserve built-in VPs in non-group mode</p>
+<p>This is not normally used but if the #define is changed to
+disable block group mode we would incorrectly clear the
+buddy completely without marking the built-in VPs reserved.</p>
+</li>
+<li><p>xive: Quieten debug messages in standard builds</p>
+<p>This makes a bunch of messages, especially the per-CPU ones,
+only enabled in debug builds. This avoids clogging up the
+OPAL logs with XIVE related messages that have proven not
+being particularly useful for field defects.</p>
+</li>
+<li><p>xive: Implement “single escalation” feature</p>
+<p>This adds a new VP flag to control the new DD2.0
+“single escalation” feature.</p>
+<p>This feature allows us to have a single escalation
+interrupt per VP instead of one per queue.</p>
+<p>It works by hijacking queue 7 (which is this no longer
+usable when that is enabled) and exploiting two new
+hardware bits that will:</p>
+<ul class="simple">
+<li><p>Make the normal queues (0..6) escalate unconditionally
+thus ignoring the ESe bits.</p></li>
+<li><p>Route the above escalations to queue 7</p></li>
+<li><p>Have queue 7 silently escalate without notification</p></li>
+</ul>
+<p>Thus the escalation of queue 7 becomes the one escalation
+interrupt for all the other queues.</p>
+</li>
+<li><p>xive: When disabling a VP, wipe all of its settings</p></li>
+<li><p>xive: Improve cleaning up of EQs</p>
+<p>Factors out the function that sets an EQ back to a clean
+state and add a cleaning pass for queue left enabled
+when freeing a block of VPs.</p>
+</li>
+<li><p>xive: When disabling an EQ, wipe all of its settings</p>
+<p>This avoids having configuration bits left over</p>
+</li>
+<li><p>xive: Define API for single-escalation VP mode</p>
+<p>This mode allows all queues of a VP to use the same
+escalation interrupt, at the cost of losing priority 7.</p>
+<p>This adds the definition and documentation of the API,
+the implementation will come next.</p>
+</li>
+<li><p>xive: Fix ability to clear some EQ flags</p>
+<p>We could never clear “unconditional notify” and “escalate”</p>
+</li>
+<li><p>xive: Update inits for DD2.0</p>
+<p>This updates some inits based on information from the HW
+designers. This includes enabling some new DD2.0 features
+that we don’t yet exploit.</p>
+</li>
+<li><p>xive: Ensure VC informational FIRs are masked</p>
+<p>Some HostBoot versions leave those as checkstop, they are harmless
+and can sometimes occur during normal operations.</p>
+</li>
+<li><p>xive: Fix occasional VC checkstops in xive_reset</p>
+<p>The current workaround for the scrub bug described in
+__xive_cache_scrub() has an issue in that it can leave
+dirty invalid entries in the cache.</p>
+<p>When cleaning up EQs or VPs during reset, if we then
+remove the underlying indirect page for these entries,
+the XIVE will checkstop when trying to flush them out
+of the cache.</p>
+<p>This replaces the existing workaround with a new pair of
+workarounds for VPs and EQs:</p>
+<ul class="simple">
+<li><p>The VP one does the dummy watch on another entry than
+the one we scrubbed (which does the job of pushing old
+stores out) using an entry that is known to be backed by
+a permanent indirect page.</p></li>
+<li><p>The EQ one switches to a more efficient workaround
+which consists of doing a non-side-effect ESB load from
+the EQ’s ESe control bits.</p></li>
+</ul>
+</li>
+<li><p>xive: Do not return a trigger page for an escalation interrupt</p>
+<p>This is bogus, we don’t support them. (Thankfully the callers
+didn’t actually try to use this on escalation interrupts).</p>
+</li>
+<li><p>xive: Mark a freed IRQs IVE as valid and masked</p>
+<p>Removing the valid bit means a FIR will trip if it’s accessed
+inadvertently. Under some circumstances, the XIVE will speculatively
+access an IVE for a masked interrupt and trip it. So make sure that
+freed entries are still marked valid (but masked).</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pci">
+<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>pci: Shared slot state synchronisation for hot reset</p>
+<p>When a device is shared between two PHBs, it doesn’t get reset properly
+unless both PHBs issue a hot reset at “the same time”.  Practically this
+means a hot reset needs to be issued on both sides, and neither should
+bring the link up until the reset on both has completed.</p>
+</li>
+<li><p>pci: Track peers of slots</p>
+<p>Witherspoon introduced a new concept where one physical slot is shared
+between two PHBs.  Making a slot aware of its peer enables syncing
+between them where necessary.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="phb4">
+<h2>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>phb4: Change PCI MMIO timers</p>
+<p>Currently we have a mismatch between the NCU and PCI timers for MMIO
+accesses. The PCI timers must be lower than the NCU timers otherwise
+it may cause checkstops.</p>
+<p>This changes PCI timeouts controlled by skiboot to 33-50ms. It should
+be forwards and backwards compatible with expected hostboot changes to
+the NCU timer.</p>
+</li>
+<li><p>phb4: Change default GEN3 lane equalisation setting to 0x54</p>
+<p>Currently our GEN3 lane equalisation settings are set to 0x77. Change
+this to 0x54. This change will allow us to train at GEN3 in a shorter
+time and more consistently.</p>
+<p>This setting gives us a TX preset 0x4 and RX hint 0x5. This gives a
+boost in gain for high frequency signalling. It allows the most optimal
+continuous time linear equalizers (CTLE) for the remote receiver port
+and de-emphasis and pre-shoot for the remote transmitter port.</p>
+<p>Machine Readable Workbooks (MRW) are moving to this new value also.</p>
+</li>
+<li><p>phb4: Init changes</p>
+<p>These init changes for phb4 from the HW team.</p>
+<p>Link down are now endpoint recoverable (ERC) rather than PHB fatal
+errors.</p>
+<p>BLIF Completion Timeout Error now generate an interrupt rather than
+causing freeze events.</p>
+</li>
+<li><p>phb4: Fix lane equalisation setting</p>
+<p>Fix cut and paste from phb3. The sizes have changes now we have GEN4,
+so the check here needs to change also</p>
+<p>Without this we end up with the default settings (all ‘7’) rather
+than what’s in HDAT.</p>
+</li>
+<li><p>hdata: Fix copying GEN4 lane equalisation settings</p>
+<p>These aren’t copied currently but should be.</p>
+</li>
+<li><p>phb4: Fix PE mapping of M32 BAR</p>
+<p>The M32 BAR is the PHB4 region used to map all the non-prefetchable
+or 32-bit device BARs. It’s supposed to have its segments remapped
+via the MDT and Linux relies on that to assign them individual PE#.</p>
+<p>However, we weren’t configuring that properly and instead used the
+mode where PE# == segment#, thus causing EEH to freeze the wrong
+device or PE#.</p>
+</li>
+<li><p>phb4: Fix lost bit in PE number on config accesses</p>
+<p>A PE number can be up to 9 bits, using a uint8_t won’t fly..</p>
+<p>That was causing error on config accesses to freeze the
+wrong PE.</p>
+</li>
+<li><p>phb4: Update inits</p>
+<p>New init value from HW folks for the fence enable register.</p>
+<p>This clears bit 17 (CFG Write Error CA or UR response) and bit 22 (MMIO Write
+DAT_ERR Indication) and sets bit 21 (MMIO CFG Pending Error)</p>
+</li>
+</ul>
+</div>
+<div class="section" id="capi">
+<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>capi: Disable CAPP virtual machines</p>
+<p>When exercising more than one CAPI accelerators simultaneously in
+cache coherency mode, the verification team is seeing a deadlock. To
+fix this a workaround of disabling CAPP virtual machines is
+suggested. These ‘virtual machines’ let PSL queue multiple CAPP
+commands for servicing by CAPP there by increasing
+throughput. Below is the error scenario described by the h/w team:</p>
+<p>” With virtual machines enabled we had a deadlock scenario where with 2
+or more CAPI’s in a system you could get in a deadlock scenario due to
+cast-outs that are required break the deadlock (evict lines that
+another CAPI is requesting) get stuck in the virtual machine queue by
+a command ahead of it that is being retried by the same scenario in
+the other CAPI. “</p>
+</li>
+<li><p>capi: Perform capp recovery sequence only when PBCQ is idle</p>
+<p>Presently during a CRESET the CAPP recovery sequence can be executed
+multiple times in case PBCQ on the PEC is still busy processing in/out
+bound in-flight transactions.</p>
+</li>
+<li><p>xive: Mask MMIO load/store to bad location FIR</p>
+<p>For opencapi, the trigger page of an interrupt is mapped to user
+space. The intent is to write the page to raise an interrupt but
+there’s nothing to prevent a user process from reading it, which has
+the unfortunate consequence of checkstopping the system.</p>
+<p>Mask the FIR bit raised when an MMIO operation targets an invalid
+location. It’s the recommendation from recent documentation and
+hostboot is expected to mask it at some point. In the meantime, let’s
+play it safe.</p>
+</li>
+<li><p>phb4: Dump CAPP error registers when it asserts link down</p>
+<p>This patch introduces a new function phb4_dump_app_err_regs() that
+dumps CAPP error registers in case the PEC nestfir register indicates
+that the fence was due to a CAPP error (BIT-24).</p>
+<p>Contents of these registers are helpful in diagnosing CAPP
+issues. Registers that are dumped in phb4_dump_app_err_regs() are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>CAPP FIR Register</p></li>
+<li><p>CAPP APC Master Error Report Register</p></li>
+<li><p>CAPP Snoop Error Report Register</p></li>
+<li><p>CAPP Transport Error Report Register</p></li>
+<li><p>CAPP TLBI Error Report Register</p></li>
+<li><p>CAPP Error Status and Control Register</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>capi: move the acknowledge of the HMI interrupt</p>
+<p>We need to acknowledge an eventual HMI initiated by the previous forced
+fence on the PHB to work around a non-existent PE in the phb4_creset()
+function.
+For this reason do_capp_recovery_scoms() is called now at the
+beginning of the step: PHB4_SLOT_CRESET_WAIT_CQ</p>
+</li>
+<li><p>capi: update ci store buffers and dma engines</p>
+<p>The number of read (APC type traffic) and mmio store (MSG type traffic)
+resources assigned to the CAPP is controlled by the CAPP control
+register.</p>
+<p>According to the type of CAPI cards present on the server, we have to
+configure differently the CAPP messages and the DMA read engines given
+to the CAPP for use.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="hmi">
+<h2>HMI<a class="headerlink" href="#hmi" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>core/hmi: Display chip location code while displaying core FIR.</p></li>
+<li><p>core/hmi: Do not display FIR details if none of the bits are set.</p>
+<p>So that we don’t flood OPAL console logs with information that is not
+useful.</p>
+</li>
+<li><p>opal/hmi: HMI logging with location code info.</p>
+<p>Add few HMI debug prints with location code info few additional info.</p>
+<p>No functionality change.</p>
+<p>With this patch the log messages will look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mf">210612.175196744</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x0840000000000000</span>
+<span class="p">[</span><span class="mf">210612.175200449</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">UOPWR</span><span class="mf">.1302</span><span class="n">LFA</span><span class="o">-</span><span class="n">Node0</span><span class="o">-</span><span class="n">Proc1</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">8</span> <span class="n">C</span><span class="p">:</span><span class="mi">16</span> <span class="n">T</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span> <span class="n">TFMR</span><span class="p">(</span><span class="mi">2</span><span class="n">d12000870e04020</span><span class="p">)</span> <span class="n">Timer</span> <span class="n">Facility</span> <span class="n">Error</span>
+
+<span class="p">[</span><span class="mf">210660.259689526</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x2040000000000000</span>
+<span class="p">[</span><span class="mf">210660.259695649</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">UOPWR</span><span class="mf">.1302</span><span class="n">LFA</span><span class="o">-</span><span class="n">Node0</span><span class="o">-</span><span class="n">Proc0</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">0</span> <span class="n">C</span><span class="p">:</span><span class="mi">16</span> <span class="n">T</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span> <span class="n">Processor</span> <span class="n">recovery</span> <span class="n">Done</span><span class="o">.</span>
+</pre></div>
+</div>
+</li>
+<li><p>core/hmi: Use pr_fmt macro for tagging log messages</p>
+<p>No functionality changes.</p>
+</li>
+<li><p>opal: Get chip location code</p>
+<p>and store it under proc_chip for quick reference during HMI handling
+code.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="sensors">
+<h2>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>occ-sensors: Fix up quad/gpu location mix-up</p>
+<p>The GPU and QUAD sensor location types are swapped compared to what
+exists in the OCC code base which is authoritative. Fix them up.</p>
+</li>
+<li><p>sensors: occ: Skip counter type of sensors</p>
+<p>Don’t add counter type of sensors to device-tree as they don’t
+fit into hwmon sensor interface.</p>
+</li>
+<li><p>sensors: dts: Assert special wakeup on idle cores while reading temperature</p>
+<p>In P9, when a core enters a stop state, its clocks will be stopped
+to save power and hence we will not be able to perform a SCOM
+operation to read the DTS temperature sensor.  Hence, assert
+a special wakeup on cores that have entered a stop state in order to
+successfully complete the SCOM operation.</p>
+</li>
+<li><p>sensors: occ: Skip power sensors with zero sample value</p>
+<p>APSS is not available on platforms like Zaius, Romulus where OCC
+can only measure Vdd (core) and Vdn (nest) power from the AVSbus
+reading. So all the sensors for APSS channels will be populated
+with 0. Different component power sensors like system, memory
+which point to the APSS channels will also be 0.</p>
+<p>As per OCC team (Martha Broyles) zeroed power sensor means that the
+system doesn’t have it. So this patch filters out these sensors.</p>
+</li>
+<li><p>sensors: occ: Skip GPU sensors for non-gpu systems</p></li>
+<li><p>sensors: Fix dtc warning for new occ in-band sensors.</p>
+<p>dtc complains about missing reg property when a DT node is having a
+unit name or address but no reg property.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="n">vrm</span><span class="o">-</span><span class="ow">in</span><span class="nd">@c00004</span> <span class="n">has</span> <span class="n">a</span> <span class="n">unit</span> <span class="n">name</span><span class="p">,</span> <span class="n">but</span> <span class="n">no</span> <span class="n">reg</span> <span class="nb">property</span>
+<span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="n">gpu</span><span class="o">-</span><span class="ow">in</span><span class="nd">@c0001f</span> <span class="n">has</span> <span class="n">a</span> <span class="n">unit</span> <span class="n">name</span><span class="p">,</span> <span class="n">but</span> <span class="n">no</span> <span class="n">reg</span> <span class="nb">property</span>
+<span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">sensor</span><span class="o">-</span><span class="n">groups</span><span class="o">/</span><span class="n">occ</span><span class="o">-</span><span class="n">js</span><span class="o">@</span><span class="mi">1</span><span class="n">c00040</span> <span class="n">has</span> <span class="n">a</span> <span class="n">unit</span> <span class="n">name</span><span class="p">,</span> <span class="n">but</span> <span class="n">no</span> <span class="n">reg</span> <span class="nb">property</span>
+</pre></div>
+</div>
+<p>This patch fixes these warnings for new occ in-band sensors and also for
+sensor-groups by adding necessary properties.</p>
+</li>
+<li><p>sensors: Fix dtc warning for dts sensors.</p>
+<p>dtc complains about missing reg property when a DT node is having a
+unit name or address but no reg property.</p>
+<p>Example warning for core dts sensor:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="n">core</span><span class="o">-</span><span class="n">temp</span><span class="o">@</span><span class="mi">5</span><span class="n">c</span> <span class="n">has</span> <span class="n">a</span> <span class="n">unit</span> <span class="n">name</span><span class="p">,</span> <span class="n">but</span> <span class="n">no</span> <span class="n">reg</span> <span class="nb">property</span>
+<span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="n">core</span><span class="o">-</span><span class="n">temp</span><span class="o">@</span><span class="mi">804</span> <span class="n">has</span> <span class="n">a</span> <span class="n">unit</span> <span class="n">name</span><span class="p">,</span> <span class="n">but</span> <span class="n">no</span> <span class="n">reg</span> <span class="nb">property</span>
+</pre></div>
+</div>
+<p>This patch fixes this by adding necessary properties.</p>
+</li>
+<li><p>hw/occ: Fix psr cpu-to-gpu sensors node dtc warning.</p>
+<p>dtc complains about missing reg property when a DT node is having a
+unit name or address but no reg property.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">power</span><span class="o">-</span><span class="n">mgt</span><span class="o">/</span><span class="n">psr</span><span class="o">/</span><span class="n">cpu</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">gpu</span><span class="o">@</span><span class="mi">0</span> <span class="n">has</span> <span class="n">a</span> <span class="n">unit</span> <span class="n">name</span><span class="p">,</span> <span class="n">but</span> <span class="n">no</span> <span class="n">reg</span> <span class="nb">property</span>
+<span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">power</span><span class="o">-</span><span class="n">mgt</span><span class="o">/</span><span class="n">psr</span><span class="o">/</span><span class="n">cpu</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">gpu</span><span class="o">@</span><span class="mi">100</span> <span class="n">has</span> <span class="n">a</span> <span class="n">unit</span> <span class="n">name</span><span class="p">,</span> <span class="n">but</span> <span class="n">no</span> <span class="n">reg</span> <span class="nb">property</span>
+</pre></div>
+</div>
+<p>This patch fixes this by adding necessary properties.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="general-fixes">
+<h2>General fixes<a class="headerlink" href="#general-fixes" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>lpc: Clear pending IRQs at boot</p>
+<p>When we come in from hostboot the LPC master has the bus reset indicator
+set. This error isn’t handled until the host kernel unmasks interrupts,
+at which point we get the following spurious error:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[   20.053560375,3] LPC: Got LPC reset on chip 0x0 !
+[   20.053564560,3] LPC[000]: Unknown LPC error Error address reg: 0x00000000
+</pre></div>
+</div>
+<p>Fix this by clearing the various error bits in the LPC status register
+before we initialise the skiboot LPC bus driver.</p>
+</li>
+<li><p>hw/imc: Check ucode state before exposing units to Linux</p>
+<p>disable_unavailable_units() checks whether the ucode
+is in the running state before enabling the nest units
+in the device tree. From a recent debug, it is found
+that on some system boot, ucode is not loaded and
+running in all the chips in the system. And this
+caused a fail in OPAL_IMC_COUNTERS_STOP call where
+we check for ucode state on each chip. Bug here is
+that disable_unavailable_units() checks the state
+of the ucode only in boot cpu chip. Patch adds a
+condition in disable_unavailable_units() to check
+for the ucode state in all the chip before enabling
+the nest units in the device tree node.</p>
+</li>
+<li><p>hdata/vpd: Add vendor property</p>
+<p>ibm,vpd blob contains VN field. Use that to populate vendor property
+for various FRU’s.</p>
+</li>
+<li><p>hdata/vpd: Fix DTC warnings</p>
+<p>All the nodes under the vpd hierarchy have a unit address (their SLCA
+index) but no reg properties. Add them and their size/address cells
+to squash the warnings.</p>
+</li>
+<li><p>HDAT/i2c: Fix SPD EEPROM compatible string</p>
+<p>Hostboot doesn’t give us accurate information about the DIMM SPD
+devices. Hack around by assuming any EEPROM we find on the SPD I2C
+master is an SPD EEPROM.</p>
+</li>
+<li><p>hdata/i2c: Fix 512Kb EEPROM size</p>
+<p>There’s no such thing as a 412Kb EEPROM.</p>
+</li>
+<li><p>libflash/mbox-flash: fall back to requesting lower MBOX versions from BMC</p>
+<p>Some BMC mbox implementations seem to sometimes mysteriously fail when trying
+to negotiate v3 when they only support v2. To work around this, we
+can fall back to requesting lower mbox protocol versions until we find
+one that works.</p>
+<p>In theory, this should already “just work”, but we have a counter example,
+which this patch fixes.</p>
+</li>
+<li><p>IPMI: Fix platform.cec_reboot() null ptr checks</p>
+<p>Kudos to Hugo Landau who reported this in:
+<a class="reference external" href="https://github.com/open-power/skiboot/issues/142">https://github.com/open-power/skiboot/issues/142</a></p>
+</li>
+<li><p>hdata: Add location code property to xscom node</p>
+<p>This patch adds chip location code property to xscom node.</p>
+</li>
+<li><p>p8-i2c: Limit number of retry attempts</p>
+<p>Current we will attempt to start an I2C transaction until it succeeds.
+In the event that the OCC does not release the lock on an I2C bus this
+results in an async token being held forever and the kernel thread that
+started the transaction will block forever while waiting for an async
+completion message. Fix this by limiting the number of attempts to
+start the transaction.</p>
+</li>
+<li><p>p8-i2c: Don’t write the watermark register at init</p>
+<p>On P9 the I2C master is shared with the OCC. Currently the watermark
+values are set once at init time which is bad for two reasons:</p>
+<ol class="loweralpha simple">
+<li><p>We don’t take the OCC master lock before setting it. Which
+may cause issues if the OCC is currently using the master.</p></li>
+<li><p>The OCC might change the watermark levels and we need to reset
+them.</p></li>
+</ol>
+<p>Change this so that we set the watermark value when a new transaction
+is started rather than at init time.</p>
+</li>
+<li><p>hdata: Rename ‘fsp-ipl-side’ as ‘sp-ipl-side’</p>
+<p>as OPAL is building device tree for both FSP and BMC system.
+Also I don’t see anyone using this property today. Hence renaming
+should be fine.</p>
+</li>
+<li><p>hdata/vpd: add support for parsing CPU VRML records</p>
+<p>Allows skiboot to parse out the processor part/serial numbers
+on OpenPOWER P9 machines.</p>
+</li>
+<li><p>core/lock: Introduce atomic cmpxchg and implement try_lock with it</p>
+<p>cmpxchg will be used in a subsequent change, and this reduces the
+amount of asm code.</p>
+</li>
+<li><p>direct-controls: add xscom error handling for p8</p>
+<p>Add xscom checks which will print something useful and return error
+back to callers (which already have error handling plumbed in).</p>
+</li>
+<li><p>direct-controls: p8 implementation of generic direct controls</p>
+<p>This reworks the sreset functionality that was brought over from
+fast-reboot, and fits it under the generic direct controls APIs.</p>
+<p>The fast reboot APIs are implemented using generic direct controls,
+which also makes them available on p9.</p>
+</li>
+<li><p>fast-reboot: allow mambo fast reboot independent of CPU type</p>
+<p>Don’t tie mambo fast reboot to POWER8 CPU type.</p>
+</li>
+<li><p>fast-reboot: remove delay after sreset</p>
+<p>There is a 100ms delay when targets reach sreset which does not appear
+to have a good purpose. Remove it and therefore reduce the sreset timeout
+by the same amount.</p>
+</li>
+<li><p>fast-reboot: add more barriers around cpu state changes</p>
+<p>This is a bit of paranoia, but when a CPU changes state to signal it
+has reached a particular point, all previous stores should be visible.</p>
+</li>
+<li><p>fast-reboot: add sreset timeout detection and handling</p>
+<p>Have the initiator wait for all its sreset targets to call in, and
+time out after 200ms if they did not. Fail and revert to IPL reboot.</p>
+<p>Testing indicates that after successful sreset_all_others(), it
+takes less than 102ms (in hundreds of fast reboots) for secondaries
+to call in. 100 of that is due to an initial delay, but core
+un-splitting was not measured.</p>
+</li>
+<li><p>fast-reboot: make spin loops consistent and SMT friendly</p></li>
+<li><p>fast-reboot: add sreset_all_others error handling</p>
+<p>Pass back failures from sreset_all_others, also change return codes to
+OPAL form in sreset_all_prepare to match.</p>
+<p>Errors will revert to the IPL path, so it’s not critical to completely
+clean up everything if that would complicate things. Detecting the
+error and failing is the important thing.</p>
+</li>
+<li><p>fast-reboot: restore SMT priority on spin loop exit</p></li>
+<li><p>Add documentation for ibm, firmware-versions device tree node</p></li>
+<li><p>NX: Print read xscom config failures.</p>
+<p>Currently in NX, only write xscom config failures are tracing.
+Add trace statements for read xscom config failures too.
+No functional changes.</p>
+</li>
+<li><p>hw/nx: Fix NX BAR assignments</p>
+<p>The NX rng BAR is used by each core to source random numbers for the
+DARN instruction. Currently we configure each core to use the NX rng of
+the chip that it exists on. Unfortunately, the NX can be de-configured by
+hostboot and in this case we need to use the NX of a different chip.</p>
+<p>This patch moves the BAR assignments for the NX into the normal nx-rng
+init path. This lets us check if the normal (chip local) NX is active
+when configuring which NX a core should use so that we can fall back
+gracefully.</p>
+</li>
+<li><p>FSP-elog: Reduce verbosity of elog messages</p>
+<p>These messages just fill up the opal console log with useless messages
+resulting in us losing useful information.</p>
+<p>They have been like this since the first commit in skiboot. Make them
+trace.</p>
+</li>
+<li><p>core/bitmap: fix bitmap iteration limit corruption</p>
+<p>The bitmap iterators did not reduce the number of bits to scan
+when searching for the next bit, which would result in them
+overrunning their bitmap.</p>
+<p>These are only used in one place, in xive reset, and the effect
+is that the xive reset code will keep zeroing memory until it
+reaches a block of memory of MAX_EQ_COUNT &gt;&gt; 3 bits in length,
+all zeroes.</p>
+</li>
+<li><p>hw/imc: always enable “imc_nest_chip” exports property</p>
+<p>imc_dt_update_nest_node() adds a “imc_nest_chip” property
+to the “exports” node (under opal_node) to view nest counter
+region. This comes handy when debugging ucode runtime
+errors (like counter data update or control block update
+so on…). And current code enables the property only if
+the microcode is in running state at system boot. To aid
+the debug of ucode not running/starting issues at boot,
+enable the addition of “imc_nest_chip” property always.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="nvlink2">
+<h2>NVLINK2<a class="headerlink" href="#nvlink2" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>npu2-hw-procedures.c: Correct phy lane mapping</p>
+<p>Each NVLINK2 device is associated with a particular group of OBUS lanes via
+a lane mask which is read from HDAT via the device-tree. However Skiboot’s
+interpretation of lane mask was different to what is exported from the
+HDAT.</p>
+<p>Specifically the lane mask bits in the HDAT are encoded in IBM bit ordering
+for a 24-bit wide value. So for example in normal bit ordering lane-0 is
+represented by having lane-mask bit 23 set and lane-23 is represented by
+lane-mask bit 0. This patch alters the Skiboot interpretation to match what
+is passed from HDAT.</p>
+</li>
+<li><p>npu2-hw-procedures.c: Power up lanes during ntl reset</p>
+<p>Newer versions of Hostboot will not power up the NVLINK2 PHY lanes by
+default. The phy_reset procedure already powers up the lanes but they also
+need to be powered up in order to access the DL.</p>
+<p>The reset_ntl procedure is called by the device driver to bring the DL out
+of reset and get it into a working state. Therefore we also need to add
+lane and clock power up to the reset_ntl procedure.</p>
+</li>
+<li><p>npu2.c: Add PE error detection</p>
+<p>Invalid accesses from the GPU can cause a specific PE to be frozen by the
+NPU. Add an interrupt handler which reports the frozen PE to the operating
+system via as an EEH event.</p>
+</li>
+<li><p>npu2.c: Fix XIVE IRQ alignment</p></li>
+<li><p>npu2: hw-procedures: Refactor reset_ntl procedure</p>
+<p>Change the implementation of reset_ntl to match the latest programming
+guide documentation.</p>
+</li>
+<li><p>npu2: hw-procedures: Add phy_rx_clock_sel()</p>
+<p>Change the RX clk mux control to be done by software instead of HW. This
+avoids glitches caused by changing the mux setting.</p>
+</li>
+<li><p>npu2: hw-procedures: Change phy_rx_clock_sel values</p>
+<p>The clock selection bits we set here are inputs to a state machine.</p>
+<p>DL clock select (bits 30-31)</p>
+<dl class="simple">
+<dt>0b00</dt><dd><p>lane 0 clock</p>
+</dd>
+<dt>0b01</dt><dd><p>lane 7 clock</p>
+</dd>
+<dt>0b10</dt><dd><p>grid clock</p>
+</dd>
+<dt>0b11</dt><dd><p>invalid/no-op</p>
+</dd>
+</dl>
+<p>To recover from a potential glitch, we need to ensure that the value we
+set forces a state change. Our current sequence is to set 0x3 followed
+by 0x1. With the above now known, that is actually a no-op followed by
+selection of lane 7. Depending on lane reversal, that selection is not a
+state change for some bricks.</p>
+<p>The way to force a state change in all cases is to switch to the grid
+clock, and then back to a lane.</p>
+</li>
+<li><p>npu2: hw-procedures: Manipulate IOVALID during training</p>
+<p>Ensure that the IOVALID bit for this brick is raised at the start of
+link training, in the reset_ntl procedure.</p>
+<p>Then, to protect us from a glitch when the PHY clock turns off or gets
+chopped, lower IOVALID for the duration of the phy_reset and
+phy_rx_dccal procedures.</p>
+</li>
+<li><p>npu2: hw-procedures: Add check_credits procedure</p>
+<p>As an immediate mitigation for a current hardware glitch, add a procedure
+that can be used to validate NTL credit values. This will be called as a
+safeguard to check that link training succeeded.</p>
+<p>Assert that things are exactly as we expect, because if they aren’t, the
+system will experience a catastrophic failure shortly after the start of
+link traffic.</p>
+</li>
+<li><p>npu2: Print bdfn in NPU2DEV* logging macros</p>
+<p>Revise the NPU2DEV{DBG,INF,ERR} logging macros to include the device’s
+bdfn. It’s useful to know exactly which link we’re referring to.</p>
+<blockquote>
+<div><p>For instance, instead of</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">234.044921238</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.048578101</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.051049676</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.053503542</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.057182864</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.059666137</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+</pre></div>
+</div>
+<p>we’ll get</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">234.044921238</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.0</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.048578101</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.1</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.051049676</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.2</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.053503542</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.0</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.057182864</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.1</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+<span class="p">[</span>  <span class="mf">234.059666137</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.2</span> <span class="n">Starting</span> <span class="n">procedure</span> <span class="n">reset_ntl</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>npu2: Move to new GPU memory map</p>
+<p>There are three different ways we configure the MCD and memory map.</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>Old way (current way)</dt><dd><p>Skiboot configures the MCD and puts GPUs at 4TB and below</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>New way with MCD</dt><dd><p>Hostboot configures the MCD and skiboot puts GPU at 4TB and above</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>New way without MCD</dt><dd><p>No one configures the MCD and skiboot puts GPU at 4TB and below</p>
+</dd>
+</dl>
+</li>
+</ol>
+<p>The patch keeps option 1 and adds options 2 and 3.</p>
+<p>The different configurations are detected using certain scoms (see
+patch).</p>
+<p>Option 1 will go away eventually as it’s a configuration that can
+cause xstops or data integrity problems. We are keeping it around to
+support existing hostboot.</p>
+<p>Option 2 supports only 4 GPUs and 512GB of memory per socket.</p>
+<p>Option 3 supports 6 GPUs and 4TB of memory but may have some
+performance impact.</p>
+</li>
+<li><p>phys-map: Rename GPU_MEM to GPU_MEM_4T_DOWN</p>
+<p>This map is soon to be replaced, but we are going to keep it around
+for a little while so that we support older hostboot firmware.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="platform-specific-fixes">
+<h2>Platform Specific Fixes<a class="headerlink" href="#platform-specific-fixes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="witherspoon">
+<h3>Witherspoon<a class="headerlink" href="#witherspoon" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>Witherspoon: Remove old Witherspoon platform definition</p>
+<p>An old Witherspoon platform definition was added to aid the transition from
+versions of Hostboot which didn’t have the correct NVLINK2 HDAT information
+available and/or planar VPD. These system should now be updated so remove
+the possibly incorrect default assumption.</p>
+<p>This may disable NVLINK2 on old out-dated systems but it can easily be
+restored with the appropriate FW and/or VPD updates. In any case there is a
+a 50% chance the existing default behaviour was incorrect as it only
+supports 6 GPU systems. Using an incorrect platform definition leads to
+undefined behaviour which is more difficult to detect/debug than not
+creating the NVLINK2 devices so remove the possibly incorrect default
+behaviour.</p>
+</li>
+<li><p>Witherspoon: Fix VPD EEPROM type</p>
+<p>There are user-space tools that update the planar VPD via the sysfs
+interface. Currently we do not get correct information from hostboot
+about the exact type of the EEPROM so we need to manually fix it up
+here. This needs to be done as a platform specific fix since there is
+not standardised VPD EEPROM type.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="ibm-fsp-systems">
+<h3>IBM FSP Systems<a class="headerlink" href="#ibm-fsp-systems" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>nvram: Fix ‘missing’ nvram on FSP systems.</p>
+<p>commit ba4d46fdd9eb (“console: Set log level from nvram”) wants to read
+from NVRAM rather early. This works fine on BMC based systems as
+nvram_init() is actually synchronous. This is not true for FSP systems
+and it turns out that the query for the console log level simply
+queries blank nvram.</p>
+<p>The simple fix is to wait for the NVRAM read to complete before
+performing any query. Unfortunately it turns out that the fsp-nvram
+code does not inform the generic NVRAM layer when the read is complete,
+rather, it must be prompted to do so.</p>
+<p>This patch addresses both these problems. This patch adds a check before
+the first read of the NVRAM (for the console log level) that the read
+has completed. The fsp-nvram code has been updated to inform the generic
+layer as soon as the read completes.</p>
+<p>The old prompt to the fsp-nvram code has been removed but a check to
+ensure that the NVRAM has been loaded remains. It is conservative but
+if the NVRAM is not done loading before the host is booted it will not
+have an nvram device-tree node which means it won’t be able to access
+the NVRAM at all, ever, even after the NVRAM has loaded.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Fix xscom-utils distclean target</p>
+<p>In Debian/Ubuntu, the packaging system likes to have a full clean-up that
+restores the tree back to original one, so add some files to the distclean
+target.</p>
+</li>
+<li><p>Add man pages for xscom-utils and pflash</p>
+<p>For the need of Debian/Ubuntu packaging, I inferred some initial man
+pages from their help output.</p>
+</li>
+</ul>
+<div class="section" id="gard">
+<h3>gard<a class="headerlink" href="#gard" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>gard: Add tests</p>
+<p>I hear Stewart likes these for some reason. Dunno why.</p>
+</li>
+<li><p>gard: Add OpenBMC vPNOR support</p>
+<p>A big-ol-hack to add some checking for OpenBMC’s vPNOR GUARD files under
+/media/pnor-prsv. This isn’t ideal since it doesn’t handle the create
+case well, but it’s better than nothing.</p>
+</li>
+<li><p>gard: Always use MTD to access flash</p>
+<p>Direct mode is generally either unsafe or unsupported. We should always
+access the PNOR via an MTD device so make that the default. If someone
+really needs direct mode, then they can use pflash.</p>
+</li>
+<li><p>gard: Fix up do_create return values</p>
+<p>The return value of a subcommand is interpreted as a libflash error code
+when it’s positive or some subcommand specific error when negative.
+Currently the create subcommand always returns zero when exiting (even
+for errors) so fix that.</p>
+</li>
+<li><p>gard: Add usage message for -p</p>
+<p>The -p argument only really makes sense when -f is specified. Print an
+actual error message rather than just the usage blob.</p>
+</li>
+<li><p>gard: Fix max instance count</p>
+<p>There’s an entire byte for the instance count rather than a nibble. Only
+barf if the instance number is beyond 255 rather than 16.</p>
+</li>
+<li><p>gard: Fix up path parsing</p>
+<p>Currently we assume that the Unit ID can be used as an array index into
+the chip_units[] structure. There are holes in the ID space though, so
+this doesn’t actually work. Fix it up by walking the array looking for
+the ID.</p>
+</li>
+<li><p>gard: Set chip generation based on PVR</p>
+<p>Currently we assume that this tool is being used on a P8 system by
+default and allow the user to override this behaviour using the -8 and
+-9 command line arguments. When running on the host we can use the
+PVR to guess what chip generation so do that.</p>
+<p>This also changes the default behaviour to assume that the host is a P9
+when running on an ARM system. This tool didn’t even work when compiled
+for ARM until recently and the OpenBMC vPNOR hack that we have currently
+is broken for P9 systems that don’t use vPNOR (Zaius and Romulus).</p>
+</li>
+<li><p>gard: Allow records with an ID of 0xffffffff</p>
+<p>We currently assume that a record with an ID of 0xffffffff is invalid.
+Apparently this is incorrect and we should display these records, so
+expand the check to compare the entire record with 0xff rather than
+just the ID.</p>
+</li>
+<li><p>gard: create: Allow creating arbitrary GARD records</p>
+<p>Add a new sub-command that allows us to create GARD records for
+arbitrary chip units. There isn’t a whole lot of constraints on this and
+that limits how useful it can be, but it does allow a user to GARD out
+individual DIMMs, chips or cores from the BMC (or host) if needed.</p>
+<p>There are a few caveats though:</p>
+<ol class="arabic simple">
+<li><p>Not everything can, or should, have a GARD record applied it to.</p></li>
+<li><p>There is no validation that the unit actually exists. Doing that
+sort of validation requires something that understands the FAPI
+targeting information (I think) and adding support for it here
+would require some knowledge from the system XML file.</p></li>
+<li><p>There’s no way to get a list of paths in the system.</p></li>
+<li><p>Although we can create a GARD record at runtime it won’t be applied
+until the next IPL.</p></li>
+</ol>
+</li>
+<li><p>gard: Add path parsing support</p>
+<p>In order to support manual GARD records we need to be able to parse the
+hardware unit path strings. This patch implements that.</p>
+</li>
+<li><p>gard: list: Improve output</p>
+<p>Display the full path to the GARDed hardware unit in each record rather
+than relying on the output of <cite>gard show</cite> and convert do_list() to use
+the iterator while we’re here.</p>
+</li>
+<li><p>gard: {list, show}: Fix the Type field in the output</p>
+<p>The output of <cite>gard list</cite> has a field named “Type”, however this
+doesn’t actually indicate the type of the record. Rather, it
+shows the type of the path used to identify the hardware being
+GARDed. This is of pretty dubious value considering the Physical
+path seems to always be used when referring to GARDed hardware.</p>
+</li>
+<li><p>gard: Add P9 support</p></li>
+<li><p>gard: Update chip unit data</p>
+<p>Source the list of units from the hostboot source rather than the
+previous hard coded list. The list of path element types changes
+between generations so we need to add a level of indirection to
+accommodate P9. This also changes the names used to match those
+printed by Hostboot at IPL time and paves the way to adding support
+for manual GARD record creation.</p>
+</li>
+<li><p>gard: show: Remove “Res Recovery” field</p>
+<p>This field has never been populated by hostboot on OpenPower systems
+so there’s no real point in reporting it’s contents.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="libflash-pflash">
+<h3>libflash / pflash<a class="headerlink" href="#libflash-pflash" title="Permalink to this headline">¶</a></h3>
+<p>Anybody shipping libflash or pflash to interact with POWER9 systems must
+upgrade to this version.</p>
+<ul>
+<li><p>pflash: Support for volatile flag</p>
+<p>The volatile flag was added to the PNOR image to
+indicate partitions that are cleared during a host
+power off. Display this flag from the pflash command.</p>
+</li>
+<li><p>pflash: Support for clean_on_ecc_error flag</p>
+<p>Add the misc flag clear_on_ecc_error to libflash/pflash. This was
+the only missing flag. The generator of the virtual PNOR image
+relies on libflash/pflash to provide the partition information,
+so all flags are needed to build an accurate virtual PNOR partition
+table.</p>
+</li>
+<li><p>pflash: Respect write(2) return values</p>
+<p>The write(2) system call returns the number of bytes written, this is
+important since it is entitled to write less than what we requested.
+Currently we ignore the return value and assume it wrote everything we
+requested. While in practice this is likely to always be the case, it
+isn’t actually correct.</p>
+</li>
+<li><p>external/pflash: Fix erasing within a single erase block</p>
+<p>It is possible to erase within a single erase block. Currently the
+pflash code assumes that if the erase starts part way into an erase
+block it is because it needs to be aligned up to the boundary with the
+next erase block.</p>
+<p>Doing an erase smaller than a single erase block will cause underflows
+and looping forever on erase.</p>
+</li>
+<li><p>external/pflash: Fix non-zero return code for successful read when size%256 != 0</p>
+<p>When performing a read the return value from pflash is non-zero, even for
+a successful read, when the size being read is not a multiple of 256.
+This is because do_read_file returns the value from the write system
+call which is then returned by pflash. When the size is a multiple of
+256 we get lucky in that this wraps around back to zero. However for any
+other value the return code is size % 256. This means even when the
+operation is successful the return code will seem to reflect an error.</p>
+<p>Fix this by returning zero if the entire size was read correctly,
+otherwise return the corresponding error code.</p>
+</li>
+<li><p>libflash: Fix parity calculation on ARM</p>
+<p>To calculate the ECC syndrome we need to calculate the parity of a 64bit
+number. On non-powerpc platforms we use the GCC builtin function
+__builtin_parityl() to do this calculation. This is broken on 32bit ARM
+where sizeof(unsigned long) is four bytes. Using __builtin_parityll()
+instead cures this.</p>
+</li>
+<li><p>libflash/mbox-flash: Add the ability to lock flash</p></li>
+<li><p>libflash/mbox-flash: Understand v3</p></li>
+<li><p>libflash/mbox-flash: Use BMC suggested timeout value</p></li>
+<li><p>libflash/mbox-flash: Simplify message sending</p>
+<p>hw/lpc-mbox no longer requires that the memory associated with messages
+exist for the lifetime of the message. Once it has been sent to the BMC,
+that is bmc_mbox_enqueue() returns, lpc-mbox does not need the message
+to continue to exist. On the receiving side, lpc-mbox will ensure that a
+message exists for the receiving callback function.</p>
+<p>Remove all code to deal with allocating messages.</p>
+</li>
+<li><p>hw/lpc-mbox: Simplify message bookkeeping and timeouts</p>
+<p>Currently the hw/lpc-mbox layer keeps a pointer for the currently
+in-flight message for the duration of the mbox call. This creates
+problems when messages timeout, is that pointer still valid, what can we
+do with it. The memory is owned by the caller but if the caller has
+declared a timeout, it may have freed that memory.</p>
+<p>Another problem is locking. This patch also locks around sending and
+receiving to avoid races with timeouts and possible resends. There was
+some locking previously which was likely insufficient - definitely too
+hard to be sure is correct</p>
+<p>All this is made much easier with the previous rework which moves
+sequence number allocation and verification into lpc-mbox rather than
+the caller.</p>
+</li>
+<li><p>libflash/mbox-flash: Allow mbox-flash to tell the driver msg timeouts</p>
+<p>Currently when mbox-flash decides that a message times out the driver
+has no way of knowing to drop the message and will continue waiting for
+a response indefinitely preventing more messages from ever being sent.</p>
+<p>This is a problem if the BMC crashes or has some other issue where it
+won’t ever respond to our outstanding message.</p>
+<p>This patch provides a method for mbox-flash to tell the driver how long
+it should wait before it no longer needs to care about the response.</p>
+</li>
+<li><p>libflash/mbox-flash: Move sequence handling to driver level</p></li>
+<li><p>libflash/mbox-flash: Always close windows before opening a new window</p>
+<p>The MBOX protocol states that if an open window command fails then all
+open windows are closed. Currently, if an open window command fails
+mbox-flash will erroneously assume that the previously open window is
+still open.</p>
+<p>The solution to this is to mark all windows as closed before issuing an
+open window command and then on success we’ll mark the new window as
+open.</p>
+</li>
+<li><p>libflash/mbox-flash: Add v2 error codes</p></li>
+</ul>
+</div>
+<div class="section" id="opal-prd">
+<h3>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h3>
+<p>Anybody shipping <cite>opal-prd</cite> for POWER9 systems must upgrade <cite>opal-prd</cite> to
+this new version.</p>
+<ul>
+<li><p>prd: Log unsupported message type</p>
+<p>Useful for debugging.</p>
+<p>Sample output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mf">29155.157050283</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">PRD</span><span class="p">:</span> <span class="n">Unsupported</span> <span class="n">prd</span> <span class="n">message</span> <span class="nb">type</span> <span class="p">:</span> <span class="mh">0xc</span>
+</pre></div>
+</div>
+</li>
+<li><p>opal-prd: occ: Add support for runtime OCC load/start in ZZ</p>
+<p>This patch adds support to handle OCC load/start event from FSP/PRD.
+During IPL we send a success directly to FSP without invoking any HBRT
+load routines on receiving OCC load mbox message from FSP. At runtime
+we forward this event to host opal-prd.</p>
+<p>This patch provides support for invoking OCC load/start HBRT routines
+like load_pm_complex() and start_pm_complex() from opal-prd.</p>
+</li>
+<li><p>opal-prd: Add support for runtime OCC reset in ZZ</p>
+<p>This patch handles OCC_RESET runtime events in host opal-prd and also
+provides support for calling ‘hostinterface-&gt;wakeup()’ which is
+required for doing the reset operation.</p>
+</li>
+<li><p>prd: Enable error logging via firmware_request interface</p>
+<p>In P9 HBRT sends error logs to FSP via firmware_request interface.
+This patch adds support to parse error log and send it to FSP.</p>
+</li>
+<li><p>prd: Add generic response structure inside prd_fw_msg</p>
+<p>This patch adds generic response structure. Also sync prd_fw_msg type
+macros with hostboot.</p>
+</li>
+<li><p>opal-prd: flush after logging to stdio in debug mode</p>
+<p>When in debug mode, flush after each log output. This makes it more
+likely that we’ll catch failure reasons on severe errors.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="debugging-and-reliability-improvements">
+<h2>Debugging and reliability improvements<a class="headerlink" href="#debugging-and-reliability-improvements" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>lock: Add additional lock auditing code</p>
+<p>Keep track of lock owner name and replace lock_depth counter
+with a per-cpu list of locks held by the cpu.</p>
+<p>This allows us to print the actual locks held in case we hit
+the (in)famous message about opal_pollers being run with a
+lock held.</p>
+<p>It also allows us to warn (and drop them) if locks are still
+held when returning to the OS or completing a scheduled job.</p>
+</li>
+<li><p>Add support for new GCC 7 parametrized stack protector</p>
+<p>This gives us per-cpu guard values as well. For now I just
+XOR a magic constant with the CPU PIR value.</p>
+</li>
+<li><p>Mambo: run hello_world and sreset_world tests with Secure and Trusted Boot</p>
+<p>We <em>disable</em> the secure boot part, but we keep the verified boot
+part as we don’t currently have container verification code for Mambo.</p>
+<p>We can run a small part of the code currently though.</p>
+</li>
+<li><p>core/flash.c: extern function to get the name of a PNOR partition</p>
+<p>This adds the flash_map_resource_name() to allow skiboot subsystems to
+lookup the name of a PNOR partition. Thus, we don’t need to duplicate
+the same information in other places (e.g. libstb).</p>
+</li>
+<li><p>libflash/mbox-flash: only wait for MBOX_DEFAULT_POLL_MS if busy</p>
+<p>This makes the mbox unit test run 300x quicker and seems to
+shave about 6 seconds from boot time on Witherspoon.</p>
+</li>
+<li><p>make check: Make valgrind optional</p>
+<p>To (slightly) lower the barrier for contributions, we can make valgrind
+optional with just a small amount of plumbing.</p>
+<p>This allows make check to run successfully without valgrind.</p>
+</li>
+<li><p>libflash/test: Add tests for mbox-flash</p>
+<p>A first basic set of tests for mbox-flash. These tests do their testing
+by stubbing out or otherwise replacing functions not in
+libflash/mbox-flash.c. The stubbed out version of the function can then
+be used to emulate a BMC mbox daemon talking to back to the code in
+mbox-flash and it can ensure that there is some adherence to the
+protocol and that from a block-level api point of view the world appears
+sane.</p>
+<p>This makes these tests simple to run and they have been integrated into
+<cite>make check</cite>. The down side is that these tests rely on duplicated
+feature incomplete BMC daemon behaviour. Therefore these tests are a
+strong indicator of broken behaviour but a very unreliable indicator of
+correctness.</p>
+<p>Full integration tests with a ‘real’ BMC daemon are probably beyond the
+scope of this repository.</p>
+</li>
+<li><p>external/test/test.sh: fix VERSION substitution when no tags</p>
+<p>i.e. we get a hash rather than a version number</p>
+<p>This seems to be occurring in Travis if it doesn’t pull a tag.</p>
+</li>
+<li><p>external/test: make stripping out version number more robust</p>
+<p>For some bizarre reason, Travis started failing on this
+substitution when there’d been zero code changes in this
+area… This at least papers over whatever the problem is
+for the time being.</p>
+</li>
+<li><p>io: Add load_wait() helper</p>
+<p>This uses the standard form twi/isync pair to ensure a load
+is consumed by the core before continuing. This can be necessary
+under some circumstances for example when having the following
+sequence:</p>
+<ul class="simple">
+<li><p>Store reg A</p></li>
+<li><p>Load reg A (ensure above store pushed out)</p></li>
+<li><p>delay loop</p></li>
+<li><p>Store reg A</p></li>
+</ul>
+<p>I.E., a mandatory delay between 2 stores. In theory the first store
+is only guaranteed to reach the device after the load from the same
+location has completed. However the processor will start executing
+the delay loop without waiting for the return value from the load.</p>
+<p>This construct enforces that the delay loop isn’t executed until
+the load value has been returned.</p>
+</li>
+<li><p>chiptod: Keep boot timestamps contiguous</p>
+<p>Currently we reset the timebase value to (almost) zero when
+synchronising the timebase of each chip to the Chip TOD network which
+results in this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">42.374813167</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">CPU</span><span class="p">:</span> <span class="n">All</span> <span class="mi">80</span> <span class="n">processors</span> <span class="n">called</span> <span class="ow">in</span><span class="o">...</span>
+<span class="p">[</span>    <span class="mf">2.222791151</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Found</span> <span class="n">system</span> <span class="n">flash</span><span class="p">:</span> <span class="n">Macronix</span> <span class="n">MXxxL51235F</span> <span class="nb">id</span><span class="p">:</span><span class="mi">0</span>
+<span class="p">[</span>    <span class="mf">2.222977933</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">BT</span><span class="p">:</span> <span class="n">Interface</span> <span class="n">initialized</span><span class="p">,</span> <span class="n">IO</span> <span class="mh">0x00e4</span>
+</pre></div>
+</div>
+<p>This patch modifies the chiptod_init() process to use the current
+timebase value rather than resetting it to zero. This results in the
+timestamps remaining contiguous from the start of hostboot until
+the petikernel starts. e.g.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">70.188811484</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">CPU</span><span class="p">:</span> <span class="n">All</span> <span class="mi">144</span> <span class="n">processors</span> <span class="n">called</span> <span class="ow">in</span><span class="o">...</span>
+<span class="p">[</span>   <span class="mf">72.458004252</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Found</span> <span class="n">system</span> <span class="n">flash</span><span class="p">:</span>  <span class="nb">id</span><span class="p">:</span><span class="mi">0</span>
+<span class="p">[</span>   <span class="mf">72.458147358</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">BT</span><span class="p">:</span> <span class="n">Interface</span> <span class="n">initialized</span><span class="p">,</span> <span class="n">IO</span> <span class="mh">0x00e4</span>
+</pre></div>
+</div>
+</li>
+<li><p>hdata/spira: Add missing newline to prlog() call</p>
+<p>We’re missing a n here.</p>
+</li>
+<li><p>opal/xscom: Add recovery for lost core wakeup SCOM failures.</p>
+<p>Due to a hardware issue where core responding to SCOM was delayed due to
+thread reconfiguration, leaves the SCOM logic in a state where the
+subsequent SCOM to that core can get errors. This is affected for Core
+PC SCOM registers in the range of 20010A80-20010ABF</p>
+<p>The solution is if a xscom timeout occurs to one of Core PC SCOM registers
+in the range of 20010A80-20010ABF, a clearing SCOM write is done to
+0x20010800 with data of ‘0x00000000’ which will also get a timeout but
+clears the SCOM logic errors. After the clearing write is done the original
+SCOM operation can be retried.</p>
+<p>The SCOM timeout is reported as status 0x4 (Invalid address) in HMER[21-23].</p>
+</li>
+<li><p>opal/xscom: Move the delay inside xscom_reset() function.</p>
+<p>So caller of xscom_reset() does not have to bother about adding a delay
+separately. Instead caller can control whether to add a delay or not using
+second argument to xscom_reset().</p>
+</li>
+<li><p>timer: Stop calling list_top() racily</p>
+<p>This will trip the debug checks in debug builds under some circumstances
+and is actually a rather bad idea as we might look at a timer that is
+concurrently being removed and modified, and thus incorrectly assume
+there is no work to do.</p>
+</li>
+<li><p>fsp: Bail out of HIR if FSP is resetting voluntarily</p>
+<ol class="loweralpha simple">
+<li><p>Surveillance response times out and OPAL triggers a HIR</p></li>
+<li><p>Before the HIR process kicks in, OPAL gets a PSI interrupt indicating link down</p></li>
+<li><p>HIR process continues and OPAL tries to write to DRCR; PSI link inactive =&gt; xstop</p></li>
+</ol>
+<p>OPAL should confirm that the FSP is not already in reset in the HIR path.</p>
+</li>
+<li><p>sreset_kernel: only run SMT tests due to not supporting re-entry</p></li>
+<li><p>Use systemsim-p9 v1.1</p></li>
+<li><p>direct-controls: enable fast reboot direct controls for mambo</p>
+<p>Add mambo direct controls to stop threads, which is required for
+reliable fast-reboot. Enable direct controls by default on mambo.</p>
+</li>
+<li><p>core/opal: always verify cpu-&gt;pir on entry</p></li>
+<li><p>asm/head: add entry/exit calls</p>
+<p>Add entry and exit C functions that can do some more complex
+checks before the opal proper call. This requires saving off
+volatile registers that have arguments in them.</p>
+</li>
+<li><p>core/lock: improve bust_locks</p>
+<p>Prevent try_lock from modifying the lock state when bust_locks is set.
+unlock will not unlock it in that case, so locks will get taken and
+never released while bust_locks is set.</p>
+</li>
+<li><p>hw/occ: Log proper SCOM register names</p>
+<p>This patch fixes the logging of incorrect SCOM
+register names.</p>
+</li>
+<li><p>mambo: Add support for NUMA</p>
+<p>Currently the mambo scripts can do multiple chips, but only the first
+ever has memory.</p>
+<p>This patch adds support for having memory on each chip, with each
+appearing as a separate NUMA node. Each node gets MEM_SIZE worth of
+memory.</p>
+<p>It’s opt-in, via <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">MAMBO_NUMA=1</span></code>.</p>
+</li>
+<li><p>external/mambo: Switch qtrace command to use plug-ins</p>
+<p>The plug-in seems to be the preferred way to do this now, it works
+better, and the qtracer emitter seems to generate invalid traces
+in new mambo versions.</p>
+</li>
+<li><p>asm/head: Loop after attn</p>
+<p>We use the attn instruction to raise an error in early boot if OPAL
+don’t recognise the PVR. It’s possible for hostboot to disable the
+attn instruction before entering OPAL so add an extra busy loop after
+the attn to prevent attempting to boot on an unknown processor.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.10-rc1</a><ul>
+<li><a class="reference internal" href="#new-features">New Features</a><ul>
+<li><a class="reference internal" href="#fast-reboot-and-quiesce">Fast Reboot and Quiesce</a></li>
+<li><a class="reference internal" href="#power9-power-saving">POWER9 power saving</a></li>
+<li><a class="reference internal" href="#secure-and-trusted-boot-for-power9">Secure and Trusted Boot for POWER9</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xive">XIVE</a></li>
+<li><a class="reference internal" href="#pci">PCI</a></li>
+<li><a class="reference internal" href="#phb4">PHB4</a></li>
+<li><a class="reference internal" href="#capi">CAPI</a></li>
+<li><a class="reference internal" href="#hmi">HMI</a></li>
+<li><a class="reference internal" href="#sensors">Sensors</a></li>
+<li><a class="reference internal" href="#general-fixes">General fixes</a></li>
+<li><a class="reference internal" href="#nvlink2">NVLINK2</a></li>
+<li><a class="reference internal" href="#platform-specific-fixes">Platform Specific Fixes</a><ul>
+<li><a class="reference internal" href="#witherspoon">Witherspoon</a></li>
+<li><a class="reference internal" href="#ibm-fsp-systems">IBM FSP Systems</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#utilities">Utilities</a><ul>
+<li><a class="reference internal" href="#gard">gard</a></li>
+<li><a class="reference internal" href="#libflash-pflash">libflash / pflash</a></li>
+<li><a class="reference internal" href="#opal-prd">opal-prd</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#debugging-and-reliability-improvements">Debugging and reliability improvements</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.10.html"
+                        title="previous chapter">skiboot-5.10</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.10-rc2.html"
+                        title="next chapter">skiboot-5.10-rc2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.10-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc2.html" title="skiboot-5.10-rc2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.html" title="skiboot-5.10"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

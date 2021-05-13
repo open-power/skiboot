@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_SENSOR_READ &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_SET_XIVE" href="opal-set-xive-19.html" />
+    <link rel="prev" title="OPAL Sensor Groups" href="opal-sensor-group-enable-clear-163-156.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-set-xive-19.html" title="OPAL_SET_XIVE"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-sensor-group-enable-clear-163-156.html" title="OPAL Sensor Groups"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_SENSOR_READ</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-sensor-read">
+<span id="id1"></span><h1>OPAL_SENSOR_READ<a class="headerlink" href="#opal-sensor-read" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_SENSOR_READ                     88</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_sensor_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">sensor_hndl</span><span class="p">,</span> <span class="kt">int</span> <span class="n">token</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">sensor_data</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The OPAL sensor call reads a sensor data using a unique handler to
+identity the targeted sensor. The <cite>sensor_handle</cite> is provided
+via the device tree and is opaque to the OS (although we currently
+do use an encoding scheme).</p>
+<p>This call can be asynchronous, when a message needs to be sent to a
+service processor for example.  In this case, the call will return
+OPAL_ASYNC_COMPLETION and the token parameter will be used to wait for
+the completion of the request.</p>
+<p>The OPAL API doesn’t enforce alimit on the number of sensor calls that can
+be in flight.</p>
+<p>Internally, <a class="reference internal" href="#opal-sensor-read"><span class="std std-ref">OPAL_SENSOR_READ</span></a> is implemented as a wrapper around
+<a class="reference internal" href="#opal-sensor-read-u64"><span class="std std-ref">OPAL_SENSOR_READ_U64</span></a>. Any code targeting processor generations prior
+to POWER9 will need to use <a class="reference internal" href="opal-check-token-80.html#opal-check-token"><span class="std std-ref">OPAL_CHECK_TOKEN</span></a> to ensure <a class="reference internal" href="#opal-sensor-read-u64"><span class="std std-ref">OPAL_SENSOR_READ_U64</span></a>
+is present and gracefully fall back to <a class="reference internal" href="#opal-sensor-read"><span class="std std-ref">OPAL_SENSOR_READ</span></a> if it is not.</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint32_t</span> <span class="n">sensor_handle</span>
+<span class="nb">int</span>      <span class="n">token</span>
+<span class="n">uint32_t</span> <span class="o">*</span><span class="n">sensor_data</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="return-values">
+<h2>Return values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success!</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>invalid sensor handle</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>platform does not support reading sensors.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt><dd><p>a request was sent and an async completion will
+be triggered with the &#64;token argument</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-partial"><span class="std std-ref">OPAL_PARTIAL</span></a></dt><dd><p>the request completed but the data returned is invalid</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt><dd><p>a previous request is still pending</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-no-mem"><span class="std std-ref">OPAL_NO_MEM</span></a></dt><dd><p>allocation failed</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>communication failure with the FSP</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>FSP is not available</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-sensor-read-u64">
+<span id="id2"></span><h1>OPAL_SENSOR_READ_U64<a class="headerlink" href="#opal-sensor-read-u64" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_SENSOR_READ_U64                 162</span>
+
+<span class="n">s64</span> <span class="nf">opal_sensor_read_u64</span><span class="p">(</span><span class="n">u32</span> <span class="n">sensor_hndl</span><span class="p">,</span> <span class="kt">int</span> <span class="n">token</span><span class="p">,</span> <span class="n">u64</span> <span class="o">*</span><span class="n">sensor_data</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The OPAL sensor call to read sensor data of type u64. Unlike
+opal_sensor_read which reads upto u32 this call can be used to
+read values of sensors upto 64bits. The calling conventions and
+return values are same as <a class="reference internal" href="#opal-sensor-read"><span class="std std-ref">OPAL_SENSOR_READ</span></a>.</p>
+<p>All sensors can be read through the <a class="reference internal" href="#opal-sensor-read-u64"><span class="std std-ref">OPAL_SENSOR_READ_U64</span></a> call that
+can be read using the <a class="reference internal" href="#opal-sensor-read"><span class="std std-ref">OPAL_SENSOR_READ</span></a> call. Internally,
+<a class="reference internal" href="#opal-sensor-read"><span class="std std-ref">OPAL_SENSOR_READ</span></a> is a wrapper around <a class="reference internal" href="#opal-sensor-read-u64"><span class="std std-ref">OPAL_SENSOR_READ_U64</span></a>.
+Any code targeting processor generations prior to POWER9 will need to use
+<a class="reference internal" href="opal-check-token-80.html#opal-check-token"><span class="std std-ref">OPAL_CHECK_TOKEN</span></a> to ensure <a class="reference internal" href="#opal-sensor-read-u64"><span class="std std-ref">OPAL_SENSOR_READ_U64</span></a>
+is present and gracefully fall back to <a class="reference internal" href="#opal-sensor-read"><span class="std std-ref">OPAL_SENSOR_READ</span></a> if it is not.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_SENSOR_READ</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#return-values">Return values</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-sensor-read-u64">OPAL_SENSOR_READ_U64</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-sensor-group-enable-clear-163-156.html"
+                        title="previous chapter">OPAL Sensor Groups</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-set-xive-19.html"
+                        title="next chapter">OPAL_SET_XIVE</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-sensor-read-88.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-set-xive-19.html" title="OPAL_SET_XIVE"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-sensor-group-enable-clear-163-156.html" title="OPAL Sensor Groups"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_SENSOR_READ</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

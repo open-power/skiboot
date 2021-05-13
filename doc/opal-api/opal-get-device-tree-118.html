@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_GET_DEVICE_TREE &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_GET_EPOW_STATUS" href="opal-get-epow-status-56.html" />
+    <link rel="prev" title="OPAL Flash calls" href="opal-flash-110-111-112.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-get-epow-status-56.html" title="OPAL_GET_EPOW_STATUS"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-flash-110-111-112.html" title="OPAL Flash calls"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_GET_DEVICE_TREE</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-get-device-tree">
+<span id="id1"></span><h1>OPAL_GET_DEVICE_TREE<a class="headerlink" href="#opal-get-device-tree" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_DEVICE_TREE                 118</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_get_device_tree</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">phandle</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">buf</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">len</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Get device sub-tree.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">phandle</span></code></dt><dd><p>root device node phandle of the device sub-tree</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">buf</span></code></dt><dd><p>FDT blob buffer or NULL</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">len</span></code></dt><dd><p>length of the FDT blob buffer</p>
+</dd>
+</dl>
+<p>Retrieve device sub-tree. The root node’s phandle is identified by &#64;phandle.
+The typical use is for the kernel to update its device tree following a change
+in hardware (e.g. PCI hotplug).</p>
+<div class="section" id="return-codes">
+<h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>FDT blob size</dt><dd><p>returned FDT blob buffer size when <code class="docutils literal notranslate"><span class="pre">buf</span></code> is NULL</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>FDT blob is created successfully</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>invalid argument &#64;phandle or &#64;len</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>failure creating FDT blob when calculating its size</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-no-mem"><span class="std std-ref">OPAL_NO_MEM</span></a></dt><dd><p>not enough room in buffer for device sub-tree</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-empty"><span class="std std-ref">OPAL_EMPTY</span></a></dt><dd><p>failure creating FDT blob</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_GET_DEVICE_TREE</a><ul>
+<li><a class="reference internal" href="#return-codes">Return Codes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-flash-110-111-112.html"
+                        title="previous chapter">OPAL Flash calls</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-get-epow-status-56.html"
+                        title="next chapter">OPAL_GET_EPOW_STATUS</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-get-device-tree-118.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-get-epow-status-56.html" title="OPAL_GET_EPOW_STATUS"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-flash-110-111-112.html" title="OPAL Flash calls"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_GET_DEVICE_TREE</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

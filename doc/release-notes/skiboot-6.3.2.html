@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.3.2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.3.3" href="skiboot-6.3.3.html" />
+    <link rel="prev" title="skiboot-6.3.1" href="skiboot-6.3.1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.3.html" title="skiboot-6.3.3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3.1.html" title="skiboot-6.3.1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-3-2">
+<span id="id1"></span><h1>skiboot-6.3.2<a class="headerlink" href="#skiboot-6-3-2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.3.2 was released on Monday July 1st, 2019. It replaces
+<a class="reference internal" href="skiboot-6.3.1.html#skiboot-6-3-1"><span class="std std-ref">skiboot-6.3.1</span></a> as the current stable release in the 6.3.x series.</p>
+<p>It is recommended that 6.3.2 be used instead of 6.3.1 version due to the
+bug fixes it contains.</p>
+<p>Bug fixes included in this release are:</p>
+<ul>
+<li><p>npu2: Purge cache when resetting a GPU</p>
+<p>After putting all a GPU’s links in reset, do a cache purge in case we
+have CPU cache lines belonging to the now-unaccessible GPU memory.</p>
+</li>
+<li><p>npu2: Reset NVLinks when resetting a GPU</p>
+<p>Resetting a V100 GPU brings its NVLinks down and if an NPU tries using
+those, an HMI occurs. We were lucky not to observe this as the bare metal
+does not normally reset a GPU and when passed through, GPUs are usually
+before NPUs in QEMU command line or Libvirt XML and because of that NPUs
+are naturally reset first. However simple change of the device order
+brings HMIs.</p>
+<p>This defines a bus control filter for a PCI slot with a GPU with NVLinks
+so when the host system issues secondary bus reset to the slot, it resets
+associated NVLinks.</p>
+</li>
+<li><p>hw/phb4: Assert Link Disable bit after ETU init</p>
+<p>The cursed RAID card in ozrom1 has a bug where it ignores PERST being
+asserted. The PCIe Base spec is a little vague about what happens
+while PERST is asserted, but it does clearly specify that when
+PERST is de-asserted the Link Training and Status State Machine
+(LTSSM) of a device should return to the initial state (Detect)
+defined in the spec and the link training process should restart.</p>
+<p>This bug was worked around in 9078f8268922 (“phb4: Delay training till
+after PERST is deasserted”) by setting the link disable bit at the
+start of the FRESET process and clearing it after PERST was
+de-asserted. Although this fixed the bug, the patch offered no
+explaination of why the fix worked.</p>
+<p>In b8b4c79d4419 (“hw/phb4: Factor out PERST control”) the link disable
+workaround was moved into phb4_assert_perst(). This is called
+always in the CRESET case, but a following patch resulted in
+assert_perst() not being called if phb4_freset() was entered following a
+CRESET since p-&gt;skip_perst was set in the CRESET handler. This is bad
+since a side-effect of the CRESET is that the Link Disable bit is
+cleared.</p>
+<p>This, combined with the RAID card ignoring PERST results in the PCIe
+link being trained by the PHB while we’re waiting out the 100ms
+ETU reset time. If we hack skiboot to print a DLP trace after returning
+from phb4_hw_init() we get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PHB</span><span class="c1">#0001[0:1]: Initialization complete</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000  0ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000 23ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000 23ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000183101000000 29ms training GEN1:x16:config</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5881000000 30ms training GEN1:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5883000000 30ms training GEN3:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000144883000000 33ms presence GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000154883000000 33ms trained  GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: CRESET: wait_time = 100</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Starts</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Prepare for link down</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Assert skipped</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Deassert</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000154883000000  0ms trained  GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE: Reached target state</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Start polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Electrical link detected</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Link is up</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Went down waiting for stabilty</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: DLP train control: 0x0000105101000000</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: CRESET: Starts</span>
+</pre></div>
+</div>
+<p>What has happened here is that the link is trained to 8x Gen3 33ms after
+we return from phb4_init_hw(), and before we’ve waitined to 100ms
+that we normally wait after re-initialising the ETU. When we “deassert”
+PERST later on in the FRESET handler the link in L0 (normal) state. At
+this point we try to read from the Vendor/Device ID register to verify
+that the link is stable and immediately get a PHB fence due to a PCIe
+Completion Timeout. Skiboot attempts to recover by doing another CRESET,
+but this will encounter the same issue.</p>
+<p>This patch fixes the problem by setting the Link Disable bit (by calling
+phb4_assert_perst()) immediately after we return from phb4_init_hw().
+This prevents the link from being trained while PERST is asserted which
+seems to avoid the Completion Timeout. With the patch applied we get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PHB</span><span class="c1">#0001[0:1]: Initialization complete</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000  0ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000 23ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000 23ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000909101000000 29ms presence GEN1:x16:disabled</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: CRESET: wait_time = 100</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Starts</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Prepare for link down</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Assert skipped</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Deassert</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000  0ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000  0ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000 24ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000 36ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000183101000000 97ms training GEN1:x16:config</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5881000000 97ms training GEN1:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5883000000 97ms training GEN3:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000144883000000 99ms presence GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE: Reached target state</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Start polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Electrical link detected</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Link is up</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Link is stable</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Card [9005:028c] Optimal Retry:disabled</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Speed Train:GEN3 PHB:GEN4 DEV:GEN3</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Width Train:x08 PHB:x08 DEV:x08</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: RX Errors Now:0 Max:8 Lane:0x0000</span>
+</pre></div>
+</div>
+</li>
+<li><p>npu2: Reset PID wildcard and refcounter when mapped to LPID</p>
+<p>Since 105d80f85b “npu2: Use unfiltered mode in XTS tables” we do not
+register every PID in the XTS table so the table has one entry per LPID.
+Then we added a reference counter to keep track of the entry use when
+switching GPU between the host and guest systems (the “Fixes:” tag below).</p>
+<p>The POWERNV platform setup creates such entries and references them
+at the boot time when initializing IOMMUs and only removes it when
+a GPU is passed through to a guest. This creates a problem as POWERNV
+boots via kexec and no defererencing happens; the XTS table state remains
+undefined. So when the host kernel boots, skiboot thinks there are valid
+XTS entries and does not update the XTS table which breaks ATS.</p>
+<p>This adds the reference counter and the XTS entry reset when a GPU is
+assigned to LPID and we cannot rely on the kernel to clean that up.</p>
+</li>
+<li><p>hw/phb4: Use read/write_reg in assert_perst</p>
+<p>While the PHB is fenced we can’t use the MMIO interface to access PHB
+registers. While processing a complete reset we inject a PHB fence to
+isolate the PHB from the rest of the system because the PHB won’t
+respond to MMIOs from the rest of the system while being reset.</p>
+<p>We assert PERST after the fence has been erected which requires us to
+use the XSCOM indirect interface to access the PHB registers rather than
+the MMIO interface. Previously we did that when asserting PERST in the
+CRESET path. However in b8b4c79d4419 (“hw/phb4: Factor out PERST
+control”). This was re-written to use the raw in_be64() accessor. This
+means that CRESET would not be asserted in the reset path. On some
+Mellanox cards this would prevent them from re-loading their firmware
+when the system was fast-reset.</p>
+<p>This patch fixes the problem by replacing the raw {in|out}_be64()
+accessors with the phb4_{read|write}_reg() functions.</p>
+</li>
+<li><p>opal-prd: Fix prd message size issue</p>
+<p>If prd messages size is insufficient then read_prd_msg() call fails with
+below error. And caller is not reallocating sufficient buffer. Also its
+hard to guess the size.</p>
+<p>sample log:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mar</span> <span class="mi">28</span> <span class="mi">03</span><span class="p">:</span><span class="mi">31</span><span class="p">:</span><span class="mi">43</span> <span class="n">zz24p1</span> <span class="n">opal</span><span class="o">-</span><span class="n">prd</span><span class="p">:</span> <span class="n">FW</span><span class="p">:</span> <span class="n">error</span> <span class="n">reading</span> <span class="kn">from</span> <span class="nn">firmware</span><span class="p">:</span> <span class="n">alloc</span> <span class="mi">32</span> <span class="n">rc</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="n">Invalid</span> <span class="n">argument</span>
+<span class="n">Mar</span> <span class="mi">28</span> <span class="mi">03</span><span class="p">:</span><span class="mi">31</span><span class="p">:</span><span class="mi">43</span> <span class="n">zz24p1</span> <span class="n">opal</span><span class="o">-</span><span class="n">prd</span><span class="p">:</span> <span class="n">FW</span><span class="p">:</span> <span class="n">error</span> <span class="n">reading</span> <span class="kn">from</span> <span class="nn">firmware</span><span class="p">:</span> <span class="n">alloc</span> <span class="mi">32</span> <span class="n">rc</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="n">Invalid</span> <span class="n">argument</span>
+<span class="n">Mar</span> <span class="mi">28</span> <span class="mi">03</span><span class="p">:</span><span class="mi">31</span><span class="p">:</span><span class="mi">43</span> <span class="n">zz24p1</span> <span class="n">opal</span><span class="o">-</span><span class="n">prd</span><span class="p">:</span> <span class="n">FW</span><span class="p">:</span> <span class="n">error</span> <span class="n">reading</span> <span class="kn">from</span> <span class="nn">firmware</span><span class="p">:</span> <span class="n">alloc</span> <span class="mi">32</span> <span class="n">rc</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="n">Invalid</span> <span class="n">argument</span>
+</pre></div>
+</div>
+<p>Lets use opal-msg-size device tree property to allocate memory
+for prd message.</p>
+</li>
+<li><p>npu2: Fix clearing the FIR bits</p>
+<p>FIR registers are SCOM-only so they cannot be accesses with the indirect
+write, and yet we use SCOM-based addresses for these; fix this.</p>
+</li>
+<li><p>opal-gard: Account for ECC size when clearing partition</p>
+<p>When ‘opal-gard clear all’ is run, it works by erasing the GUARD then
+using blockevel_smart_write() to write nothing to the partition. This
+second write call is needed because we rely on libflash to set the ECC
+bits appropriately when the partition contained ECCed data.</p>
+<p>The API for this is a little odd with the caller specifying how much
+actual data to write, and libflash writing size + size/8 bytes
+since there is one additional ECC byte for every eight bytes of data.</p>
+<p>We currently do not account for the extra space consumed by the ECC data
+in reset_partition() which is used to handle the ‘clear all’ command.
+Which results in the paritition following the GUARD partition being
+partially overwritten when the command is used. This patch fixes the
+problem by reducing the length we would normally write by the number
+of ECC bytes required.</p>
+</li>
+<li><p>nvram: Flag dangerous NVRAM options</p>
+<p>Most nvram options used by skiboot are just for debug or testing for
+regressions. They should never be used long term.</p>
+<p>We’ve hit a number of issues in testing and the field where nvram
+options have been set “temporarily” but haven’t been properly cleared
+after, resulting in crashes or real bugs being masked.</p>
+<p>This patch marks most nvram options used by skiboot as dangerous and
+prints a chicken to remind users of the problem.</p>
+</li>
+<li><p>devicetree: Don’t set path to dtc in makefile</p>
+<p>By setting the path we fail to build under buildroot which has it’s own
+set of host tools in PATH, but not at /usr/bin.</p>
+<p>Keep the variable so it can be set if need be but default to whatever
+‘dtc’ is in the users path.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.3.1.html"
+                        title="previous chapter">skiboot-6.3.1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.3.3.html"
+                        title="next chapter">skiboot-6.3.3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.3.2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.3.html" title="skiboot-6.3.3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3.1.html" title="skiboot-6.3.1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

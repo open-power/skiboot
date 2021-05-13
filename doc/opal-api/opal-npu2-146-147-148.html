@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL NPU2 calls &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_NPU_SET_RELAXED_ORDER" href="opal-npu2-get-set-relaxed-order-168-169.html" />
+    <link rel="prev" title="OPAL_NMMU_SET_PTCR" href="opal-nmmu-set-ptcr-127.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-npu2-get-set-relaxed-order-168-169.html" title="OPAL_NPU_SET_RELAXED_ORDER"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-nmmu-set-ptcr-127.html" title="OPAL_NMMU_SET_PTCR"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL NPU2 calls</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-npu2-calls">
+<span id="opal-npu2"></span><h1>OPAL NPU2 calls<a class="headerlink" href="#opal-npu2-calls" title="Permalink to this headline">¶</a></h1>
+<p>There are three OPAL calls for interacting with NPU2 devices:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define OPAL_NPU_INIT_CONTEXT                   146</span>
+<span class="c1">#define OPAL_NPU_DESTROY_CONTEXT                147</span>
+<span class="c1">#define OPAL_NPU_MAP_LPAR                       148</span>
+</pre></div>
+</div>
+<p>These are used to setup and configure address translation services
+(ATS) for a given NVLink2 device. Note that in some documentation this
+is also referred to as extended translation services (XTS).</p>
+<p>Each NVLink2 supports multiple processes running on a GPU which issues
+requests for address translation. The NPU2 is responsible for
+completing the request by forwarding it to the Nest MMU (NMMU) along
+with the appropriate translation context (MSR/LPCR) bits. These bits
+are keyed off a 20-bit process ID (PASID/PID) which is identical to
+the PID used on the processor.</p>
+<p>The OPAL calls documented here are used to setup/destroy the
+appropriate context for a given process on a given NVLink2 device.</p>
+<div class="section" id="opal-npu-init-context">
+<span id="id1"></span><h2>OPAL_NPU_INIT_CONTEXT<a class="headerlink" href="#opal-npu-init-context" title="Permalink to this headline">¶</a></h2>
+<p>Parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
+<span class="nb">int</span> <span class="n">pasid</span>
+<span class="n">uint64_t</span> <span class="n">msr</span>
+<span class="n">uint64_t</span> <span class="n">lpid</span>
+</pre></div>
+</div>
+<p>Allocates a new context ID and sets up the given PASID/PID to be
+associated with the supplied MSR on for the given LPID. MSR should
+only contain bits set requried for NPU2 address lookups - ie. MSR
+DR/HV/PR/SF.</p>
+<p>Returns the context ID on success or <code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code> if no more
+contexts are available or <code class="docutils literal notranslate"><span class="pre">OPAL_UNSUPPORTED</span></code> in the case of
+unsupported MSR bits.</p>
+</div>
+<div class="section" id="opal-npu-destroy-context">
+<span id="id2"></span><h2>OPAL_NPU_DESTROY_CONTEXT<a class="headerlink" href="#opal-npu-destroy-context" title="Permalink to this headline">¶</a></h2>
+<p>Parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
+<span class="n">uint64_t</span> <span class="nb">id</span>
+</pre></div>
+</div>
+<p>Destroys a previously allocated context ID. This may cause further
+translation requests from the GPU to fail.</p>
+</div>
+<div class="section" id="opal-npu-map-lpar">
+<span id="id3"></span><h2>OPAL_NPU_MAP_LPAR<a class="headerlink" href="#opal-npu-map-lpar" title="Permalink to this headline">¶</a></h2>
+<p>Parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
+<span class="n">uint64_t</span> <span class="n">bdf</span>
+<span class="n">uint64_t</span> <span class="n">lparid</span>
+<span class="n">uint64_t</span> <span class="n">lpcr</span>
+</pre></div>
+</div>
+<p>Associates the given GPU BDF with a particular LPAR and LPCR
+bits. Hash mode ATS is currently unsupported so lpcr should be set
+to 0.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL NPU2 calls</a><ul>
+<li><a class="reference internal" href="#opal-npu-init-context">OPAL_NPU_INIT_CONTEXT</a></li>
+<li><a class="reference internal" href="#opal-npu-destroy-context">OPAL_NPU_DESTROY_CONTEXT</a></li>
+<li><a class="reference internal" href="#opal-npu-map-lpar">OPAL_NPU_MAP_LPAR</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-nmmu-set-ptcr-127.html"
+                        title="previous chapter">OPAL_NMMU_SET_PTCR</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-npu2-get-set-relaxed-order-168-169.html"
+                        title="next chapter">OPAL_NPU_SET_RELAXED_ORDER</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-npu2-146-147-148.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-npu2-get-set-relaxed-order-168-169.html" title="OPAL_NPU_SET_RELAXED_ORDER"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-nmmu-set-ptcr-127.html" title="OPAL_NMMU_SET_PTCR"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL NPU2 calls</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

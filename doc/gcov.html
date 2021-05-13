@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GCOV for skiboot &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Memory in skiboot" href="memory.html" />
+    <link rel="prev" title="OPAL &lt;–&gt; BMC interactions" href="bmc.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="memory.html" title="Memory in skiboot"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="bmc.html" title="OPAL &lt;–&gt; BMC interactions"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GCOV for skiboot</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="gcov-for-skiboot">
+<h1>GCOV for skiboot<a class="headerlink" href="#gcov-for-skiboot" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="unit-tests">
+<h2>Unit tests<a class="headerlink" href="#unit-tests" title="Permalink to this headline">¶</a></h2>
+<p>All unit tests are built+run with gcov enabled.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">coverage</span><span class="o">-</span><span class="n">report</span>
+</pre></div>
+</div>
+<p>will generate a unit test coverage report like:
+<a class="reference external" href="http://open-power.github.io/skiboot/coverage-report/">http://open-power.github.io/skiboot/coverage-report/</a></p>
+</div>
+<div class="section" id="skiboot">
+<h2>Skiboot<a class="headerlink" href="#skiboot" title="Permalink to this headline">¶</a></h2>
+<p>You can now build Skiboot itself with gcov support, boot it on a machine,
+do things, and then extract out gcda files to generate coverage reports
+from real hardware (or a simulator).</p>
+</div>
+<div class="section" id="building-skiboot-with-gcov">
+<h2>Building Skiboot with GCOV<a class="headerlink" href="#building-skiboot-with-gcov" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SKIBOOT_GCOV</span><span class="o">=</span><span class="mi">1</span> <span class="n">make</span>
+</pre></div>
+</div>
+<p>You may need to <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code> first.</p>
+<p>This will build a skiboot lid roughly <em>twice</em> the size.</p>
+<p>Flash/Install the skiboot.lid and boot.</p>
+</div>
+<div class="section" id="extracting-gcov-data">
+<h2>Extracting GCOV data<a class="headerlink" href="#extracting-gcov-data" title="Permalink to this headline">¶</a></h2>
+<p>The way we extract the gcov data from a system is by dumping the contents
+of skiboot memory and then parsing the data structures in user space with
+the extract-gcov utility in the skiboot repo.</p>
+<p>mambo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mysim</span> <span class="n">memory</span> <span class="n">fwrite</span> <span class="mh">0x30000000</span> <span class="mh">0x240000</span> <span class="n">skiboot</span><span class="o">.</span><span class="n">dump</span>
+</pre></div>
+</div>
+<p>FSP:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">getmemproc</span> <span class="mi">30000000</span> <span class="mi">3407872</span> <span class="o">-</span><span class="n">fb</span> <span class="n">skiboot</span><span class="o">.</span><span class="n">dump</span>
+</pre></div>
+</div>
+<p>linux (e.g. petitboot environment):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dd</span> <span class="k">if</span><span class="o">=/</span><span class="n">proc</span><span class="o">/</span><span class="n">kcore</span> <span class="n">skip</span><span class="o">=</span><span class="mi">1572864</span> <span class="n">count</span><span class="o">=</span><span class="mi">6656</span>  <span class="n">of</span><span class="o">=</span><span class="n">skiboot</span><span class="o">.</span><span class="n">dump</span>
+</pre></div>
+</div>
+<p>You basically need to dump out the first 3MB of skiboot memory.</p>
+<p>Then you need to find out where the gcov data structures are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">perl</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;printf &#39;0x</span><span class="si">%x</span><span class="s2">&#39;, 0x30000000 + 0x`grep gcov_info_list skiboot.map|cut -f 1 -d &#39; &#39;`&quot;</span>
+</pre></div>
+</div>
+<p>That address needs to be supplied to the extract-gcov utility:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">extract</span><span class="o">-</span><span class="n">gcov</span> <span class="n">skiboot</span><span class="o">.</span><span class="n">dump</span> <span class="mh">0x3023ec40</span>
+</pre></div>
+</div>
+<p>Once you’ve run extract-gcov, it will have extracted the gcda files
+from the skiboot memory image.</p>
+<p>You can then run lcov:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lcov</span> <span class="o">-</span><span class="n">b</span> <span class="o">.</span> <span class="o">-</span><span class="n">q</span> <span class="o">-</span><span class="n">c</span> <span class="o">-</span><span class="n">d</span> <span class="o">.</span> <span class="o">-</span><span class="n">o</span> <span class="n">skiboot</span><span class="o">-</span><span class="n">boot</span><span class="o">.</span><span class="n">info</span>
+<span class="o">--</span><span class="n">gcov</span><span class="o">-</span><span class="n">tool</span>
+<span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">cross</span><span class="o">/</span><span class="n">gcc</span><span class="o">-</span><span class="mf">4.8.0</span><span class="o">-</span><span class="n">nolibc</span><span class="o">/</span><span class="n">powerpc64</span><span class="o">-</span><span class="n">linux</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">powerpc64</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gcov</span>
+</pre></div>
+</div>
+<p><em>IMPORTANT</em> you should point lcov to the gcov for the compiler you used
+to build skiboot, otherwise you’re likely to get errors.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">GCOV for skiboot</a><ul>
+<li><a class="reference internal" href="#unit-tests">Unit tests</a></li>
+<li><a class="reference internal" href="#skiboot">Skiboot</a></li>
+<li><a class="reference internal" href="#building-skiboot-with-gcov">Building Skiboot with GCOV</a></li>
+<li><a class="reference internal" href="#extracting-gcov-data">Extracting GCOV data</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="bmc.html"
+                        title="previous chapter">OPAL &lt;–&gt; BMC interactions</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="memory.html"
+                        title="next chapter">Memory in skiboot</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gcov.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="memory.html" title="Memory in skiboot"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="bmc.html" title="OPAL &lt;–&gt; BMC interactions"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GCOV for skiboot</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>secboot_tpm secvar storage driver for P9 platforms &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">secboot_tpm secvar storage driver for P9 platforms</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="secboot-tpm-secvar-storage-driver-for-p9-platforms">
+<span id="secvar-secboot-tpm"></span><h1>secboot_tpm secvar storage driver for P9 platforms<a class="headerlink" href="#secboot-tpm-secvar-storage-driver-for-p9-platforms" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This storage driver utilizes the SECBOOT PNOR partition and TPM NV space to
+persist secure variables across reboots in a tamper-resistant manner. While
+writes to PNOR cannot be completely prevented, writes CAN be prevented to TPM
+NV. On the other hand, there is limited available space in TPM NV.</p>
+<p>Therefore, this driver uses both in conjunction: large variable data is written
+to SECBOOT, and a hash of the variable data is stored in TPM NV. When the
+variables are loaded from SECBOOT, this hash is recalculated and compared
+against the value stored in the TPM. If they do not match, then the variables
+must have been altered and are not loaded.</p>
+<p>See the following sections for more information on the internals of the driver.</p>
+</div>
+<div class="section" id="storage-layouts">
+<h2>Storage Layouts<a class="headerlink" href="#storage-layouts" title="Permalink to this headline">¶</a></h2>
+<p>At a high-level, there are a few major logical components:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>(PNOR) Variable storage (split in half, active/staging)</p></li>
+<li><p>(PNOR) Update storage</p></li>
+<li><p>(TPM)  Protected variable storage</p></li>
+<li><p>(TPM)  Bank hashes &amp; active bit</p></li>
+</ul>
+</div></blockquote>
+<p>Variable storage consists of two smaller banks, variable bank 0 and variable
+bank 1. Either of the banks may be designated “active” by setting the active
+bank bit to either 0 or 1, indicating that the corresponding bank is now
+“active”. The other bank is then considered “staging”. See the “Persisting
+Variable Bank Updates” for more on the active/staging bank logic.</p>
+<p>Protected variable storage is stored in <code class="docutils literal notranslate"><span class="pre">VARS</span></code> TPM NV index. Unlike the other
+variable storage, there is only one bank due to limited storage space. See the
+TPM NV Indices section for more.</p>
+</div>
+<div class="section" id="persisting-the-variable-bank">
+<h2>Persisting the Variable Bank<a class="headerlink" href="#persisting-the-variable-bank" title="Permalink to this headline">¶</a></h2>
+<p>When writing a new variable bank to storage, this is (roughly) the procedure the
+driver will follow:</p>
+<ol class="arabic simple">
+<li><p>write variables to the staging bank</p></li>
+<li><p>calculate hash of the staging bank</p></li>
+<li><p>store the staging bank hash in the TPM NV</p></li>
+<li><p>flip the active bank bit</p></li>
+</ol>
+<p>This procedure ensures that the switch-over from the old variables to the
+new variables is as atomic as possible. This should prevent any possible
+issues caused by an interruption during the writing process, such as power loss.</p>
+<p>The bank hashes are a SHA256 hash calculated over the whole region of
+storage space allocated to the bank, including unused storage. For consistency,
+unused space is always written as zeroes. Like the active/staging variable
+banks, there are also two corresponding active/staging bank hashes stored in
+the TPM.</p>
+</div>
+<div class="section" id="tpm-nv-indices">
+<h2>TPM NV Indices<a class="headerlink" href="#tpm-nv-indices" title="Permalink to this headline">¶</a></h2>
+<p>The driver utilizes two TPM NV indices:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp"># size). datadefine SECBOOT_TPMNV_VARS_INDEX  0x01c10190</span>
+<span class="cp">#define SECBOOT_TPMNV_CONTROL_INDEX   0x01c10191</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">VARS</span></code> index stores variables flagged with <code class="docutils literal notranslate"><span class="pre">SECVAR_FLAG_PROTECTED</span></code>.
+These variables are critical to the state of OS secure boot, and therefore
+cannot be safely stored in the SECBOOT partition. This index is defined to be
+1024 bytes in size, which is enough for the current implementation on P9. It
+is kept small by default to preserve the very limited NV index space.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">CONTROL</span></code> index stores the bank hashes, and the bit to determine which
+bank is active. See the Active/Staging Bank Swapping section for more.</p>
+<p>Both indices are defined on first boot with the same set of attributes. If the
+indices are already defined but not in the expected state, (different
+attributes, size, etc), then the driver will halt the boot. Asserting physical
+presence will redefine the indices in the correct state.</p>
+</div>
+<div class="section" id="locking">
+<h2>Locking<a class="headerlink" href="#locking" title="Permalink to this headline">¶</a></h2>
+<p>PNOR cannot be locked, however the TPM can be. The TPM NV indices are double
+protected via two locking mechanisms:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The driver’s <code class="docutils literal notranslate"><span class="pre">.lock()</span></code> hook sends the <code class="docutils literal notranslate"><span class="pre">TSS_NV_WriteLock</span></code> TPM command.</p></li>
+</ul>
+</div></blockquote>
+<p>This sets the <code class="docutils literal notranslate"><span class="pre">WRITELOCKED</span></code> attribute, which is cleared on the next
+TPM reset.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The TPM NV indices are defined under the platform hierarchy. Skiboot will add</p></li>
+</ul>
+</div></blockquote>
+<p>a global lock to all the NV indices under this hierarchy prior to loading a
+kernel. This is also reset on the next TPM reset.</p>
+<p>NOTE: The TPM is only reset during a cold reboot. Fast reboots or kexecs will
+NOT unlock the TPM.</p>
+</div>
+<div class="section" id="resetting-storage-physical-presence">
+<h2>Resetting Storage / Physical Presence<a class="headerlink" href="#resetting-storage-physical-presence" title="Permalink to this headline">¶</a></h2>
+<p>In the case that secure boot/secvar has been rendered unusable, (for example:
+corrupted data, lost/compromised private key, improperly defined NV indices, etc)
+this storage driver responds to physical presence assertion as a last-resort
+method to recover the system.</p>
+<p>Asserting physical presence undefines, and immediately redefines the TPM NV
+indices. Defining the NV indices then causes a cascading set of reformats for
+the remaining components of storage, similar to a first-boot scenario.</p>
+<p>This driver considers physical presence to be asserted if any of the following
+device tree nodes are present in <code class="docutils literal notranslate"><span class="pre">ibm,secureboot</span></code>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">clear-os-keys</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">clear-all-keys</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">clear-mfg-keys</span></code></p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="storage-formats-layouts">
+<h1>Storage Formats/Layouts<a class="headerlink" href="#storage-formats-layouts" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="secboot-pnor">
+<h2>SECBOOT (PNOR)<a class="headerlink" href="#secboot-pnor" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Partition Format:</dt><dd><ul class="simple">
+<li><p>8b secboot header
+- 4b: u32. magic number, always 0x5053424b
+- 1b: u8. version, always 1
+- 3b: unused padding</p></li>
+<li><p>32k: secvars. variable bank 0</p></li>
+<li><p>32k: secvars. variable bank 1</p></li>
+<li><p>32k: secvars. update bank</p></li>
+</ul>
+</dd>
+<dt>Variable Format (secvar):</dt><dd><ul class="simple">
+<li><p>8b: u64. key length</p></li>
+<li><p>8b: u64. data size</p></li>
+<li><p>1k: string. key</p></li>
+<li><p>(data size). data</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="tpm-vars-nv">
+<h2>TPM VARS (NV)<a class="headerlink" href="#tpm-vars-nv" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>NV Index Format:</dt><dd><ul class="simple">
+<li><p>8b secboot header
+- 4b: u32. magic number, always 0x5053424b
+- 1b: u8. version, always 1
+- 3b: unused padding</p></li>
+<li><p>1016b: packed secvars. protected variable storage</p></li>
+</ul>
+</dd>
+<dt>Variable Format (packed secvar):</dt><dd><ul class="simple">
+<li><p>8b: u64. key length</p></li>
+<li><p>8b: u64. data size</p></li>
+<li><p>(key length): string. key</p></li>
+<li><p>(data size). data</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="tpm-control-nv">
+<h2>TPM CONTROL (NV)<a class="headerlink" href="#tpm-control-nv" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>8b secboot header
+- 4b: u32. magic number, always 0x5053424b
+- 1b: u8. version, always 1
+- 3b: unused padding</p></li>
+<li><p>1b: u8. active bit, 0 or 1</p></li>
+<li><p>32b: sha256 hash of variable bank 0</p></li>
+<li><p>32b: sha256 hash of variable bank 1</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">secboot_tpm secvar storage driver for P9 platforms</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#storage-layouts">Storage Layouts</a></li>
+<li><a class="reference internal" href="#persisting-the-variable-bank">Persisting the Variable Bank</a></li>
+<li><a class="reference internal" href="#tpm-nv-indices">TPM NV Indices</a></li>
+<li><a class="reference internal" href="#locking">Locking</a></li>
+<li><a class="reference internal" href="#resetting-storage-physical-presence">Resetting Storage / Physical Presence</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage-formats-layouts">Storage Formats/Layouts</a><ul>
+<li><a class="reference internal" href="#secboot-pnor">SECBOOT (PNOR)</a></li>
+<li><a class="reference internal" href="#tpm-vars-nv">TPM VARS (NV)</a></li>
+<li><a class="reference internal" href="#tpm-control-nv">TPM CONTROL (NV)</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/secvar/secboot_tpm.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">secboot_tpm secvar storage driver for P9 platforms</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

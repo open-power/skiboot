@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_HANDLE_INTERRUPT &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_I2C_REQUEST" href="opal-i2c-request-109.html" />
+    <link rel="prev" title="Hypervisor Maintenance Interrupt (HMI)" href="opal-handle-hmi-98-166.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-i2c-request-109.html" title="OPAL_I2C_REQUEST"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-handle-hmi-98-166.html" title="Hypervisor Maintenance Interrupt (HMI)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_HANDLE_INTERRUPT</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-handle-interrupt">
+<span id="id1"></span><h1>OPAL_HANDLE_INTERRUPT<a class="headerlink" href="#opal-handle-interrupt" title="Permalink to this headline">¶</a></h1>
+<p>The host OS must pass all interrupts in the <cite>opal-interrupts</cite> property of <a class="reference internal" href="../device-tree/ibm%2Copal.html#device-tree-ibm-opal"><span class="std std-ref">ibm,opal</span></a> in the device tree to OPAL.</p>
+<p>An example dt snippet is:</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,opal</span> <span class="p">{</span>
+          <span class="nf">opal-interrupts</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10</span> <span class="mh">0x11</span> <span class="mh">0x12</span> <span class="mh">0x13</span> <span class="mh">0x14</span> <span class="mh">0x20010</span> <span class="mh">0x20011</span> <span class="mh">0x20012</span> <span class="mh">0x20013</span> <span class="mh">0x20014</span> <span class="mh">0xffe</span> <span class="mh">0xfff</span> <span class="mh">0x17fe</span> <span class="mh">0x17ff</span> <span class="mh">0x2ffe</span> <span class="mh">0x2fff</span> <span class="mh">0x37fe</span> <span class="mh">0x37ff</span> <span class="mh">0x20ffe</span> <span class="mh">0x20fff</span> <span class="mh">0x217fe</span> <span class="mh">0x217ff</span> <span class="mh">0x22ffe</span> <span class="mh">0x22fff</span> <span class="mh">0x237fe</span> <span class="mh">0x237ff</span><span class="p">&gt;;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>When the host OS gets any of these interrupts, it must call
+<code class="docutils literal notranslate"><span class="pre">OPAL_HANDLE_INTERRUPT</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">OPAL_HANDLE_INTERRUPT</span></code> call takes two parameters, one input and one output.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">isn</span></code></dt><dd><p>the interrupt</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">*outstanding_event_mask</span></code></dt><dd><p>returns outstanding events for host OS to handle</p>
+</dd>
+</dl>
+<p>The host OS should then handle any outstanding events.</p>
+<p>See <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> for documentation on events.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-handle-hmi-98-166.html"
+                        title="previous chapter">Hypervisor Maintenance Interrupt (HMI)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-i2c-request-109.html"
+                        title="next chapter">OPAL_I2C_REQUEST</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-handle-interrupt.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-i2c-request-109.html" title="OPAL_I2C_REQUEST"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-handle-hmi-98-166.html" title="Hypervisor Maintenance Interrupt (HMI)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_HANDLE_INTERRUPT</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

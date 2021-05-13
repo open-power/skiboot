@@ -1,0 +1,258 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.1.20 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.1.21" href="skiboot-5.1.21.html" />
+    <link rel="prev" title="skiboot-5.1.2" href="skiboot-5.1.2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.21.html" title="skiboot-5.1.21"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.2.html" title="skiboot-5.1.2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.20</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-1-20">
+<span id="id1"></span><h1>skiboot-5.1.20<a class="headerlink" href="#skiboot-5-1-20" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.1.20 was released on Friday 18th August 2017.</p>
+<p>skiboot-5.1.20 is the 21st stable release of 5.1, it follows skiboot-5.1.19
+(which was released 16th January 2017).</p>
+<p>This release contains a few minor bug fixes backported to the 5.1.x series.
+All of the fixes have previously appeared in the 5.4.x stable series.</p>
+<p>Changes are:</p>
+<ul>
+<li><p>FSP/CONSOLE: Workaround for unresponsive ipmi daemon</p>
+<p>In some corner cases, where FSP is active but not responding to
+console MBOX message (due to buggy IPMI) and we have heavy console
+write happening from kernel, then eventually our console buffer
+becomes full. At this point OPAL starts sending OPAL_BUSY_EVENT to
+kernel. Kernel will keep on retrying. This is creating kernel soft
+lockups. In some extreme case when every CPU is trying to write to
+console, user will not be able to ssh and thinks system is hang.</p>
+<p>If we reset FSP or restart IPMI daemon on FSP, system recovers and
+everything becomes normal.</p>
+<p>This patch adds workaround to above issue by returning OPAL_HARDWARE
+when cosole is full. Side effect of this patch is, we may endup dropping
+latest console data. But better to drop console data than system hang.</p>
+<p>Alternative approach is to drop old data from console buffer, make space
+for new data. But in normal condition only FSP can update ‘next_out’
+pointer and if we touch that pointer, it may introduce some other
+race conditions. Hence we decided to just new console write request.</p>
+</li>
+<li><p>FSP: Set status field in response message for timed out message</p>
+<p>For timed out FSP messages, we set message status as “fsp_msg_timeout”.
+But most FSP driver users (like surviellance) are ignoring this field.
+They always look for FSP returned status value in callback function
+(second byte in word1). So we endup treating timed out message as success
+response from FSP.</p>
+<p>Sample output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mf">69902.432509048</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">SURV</span><span class="p">:</span> <span class="n">Sending</span> <span class="n">the</span> <span class="n">heartbeat</span> <span class="n">command</span> <span class="n">to</span> <span class="n">FSP</span>
+<span class="p">[</span><span class="mf">70023.226860117</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">Response</span> <span class="kn">from</span> <span class="nn">FSP</span> <span class="n">timed</span> <span class="n">out</span><span class="p">,</span> <span class="n">word0</span> <span class="o">=</span> <span class="n">d66a00d7</span><span class="p">,</span> <span class="n">word1</span> <span class="o">=</span> <span class="mi">0</span> <span class="n">state</span><span class="p">:</span> <span class="mi">3</span>
+<span class="o">....</span>
+<span class="p">[</span><span class="mf">70023.226901445</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">SURV</span><span class="p">:</span> <span class="n">Received</span> <span class="n">heartbeat</span> <span class="n">acknowledge</span> <span class="kn">from</span> <span class="nn">FSP</span>
+<span class="p">[</span><span class="mf">70023.226903251</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">fsp_trigger_reset</span><span class="p">()</span> <span class="n">entry</span>
+</pre></div>
+</div>
+<p>Here SURV code thought it got valid response from FSP. But actually we didn’t
+receive response from FSP.</p>
+</li>
+<li><p>FSP: Improve timeout message</p>
+<p>Presently we print word0 and word1 in error log. word0 contains
+sequence number and command class. One has to understand word0
+format to identify command class.</p>
+<p>Lets explicitly print command class, sub command etc.</p>
+</li>
+<li><p>FSP/RTC: Remove local fsp_in_reset variable</p>
+<p>Now that we are using fsp_in_rr() to detect FSP reset/reload, fsp_in_reset
+become redundant. Lets remove this local variable.</p>
+</li>
+<li><p>FSP/RTC: Fix possible FSP R/R issue in rtc write path</p>
+<p>fsp_opal_rtc_write() checks FSP status before queueing message to FSP. But if
+FSP R/R starts before getting response to queued message then we will continue
+to return OPAL_BUSY_EVENT to host. In some extreme condition host may
+experience hang. Once FSP is back we will repost message, get response from FSP
+and return OPAL_SUCCESS to host.</p>
+<p>This patch caches new values and returns OPAL_SUCCESS if FSP R/R is happening.
+And once FSP is back we will send cached value to FSP.</p>
+</li>
+<li><p>hw/fsp/rtc: read/write cached rtc tod on fsp hir.</p>
+<p>Currently fsp-rtc reads/writes the cached RTC TOD on an fsp
+reset. Use latest fsp_in_rr() function to properly read the cached rtc
+value when fsp reset initiated by the hir.</p>
+<p>Below is the kernel trace when we set hw clock, when hir process starts.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mf">1727.775824</span><span class="p">]</span> <span class="n">NMI</span> <span class="n">watchdog</span><span class="p">:</span> <span class="n">BUG</span><span class="p">:</span> <span class="n">soft</span> <span class="n">lockup</span> <span class="o">-</span> <span class="n">CPU</span><span class="c1">#57 stuck for 23s! [hwclock:7688]</span>
+<span class="p">[</span> <span class="mf">1727.775856</span><span class="p">]</span> <span class="n">Modules</span> <span class="n">linked</span> <span class="ow">in</span><span class="p">:</span> <span class="n">vmx_crypto</span> <span class="n">ibmpowernv</span> <span class="n">ipmi_powernv</span> <span class="n">uio_pdrv_genirq</span> <span class="n">ipmi_devintf</span> <span class="n">powernv_op_panel</span> <span class="n">uio</span> <span class="n">ipmi_msghandler</span> <span class="n">powernv_rng</span> <span class="n">leds_powernv</span> <span class="n">ip_tables</span> <span class="n">x_tables</span> <span class="n">autofs4</span> <span class="n">ses</span> <span class="n">enclosure</span> <span class="n">scsi_transport_sas</span> <span class="n">crc32c_vpmsum</span> <span class="n">lpfc</span> <span class="n">ipr</span> <span class="n">tg3</span> <span class="n">scsi_transport_fc</span>
+<span class="p">[</span> <span class="mf">1727.775883</span><span class="p">]</span> <span class="n">CPU</span><span class="p">:</span> <span class="mi">57</span> <span class="n">PID</span><span class="p">:</span> <span class="mi">7688</span> <span class="n">Comm</span><span class="p">:</span> <span class="n">hwclock</span> <span class="n">Not</span> <span class="n">tainted</span> <span class="mf">4.10.0</span><span class="o">-</span><span class="mi">14</span><span class="o">-</span><span class="n">generic</span> <span class="c1">#16-Ubuntu</span>
+<span class="p">[</span> <span class="mf">1727.775883</span><span class="p">]</span> <span class="n">task</span><span class="p">:</span> <span class="n">c000000fdfdc8400</span> <span class="n">task</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span> <span class="n">c000000fdfef4000</span>
+<span class="p">[</span> <span class="mf">1727.775884</span><span class="p">]</span> <span class="n">NIP</span><span class="p">:</span> <span class="n">c00000000090540c</span> <span class="n">LR</span><span class="p">:</span> <span class="n">c0000000000846f4</span> <span class="n">CTR</span><span class="p">:</span> <span class="mi">000000003006</span><span class="n">dd70</span>
+<span class="p">[</span> <span class="mf">1727.775885</span><span class="p">]</span> <span class="n">REGS</span><span class="p">:</span> <span class="n">c000000fdfef79a0</span> <span class="n">TRAP</span><span class="p">:</span> <span class="mi">0901</span>   <span class="n">Not</span> <span class="n">tainted</span>  <span class="p">(</span><span class="mf">4.10.0</span><span class="o">-</span><span class="mi">14</span><span class="o">-</span><span class="n">generic</span><span class="p">)</span>
+<span class="p">[</span> <span class="mf">1727.775886</span><span class="p">]</span> <span class="n">MSR</span><span class="p">:</span> <span class="mi">9000000000009033</span> <span class="o">&lt;</span><span class="n">SF</span><span class="p">,</span><span class="n">HV</span><span class="p">,</span><span class="n">EE</span><span class="p">,</span><span class="n">ME</span><span class="p">,</span><span class="n">IR</span><span class="p">,</span><span class="n">DR</span><span class="p">,</span><span class="n">RI</span><span class="p">,</span><span class="n">LE</span><span class="o">&gt;</span>
+<span class="p">[</span> <span class="mf">1727.775889</span><span class="p">]</span>   <span class="n">CR</span><span class="p">:</span> <span class="mi">28024442</span>  <span class="n">XER</span><span class="p">:</span> <span class="mi">20000000</span>
+<span class="p">[</span> <span class="mf">1727.775890</span><span class="p">]</span> <span class="n">CFAR</span><span class="p">:</span> <span class="n">c00000000008472c</span> <span class="n">SOFTE</span><span class="p">:</span> <span class="mi">1</span>
+               <span class="n">GPR00</span><span class="p">:</span> <span class="mi">0000000030005128</span> <span class="n">c000000fdfef7c20</span> <span class="n">c00000000144c900</span> <span class="n">fffffffffffffff4</span>
+               <span class="n">GPR04</span><span class="p">:</span> <span class="mi">0000000028024442</span> <span class="n">c00000000090540c</span> <span class="mi">9000000000009033</span> <span class="mi">0000000000000000</span>
+               <span class="n">GPR08</span><span class="p">:</span> <span class="mi">0000000000000000</span> <span class="mi">0000000031</span><span class="n">fc4000</span> <span class="n">c000000000084710</span> <span class="mi">9000000000001003</span>
+               <span class="n">GPR12</span><span class="p">:</span> <span class="n">c0000000000846e8</span> <span class="n">c00000000fba0100</span>
+<span class="p">[</span> <span class="mf">1727.775897</span><span class="p">]</span> <span class="n">NIP</span> <span class="p">[</span><span class="n">c00000000090540c</span><span class="p">]</span> <span class="n">opal_set_rtc_time</span><span class="o">+</span><span class="mh">0x4c</span><span class="o">/</span><span class="mh">0xb0</span>
+<span class="p">[</span> <span class="mf">1727.775899</span><span class="p">]</span> <span class="n">LR</span> <span class="p">[</span><span class="n">c0000000000846f4</span><span class="p">]</span> <span class="n">opal_return</span><span class="o">+</span><span class="mh">0xc</span><span class="o">/</span><span class="mh">0x48</span>
+<span class="p">[</span> <span class="mf">1727.775899</span><span class="p">]</span> <span class="n">Call</span> <span class="n">Trace</span><span class="p">:</span>
+<span class="p">[</span> <span class="mf">1727.775900</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7c20</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000090540c</span><span class="p">]</span> <span class="n">opal_set_rtc_time</span><span class="o">+</span><span class="mh">0x4c</span><span class="o">/</span><span class="mh">0xb0</span> <span class="p">(</span><span class="n">unreliable</span><span class="p">)</span>
+<span class="p">[</span> <span class="mf">1727.775901</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7c60</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000000900828</span><span class="p">]</span> <span class="n">rtc_set_time</span><span class="o">+</span><span class="mh">0xb8</span><span class="o">/</span><span class="mh">0x1b0</span>
+<span class="p">[</span> <span class="mf">1727.775903</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7ca0</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000000902364</span><span class="p">]</span> <span class="n">rtc_dev_ioctl</span><span class="o">+</span><span class="mh">0x454</span><span class="o">/</span><span class="mh">0x630</span>
+<span class="p">[</span> <span class="mf">1727.775904</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7d40</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000035b1f4</span><span class="p">]</span> <span class="n">do_vfs_ioctl</span><span class="o">+</span><span class="mh">0xd4</span><span class="o">/</span><span class="mh">0x8c0</span>
+<span class="p">[</span> <span class="mf">1727.775906</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7de0</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000035bab4</span><span class="p">]</span> <span class="n">SyS_ioctl</span><span class="o">+</span><span class="mh">0xd4</span><span class="o">/</span><span class="mh">0xf0</span>
+<span class="p">[</span> <span class="mf">1727.775907</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000fdfef7e30</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000000b184</span><span class="p">]</span> <span class="n">system_call</span><span class="o">+</span><span class="mh">0x38</span><span class="o">/</span><span class="mh">0xe0</span>
+<span class="p">[</span> <span class="mf">1727.775908</span><span class="p">]</span> <span class="n">Instruction</span> <span class="n">dump</span><span class="p">:</span>
+<span class="p">[</span> <span class="mf">1727.775909</span><span class="p">]</span> <span class="n">f821ffc1</span> <span class="mi">39200000</span> <span class="mi">7</span><span class="n">c832378</span> <span class="mi">91210028</span> <span class="mi">38</span><span class="n">a10020</span> <span class="mi">39200000</span> <span class="mi">38810028</span> <span class="n">f9210020</span>
+<span class="p">[</span> <span class="mf">1727.775911</span><span class="p">]</span> <span class="mi">4</span><span class="n">bfffe6d</span> <span class="n">e8810020</span> <span class="mi">80610028</span> <span class="mi">4</span><span class="n">b77f61d</span> <span class="o">&lt;</span><span class="mi">60000000</span><span class="o">&gt;</span> <span class="mi">7</span><span class="n">c7f1b78</span> <span class="mi">3860000</span><span class="n">a</span> <span class="mi">2</span><span class="n">fbffff4</span>
+</pre></div>
+</div>
+<p>This is found when executing the <a class="reference external" href="https://github.com/open-power/op-test-framework/blob/master/testcases/fspresetReload.py">op-test-framework fspresetReload testcase</a></p>
+<p>With this fix ran fsp hir torture testcase in the above test
+which is working fine.</p>
+</li>
+<li><p>FSP/CHIPTOD: Return false in error path</p></li>
+<li><p>On FSP platforms: notify FSP of Platform Log ID after Host Initiated Reset Reload
+Trigging a Host Initiated Reset (when the host detects the FSP has gone
+out to lunch and should be rebooted), would cause “Unknown Command” messages
+to appear in the OPAL log.</p>
+<p>This patch implements those messages.</p>
+<p>Log showing unknown command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span> <span class="c1"># cat /sys/firmware/opal/msglog | grep -i ,3</span>
+<span class="p">[</span>  <span class="mf">110.232114723</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">fsp_trigger_reset</span><span class="p">()</span> <span class="n">entry</span>
+<span class="p">[</span>  <span class="mf">188.431793837</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span> <span class="c1">#0: Link down, starting R&amp;R</span>
+<span class="p">[</span>  <span class="mf">464.109239162</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span> <span class="c1">#0: Got XUP with no pending message !</span>
+<span class="p">[</span>  <span class="mf">466.340598554</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="o">-</span><span class="n">DPO</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">command</span> <span class="mh">0xce0900</span>
+<span class="p">[</span>  <span class="mf">466.340600126</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">Unhandled</span> <span class="n">message</span> <span class="n">ce0900</span>
+</pre></div>
+</div>
+</li>
+<li><p>hw/i2c: Fix early lock drop</p>
+<p>When interacting with an I2C master the p8-i2c driver (common to p9)
+aquires a per-master lock which it holds for the duration of it’s
+interaction with the master.  Unfortunately, when
+p8_i2c_check_initial_status() detects that the master is busy with
+another transaction it drops the lock and returns OPAL_BUSY. This is
+contrary to the driver’s locking strategy which requires that the
+caller aquire and drop the lock. This leads to a crash due to the
+double unlock(), which skiboot treats as fatal.</p>
+</li>
+<li><p>head.S: store all of LR and CTR</p>
+<p>When saving the CTR and LR registers the skiboot exception handlers use the
+‘stw’ instruction which only saves the lower 32 bits of the register. Given
+these are both 64 bit registers this leads to some strange register dumps,
+for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>***********************************************
+Unexpected exception 200 !
+SRR0 : 0000000030016968 SRR1 : 9000000000201000
+HSRR0: 0000000000000180 HSRR1: 9000000000001000
+LR   : 3003438830823f50 CTR  : 3003438800000018
+CFAR : 00000000300168fc
+CR   : 40004208  XER: 00000000
+</pre></div>
+</div>
+<p>In this dump the upper 32 bits of LR and CTR are actually stack gunk
+which obscures the underlying issue.</p>
+</li>
+<li><p>hw/fsp: Do not queue SP and SPCN class messages during reset/reload
+In certain cases of communicating with the FSP (e.g. sensors), the OPAL FSP
+driver returns a default code (async
+completion) even though there is no known bound from the time of this error
+return to the actual data being available. The kernel driver keeps waiting
+leading to soft-lockup on the host side.</p>
+<p>Mitigate both these (known) cases by returning OPAL_BUSY so the host driver
+knows to retry later.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.1.2.html"
+                        title="previous chapter">skiboot-5.1.2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.1.21.html"
+                        title="next chapter">skiboot-5.1.21</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.1.20.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.21.html" title="skiboot-5.1.21"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.2.html" title="skiboot-5.1.2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.20</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

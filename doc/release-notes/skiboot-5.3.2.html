@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.3.2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.3.3" href="skiboot-5.3.3.html" />
+    <link rel="prev" title="skiboot-5.3.1" href="skiboot-5.3.1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.3.3.html" title="skiboot-5.3.3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.3.1.html" title="skiboot-5.3.1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.3.2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-3-2">
+<h1>skiboot-5.3.2<a class="headerlink" href="#skiboot-5-3-2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.3.2 was released on Friday August 26th, 2016.</p>
+<p>This is the 3rd stable release of skiboot 5.3, the new stable release of
+skiboot (first released with 5.3.0 on August 2nd, 2016).</p>
+<p>Skiboot 5.3.2 replaces skiboot-5.3.1 as the current stable version. It contains
+a few minor bug fixes.</p>
+<p>Over skiboot-5.3.1, the following fixes are included:</p>
+<ul class="simple">
+<li><p>opal/hmi: Fix a TOD HMI failure during a race condition.
+Rare race condition which meant we wouldn’t recover from TOD error</p></li>
+<li><p>lpc: Log LPC SYNC errors as unrecoverable ones for manufacturing
+Only affects systems in manufacturing mode.
+No behaviour change when not in manufacturing mode.</p></li>
+<li><p>hw/phb3: Update capi initialization sequence
+The capi initialization sequence was revised in a circumvention
+document when a ‘link down’ error was converted from fatal to Endpoint
+Recoverable. Other, non-capi, register setup was corrected even before
+the initial open-source release of skiboot, but a few capi-related
+registers were not updated then, so this patch fixes it.
+The point is that a link-down error detected by the UTL logic will
+lead to an AIB fence, so that the CAPP unit can detect the error.</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.3.1.html"
+                        title="previous chapter">skiboot-5.3.1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.3.3.html"
+                        title="next chapter">skiboot-5.3.3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.3.2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.3.3.html" title="skiboot-5.3.3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.3.1.html" title="skiboot-5.3.1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.3.2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_POLL_EVENTS &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL Power Shift Ratio" href="opal-power-shift-ratio.html" />
+    <link rel="prev" title="OPAL_PHB_SET_OPTION" href="opal-phb-flag-set-get-179-180.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-power-shift-ratio.html" title="OPAL Power Shift Ratio"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-phb-flag-set-get-179-180.html" title="OPAL_PHB_SET_OPTION"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_POLL_EVENTS</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-poll-events">
+<span id="id1"></span><h1>OPAL_POLL_EVENTS<a class="headerlink" href="#opal-poll-events" title="Permalink to this headline">¶</a></h1>
+<p>Poll for outstanding events.</p>
+<p>Fills in a bitmask of pending events.</p>
+<p>Current events are:</p>
+<div class="section" id="opal-event-opal-internal-0x1">
+<h2>OPAL_EVENT_OPAL_INTERNAL = 0x1<a class="headerlink" href="#opal-event-opal-internal-0x1" title="Permalink to this headline">¶</a></h2>
+<p>Currently unused.</p>
+</div>
+<div class="section" id="opal-event-nvram-0x2">
+<h2>OPAL_EVENT_NVRAM = 0x2<a class="headerlink" href="#opal-event-nvram-0x2" title="Permalink to this headline">¶</a></h2>
+<p>Unused</p>
+</div>
+<div class="section" id="opal-event-rtc-0x4">
+<span id="opal-event-rtc"></span><h2>OPAL_EVENT_RTC = 0x4<a class="headerlink" href="#opal-event-rtc-0x4" title="Permalink to this headline">¶</a></h2>
+<p><strong>TODO</strong>: clean this up, this is just copied from hw/fsp/fsp-rtc.c:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="n">Because</span> <span class="n">the</span> <span class="n">RTC</span> <span class="n">calls</span> <span class="n">can</span> <span class="n">be</span> <span class="n">pretty</span> <span class="n">slow</span><span class="p">,</span> <span class="n">these</span> <span class="n">functions</span> <span class="n">will</span> <span class="n">shoot</span>
+<span class="o">*</span> <span class="n">an</span> <span class="n">asynchronous</span> <span class="n">request</span> <span class="n">to</span> <span class="n">the</span> <span class="n">FSP</span> <span class="p">(</span><span class="k">if</span> <span class="n">none</span> <span class="ow">is</span> <span class="n">already</span> <span class="n">pending</span><span class="p">)</span>
+<span class="o">*</span>
+<span class="o">*</span> <span class="n">The</span> <span class="n">requests</span> <span class="n">will</span> <span class="k">return</span> <span class="n">OPAL_BUSY_EVENT</span> <span class="k">as</span> <span class="n">long</span> <span class="k">as</span> <span class="n">the</span> <span class="n">event</span> <span class="n">has</span>
+<span class="o">*</span> <span class="ow">not</span> <span class="n">been</span> <span class="n">completed</span><span class="o">.</span>
+<span class="o">*</span>
+<span class="o">*</span> <span class="n">WARNING</span><span class="p">:</span> <span class="n">An</span> <span class="n">attempt</span> <span class="n">at</span> <span class="n">doing</span> <span class="n">an</span> <span class="n">RTC</span> <span class="n">write</span> <span class="k">while</span> <span class="n">one</span> <span class="ow">is</span> <span class="n">already</span> <span class="n">pending</span>
+<span class="o">*</span> <span class="n">will</span> <span class="n">simply</span> <span class="n">ignore</span> <span class="n">the</span> <span class="n">new</span> <span class="n">arguments</span> <span class="ow">and</span> <span class="k">continue</span> <span class="n">returning</span>
+<span class="o">*</span> <span class="n">OPAL_BUSY_EVENT</span><span class="o">.</span> <span class="n">This</span> <span class="ow">is</span> <span class="n">to</span> <span class="n">be</span> <span class="n">compatible</span> <span class="k">with</span> <span class="n">existing</span> <span class="n">Linux</span> <span class="n">code</span><span class="o">.</span>
+<span class="o">*</span>
+<span class="o">*</span> <span class="n">Completion</span> <span class="n">of</span> <span class="n">the</span> <span class="n">request</span> <span class="n">will</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">an</span> <span class="n">event</span> <span class="n">OPAL_EVENT_RTC</span>
+<span class="o">*</span> <span class="n">being</span> <span class="n">signaled</span><span class="p">,</span> <span class="n">which</span> <span class="n">will</span> <span class="n">remain</span> <span class="n">raised</span> <span class="n">until</span> <span class="n">a</span> <span class="n">corresponding</span> <span class="n">call</span>
+<span class="o">*</span> <span class="n">to</span> <span class="n">opal_rtc_read</span><span class="p">()</span> <span class="ow">or</span> <span class="n">opal_rtc_write</span><span class="p">()</span> <span class="k">finally</span> <span class="n">returns</span> <span class="n">OPAL_SUCCESS</span><span class="p">,</span>
+<span class="o">*</span> <span class="n">at</span> <span class="n">which</span> <span class="n">point</span> <span class="n">the</span> <span class="n">operation</span> <span class="ow">is</span> <span class="n">complete</span> <span class="ow">and</span> <span class="n">the</span> <span class="n">event</span> <span class="n">cleared</span><span class="o">.</span>
+<span class="o">*</span>
+<span class="o">*</span> <span class="n">If</span> <span class="n">we</span> <span class="n">end</span> <span class="n">up</span> <span class="n">taking</span> <span class="n">longer</span> <span class="n">than</span> <span class="n">rtc_read_timeout_ms</span> <span class="n">millieconds</span> <span class="n">waiting</span>
+<span class="o">*</span> <span class="k">for</span> <span class="n">the</span> <span class="n">response</span> <span class="kn">from</span> <span class="nn">a</span> <span class="n">read</span> <span class="n">request</span><span class="p">,</span> <span class="n">we</span> <span class="n">simply</span> <span class="k">return</span> <span class="n">a</span> <span class="n">cached</span> <span class="n">value</span> <span class="p">(</span><span class="n">plus</span>
+<span class="o">*</span> <span class="n">an</span> <span class="n">offset</span> <span class="n">calculated</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">timebase</span><span class="o">.</span> <span class="n">When</span> <span class="n">the</span> <span class="n">read</span> <span class="n">request</span> <span class="k">finally</span>
+<span class="o">*</span> <span class="n">returns</span><span class="p">,</span> <span class="n">we</span> <span class="n">update</span> <span class="n">our</span> <span class="n">cache</span> <span class="n">value</span> <span class="n">accordingly</span><span class="o">.</span>
+<span class="o">*</span>
+<span class="o">*</span> <span class="n">There</span> <span class="ow">is</span> <span class="n">two</span> <span class="n">separate</span> <span class="nb">set</span> <span class="n">of</span> <span class="n">state</span> <span class="k">for</span> <span class="n">reads</span> <span class="ow">and</span> <span class="n">writes</span><span class="o">.</span> <span class="n">If</span> <span class="n">both</span> <span class="n">are</span>
+<span class="o">*</span> <span class="n">attempted</span> <span class="n">at</span> <span class="n">the</span> <span class="n">same</span> <span class="n">time</span><span class="p">,</span> <span class="n">the</span> <span class="n">event</span> <span class="n">bit</span> <span class="n">will</span> <span class="n">remain</span> <span class="nb">set</span> <span class="k">as</span> <span class="n">long</span> <span class="k">as</span> <span class="n">either</span>
+<span class="o">*</span> <span class="n">of</span> <span class="n">the</span> <span class="n">two</span> <span class="n">has</span> <span class="n">a</span> <span class="n">pending</span> <span class="n">event</span> <span class="n">to</span> <span class="n">signal</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-event-console-output-0x8">
+<h2>OPAL_EVENT_CONSOLE_OUTPUT = 0x8<a class="headerlink" href="#opal-event-console-output-0x8" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="opal-event-console-input-0x10">
+<h2>OPAL_EVENT_CONSOLE_INPUT = 0x10<a class="headerlink" href="#opal-event-console-input-0x10" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="opal-event-error-log-avail-0x20">
+<h2>OPAL_EVENT_ERROR_LOG_AVAIL = 0x20<a class="headerlink" href="#opal-event-error-log-avail-0x20" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="opal-event-error-log-0x40">
+<h2>OPAL_EVENT_ERROR_LOG = 0x40<a class="headerlink" href="#opal-event-error-log-0x40" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="opal-event-epow-0x80">
+<h2>OPAL_EVENT_EPOW = 0x80<a class="headerlink" href="#opal-event-epow-0x80" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="opal-event-led-status-0x100">
+<h2>OPAL_EVENT_LED_STATUS = 0x100<a class="headerlink" href="#opal-event-led-status-0x100" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="opal-event-pci-error-0x200">
+<h2>OPAL_EVENT_PCI_ERROR = 0x200<a class="headerlink" href="#opal-event-pci-error-0x200" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="opal-event-dump-avail-0x400">
+<span id="opal-event-dump-avail"></span><h2>OPAL_EVENT_DUMP_AVAIL = 0x400<a class="headerlink" href="#opal-event-dump-avail-0x400" title="Permalink to this headline">¶</a></h2>
+<p>Signifies that there is a pending system dump available. See <a class="reference internal" href="opal-dump-81-82-83-84-94-101-102.html#opal-dumps"><span class="std std-ref">OPAL Dumps</span></a> suite
+of calls for details.</p>
+</div>
+<div class="section" id="opal-event-msg-pending-0x800">
+<h2>OPAL_EVENT_MSG_PENDING = 0x800<a class="headerlink" href="#opal-event-msg-pending-0x800" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_POLL_EVENTS</a><ul>
+<li><a class="reference internal" href="#opal-event-opal-internal-0x1">OPAL_EVENT_OPAL_INTERNAL = 0x1</a></li>
+<li><a class="reference internal" href="#opal-event-nvram-0x2">OPAL_EVENT_NVRAM = 0x2</a></li>
+<li><a class="reference internal" href="#opal-event-rtc-0x4">OPAL_EVENT_RTC = 0x4</a></li>
+<li><a class="reference internal" href="#opal-event-console-output-0x8">OPAL_EVENT_CONSOLE_OUTPUT = 0x8</a></li>
+<li><a class="reference internal" href="#opal-event-console-input-0x10">OPAL_EVENT_CONSOLE_INPUT = 0x10</a></li>
+<li><a class="reference internal" href="#opal-event-error-log-avail-0x20">OPAL_EVENT_ERROR_LOG_AVAIL = 0x20</a></li>
+<li><a class="reference internal" href="#opal-event-error-log-0x40">OPAL_EVENT_ERROR_LOG = 0x40</a></li>
+<li><a class="reference internal" href="#opal-event-epow-0x80">OPAL_EVENT_EPOW = 0x80</a></li>
+<li><a class="reference internal" href="#opal-event-led-status-0x100">OPAL_EVENT_LED_STATUS = 0x100</a></li>
+<li><a class="reference internal" href="#opal-event-pci-error-0x200">OPAL_EVENT_PCI_ERROR = 0x200</a></li>
+<li><a class="reference internal" href="#opal-event-dump-avail-0x400">OPAL_EVENT_DUMP_AVAIL = 0x400</a></li>
+<li><a class="reference internal" href="#opal-event-msg-pending-0x800">OPAL_EVENT_MSG_PENDING = 0x800</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-phb-flag-set-get-179-180.html"
+                        title="previous chapter">OPAL_PHB_SET_OPTION</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-power-shift-ratio.html"
+                        title="next chapter">OPAL Power Shift Ratio</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-poll-events.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-power-shift-ratio.html" title="OPAL Power Shift Ratio"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-phb-flag-set-get-179-180.html" title="OPAL_PHB_SET_OPTION"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_POLL_EVENTS</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

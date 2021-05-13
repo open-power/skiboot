@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL Secure Variable API &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL Sensor Groups" href="opal-sensor-group-enable-clear-163-156.html" />
+    <link rel="prev" title="OPAL Real Time Clock (RTC) APIs" href="opal-rtc-read-write-3-4.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-sensor-group-enable-clear-163-156.html" title="OPAL Sensor Groups"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-rtc-read-write-3-4.html" title="OPAL Real Time Clock (RTC) APIs"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL Secure Variable API</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-secure-variable-api">
+<h1>OPAL Secure Variable API<a class="headerlink" href="#opal-secure-variable-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>In order to support host OS secure boot on POWER systems, the platform needs
+some form of tamper-resistant persistant storage for authorized public keys.
+Furthermore, these keys must be retrieveable by the host kernel, and new
+keys must be able to be submitted.</p>
+<p>OPAL exposes an abstracted “variable” API, in which these keys can be stored
+and retrieved. At a high level, <code class="docutils literal notranslate"><span class="pre">opal_secvar_get</span></code> retrieves a specific
+variable corresponding to a particular key. <code class="docutils literal notranslate"><span class="pre">opal_secvar_get_next</span></code> can be
+used to iterate through the keys of the stored variables.
+<code class="docutils literal notranslate"><span class="pre">opal_secvar_enqueue_update</span></code> can be used to submit a new variable for
+processing on next boot.</p>
+</div>
+</div>
+<div class="section" id="opal-secvar-get">
+<h1>OPAL_SECVAR_GET<a class="headerlink" href="#opal-secvar-get" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define OPAL_SECVAR_GET                         176</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">OPAL_SECVAR_GET</span></code> call retrieves a data blob associated with the supplied
+key.</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">char</span>     <span class="o">*</span><span class="n">key</span>
+<span class="n">uint64_t</span>  <span class="n">key_len</span>
+<span class="n">void</span>     <span class="o">*</span><span class="n">data</span>
+<span class="n">uint64_t</span> <span class="o">*</span><span class="n">data_size</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">key</span></code></dt><dd><p>a buffer used to associate with the variable data. May
+be any encoding, but must not be all zeroes</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">key_len</span></code></dt><dd><p>size of the key buffer in bytes</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">data</span></code></dt><dd><p>return buffer to store the data blob of the requested variable if
+a match was found. May be set to NULL to only query the size into
+<code class="docutils literal notranslate"><span class="pre">data_size</span></code></p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">data_size</span></code></dt><dd><p>reference to the size of the <code class="docutils literal notranslate"><span class="pre">data</span></code> buffer. OPAL sets this to
+the size of the requested variable if found.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="return-values">
+<h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt><dd><p>the requested data blob was copied successfully. <code class="docutils literal notranslate"><span class="pre">data</span></code> was NULL,
+and the <code class="docutils literal notranslate"><span class="pre">data_size</span></code> value was set successfully</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">key</span></code> is NULL.
+<code class="docutils literal notranslate"><span class="pre">key_len</span></code> is zero.
+<code class="docutils literal notranslate"><span class="pre">data_size</span></code> is NULL.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_EMPTY</span></code></dt><dd><p>no variable with the supplied <code class="docutils literal notranslate"><span class="pre">key</span></code> was found</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARTIAL</span></code></dt><dd><p>the buffer size provided in <code class="docutils literal notranslate"><span class="pre">data_size</span></code> was insufficient.
+<code class="docutils literal notranslate"><span class="pre">data_size</span></code> is set to the minimum required size.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_UNSUPPORTED</span></code></dt><dd><p>secure variables are not supported by the platform</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code></dt><dd><p>secure variables are supported, but did not initialize properly</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-secvar-get-next">
+<h1>OPAL_SECVAR_GET_NEXT<a class="headerlink" href="#opal-secvar-get-next" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define OPAL_SECVAR_GET_NEXT                        177</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">OPAL_SECVAR_GET_NEXT</span></code> returns the key of the next variable in the secure
+variable bank in sequence.</p>
+<div class="section" id="id1">
+<h2>Parameters<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">char</span>     <span class="o">*</span><span class="n">key</span>
+<span class="n">uint64_t</span> <span class="o">*</span><span class="n">key_len</span>
+<span class="n">uint64_t</span>  <span class="n">key_buf_size</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">key</span></code></dt><dd><p>name of the previous variable or empty. The key of the next
+variable in sequence will be copied to <code class="docutils literal notranslate"><span class="pre">key</span></code>. If passed as empty,
+returns the first variable in the bank</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">key_len</span></code></dt><dd><p>length in bytes of the key in the  <code class="docutils literal notranslate"><span class="pre">key</span></code> buffer. OPAL sets
+this to the length in bytes of the next variable in sequence</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">key_buf_size</span></code></dt><dd><p>maximum size of the <code class="docutils literal notranslate"><span class="pre">key</span></code> buffer. The next key will not be
+copied if this value is less than the length of the next key</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id2">
+<h2>Return Values<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt><dd><p>the key and length of the next variable in sequence was copied
+successfully</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">key</span></code> or <code class="docutils literal notranslate"><span class="pre">key_length</span></code> is NULL.
+<code class="docutils literal notranslate"><span class="pre">key_size</span></code> is zero.
+<code class="docutils literal notranslate"><span class="pre">key_length</span></code> is impossibly large. No variable with the associated
+<code class="docutils literal notranslate"><span class="pre">key</span></code> was found</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_EMPTY</span></code></dt><dd><p>end of list reached</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARTIAL</span></code></dt><dd><p>the size specified in <code class="docutils literal notranslate"><span class="pre">key_size</span></code> is insufficient for the next
+variable’s key length. <code class="docutils literal notranslate"><span class="pre">key_length</span></code> is set to the next variable’s
+length, but <code class="docutils literal notranslate"><span class="pre">key</span></code> is untouched</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_UNSUPPORTED</span></code></dt><dd><p>secure variables are not supported by the platform</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code></dt><dd><p>secure variables are supported, but did not initialize properly</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-secvar-enqueue-update">
+<h1>OPAL_SECVAR_ENQUEUE_UPDATE<a class="headerlink" href="#opal-secvar-enqueue-update" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define OPAL_SECVAR_ENQUEUE_UPDATE                    178</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">OPAL_SECVAR_ENQUEUE</span></code> call appends the supplied variable data to the
+queue for processing on next boot.</p>
+<div class="section" id="id3">
+<h2>Parameters<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">char</span>     <span class="o">*</span><span class="n">key</span>
+<span class="n">uint64_t</span>  <span class="n">key_len</span>
+<span class="n">void</span>     <span class="o">*</span><span class="n">data</span>
+<span class="n">uint64_t</span>  <span class="n">data_size</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">key</span></code></dt><dd><p>a buffer used to associate with the variable data. May
+be any encoding, but must not be all zeroes</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">key_len</span></code></dt><dd><p>size of the key buffer in bytes</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">data</span></code></dt><dd><p>buffer containing the blob of data to enqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">data_size</span></code></dt><dd><p>size of the <code class="docutils literal notranslate"><span class="pre">data</span></code> buffer</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id4">
+<h2>Return Values<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt><dd><p>the variable was appended to the update queue bank successfully</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">key</span></code> or <code class="docutils literal notranslate"><span class="pre">data</span></code> was NULL.
+<code class="docutils literal notranslate"><span class="pre">key</span></code> was empty.
+<code class="docutils literal notranslate"><span class="pre">key_len</span></code> or <code class="docutils literal notranslate"><span class="pre">data_size</span></code> was zero.
+<code class="docutils literal notranslate"><span class="pre">key_len</span></code>, <code class="docutils literal notranslate"><span class="pre">data_size</span></code> is larger than the maximum size</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_NO_MEM</span></code></dt><dd><p>OPAL was unable to allocate memory for the variable update</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_HARDWARE</span></code></dt><dd><p>OPAL was unable to write the update to persistant storage</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_UNSUPPORTED</span></code></dt><dd><p>secure variables are not supported by the platform</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code></dt><dd><p>secure variables are supported, but did not initialize properly</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL Secure Variable API</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-secvar-get">OPAL_SECVAR_GET</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#return-values">Return Values</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-secvar-get-next">OPAL_SECVAR_GET_NEXT</a><ul>
+<li><a class="reference internal" href="#id1">Parameters</a></li>
+<li><a class="reference internal" href="#id2">Return Values</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-secvar-enqueue-update">OPAL_SECVAR_ENQUEUE_UPDATE</a><ul>
+<li><a class="reference internal" href="#id3">Parameters</a></li>
+<li><a class="reference internal" href="#id4">Return Values</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-rtc-read-write-3-4.html"
+                        title="previous chapter">OPAL Real Time Clock (RTC) APIs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-sensor-group-enable-clear-163-156.html"
+                        title="next chapter">OPAL Sensor Groups</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-secvar.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-sensor-group-enable-clear-163-156.html" title="OPAL Sensor Groups"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-rtc-read-write-3-4.html" title="OPAL Real Time Clock (RTC) APIs"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL Secure Variable API</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

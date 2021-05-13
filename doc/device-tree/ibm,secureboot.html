@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ibm,secureboot &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="IMC Device Tree Bindings" href="imc.html" />
+    <link rel="prev" title="sysparams" href="ibm%2Copal/sysparams.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="imc.html" title="IMC Device Tree Bindings"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Copal/sysparams.html" title="sysparams"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,secureboot</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ibm-secureboot">
+<span id="device-tree-ibm-secureboot"></span><h1>ibm,secureboot<a class="headerlink" href="#ibm-secureboot" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">ìbm,secureboot</span></code> node provides secure boot and trusted boot information
+up to the target OS. Further information can be found in <a class="reference internal" href="../stb.html#stb-overview"><span class="std std-ref">Secure and Trusted Boot Library (LibSTB) Documentation</span></a>.</p>
+<div class="section" id="required-properties">
+<h2>Required properties<a class="headerlink" href="#required-properties" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>compatible:         Either one of the following values:
+
+                    ibm,secureboot-v1  :  The container-verification-code
+                                          is stored in a secure ROM memory.
+
+                    ibm,secureboot-v2  :  The container-verification-code
+                                          is stored in a reserved memory.
+                                          It described by the ibm,cvc child
+                                          node.
+
+secure-enabled:     this property exists when the firmware stack is booting
+                    in secure mode (hardware secure boot jumper asserted).
+
+trusted-enabled:    this property exists when the firmware stack is booting
+                    in trusted mode.
+
+hw-key-hash:        hash of the three hardware public keys trusted by the
+                    platformw owner. This is used to verify if a firmware
+                    code is signed with trusted keys.
+
+hw-key-hash-size:   hw-key-hash size
+
+os-secureboot-enforcing:
+                    this property is created by the secure variable backend
+                    if it detects a desire by the owner to requre any
+                    images (e.g. kernels) to be signed by an appropriate
+                    key stored in secure variables.
+
+physical-presence-asserted:
+                    this property exists to indicate the physical presence
+                    of user to request key clearance.
+
+clear-os-keys:      this property exists when the firmware indicates that
+                    physical presence is asserted to clear only Host OS
+                    secure boot keys.
+
+clear-all-keys:     this property exists when the firmware indicates that
+                    physical presence is asserted to clear all sensistive
+                    data controlled by platform firmware.
+
+clear-mfg-keys:     this property exists only during manufacturing process
+                    when the firmware indicates to clear all senstive data
+                    during manufacturing. It is only valid on development
+                    drivers.
+</pre></div>
+</div>
+</div>
+<div class="section" id="obsolete-properties">
+<h2>Obsolete properties<a class="headerlink" href="#obsolete-properties" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>hash-algo:          Superseded by the hw-key-hash-size property in
+                    &#39;ibm,secureboot-v2&#39;.
+</pre></div>
+</div>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,secureboot</span> <span class="p">{</span>
+    <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,secureboot-v2&quot;</span><span class="p">;</span>
+    <span class="nf">secure-enabled</span><span class="p">;</span>
+    <span class="nf">trusted-enabled</span><span class="p">;</span>
+    <span class="nf">hw-key-hash-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x40</span><span class="p">&gt;;</span>
+    <span class="nf">hw-key-hash</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x40d487ff</span> <span class="mh">0x7380ed6a</span> <span class="mh">0xd54775d5</span> <span class="mh">0x795fea0d</span> <span class="mh">0xe2f541fe</span>
+                   <span class="mh">0xa9db06b8</span> <span class="mh">0x466a42a3</span> <span class="mh">0x20e65f75</span> <span class="mh">0xb4866546</span> <span class="mh">0x0017d907</span>
+                   <span class="mh">0x515dc2a5</span> <span class="mh">0xf9fc5095</span> <span class="mh">0x4d6ee0c9</span> <span class="mh">0xb67d219d</span> <span class="mh">0xfb708535</span>
+                   <span class="mh">0x1d01d6d1</span><span class="p">&gt;;</span>
+    <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x100000fd</span><span class="p">&gt;;</span>
+    <span class="nf">linux,phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x100000fd</span><span class="p">&gt;;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ibm,secureboot</a><ul>
+<li><a class="reference internal" href="#required-properties">Required properties</a></li>
+<li><a class="reference internal" href="#obsolete-properties">Obsolete properties</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ibm%2Copal/sysparams.html"
+                        title="previous chapter">sysparams</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="imc.html"
+                        title="next chapter">IMC Device Tree Bindings</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/ibm,secureboot.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="imc.html" title="IMC Device Tree Bindings"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Copal/sysparams.html" title="sysparams"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,secureboot</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

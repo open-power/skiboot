@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Development and Release Process &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing to skiboot" href="CONTRIBUTING.html" />
+    <link rel="prev" title="Supported platforms &amp; CPUs" href="../platforms-and-cpus.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="CONTRIBUTING.html" title="Contributing to skiboot"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../platforms-and-cpus.html" title="Supported platforms &amp; CPUs"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Development and Release Process</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="development-and-release-process">
+<span id="release-process"></span><h1>Development and Release Process<a class="headerlink" href="#development-and-release-process" title="Permalink to this headline">¶</a></h1>
+<p>Skiboot follows the release cycle of <cite>op-build</cite>, so that each new op-build
+has a new stable skiboot. Currently, this means that we release once every
+six weeks (or so). Our <em>goal</em> is to have roughly the first 4 weeks of a
+6 week cycle open for merging new features, and reserving the final two
+weeks for stabilisation efforts after the first -rcX release.</p>
+<p>It is <em>strongly</em> preferred to have new features (especially new APIs and
+device tree bindings) to come in <em>early</em> in the cycle.</p>
+<p>Once the final release is cut, the <a class="reference internal" href="stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> process takes over.</p>
+<p>Our process has evolved, and will so into the future. It’s inspired by the
+Linux process, but not a slave to it. For example, there is currently not
+the volume of patches to justify a next tree.</p>
+<p>Here’s how some of the recent (at time of writing) releases have gone:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 59%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Date</p></th>
+<th class="head"><p>Release</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oct 31st 2017</p></td>
+<td><p>v5.9</p></td>
+</tr>
+<tr class="row-odd"><td><p>Feb 6th 2018</p></td>
+<td><p>v5.10-rc1</p></td>
+</tr>
+<tr class="row-even"><td><p>Feb 9th 2018</p></td>
+<td><p>v5.10-rc2</p></td>
+</tr>
+<tr class="row-odd"><td><p>Feb 15th 2018</p></td>
+<td><p>v5.10-rc3</p></td>
+</tr>
+<tr class="row-even"><td><p>Feb 21st 2018</p></td>
+<td><p>v5.10-rc4</p></td>
+</tr>
+<tr class="row-odd"><td><p>Feb 23rd 2018</p></td>
+<td><p>v5.10</p></td>
+</tr>
+<tr class="row-even"><td><p>Mar 28th 2018</p></td>
+<td><p>v5.11-rc1</p></td>
+</tr>
+<tr class="row-odd"><td><p>Apr 6th 2018</p></td>
+<td><p>v5.11</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="lifecycle-of-a-patch">
+<h2>Lifecycle of a patch<a class="headerlink" href="#lifecycle-of-a-patch" title="Permalink to this headline">¶</a></h2>
+<p>Roughly speaking, a patch has the following lifecycle:</p>
+<ul>
+<li><p>Design</p>
+<p>It is best to do design work in the open, although sometimes this is hard
+when upcoming unannounced hardware is involved. Often, it can be useful to
+post an RFC design or patch to encourage discussion. This is especially
+useful when designing new OPAL APs or device tree bindings. Never be afraid
+to send a patch (or series of patches) as RFC (Request for Comment) with
+whatever disclaimer you deem appropriate.</p>
+<p>Once you have a design, sharing it is an important part of the process of
+getting the applicable code upstream. Different perspectives are important
+in coming to elegant solutions, as is having more than one person understand
+the reasoning behind design decisions.</p>
+</li>
+<li><p>Review and Test</p>
+<p>Once you think your patch is a state suitable for merging, send it to the
+mailing list for others to review and test. Using <cite>git format-patch</cite> and
+<cite>git send-email</cite> is good practice to ensure your patches survive being sent
+to the list. Ensure you have followed <cite>CONTRIBUTING.md</cite> and have your
+Signed-off-by present on your patches (<cite>git commit -s</cite> will add this for you).</p>
+<p>It is good practice to solicit review from an expert in the area of code
+you’re modifying. A reviewer will add their Reviewed-by or Acked-by tags as
+replies, as will anybody testing it add Tested-by. The aim of reviewing and
+testing code before we merge it is to limit any problems to the smallest
+number of people possible, only merging code we are collectively confident
+that will <em>improve</em> life for all users and developers.</p>
+</li>
+<li><p>Merged to master</p>
+<p>The maintainer as merged your patches to the development tree (the ‘master’
+git branch). Soon after this, many more people are going to be running your
+code, so good review and testing helps ensure your inbox isn’t flooded with
+bug reports.</p>
+<p>If your patch has also been sent to the stable tree, it’s possible it also
+gets merged there soonafter.</p>
+</li>
+<li><p>Stable release</p>
+<p>Once a stable release is made, it’s likely that your code makes its way into
+vendor’s firmware releases via their test cycles.</p>
+</li>
+<li><p>Bug fixes and maintenance</p>
+<p>Bugs are a fact of life, sometimes in our own code, sometimes in others, and
+sometimes in hardware. After your patch is accepted, being available for
+input on possible bugs found and possible fixes is invaluable so that all
+can ship high quality firmware.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="on-closed-source-branches-and-forks">
+<h2>On closed source branches and forks<a class="headerlink" href="#on-closed-source-branches-and-forks" title="Permalink to this headline">¶</a></h2>
+<p>Even though the license that skiboot is distributed under does <em>allow</em> you
+to keep your changes private, we (the skiboot developers) cannot in any way
+provide support on the resulting code base.</p>
+<p>Additionally, the broader PowerPC Linux community has neither the capacity,
+time, or resources to support Linux running on such closed source forks.
+The kernel developers have said that patches to the kernel to support or
+work around closed skiboot changes will <em>not</em> be accepted upstream.</p>
+<p>If you keep your changes private, you are <em>entirely</em> on your own.</p>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>Skiboot is licensed under the Apache 2.0 license (see the LICENSE file in the
+source tree for the full text).</p>
+<p>Portions (e.g. our libc, CCAN modules we use) are made available under a CC0, BSD,
+or BSD-MIT license (see LICENSE files for specifics).</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Development and Release Process</a><ul>
+<li><a class="reference internal" href="#lifecycle-of-a-patch">Lifecycle of a patch</a></li>
+<li><a class="reference internal" href="#on-closed-source-branches-and-forks">On closed source branches and forks</a></li>
+<li><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../platforms-and-cpus.html"
+                        title="previous chapter">Supported platforms &amp; CPUs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="CONTRIBUTING.html"
+                        title="next chapter">Contributing to skiboot</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/process/dev-release-process.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="CONTRIBUTING.html" title="Contributing to skiboot"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../platforms-and-cpus.html" title="Supported platforms &amp; CPUs"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Development and Release Process</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

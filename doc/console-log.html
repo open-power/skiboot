@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SkiBoot Console Log &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="How to log errors on OPAL" href="error-logging.html" />
+    <link rel="prev" title="Versioning Scheme of skiboot" href="process/versioning.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="error-logging.html" title="How to log errors on OPAL"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="process/versioning.html" title="Versioning Scheme of skiboot"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SkiBoot Console Log</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-console-log">
+<h1>SkiBoot Console Log<a class="headerlink" href="#skiboot-console-log" title="Permalink to this headline">¶</a></h1>
+<p>Skiboot maintains a circular textual log buffer in memory.</p>
+<p>It can be accessed using any debugging method that can peek at
+memory contents. While the debug_descriptor does hold the location
+of the memory console, we’re pretty keen on keeping its location
+static.</p>
+<p>Events are logged in the following format:
+<code class="docutils literal notranslate"><span class="pre">[S.T,L]</span> <span class="pre">message</span></code> where:</p>
+<dl class="field-list simple">
+<dt class="field-odd">S</dt>
+<dd class="field-odd"><p>Seconds, which is the timebase divided by 512,000,000.
+<strong>NOTE</strong>: The timebase is reset during boot, so zero is a few dozen
+messages into skiboot booting.</p>
+</dd>
+<dt class="field-even">T</dt>
+<dd class="field-even"><p>Remaining Timebase. It is <em>NOT</em> a fraction of a second, but rather
+timebase%512000000</p>
+</dd>
+<dt class="field-odd">L</dt>
+<dd class="field-odd"><p>Log level (see below)</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>    <span class="mf">2.223466021</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Found</span> <span class="n">system</span> <span class="n">flash</span><span class="p">:</span> <span class="n">Macronix</span> <span class="n">MXxxL51235F</span> <span class="nb">id</span><span class="p">:</span><span class="mi">0</span>
+<span class="p">[</span>    <span class="mf">3.494892796</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">flash</span> <span class="n">subpartition</span> <span class="n">eyecatcher</span> <span class="n">CAPP</span>
+</pre></div>
+</div>
+<p>You should use the new prlog() call for any log message and set the
+log level/priority appropriately.</p>
+<p>printf() is mapped to PR_PRINTF and should be phased out and replaced
+with prlog() calls.</p>
+<p>See timebase.h for full timebase explanation.</p>
+<div class="section" id="log-levels">
+<h2>Log levels<a class="headerlink" href="#log-levels" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Define</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PR_EMERG</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>PR_ALERT</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>PR_CRIT</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>PR_ERR</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>PR_WARNING</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-odd"><td><p>PR_NOTICE</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-even"><td><p>PR_PRINTF</p></td>
+<td><p>PR_NOTICE</p></td>
+</tr>
+<tr class="row-odd"><td><p>PR_INFO</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-even"><td><p>PR_DEBUG</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-odd"><td><p>PR_TRACE</p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-even"><td><p>PR_INSANE</p></td>
+<td><p>9</p></td>
+</tr>
+</tbody>
+</table>
+<p>The console_log_levels byte in the debug_descriptor controls what
+messages are written to any console drivers (e.g. fsp, uart) and
+what level is just written to the in memory console (or not at all).</p>
+<p>This enables (advanced) users to vary what level of output they want
+at runtime in the memory console and through console drivers (fsp/uart)</p>
+<p>You can vary two things by poking in the debug descriptor:</p>
+<ol class="arabic simple">
+<li><p>what log level is printed at all
+e.g. only turn on PR_TRACE at specific points during runtime</p></li>
+<li><p>what log level goes out the fsp/uart console, defaults to PR_PRINTF</p></li>
+</ol>
+<p>We use two 4bit numbers (1 byte) for this in debug descriptor (saving
+some space, not needlessly wasting space that we may want in future).</p>
+<p>The default is 0x75 (7=PR_DEBUG to in memory console, 5=PR_PRINTF to drivers</p>
+<p>If you write 0x77 you will get debug info on uart/fsp console as
+well as in memory. If you write 0x95 you get PR_INSANE in memory but
+still only PR_NOTICE through drivers.</p>
+<p>People who write something like 0x1f will get a very quiet boot indeed.</p>
+</div>
+<div class="section" id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
+<p>You can change the log level of what goes to the in memory buffer and whta
+goes to the driver (i.e. serial port / IPMI Serial over LAN) at boot time
+by setting NVRAM variables:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span><span class="o">-</span><span class="n">driver</span><span class="o">=</span><span class="mi">7</span>
+<span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span><span class="o">-</span><span class="n">memory</span><span class="o">=</span><span class="mi">7</span>
+</pre></div>
+</div>
+<p>You can also use the named versions of emerg, alert, crit, err,
+warning, notice, printf, info, debug, trace or insane.  ie.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span><span class="o">-</span><span class="n">driver</span><span class="o">=</span><span class="n">insane</span>
+</pre></div>
+</div>
+<p>You an also write to the debug_descriptor to change it at runtime.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SkiBoot Console Log</a><ul>
+<li><a class="reference internal" href="#log-levels">Log levels</a></li>
+<li><a class="reference internal" href="#debugging">Debugging</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="process/versioning.html"
+                        title="previous chapter">Versioning Scheme of skiboot</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="error-logging.html"
+                        title="next chapter">How to log errors on OPAL</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/console-log.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="error-logging.html" title="How to log errors on OPAL"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="process/versioning.html" title="Versioning Scheme of skiboot"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SkiBoot Console Log</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

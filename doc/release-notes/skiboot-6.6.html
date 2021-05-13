@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.6 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.6.1" href="skiboot-6.6.1.html" />
+    <link rel="prev" title="skiboot-6.5.4" href="skiboot-6.5.4.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.6.1.html" title="skiboot-6.6.1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.5.4.html" title="skiboot-6.5.4"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.6</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-6">
+<span id="id1"></span><h1>skiboot-6.6<a class="headerlink" href="#skiboot-6-6" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v6.6 was released on Wednesday April 22nd 2020. It is the first release
+of skiboot 6.6 series, which becomes the new stable release following the
+<a class="reference internal" href="skiboot-6.5.html#skiboot-6-5"><span class="std std-ref">skiboot-6.5</span></a> release, first released August 16th 2019.</p>
+<p>There hasn’t been a skiboot release in a while and this release doesn’t contain
+a huge number of new features for users, just a lot of bug fixes, and additional
+platform support. The next release should be a little more lively with a number
+of internal refactorings and new features on the way.</p>
+<div class="section" id="new-features">
+<span id="skiboot-6-6-new-features"></span><h2>New features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Skiboot is now dual licensed as Apache 2.0 -OR- GPLv2+</p>
+<p>There are some files still licensed Apache 2.0 only due to contributions
+that we are unable to change the license of, but they are the minority.</p>
+</li>
+<li><p>Skiboot can now be built as little endian, thanks to Team Nick.</p>
+<p>Doing so requires building with: make LITTLE_ENDIAN=1</p>
+</li>
+<li><p>OpenCAPI reset support</p>
+<p>This is to allow FPGA-based OpenCAPI devices to be re-flashed with a new
+device image, then reset to activate the new image. Although it is based
+on top of the existing PCI Hotplug support it does require some OS changes
+to function.</p>
+</li>
+<li><p>The <a class="reference internal" href="../opal-api/opal-phb-flag-set-get-179-180.html#opal-phb-set-option"><span class="std std-ref">OPAL_PHB_SET_OPTION</span></a> and <a class="reference internal" href="../opal-api/opal-phb-flag-set-get-179-180.html#opal-phb-get-option"><span class="std std-ref">OPAL_PHB_GET_OPTION</span></a> OPAL calls</p>
+<p>These OPAL calls provide the OS with a means for controlling per-PHB
+settings. Currently this allows the OS to enable or disable the the “Global
+MMIO EEH Disable” and “4GTE” settings which are available on Power9 / PHB4.
+See the PHB specification for more details.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="removed-features">
+<h2>Removed features<a class="headerlink" href="#removed-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Fast-reboot is now disabled by default.</p>
+<p>Fast-reboot will continue to be supported, but as an opt-in feature rather
+than the default. From the commit (ee07f2c68160) message:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">This</span> <span class="n">has</span> <span class="n">two</span> <span class="n">user</span> <span class="n">visible</span> <span class="n">changes</span><span class="p">:</span>
+
+<span class="mf">1.</span> <span class="n">Full</span> <span class="n">reboot</span> <span class="ow">is</span> <span class="n">now</span> <span class="n">the</span> <span class="n">default</span><span class="o">.</span> <span class="n">In</span> <span class="n">order</span> <span class="n">to</span> <span class="n">get</span> <span class="n">fast</span><span class="o">-</span><span class="n">reboot</span> <span class="k">as</span> <span class="n">the</span>
+   <span class="n">default</span> <span class="n">the</span> <span class="n">nvram</span> <span class="n">option</span> <span class="n">needs</span> <span class="n">to</span> <span class="n">be</span> <span class="nb">set</span><span class="p">:</span>
+
+        <span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">fast</span><span class="o">-</span><span class="n">reset</span><span class="o">=</span><span class="mi">1</span>
+
+<span class="mf">2.</span> <span class="n">The</span> <span class="n">nvram</span> <span class="n">option</span> <span class="n">to</span> <span class="n">force</span> <span class="n">a</span> <span class="n">fast</span><span class="o">-</span><span class="n">reboot</span> <span class="n">even</span> <span class="n">when</span> <span class="n">some</span> <span class="n">part</span> <span class="n">of</span>
+   <span class="n">skiboot</span> <span class="n">has</span> <span class="n">called</span> <span class="n">disable_fast_reboot</span><span class="p">()</span> <span class="n">has</span> <span class="n">changed</span> <span class="kn">from</span>
+   <span class="s1">&#39;fast-reset=im-feeling-lucky&#39;</span> <span class="n">to</span> <span class="s1">&#39;force-fast-reset=1&#39;</span> <span class="n">because</span>
+   <span class="n">it</span><span class="s1">&#39;s impossible to actually use that &#39;</span><span class="n">feature</span><span class="s1">&#39; if fast-reboot is</span>
+   <span class="n">off</span> <span class="n">by</span> <span class="n">default</span><span class="o">.</span>
+
+        <span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">force</span><span class="o">-</span><span class="n">fast</span><span class="o">-</span><span class="n">reset</span><span class="o">=</span><span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-6.6</a><ul>
+<li><a class="reference internal" href="#new-features">New features</a></li>
+<li><a class="reference internal" href="#removed-features">Removed features</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.5.4.html"
+                        title="previous chapter">skiboot-6.5.4</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.6.1.html"
+                        title="next chapter">skiboot-6.6.1</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.6.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.6.1.html" title="skiboot-6.6.1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.5.4.html" title="skiboot-6.5.4"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.6</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

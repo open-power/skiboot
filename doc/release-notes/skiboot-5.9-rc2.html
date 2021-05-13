@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.9-rc2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.9-rc3" href="skiboot-5.9-rc3.html" />
+    <link rel="prev" title="skiboot-5.9-rc1" href="skiboot-5.9-rc1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9-rc3.html" title="skiboot-5.9-rc3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9-rc1.html" title="skiboot-5.9-rc1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-9-rc2">
+<span id="id1"></span><h1>skiboot-5.9-rc2<a class="headerlink" href="#skiboot-5-9-rc2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v5.9-rc2 was released on Monday October 16th 2017. It is the second
+release candidate of skiboot 5.9, which will become the new stable release
+of skiboot following the 5.8 release, first released August 31st 2017.</p>
+<p>skiboot v5.9-rc2 contains all bug fixes as of <a class="reference internal" href="skiboot-5.4.8.html#skiboot-5-4-8"><span class="std std-ref">skiboot-5.4.8</span></a>
+and <a class="reference internal" href="skiboot-5.1.21.html#skiboot-5-1-21"><span class="std std-ref">skiboot-5.1.21</span></a> (the currently maintained stable releases). We
+do not currently expect to do any 5.8.x stable releases.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.9 by October 17th, with skiboot 5.9
+being for all POWER8 and POWER9 platforms in op-build v1.20 (Due October 18th).
+This release will be targetted to early POWER9 systems.</p>
+<p>Over <a class="reference internal" href="skiboot-5.9-rc1.html#skiboot-5-9-rc1"><span class="std std-ref">skiboot-5.9-rc1</span></a>, we have the following changes:</p>
+<ul>
+<li><p>opal-prd: Fix memory leak</p></li>
+<li><p>hdata/i2c: update the list of known i2c devs</p>
+<p>This updates the list of known i2c devices - as of HDAT spec v10.5e - so
+that they can be properly identified during the hdat parsing.</p>
+</li>
+<li><p>hdata/i2c: log unknown i2c devices</p>
+<p>An i2c device is unknown if either the i2c device list is outdated or
+the device is marked as unknown (0xFF) in the hdat.</p>
+</li>
+<li><p>opal/cpu: Mark the core as bad while disabling threads of the core.</p>
+<p>If any of the core fails to sync its TB during chipTOD initialization,
+all the threads of that core are disabled. But this does not make
+linux kernel to ignore the core/cpus. It crashes while bringing them up
+with below backtrace:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[   38.883898] kexec_core: Starting new kernel
+cpu 0x0: Vector: 300 (Data Access) at [c0000003f277b730]
+    pc: c0000000001b9890: internal_create_group+0x30/0x304
+    lr: c0000000001b9880: internal_create_group+0x20/0x304
+    sp: c0000003f277b9b0
+   msr: 900000000280b033
+   dar: 40
+ dsisr: 40000000
+  current = 0xc0000003f9f41000
+  paca    = 0xc00000000fe00000   softe: 0        irq_happened: 0x01
+    pid   = 2572, comm = kexec
+Linux version 4.13.2-openpower1 (jenkins@p89) (gcc version 6.4.0 (Buildroot 2017.08-00006-g319c6e1)) #1 SMP Wed Sep 20 05:42:11 UTC 2017
+enter ? for help
+[c0000003f277b9b0] c0000000008a8780 (unreliable)
+[c0000003f277ba50] c00000000041c3ac topology_add_dev+0x2c/0x40
+[c0000003f277ba70] c00000000006b078 cpuhp_invoke_callback+0x88/0x170
+[c0000003f277bac0] c00000000006b22c cpuhp_up_callbacks+0x54/0xb8
+[c0000003f277bb10] c00000000006bc68 cpu_up+0x11c/0x168
+[c0000003f277bbc0] c00000000002f0e0 default_machine_kexec+0x1fc/0x274
+[c0000003f277bc50] c00000000002e2d8 machine_kexec+0x50/0x58
+[c0000003f277bc70] c0000000000de4e8 kernel_kexec+0x98/0xb4
+[c0000003f277bce0] c00000000008b0f0 SyS_reboot+0x1c8/0x1f4
+[c0000003f277be30] c00000000000b118 system_call+0x58/0x6c
+</pre></div>
+</div>
+</li>
+<li><p>hw/imc: pause microcode at boot</p>
+<p>IMC nest counters has both in-band (ucode access) and out of
+band access to it. Since not all nest counter configurations
+are supported by ucode, out of band tools are used to characterize
+other configuration.</p>
+<p>So it is prefer to pause the nest microcode at boot to aid the
+nest out of band tools. If the ucode not paused and OS does not
+have IMC driver support, then out to band tools will race with
+ucode and end up getting undesirable values. Patch to check and
+pause the ucode at boot.</p>
+<p>OPAL provides APIs to control IMC counters. OPAL_IMC_COUNTERS_INIT
+is used to initialize these counters at boot. OPAL_IMC_COUNTERS_START
+and OPAL_IMC_COUNTERS_STOP API calls should be used to start and pause
+these IMC engines. <cite>doc/opal-api/opal-imc-counters.rst</cite> details the
+OPAL APIs and their usage.</p>
+</li>
+<li><p>xive: Fix VP free block group mode false-positive parameter check</p>
+<p>The check to ensure the buddy allocation idx is aligned to its
+allocation order was not taking into account the allocation split.
+This would result in opal_xive_free_vp_block failures despite
+giving the same value as returned by opal_xive_alloc_vp_block.</p>
+<p>E.g., starting then stopping 4 KVM guests gives the following pattern
+in the host:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opal_xive_alloc_vp_block</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">=</span><span class="mh">0x45000020</span>
+<span class="n">opal_xive_alloc_vp_block</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">=</span><span class="mh">0x45000040</span>
+<span class="n">opal_xive_alloc_vp_block</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">=</span><span class="mh">0x45000060</span>
+<span class="n">opal_xive_alloc_vp_block</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">=</span><span class="mh">0x45000080</span>
+<span class="n">opal_xive_free_vp_block</span><span class="p">(</span><span class="mh">0x45000020</span><span class="p">)</span><span class="o">=-</span><span class="mi">1</span>
+<span class="n">opal_xive_free_vp_block</span><span class="p">(</span><span class="mh">0x45000040</span><span class="p">)</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">opal_xive_free_vp_block</span><span class="p">(</span><span class="mh">0x45000060</span><span class="p">)</span><span class="o">=-</span><span class="mi">1</span>
+<span class="n">opal_xive_free_vp_block</span><span class="p">(</span><span class="mh">0x45000080</span><span class="p">)</span><span class="o">=</span><span class="mi">0</span>
+</pre></div>
+</div>
+</li>
+<li><p>hw/p8-i2c: Fix deadlock in p9_i2c_bus_owner_change</p>
+<p>When debugging a system where Linux was taking soft lockup errors with
+two CPUs stuck in OPAL:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>CPU0</p></th>
+<th class="head"><p>CPU1</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>lock</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>p8_i2c_recover</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>opal_handle_interrupt</p></td>
+<td><p>sync_timer
+cancel_timer
+p9_i2c_bus_owner_change
+occ_p9_interrupt
+xive_source_interrupt
+opal_handle_interrupt</p></td>
+</tr>
+</tbody>
+</table>
+<p>p8_i2c_recover() is a timer, and is stuck trying to take master-&gt;lock.
+p9_i2c_bus_owner_change() has taken master-&gt;lock, but then is stuck waiting
+for all timers to complete. We deadlock.</p>
+<p>Fix this by using cancel_timer_async().</p>
+</li>
+<li><p>FSP/CONSOLE: Limit number of error logging</p>
+<p>Commit c8a7535f (FSP/CONSOLE: Workaround for unresponsive ipmi daemon) added
+error logging when buffer is full. In some corner cases kernel may call this
+function multiple time and we may endup logging error again and again.</p>
+<p>This patch fixes it by generating error log only once.</p>
+</li>
+<li><p>FSP/CONSOLE: Fix fsp_console_write_buffer_space() call</p>
+<p>Kernel calls fsp_console_write_buffer_space() to check console buffer space
+availability. If there is enough buffer space to write data, then kernel will
+call fsp_console_write() to write actual data.</p>
+<p>In some extreme corner cases (like one explained in commit c8a7535f)
+console becomes full and this function returns 0 to kernel (or space available
+in console buffer &lt; next incoming data size). Kernel will continue retrying
+until it gets enough space. So we will start seeing RCU stalls.</p>
+<p>This patch keeps track of previous available space. If previous space is same
+as current means not enough space in console buffer to write incoming data.
+It may be due to very high console write operation and slow response from FSP
+-OR- FSP has stopped processing data (ex: because of ipmi daemon died). At this
+point we will start timer with timeout of SER_BUFFER_OUT_TIMEOUT (10 secs).
+If situation is not improved within 10 seconds means something went bad. Lets
+return OPAL_RESOURCE so that kernel can drop console write and continue.</p>
+</li>
+<li><p>FSP/CONSOLE: Close SOL session during R/R</p>
+<p>Presently we are not closing SOL and FW console sessions during R/R. Host will
+continue to write to SOL buffer during FSP R/R. If there is heavy console write
+operation happening during FSP R/R (like running <cite>top</cite> command inside console),
+then at some point console buffer becomes full. fsp_console_write_buffer_space()
+returns 0 (or less than required space to write data) to host. While one thread
+is busy writing to console, if some other threads tries to write data to console
+we may see RCU stalls (like below) in kernel.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mf">2082.828363</span><span class="p">]</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">rcu_sched</span> <span class="n">detected</span> <span class="n">stalls</span> <span class="n">on</span> <span class="n">CPUs</span><span class="o">/</span><span class="n">tasks</span><span class="p">:</span> <span class="p">{</span> <span class="mi">32</span><span class="p">}</span> <span class="p">(</span><span class="n">detected</span> <span class="n">by</span> <span class="mi">16</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">6002</span> <span class="n">jiffies</span><span class="p">,</span> <span class="n">g</span><span class="o">=</span><span class="mi">23154</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">23153</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">254769</span><span class="p">)</span>
+<span class="p">[</span> <span class="mf">2082.828365</span><span class="p">]</span> <span class="n">Task</span> <span class="n">dump</span> <span class="k">for</span> <span class="n">CPU</span> <span class="mi">32</span><span class="p">:</span>
+<span class="p">[</span> <span class="mf">2082.828368</span><span class="p">]</span> <span class="n">kworker</span><span class="o">/</span><span class="mi">32</span><span class="p">:</span><span class="mi">3</span>    <span class="n">R</span>  <span class="n">running</span> <span class="n">task</span>        <span class="mi">0</span>  <span class="mi">4637</span>      <span class="mi">2</span> <span class="mh">0x00000884</span>
+<span class="p">[</span> <span class="mf">2082.828375</span><span class="p">]</span> <span class="n">Workqueue</span><span class="p">:</span> <span class="n">events</span> <span class="n">dump_work_fn</span>
+<span class="p">[</span> <span class="mf">2082.828376</span><span class="p">]</span> <span class="n">Call</span> <span class="n">Trace</span><span class="p">:</span>
+<span class="p">[</span> <span class="mf">2082.828382</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fa00</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000013b6b0</span><span class="p">]</span> <span class="n">console_unlock</span><span class="o">+</span><span class="mh">0x570</span><span class="o">/</span><span class="mh">0x600</span> <span class="p">(</span><span class="n">unreliable</span><span class="p">)</span>
+<span class="p">[</span> <span class="mf">2082.828384</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fae0</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000013ba34</span><span class="p">]</span> <span class="n">vprintk_emit</span><span class="o">+</span><span class="mh">0x2f4</span><span class="o">/</span><span class="mh">0x5c0</span>
+<span class="p">[</span> <span class="mf">2082.828389</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fb60</span><span class="p">]</span> <span class="p">[</span><span class="n">c00000000099e644</span><span class="p">]</span> <span class="n">printk</span><span class="o">+</span><span class="mh">0x84</span><span class="o">/</span><span class="mh">0x98</span>
+<span class="p">[</span> <span class="mf">2082.828391</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fb90</span><span class="p">]</span> <span class="p">[</span><span class="n">c0000000000851a8</span><span class="p">]</span> <span class="n">dump_work_fn</span><span class="o">+</span><span class="mh">0x238</span><span class="o">/</span><span class="mh">0x250</span>
+<span class="p">[</span> <span class="mf">2082.828394</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fc60</span><span class="p">]</span> <span class="p">[</span><span class="n">c0000000000ecb98</span><span class="p">]</span> <span class="n">process_one_work</span><span class="o">+</span><span class="mh">0x198</span><span class="o">/</span><span class="mh">0x4b0</span>
+<span class="p">[</span> <span class="mf">2082.828396</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fcf0</span><span class="p">]</span> <span class="p">[</span><span class="n">c0000000000ed3dc</span><span class="p">]</span> <span class="n">worker_thread</span><span class="o">+</span><span class="mh">0x18c</span><span class="o">/</span><span class="mh">0x5a0</span>
+<span class="p">[</span> <span class="mf">2082.828399</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fd80</span><span class="p">]</span> <span class="p">[</span><span class="n">c0000000000f4650</span><span class="p">]</span> <span class="n">kthread</span><span class="o">+</span><span class="mh">0x110</span><span class="o">/</span><span class="mh">0x130</span>
+<span class="p">[</span> <span class="mf">2082.828403</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000f1633fe30</span><span class="p">]</span> <span class="p">[</span><span class="n">c000000000009674</span><span class="p">]</span> <span class="n">ret_from_kernel_thread</span><span class="o">+</span><span class="mh">0x5c</span><span class="o">/</span><span class="mh">0x68</span>
+</pre></div>
+</div>
+<p>Hence lets close SOL (and FW console) during FSP R/R.</p>
+</li>
+<li><p>FSP/CONSOLE: Do not associate unavailable console</p>
+<p>Presently OPAL sends associate/unassociate MBOX command for all
+FSP serial console (like below OPAL message). We have to check
+console is available or not before sending this message.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mf">5013.227994012</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">Reassociating</span> <span class="n">HVSI</span> <span class="n">console</span> <span class="mi">1</span>
+<span class="p">[</span> <span class="mf">5013.227997540</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">Reassociating</span> <span class="n">HVSI</span> <span class="n">console</span> <span class="mi">2</span>
+</pre></div>
+</div>
+</li>
+<li><p>FSP: Disable PSI link whenever FSP tells OPAL about impending R/R</p>
+<p>Commit 42d5d047 fixed scenario where DPO has been initiated, but FSP went
+into reset before the CEC power down came in. But this is generic issue
+that can happen in normal shutdown path as well.</p>
+<p>Hence disable PSI link as soon as we detect FSP impending R/R.</p>
+</li>
+<li><p>fsp: return OPAL_BUSY_EVENT on failure sending FSP_CMD_POWERDOWN_NORM
+Also, return OPAL_BUSY_EVENT on failure sending FSP_CMD_REBOOT / DEEP_REBOOT.</p>
+<p>We had a race condition between FSP Reset/Reload and powering down
+the system from the host:</p>
+<p>Roughly:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 2%" />
+<col style="width: 29%" />
+<col style="width: 69%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>#</p></th>
+<th class="head"><p>FSP</p></th>
+<th class="head"><p>Host</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>Power on</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td></td>
+<td><p>Power on</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>(inject EPOW)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>(trigger FSP R/R)</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td></td>
+<td><p>Processes EPOW event, starts shutting down</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td></td>
+<td><p>calls OPAL_CEC_POWER_DOWN</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>(is still in R/R)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td></td>
+<td><p>gets OPAL_INTERNAL_ERROR, spins in opal_poll_events</p></td>
+</tr>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>(FSP comes back)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td></td>
+<td><p>spinning in opal_poll_events</p></td>
+</tr>
+<tr class="row-even"><td><p>11</p></td>
+<td><p>(thinks host is running)</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The call to OPAL_CEC_POWER_DOWN is only made once as the reset/reload
+error path for fsp_sync_msg() is to return -1, which means we give
+the OS OPAL_INTERNAL_ERROR, which is fine, except that our own API
+docs give us the opportunity to return OPAL_BUSY when trying again
+later may be successful, and we’re ambiguous as to if you should retry
+on OPAL_INTERNAL_ERROR.</p>
+<p>For reference, the linux code looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">static</span> <span class="n">void</span> <span class="n">__noreturn</span> <span class="n">pnv_power_off</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="n">long</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">OPAL_BUSY</span><span class="p">;</span>
+
+        <span class="n">pnv_prepare_going_down</span><span class="p">();</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="n">OPAL_BUSY</span> <span class="o">||</span> <span class="n">rc</span> <span class="o">==</span> <span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">rc</span> <span class="o">=</span> <span class="n">opal_cec_power_down</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span>
+                        <span class="n">opal_poll_events</span><span class="p">(</span><span class="n">NULL</span><span class="p">);</span>
+                <span class="k">else</span>
+                        <span class="n">mdelay</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="p">(;;)</span>
+                <span class="n">opal_poll_events</span><span class="p">(</span><span class="n">NULL</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Which means that <em>practically</em> our only option is to return OPAL_BUSY
+or OPAL_BUSY_EVENT.</p>
+<p>We choose OPAL_BUSY_EVENT for FSP systems as we do want to ensure we’re
+running pollers to communicate with the FSP and do the final bits of
+Reset/Reload handling before we power off the system.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.9-rc1.html"
+                        title="previous chapter">skiboot-5.9-rc1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.9-rc3.html"
+                        title="next chapter">skiboot-5.9-rc3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.9-rc2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9-rc3.html" title="skiboot-5.9-rc3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9-rc1.html" title="skiboot-5.9-rc1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

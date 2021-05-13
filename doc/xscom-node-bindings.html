@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XSCOM Bindings &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="P9 XIVE Exploitation" href="xive.html" />
+    <link rel="prev" title="PCI Slots" href="pci-slot.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="xive.html" title="P9 XIVE Exploitation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pci-slot.html" title="PCI Slots"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">XSCOM Bindings</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="xscom-bindings">
+<h1>XSCOM Bindings<a class="headerlink" href="#xscom-bindings" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="xscom-regions">
+<h2>XSCOM regions<a class="headerlink" href="#xscom-regions" title="Permalink to this headline">¶</a></h2>
+<p>The top-level xscom nodes specify the mapping range from the 64-bit address
+space into the PCB address space.</p>
+<p>There’s one mapping range per chip xscom, therefore one node per mapping range.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>/
+/xscom@&lt;chip-base-address-0&gt;/
+/xscom@&lt;chip-base-address-1&gt;/
+…
+/xscom@&lt;chip-base-address-n&gt;/
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>where &lt;chip-base-address-n&gt; is the xscom base address with the gcid-specific
+bits (for chip n) OR-ed in.</p></li>
+</ul>
+<p>Each xscom node has the following properties:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>#address-cells = 1</p></li>
+<li><p>#size-cells = 1</p></li>
+<li><p>reg = &lt;base-address[#parent-address-cells] size[#parent-size-cells]&gt;</p></li>
+<li><p>ibm,chip-id = gcid</p></li>
+<li><p>compatible = “ibm,xscom”, “ibm,power8-scom” / “ibm,power7-xscom”</p></li>
+<li><p>ecid = &lt;Electronic Chip ID, applicable for POWER9 onwards&gt;</p></li>
+<li><p>wafer-id = &lt;wafer ID, applicable for POWER9 onwards&gt;</p></li>
+<li><p>wafer-location = &lt;wafer location, applicable for POWER9 onwards&gt;</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="ecid">
+<h2>ECID<a class="headerlink" href="#ecid" title="Permalink to this headline">¶</a></h2>
+<p>Electronic Chip ID (ECID) is a process by which the wafer number, chip location
+(i.e. X,Y) and other optional data items are electrically encoded directly on
+the chip. wafer-id property represents wafer number and wafer-location property
+represents chip location (both X and Y location).</p>
+</div>
+<div class="section" id="chiplet-endpoints">
+<h2>Chiplet endpoints<a class="headerlink" href="#chiplet-endpoints" title="Permalink to this headline">¶</a></h2>
+<p>One sub-node per endpoint. Endpoints are defined by their (port,
+endpoint-address) data on the PCB, and are named according to their endpoint
+types:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">xscom</span><span class="o">@&lt;</span><span class="n">chip</span><span class="o">-</span><span class="n">base</span><span class="o">-</span><span class="n">address</span><span class="o">&gt;/</span>
+<span class="o">/</span><span class="n">xscom</span><span class="o">@&lt;</span><span class="n">chip</span><span class="o">-</span><span class="n">base</span><span class="o">-</span><span class="n">address</span><span class="o">&gt;/</span><span class="n">chiptod</span><span class="o">@&lt;</span><span class="n">endpoint</span><span class="o">-</span><span class="n">addr</span><span class="o">&gt;</span>
+<span class="o">/</span><span class="n">xscom</span><span class="o">@&lt;</span><span class="n">chip</span><span class="o">-</span><span class="n">base</span><span class="o">-</span><span class="n">address</span><span class="o">&gt;/</span><span class="n">lpc</span><span class="o">@&lt;</span><span class="n">endpoint</span><span class="o">-</span><span class="n">addr</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>where the &lt;endpoint-addr&gt; is a single address (as distinct from the current
+(gcid,base) format), consisting of the SCOM port and SCOM endpoint bits in
+their 31-bit address format.</p></li>
+</ul>
+<p>Each endpoint node has the following properties:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>reg = &lt;endpoint-address[#parent-address-cells] size[#parent-size-cells]&gt;</p></li>
+<li><p>compatible - depends on endpoint type, eg “ibm,power8-chiptod”</p></li>
+</ul>
+</div></blockquote>
+<p>The endpoint address specifies the address on the PCB. So, to calculate the
+MMIO address for a PCB register:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mmio_addr</span>  <span class="o">=</span> <span class="o">&lt;</span><span class="n">xscom</span><span class="o">-</span><span class="n">base</span><span class="o">-</span><span class="n">addr</span><span class="o">&gt;</span> <span class="o">|</span> <span class="p">(</span><span class="n">pcb_addr</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">27</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span><span class="p">)</span>
+                               <span class="o">|</span> <span class="p">(</span><span class="n">pcb_addr</span><span class="p">[</span><span class="mi">28</span><span class="p">:</span><span class="mi">31</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Where:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>xscom-base-addr is the address from the first two cells of the parent
+node’s reg property</p></li>
+<li><p>pcb_addr is the first cell of the endpoint’s reg property</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">XSCOM Bindings</a><ul>
+<li><a class="reference internal" href="#xscom-regions">XSCOM regions</a></li>
+<li><a class="reference internal" href="#ecid">ECID</a></li>
+<li><a class="reference internal" href="#chiplet-endpoints">Chiplet endpoints</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pci-slot.html"
+                        title="previous chapter">PCI Slots</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="xive.html"
+                        title="next chapter">P9 XIVE Exploitation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/xscom-node-bindings.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="xive.html" title="P9 XIVE Exploitation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pci-slot.html" title="PCI Slots"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">XSCOM Bindings</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

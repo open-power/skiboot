@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.3.1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.3.2" href="skiboot-6.3.2.html" />
+    <link rel="prev" title="skiboot-6.3-rc3" href="skiboot-6.3-rc3.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.2.html" title="skiboot-6.3.2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3-rc3.html" title="skiboot-6.3-rc3"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-3-1">
+<span id="id1"></span><h1>skiboot-6.3.1<a class="headerlink" href="#skiboot-6-3-1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.3.1 was released on Friday May 10th, 2019. It replaces
+<a class="reference internal" href="skiboot-6.3.html#skiboot-6-3"><span class="std std-ref">skiboot-6.3</span></a> as the current stable release in the 6.3.x series.</p>
+<p>It is recommended that 6.3.1 be used instead of 6.3 version
+due to the bug fixes it contains.</p>
+<p>Bug fixes included in this release are:</p>
+<ul>
+<li><p>platforms/astbmc: Check for SBE validation step</p>
+<p>On some POWER8 astbmc systems an update to the SBE requires pausing at
+runtime to ensure integrity of the SBE. If this is required the BMC will
+set a chassis boot option IPMI flag using the OEM parameter 0x62. If
+Skiboot sees this flag is set it waits until the SBE update is complete
+and the flag is cleared.
+Unfortunately the mystery operation that validates the SBE also leaves
+it in a bad state and unable to be used for timer operations. To
+workaround this the flag is checked as soon as possible (ie. when IPMI
+and the console are set up), and once complete the system is rebooted.</p>
+</li>
+<li><p>ipmi: ensure forward progress on ipmi_queue_msg_sync()</p>
+<p>BT responses are handled using a timer doing the polling. To hope to
+get an answer to an IPMI synchronous message, the timer needs to run.</p>
+<p>We can’t just check all timers though as there may be a timer that
+wants a lock that’s held by a code path calling ipmi_queue_msg_sync(),
+and if we did enforce that as a requirement, it’s a pretty subtle
+API that is asking to be broken.</p>
+<p>So, if we just run a poll function to crank anything that the IPMI
+backend needs, then we should be fine.</p>
+<p>This issue shows up very quickly under QEMU when loading the first
+flash resource with the IPMI HIOMAP backend.</p>
+</li>
+<li><p>pci/iov: Remove skiboot VF tracking</p>
+<p>This feature was added a few years ago in response to a request to make
+the MaxPayloadSize (MPS) field of a Virtual Function match the MPS of the
+Physical Function that hosts it.</p>
+<p>The SR-IOV specification states the the MPS field of the VF is “ResvP”.
+This indicates the VF will use whatever MPS is configured on the PF and
+that the field should be treated as a reserved field in the config space
+of the VF. In other words, a SR-IOV spec compliant VF should always return
+zero in the MPS field.  Adding hacks in OPAL to make it non-zero is…
+misguided at best.</p>
+<p>Additionally, there is a bug in the way pci_device structures are handled
+by VFs that results in a crash on fast-reboot that occurs if VFs are
+enabled and then disabled prior to rebooting. This patch fixes the bug by
+removing the code entirely. This patch has no impact on SR-IOV support on
+the host operating system.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.3-rc3.html"
+                        title="previous chapter">skiboot-6.3-rc3</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.3.2.html"
+                        title="next chapter">skiboot-6.3.2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.3.1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.2.html" title="skiboot-6.3.2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3-rc3.html" title="skiboot-6.3-rc3"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

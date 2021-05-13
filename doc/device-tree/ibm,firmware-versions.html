@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ibm,firmware-versions node &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ibm,opal" href="ibm%2Copal.html" />
+    <link rel="prev" title="ibm,cvc" href="ibm%2Ccvc.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ibm%2Copal.html" title="ibm,opal"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Ccvc.html" title="ibm,cvc"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,firmware-versions node</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ibm-firmware-versions-node">
+<h1>ibm,firmware-versions node<a class="headerlink" href="#ibm-firmware-versions-node" title="Permalink to this headline">¶</a></h1>
+<p>The <cite>ibm,firmware-versions</cite> node contains information on the versions of
+various firmware components as they were <strong>during boot</strong>. It <strong>does not</strong>
+change if there are pending or runtime updates. It represents (to the best
+of boot firmware’s ability) what versions of firmware were during this boot.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 12%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>version</p></td>
+<td><p>POWER9</p></td>
+<td><p>See below</p></td>
+</tr>
+<tr class="row-odd"><td><p>skiboot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-even"><td><p>occ</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-odd"><td><p>buildroot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-even"><td><p>capp-ucode</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-odd"><td><p>petitboot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-even"><td><p>open-power</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-odd"><td><p>hostboot-binaries</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-even"><td><p>MACHINE-xml</p></td>
+<td><p>N</p></td>
+<td><p>MACHINE (e.g. habanero) machine XML version</p></td>
+</tr>
+<tr class="row-odd"><td><p>hostboot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+<tr class="row-even"><td><p>linux</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="version-property">
+<h2><code class="docutils literal notranslate"><span class="pre">version</span></code> property<a class="headerlink" href="#version-property" title="Permalink to this headline">¶</a></h2>
+<p>This property <strong>must</strong> exist on POWER9 and above systems. It <strong>may</strong> exist
+on POWER8 systems.</p>
+<p>If this property exists, it <strong>must</strong> conform to this specification.
+It’s a single version number of the firmware image. In the event of a system
+supporting multiple firmware sides, this represents the <strong>default</strong> boot side.
+That is, the version that is applicable when determining if a machine
+requires a firmware update.</p>
+<p>Examples (for three different platforms):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">IBM-sandwich-20170217</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">open-power-habanero-v1.14-45-g78d89280c3f9-dirty</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">open-power-SUPERMICRO-P8DTU-V2.00.GA2-20161028</span></code></p></li>
+</ul>
+<p>To compare two versions (for the purpose of determining if the current
+installed firmware is in need of updating to the one being compared against)
+we need a defined set of rules on how to do this comparison.</p>
+<p>Version numbers are <strong>not</strong> intended to be compared across platforms.</p>
+<p>The version string may include a description at the start of it. This
+description can contain any set of characters but <strong>must not</strong> contain
+a ‘-‘ followed by a digit. It also <strong>must not</strong> contain ‘-v’ or ‘-V’ followed
+by a digit.</p>
+<p>Each part of the version string is separated by a ‘-‘ character. Leading
+sections are ignored, until one starts with a digit (0-9) or a ‘v’ or ‘V’,
+followed by a digit. Where there is a leading ‘v’ or ‘V’, it is also stripped.</p>
+<p>For the above three examples, we’d be left with:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">20170217</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1.14-45-g78d89280c3f9-dirty</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">2.00.GA2-20161028</span></code></p></li>
+</ul>
+<p>Each section is now compared until a difference is found. All comparisons
+are done <em>lexically</em>. The lexical comparison sorts in this order: tilde (~),
+all letters, non-letters. The tilde is special and sorts before an end of part.
+This allows the common usage of designating pre-release builds by a tailing
+section beginning with a ‘~’.</p>
+<p>For example: “1.0~20170217”, “1.0~rc4” and “1.0~beta1” all sort
+<strong>before</strong> “1.0”</p>
+<p>Note that “1.0beta” sorts <strong>after</strong> “1.0”</p>
+<p>The start of the version string contains an optional <em>epoch</em>. If not present,
+it is zero. This allows a reset of versioning schemes. All versions with an
+epoch of N+1 are greater than those with epoch N, no matter what the version
+strings would compare. For example “0:4.0” is <strong>less</strong> than “1:1.0”. Increasing
+the epoch should <strong>not</strong> be a regular occurance.</p>
+<p>For the remainder of the version strings, each part (separated by ‘.’ or ‘-‘)
+is compared lexically. There are two exceptions: any part beginning with “-g”
+or “-p” followed by a hexadecimal string is compared as a string, and if they
+are different the versions are determined to be different. For example, the
+sections “-g78d89280c3f9” and “-g123456789abc” differ and for all comparisons
+(less than, greater than, equal) the result should be true.</p>
+<p>For those who have been paying attention, this scheme should look very
+familiar to those who are familiar with RPM and Debian package versioning.</p>
+<p>The below table shows comparisons between versions and what the result should
+be:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 36%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>A</p></th>
+<th class="head"><p>B</p></th>
+<th class="head"><p>Result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>Equal</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-45-g78d89280c3f9</p></td>
+<td><p>A &gt; B</p></td>
+</tr>
+<tr class="row-even"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-45-g123456789abc</p></td>
+<td><p>A &lt; B, A &gt; B, A != B</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-46</p></td>
+<td><p>A &lt; B</p></td>
+</tr>
+<tr class="row-even"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.15</p></td>
+<td><p>A &lt; B</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1:1.0</p></td>
+<td><p>A &lt; B</p></td>
+</tr>
+<tr class="row-even"><td><p>1.0</p></td>
+<td><p>1.0~daily20170201</p></td>
+<td><p>A &gt; B</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.0.1</p></td>
+<td><p>1.0~daily20170201</p></td>
+<td><p>A &gt; B</p></td>
+</tr>
+<tr class="row-even"><td><p>1.0</p></td>
+<td><p>1.0.1</p></td>
+<td><p>A &lt; B</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.0</p></td>
+<td><p>1.0beta</p></td>
+<td><p>A &lt; B</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>New style (required for POWER9 and above):</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,firmware-versions</span> <span class="p">{</span>
+             <span class="nf">version</span> <span class="o">=</span> <span class="s">&quot;open-power-habanero-v1.14-45-g78d89280c3f9-dirty&quot;</span><span class="p">;</span>
+             <span class="nf">skiboot</span> <span class="o">=</span> <span class="s">&quot;5.4.0&quot;</span><span class="p">;</span>
+             <span class="nf">occ</span> <span class="o">=</span> <span class="s">&quot;d7efe30&quot;</span><span class="p">;</span>
+             <span class="nf">linux</span> <span class="o">=</span> <span class="s">&quot;4.4.32-openpower1&quot;</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Old-style:</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,firmware-versions</span> <span class="p">{</span>
+        <span class="nf">occ</span> <span class="o">=</span> <span class="s">&quot;d7efe30-opdirty&quot;</span><span class="p">;</span>
+        <span class="nf">skiboot</span> <span class="o">=</span> <span class="s">&quot;5.4.0-opdirty&quot;</span><span class="p">;</span>
+        <span class="nf">buildroot</span> <span class="o">=</span> <span class="s">&quot;211bd05&quot;</span><span class="p">;</span>
+        <span class="nf">capp-ucode</span> <span class="o">=</span> <span class="s">&quot;1bb7503-opdirty&quot;</span><span class="p">;</span>
+        <span class="nf">petitboot</span> <span class="o">=</span> <span class="s">&quot;v1.3.1-opdirty-d695626&quot;</span><span class="p">;</span>
+        <span class="nf">open-power</span> <span class="o">=</span> <span class="s">&quot;habanero-f7b8f65-dirty&quot;</span><span class="p">;</span>
+        <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1000012e</span><span class="p">&gt;;</span>
+        <span class="nf">hostboot-binaries</span> <span class="o">=</span> <span class="s">&quot;56532f5-opdirty&quot;</span><span class="p">;</span>
+        <span class="nf">habanero-xml</span> <span class="o">=</span> <span class="s">&quot;6a78496-opdirty-526ff79&quot;</span><span class="p">;</span>
+        <span class="nf">hostboot</span> <span class="o">=</span> <span class="s">&quot;09cfacb-opdirty&quot;</span><span class="p">;</span>
+        <span class="nf">linux</span> <span class="o">=</span> <span class="s">&quot;4.4.32-openpower1-opdirty-85cf528&quot;</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ibm,firmware-versions node</a><ul>
+<li><a class="reference internal" href="#version-property"><code class="docutils literal notranslate"><span class="pre">version</span></code> property</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ibm%2Ccvc.html"
+                        title="previous chapter">ibm,cvc</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ibm%2Copal.html"
+                        title="next chapter">ibm,opal</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/ibm,firmware-versions.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ibm%2Copal.html" title="ibm,opal"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Ccvc.html" title="ibm,cvc"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,firmware-versions node</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

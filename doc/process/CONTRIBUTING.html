@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contributing to skiboot &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Skiboot stable tree rules and releases" href="stable-skiboot-rules.html" />
+    <link rel="prev" title="Development and Release Process" href="dev-release-process.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="stable-skiboot-rules.html" title="Skiboot stable tree rules and releases"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dev-release-process.html" title="Development and Release Process"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contributing to skiboot</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="contributing-to-skiboot">
+<h1>Contributing to skiboot<a class="headerlink" href="#contributing-to-skiboot" title="Permalink to this headline">¶</a></h1>
+<p>skiboot is OPAL (OpenPOWER Abstraction Layer) boot and runtime firmware for
+POWER.</p>
+<p>If you haven’t already, join us on IRC (#openpower on Freenode) and on
+the mailing list ( <a class="reference external" href="mailto:skiboot&#37;&#52;&#48;lists&#46;ozlabs&#46;org">skiboot<span>&#64;</span>lists<span>&#46;</span>ozlabs<span>&#46;</span>org</a> - subscribe by
+going to <a class="reference external" href="https://lists.ozlabs.org/listinfo/skiboot">https://lists.ozlabs.org/listinfo/skiboot</a> )</p>
+<p>While we do use GitHub Issues, patches are accepted via the mailing list.
+We expect participants to adhere to the GitHub Community Guidelines (found
+at <a class="reference external" href="https://help.github.com/articles/github-community-guidelines/">https://help.github.com/articles/github-community-guidelines/</a> ).</p>
+<p>All contributions should have a Developer Certificate of Origin (see below).</p>
+<div class="section" id="development-environment">
+<h2>Development Environment<a class="headerlink" href="#development-environment" title="Permalink to this headline">¶</a></h2>
+<p>A host GCC of at least 4.9 is recommended (all modern Linux distributions
+provide this).</p>
+<p>You can build on x86-64, ppc64 or ppc64le, you just need a powerpc64 (BE)
+cross compiler. The powerpc64le cross compilers packaged in Linux distributions
+can build BE code, so they are fine.</p>
+</div>
+<div class="section" id="developer-certificate-of-origin">
+<h2>Developer Certificate of Origin<a class="headerlink" href="#developer-certificate-of-origin" title="Permalink to this headline">¶</a></h2>
+<p>Contributions to this project should conform to the <cite>Developer Certificate
+of Origin</cite> as defined at <a class="reference external" href="http://elinux.org/Developer_Certificate_Of_Origin">http://elinux.org/Developer_Certificate_Of_Origin</a>.
+Commits to this project need to contain the following line to indicate
+the submitter accepts the DCO:
+<code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">Signed-off-by:</span> <span class="pre">Your</span> <span class="pre">Name</span> <span class="pre">&lt;your_email&#64;domain.com&gt;</span>
+<span class="pre">`</span></code>
+By contributing in this way, you agree to the terms as follows:
+<a href="#id1"><span class="problematic" id="id2">``</span></a>`
+Developer Certificate of Origin
+Version 1.1</p>
+<p>Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+660 York Street, Suite 102,
+San Francisco, CA 94110 USA</p>
+<p>Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.</p>
+<p>Developer’s Certificate of Origin 1.1</p>
+<p>By making a contribution to this project, I certify that:</p>
+<ol class="loweralpha simple">
+<li><p>The contribution was created in whole or in part by me and I
+have the right to submit it under the open source license
+indicated in the file; or</p></li>
+<li><p>The contribution is based upon previous work that, to the best
+of my knowledge, is covered under an appropriate open source
+license and I have the right under that license to submit that
+work with modifications, whether created in whole or in part
+by me, under the same open source license (unless I am
+permitted to submit under a different license), as indicated
+in the file; or</p></li>
+<li><p>The contribution was provided directly to me by some other
+person who certified (a), (b) or (c) and I have not modified
+it.</p></li>
+<li><p>I understand and agree that this project and the contribution
+are public and that a record of the contribution (including all
+personal information I submit with it, including my sign-off) is
+maintained indefinitely and may be redistributed consistent with
+this project or the open source license(s) involved.</p></li>
+</ol>
+<p><a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Contributing to skiboot</a><ul>
+<li><a class="reference internal" href="#development-environment">Development Environment</a></li>
+<li><a class="reference internal" href="#developer-certificate-of-origin">Developer Certificate of Origin</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dev-release-process.html"
+                        title="previous chapter">Development and Release Process</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="stable-skiboot-rules.html"
+                        title="next chapter">Skiboot stable tree rules and releases</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/process/CONTRIBUTING.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="stable-skiboot-rules.html" title="Skiboot stable tree rules and releases"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dev-release-process.html" title="Development and Release Process"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contributing to skiboot</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

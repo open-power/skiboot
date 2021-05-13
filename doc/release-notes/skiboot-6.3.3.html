@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.3.3 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.3.4" href="skiboot-6.3.4.html" />
+    <link rel="prev" title="skiboot-6.3.2" href="skiboot-6.3.2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.4.html" title="skiboot-6.3.4"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3.2.html" title="skiboot-6.3.2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-3-3">
+<span id="id1"></span><h1>skiboot-6.3.3<a class="headerlink" href="#skiboot-6-3-3" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.3.3 was released on Wednesday Aug 6th, 2019. It replaces
+<a class="reference internal" href="skiboot-6.3.2.html#skiboot-6-3-2"><span class="std std-ref">skiboot-6.3.2</span></a> as the current stable release in the 6.3.x series.</p>
+<p>It is recommended that 6.3.3 be used instead of any previous 6.3.x version
+due to the bug fixes it contains.</p>
+<p>Bug fixes included in this release are:</p>
+<ul>
+<li><p>struct p9_sbe_msg doesn’t need to be packed</p>
+<p>Only the reg member is sent anywhere (via xscom_write), so the structure
+does not need to be packed.</p>
+</li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Fixes GCC9 build problem:
+hw/sbe-p9.c: In function ‘p9_sbe_msg_send’:
+hw/sbe-p9.c:270:9: error: taking address of packed member of ‘struct p9_sbe_msg’ may result in an unaligned p
+ointer value [-Werror=address-of-packed-member]
+  270 |  data = &amp;msg-&gt;reg[0];
+      |         ^~~~~~~~~~~~
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>hdata/vpd: fix printing (char*)0x00
+GCC9 now catches this bug:</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>In file included from hdata/vpd.c:17:
+In function ‘vpd_vini_parse’,
+    inlined from ‘vpd_data_parse’ at hdata/vpd.c:416:3:
+/skiboot/include/skiboot.h:93:31: error: ‘%s’ directive argument is null [-Werror=format-overflow=]
+   93 | #define prlog(l, f, ...) do { _prlog(l, pr_fmt(f), ##__VA_ARGS__); } while(0)
+        |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+hdata/vpd.c:390:5: note: in expansion of macro ‘prlog’
+  390 |     prlog(PR_WARNING,
+        |     ^~~~~
+hdata/vpd.c: In function ‘vpd_data_parse’:
+hdata/vpd.c:391:46: note: format string is defined here
+  391 |           &quot;VPD: CCIN desc not available for: %s\n&quot;,
+        |                                              ^~
+cc1: all warnings being treated as errors
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>errorlog: Prevent alignment error building with gcc9.</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Fixes this build error:
+[ 52s] hw/fsp/fsp-elog-write.c: In function &#39;opal_elog_read&#39;:
+[ 52s] hw/fsp/fsp-elog-write.c:213:12: error: taking address of packed member of &#39;struct errorlog&#39; may result
+in an unaligned pointer value [-Werror=address-of-packed-member]
+[ 52s] 213 | list_del(&amp;log_data-&gt;link);
+[ 52s] | ^~~~~~~~~~~~~~~
+</pre></div>
+</div>
+<ul>
+<li><p>Support BMC IPMI heartbeat command</p>
+<p>A few years ago, the OpenBMC code added support for a “heartbeat”
+command to send to the host. This command is used after the BMC is reset
+to check if the host is running. Support was never added to the host
+side however so currently when the BMC sends this command, this appears
+in the host console:
+IPMI: unknown OEM SEL command ff received</p>
+<p>There is no response needed by the host (other then the low level
+acknowledge of the command which already occurs). This commit
+handles the command so the error is no longer printed (does nothing with
+the command though since no action is needed). Here’s the tested output
+of this patch in the host console (with debug enabled):
+IPMI: BMC issued heartbeat command: 00</p>
+</li>
+<li><p>Add: add mihawk platform file</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.3.2.html"
+                        title="previous chapter">skiboot-6.3.2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.3.4.html"
+                        title="next chapter">skiboot-6.3.4</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.3.3.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.4.html" title="skiboot-6.3.4"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3.2.html" title="skiboot-6.3.2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

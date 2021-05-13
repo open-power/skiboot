@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.2-rc2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.2.1" href="skiboot-6.2.1.html" />
+    <link rel="prev" title="skiboot-6.2-rc1" href="skiboot-6.2-rc1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.2.1.html" title="skiboot-6.2.1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.2-rc1.html" title="skiboot-6.2-rc1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2-rc2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-2-rc2">
+<span id="id1"></span><h1>skiboot-6.2-rc2<a class="headerlink" href="#skiboot-6-2-rc2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v6.2-rc2 was released on Thursday November 29th 2018. It is the second
+release candidate of skiboot 6.2, which will become the new stable release
+of skiboot following the 6.1 release, first released July 11th 2018.</p>
+<p>Skiboot 6.2 will mark the basis for op-build v2.2.</p>
+<p>skiboot v6.2-rc2 contains all bug fixes as of <a class="reference internal" href="skiboot-6.0.14.html#skiboot-6-0-14"><span class="std std-ref">skiboot-6.0.14</span></a>,
+and <a class="reference internal" href="skiboot-5.4.10.html#skiboot-5-4-10"><span class="std std-ref">skiboot-5.4.10</span></a> (the currently maintained
+stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>Over <a class="reference internal" href="skiboot-6.2-rc1.html#skiboot-6-2-rc1"><span class="std std-ref">skiboot-6.2-rc1</span></a>, we have the following changes:</p>
+<ul>
+<li><p>npu2-opencapi: Log extra information on link training failure</p></li>
+<li><p>npu2-opencapi: Detect if link trained in degraded mode</p></li>
+<li><p>platform/firenze: Fix branch-to-null crash</p>
+<p>When the bus alloc and free methods were removed we missed a case in the
+Firenze platform slot code that relied on the the bus-specific method to
+the bus pointer in the request structure. This results in a
+branch-to-null during boot and a crash. This patch fixes it by
+initialising it manually here.</p>
+</li>
+<li><p>libflash: Don’t merge ECC-protected ranges</p>
+<p>Libflash currently merges contiguous ECC-protected ranges, but doesn’t
+check that the ECC bytes at the end of the first and start of the second
+range actually match sanely. More importantly, if blocklevel_read() is
+called with a position at the start of a partition that is contained
+somewhere within a region that has been merged it will update the
+position assuming ECC wasn’t being accounted for. This results in the
+position being somewhere well after the actual start of the partition
+which is incorrect.</p>
+<p>For now, remove the code merging ranges. This means more ranges must be
+held and checked however it prevents incorrectly reading ECC-correct
+regions like below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">174.334119453</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">CAPP</span> <span class="n">partition</span> <span class="n">has</span> <span class="n">ECC</span>
+<span class="p">[</span>  <span class="mf">174.437349574</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">ECC</span><span class="p">:</span> <span class="n">uncorrectable</span> <span class="n">error</span><span class="p">:</span> <span class="n">ffffffffffffffff</span> <span class="n">ff</span>
+<span class="p">[</span>  <span class="mf">174.437426306</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">failed</span> <span class="n">to</span> <span class="n">read</span> <span class="n">the</span> <span class="n">first</span> <span class="mh">0x1000</span> <span class="kn">from</span> <span class="nn">CAPP</span> <span class="n">partition</span><span class="p">,</span> <span class="n">rc</span> <span class="mi">14</span>
+<span class="p">[</span>  <span class="mf">174.439919343</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">CAPP</span><span class="p">:</span> <span class="n">Error</span> <span class="n">loading</span> <span class="n">ucode</span> <span class="n">lid</span><span class="o">.</span> <span class="n">index</span><span class="o">=</span><span class="mi">201</span><span class="n">d1</span>
+</pre></div>
+</div>
+</li>
+<li><p>libflash: Restore blocklevel tests</p>
+<p>This fell out in f58be46 “libflash/test: Rewrite Makefile.check to
+improve scalability”. Add it back in as test-blocklevel.</p>
+</li>
+<li><p>Warn on long OPAL calls</p>
+<p>Measure entry/exit time for OPAL calls and warn appropriately if the
+calls take too long (&gt;100ms gets us a DEBUG log, &gt; 1000ms gets us a
+warning).</p>
+</li>
+</ul>
+<div class="section" id="ci-testing-and-utilities">
+<h2>CI, testing, and utilities<a class="headerlink" href="#ci-testing-and-utilities" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>travis: Coverity fixed their SSL cert</p></li>
+<li><p>opal-ci: Use ubuntu:rolling for Ubuntu latest image</p></li>
+<li><p>ffspart: Add test for eraseblock size</p></li>
+<li><p>ffspart: Add toc test</p></li>
+<li><p>hdata/test: workaround dtc bugs</p>
+<p>In dtc v1.4.5 to at least v1.4.7 there have been a few bugs introduced
+that change the layout of what’s produced in the dts. In order to be
+immune from them, we should use the (provided) dtdiff utility, but we
+also need to run the dts we’re diffing against through a dtb cycle in
+order to ensure we get the same format as what the hdat_to_dt to dts
+conversion will.</p>
+<p>This fixes a bunch of unit test failures on the version of dtc shipped
+with recent Linux distros such as Fedora 29.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-6.2-rc2</a><ul>
+<li><a class="reference internal" href="#ci-testing-and-utilities">CI, testing, and utilities</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.2-rc1.html"
+                        title="previous chapter">skiboot-6.2-rc1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.2.1.html"
+                        title="next chapter">skiboot-6.2.1</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.2-rc2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.2.1.html" title="skiboot-6.2.1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.2-rc1.html" title="skiboot-6.2-rc1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2-rc2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

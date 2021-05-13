@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.10.3 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.10.4" href="skiboot-5.10.4.html" />
+    <link rel="prev" title="skiboot-5.10.2" href="skiboot-5.10.2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10.4.html" title="skiboot-5.10.4"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.2.html" title="skiboot-5.10.2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10.3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-10-3">
+<span id="id1"></span><h1>skiboot-5.10.3<a class="headerlink" href="#skiboot-5-10-3" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 5.10.3 was released on Thursday March 28th, 2018. It replaces
+<a class="reference internal" href="skiboot-5.10.2.html#skiboot-5-10-2"><span class="std std-ref">skiboot-5.10.2</span></a> as the current stable release in the 5.10.x series.</p>
+<p>It is recommended that 5.10.3 be used instead of any previous 5.10.x version
+due to the bug fixes and debugging enhancements in it.</p>
+<p>Over <a class="reference internal" href="skiboot-5.10.2.html#skiboot-5-10-2"><span class="std std-ref">skiboot-5.10.2</span></a>, we have a few improvements and bug fixes:</p>
+<ul>
+<li><p>NPU2: dump NPU2 registers on npu2 HMI</p>
+<p>Due to the nature of debugging npu2 issues, folk are wanting the
+full list of NPU2 registers dumped when there’s a problem.</p>
+<p>This is different than the solution introduced in 5.10.1
+as there we would dump the registers in a way that would trigger a FIR
+bit that would confuse PRD.</p>
+</li>
+<li><p>npu2: Add performance tuning SCOM inits</p>
+<p>Peer-to-peer GPU bandwidth latency testing has produced some tunable
+values that improve performance. Add them to our device initialization.</p>
+<p>File these under things that need to be cleaned up with nice #defines
+for the register names and bitfields when we get time.</p>
+<p>A few of the settings are dependent on the system’s particular NVLink
+topology, so introduce a helper to determine how many links go to a
+single GPU.</p>
+</li>
+<li><p>hw/npu2: Assign a unique LPARSHORTID per GPU</p>
+<p>This gets used elsewhere to index items in the XTS tables.</p>
+</li>
+<li><p>occ: Set up OCC messaging even if we fail to setup pstates</p>
+<p>This means that we no longer hit this bug if we fail to get valid pstates
+from the OCC.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[console-pexpect]#echo 1 &gt; //sys/firmware/opal/sensor_groups//occ-csm0/clear
+echo 1 &gt; //sys/firmware/opal/sensor_groups//occ-csm0/clear
+[   94.019971181,5] CPU ATTEMPT TO RE-ENTER FIRMWARE! PIR=083d cpu @0x33cf4000 -&gt; pir=083d token=8
+[   94.020098392,5] CPU ATTEMPT TO RE-ENTER FIRMWARE! PIR=083d cpu @0x33cf4000 -&gt; pir=083d token=8
+[   10.318805] Disabling lock debugging due to kernel taint
+[   10.318808] Severe Machine check interrupt [Not recovered]
+[   10.318812]   NIP [000000003003e434]: 0x3003e434
+[   10.318813]   Initiator: CPU
+[   10.318815]   Error type: Real address [Load/Store (foreign)]
+[   10.318817] opal: Hardware platform error: Unrecoverable Machine Check exception
+[   10.318821] CPU: 117 PID: 2745 Comm: sh Tainted: G   M             4.15.9-openpower1 #3
+[   10.318823] NIP:  000000003003e434 LR: 000000003003025c CTR: 0000000030030240
+[   10.318825] REGS: c00000003fa7bd80 TRAP: 0200   Tainted: G   M              (4.15.9-openpower1)
+[   10.318826] MSR:  9000000000201002 &lt;SF,HV,ME,RI&gt;  CR: 48002888  XER: 20040000
+[   10.318831] CFAR: 0000000030030258 DAR: 394a00147d5a03a6 DSISR: 00000008 SOFTE: 1
+</pre></div>
+</div>
+</li>
+<li><p>core/fast-reboot: disable fast reboot upon fundamental entry/exit/locking errors</p>
+<p>This disables fast reboot in several more cases where serious errors
+like lock corruption or call re-entrancy are detected.</p>
+</li>
+<li><p>core/opal: allow some re-entrant calls</p>
+<p>This allows a small number of OPAL calls to succeed despite re-entering
+the firmware, and rejects others rather than aborting.</p>
+<p>This allows a system reset interrupt that interrupts OPAL to do something
+useful. Sreset other CPUs, use the console, which allows xmon to work or
+stack traces to be printed, reboot the system.</p>
+<p>Use OPAL_INTERNAL_ERROR when rejecting, rather than OPAL_BUSY, which is
+used for many other things that does not mean a serious permanent error.</p>
+</li>
+<li><p>core/opal: abort in case of re-entrant OPAL call</p>
+<p>The stack is already destroyed by the time we get here, so there
+is not much point continuing.</p>
+</li>
+<li><p>npu2: Disable fast reboot</p>
+<p>Fast reboot does not yet work right with the NPU. It’s been disabled on
+NVLink and OpenCAPI machines. Do the same for NVLink2.</p>
+<p>This amounts to a port of 3e4577939bbf (“npu: Fix broken fast reset”)
+from the npu code to npu2.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.10.2.html"
+                        title="previous chapter">skiboot-5.10.2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.10.4.html"
+                        title="next chapter">skiboot-5.10.4</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.10.3.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10.4.html" title="skiboot-5.10.4"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.2.html" title="skiboot-5.10.2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10.3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

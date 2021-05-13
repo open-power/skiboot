@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_XSCOM_READ &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_NX_COPROC_INIT" href="opal_nx_coproc_init-167.html" />
+    <link rel="prev" title="OPAL_WRITE_OPPANEL_ASYNC" href="opal-write-oppanel-async-95.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal_nx_coproc_init-167.html" title="OPAL_NX_COPROC_INIT"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-write-oppanel-async-95.html" title="OPAL_WRITE_OPPANEL_ASYNC"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_XSCOM_READ</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-xscom-read">
+<span id="id1"></span><h1>OPAL_XSCOM_READ<a class="headerlink" href="#opal-xscom-read" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_READ                              65</span>
+
+<span class="kt">int</span> <span class="nf">xscom_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">partid</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">pcb_addr</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="o">*</span><span class="n">val</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This low level call will read XSCOM values directly.</p>
+<p>They should only be used by low level manufacturing/debug tools.
+“Normal” host OS kernel code should not know about XSCOM.</p>
+<p>This is also needed by HBRT/<cite>opal-prd</cite>.</p>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success!</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>if operation failed</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></dt><dd><p>if CPU is asleep</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-busy"><span class="std std-ref">OPAL_XSCOM_BUSY</span></a></dt><dd><p>Alias for <a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a>.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-chiplet-off"><span class="std std-ref">OPAL_XSCOM_CHIPLET_OFF</span></a></dt><dd><p>Alias for <a class="reference internal" href="return-codes.html#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-partial-good"><span class="std std-ref">OPAL_XSCOM_PARTIAL_GOOD</span></a></dt><dd><p>XSCOM Partial Good</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-addr-error"><span class="std std-ref">OPAL_XSCOM_ADDR_ERROR</span></a></dt><dd><p>XSCOM Address Error</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-clock-error"><span class="std std-ref">OPAL_XSCOM_CLOCK_ERROR</span></a></dt><dd><p>XSCOM Clock Error</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-parity-error"><span class="std std-ref">OPAL_XSCOM_PARITY_ERROR</span></a></dt><dd><p>XSCOM Parity Error</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-timeout"><span class="std std-ref">OPAL_XSCOM_TIMEOUT</span></a></dt><dd><p>XSCOM Timeout</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-ctr-offlined"><span class="std std-ref">OPAL_XSCOM_CTR_OFFLINED</span></a></dt><dd><p>XSCOM Controller Offlined due to too many errors.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="opal-xscom-write">
+<span id="id2"></span><h1>OPAL_XSCOM_WRITE<a class="headerlink" href="#opal-xscom-write" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_WRITE                     66</span>
+
+<span class="kt">int</span> <span class="nf">xscom_write</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">partid</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">pcb_addr</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">val</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This low level call will write an XSCOM value directly.</p>
+<p>They should only be used by low level manufacturing/debug tools.
+“Normal” host OS kernel code should not know about XSCOM.</p>
+<p>This is also needed by HBRT/<cite>opal-prd</cite>.</p>
+<div class="section" id="id3">
+<h2>Returns<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success!</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>if operation failed</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></dt><dd><p>if CPU is asleep</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-busy"><span class="std std-ref">OPAL_XSCOM_BUSY</span></a></dt><dd><p>Alias for <a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a>.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-chiplet-off"><span class="std std-ref">OPAL_XSCOM_CHIPLET_OFF</span></a></dt><dd><p>Alias for <a class="reference internal" href="return-codes.html#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-partial-good"><span class="std std-ref">OPAL_XSCOM_PARTIAL_GOOD</span></a></dt><dd><p>XSCOM Partial Good</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-addr-error"><span class="std std-ref">OPAL_XSCOM_ADDR_ERROR</span></a></dt><dd><p>XSCOM Address Error</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-clock-error"><span class="std std-ref">OPAL_XSCOM_CLOCK_ERROR</span></a></dt><dd><p>XSCOM Clock Error</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-parity-error"><span class="std std-ref">OPAL_XSCOM_PARITY_ERROR</span></a></dt><dd><p>XSCOM Parity Error</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-timeout"><span class="std std-ref">OPAL_XSCOM_TIMEOUT</span></a></dt><dd><p>XSCOM Timeout</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-xscom-ctr-offlined"><span class="std std-ref">OPAL_XSCOM_CTR_OFFLINED</span></a></dt><dd><p>XSCOM Controller Offlined due to too many errors.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_XSCOM_READ</a><ul>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opal-xscom-write">OPAL_XSCOM_WRITE</a><ul>
+<li><a class="reference internal" href="#id3">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-write-oppanel-async-95.html"
+                        title="previous chapter">OPAL_WRITE_OPPANEL_ASYNC</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal_nx_coproc_init-167.html"
+                        title="next chapter">OPAL_NX_COPROC_INIT</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-xscom-read-write-65-66.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal_nx_coproc_init-167.html" title="OPAL_NX_COPROC_INIT"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-write-oppanel-async-95.html" title="OPAL_WRITE_OPPANEL_ASYNC"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_XSCOM_READ</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

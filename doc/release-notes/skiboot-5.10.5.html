@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.10.5 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.10.6" href="skiboot-5.10.6.html" />
+    <link rel="prev" title="skiboot-5.10.4" href="skiboot-5.10.4.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10.6.html" title="skiboot-5.10.6"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.4.html" title="skiboot-5.10.4"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10.5</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-10-5">
+<span id="id1"></span><h1>skiboot-5.10.5<a class="headerlink" href="#skiboot-5-10-5" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 5.10.5 was released on Tuesday April 24th, 2018. It replaces
+<a class="reference internal" href="skiboot-5.10.4.html#skiboot-5-10-4"><span class="std std-ref">skiboot-5.10.4</span></a> as the current stable release in the 5.10.x series.</p>
+<p>It is recommended that 5.10.5 be used instead of any previous 5.10.x version
+due to the bug fixes and debugging enhancements in it.</p>
+<p>Over <a class="reference internal" href="skiboot-5.10.4.html#skiboot-5-10-4"><span class="std std-ref">skiboot-5.10.4</span></a>, we have four bug fixes:</p>
+<ul>
+<li><p>npu2/hw-procedures: fence bricks on GPU reset</p>
+<p>The NPU workbook defines a way of fencing a brick and
+getting the brick out of fence state. We do have an implementation
+of bringing the brick out of fenced/quiesced state. We do
+the latter in our procedures, but to support run time reset
+we need to do the former.</p>
+<p>The fencing ensures that access to memory behind the links
+will not lead to HMI’s, but instead SUE’s will be populated
+in cache (in the case of speculation). The expectation is then
+that prior to and after reset, the operating system components
+will flush the cache for the region of memory behind the GPU.</p>
+<p>This patch does the following:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Implements a npu2_dev_fence_brick() function to set/clear
+fence state</p></li>
+<li><p>Clear FIR bits prior to clearing the fence status</p></li>
+<li><p>Clear’s the fence status</p></li>
+<li><p>We take the powerbus out of CQ fence much later now,
+in credits_check() which is the last hardware procedure
+called after link training.</p></li>
+</ol>
+</div></blockquote>
+</li>
+<li><p>hdata/spira: parse vpd to add part-number and serial-number to xscom&#64; node</p>
+<p>Expected by FWTS and associates our processor with the part/serial
+number, which is obviously a good thing for one’s own sanity.</p>
+</li>
+<li><p>hw/imc: Check for pause_microcode_at_boot() return status</p>
+<p>pause_microcode_at_boot() loops through all the chip’s ucode
+control block and pause the ucode if it is in the running state.
+But it does not fail if any of the chip’s ucode is not initialised.</p>
+<p>Add code to return a failure if ucode is not initialized in any
+of the chip. Since pause_microcode_at_boot() is called just before
+attaching the IMC device nodes in imc_init(), add code to check for
+the function return.</p>
+</li>
+<li><p>core/cpufeatures: Fix setting DARN and SCV HWCAP feature bits</p>
+<p>DARN and SCV has been assigned AT_HWCAP2 (32-63) bits:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define PPC_FEATURE2_DARN               0x00200000 /* darn random number insn */</span>
+<span class="c1">#define PPC_FEATURE2_SCV                0x00100000 /* scv syscall */</span>
+</pre></div>
+</div>
+<p>A cpufeatures-aware OS will not advertise these to userspace without
+this patch.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.10.4.html"
+                        title="previous chapter">skiboot-5.10.4</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.10.6.html"
+                        title="next chapter">skiboot-5.10.6</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.10.5.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10.6.html" title="skiboot-5.10.6"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.4.html" title="skiboot-5.10.4"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10.5</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

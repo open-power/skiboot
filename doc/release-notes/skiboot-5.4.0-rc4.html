@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.4.0-rc4 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.4.1" href="skiboot-5.4.1.html" />
+    <link rel="prev" title="skiboot-5.4.0-rc3" href="skiboot-5.4.0-rc3.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.1.html" title="skiboot-5.4.1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc3.html" title="skiboot-5.4.0-rc3"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc4</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-4-0-rc4">
+<span id="id1"></span><h1>skiboot-5.4.0-rc4<a class="headerlink" href="#skiboot-5-4-0-rc4" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.4.0-rc4 was released on Tuesday November 8th 2016. It is the
+fourth (and hopefully final) release candidate of skiboot 5.4, which will
+become the new stable release of skiboot following the 5.3 release, first
+released August 2nd 2016.</p>
+<p>skiboot-5.4.0-rc4 contains all bug fixes as of <a class="reference internal" href="skiboot-5.3.7.html#skiboot-5-3-7"><span class="std std-ref">skiboot-5.3.7</span></a>
+and <a class="reference internal" href="skiboot-5.1.18.html#skiboot-5-1-18"><span class="std std-ref">skiboot-5.1.18</span></a> (the currently maintained stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>Since this is a release candidate, it should <em>NOT</em> be put into production.</p>
+<p>With this release candidate, I’m hoping that it’s the last one, and that within
+the week we’re able to tag a final 5.4.0 release. There is one bit of code I’m
+hoping to merge in before the final 5.4.0, and that’s the p8dtu platform
+definition. The aim is for skiboot-5.4.x to be in op-build v1.13, which is due
+by November 23rd 2016.</p>
+<p>Over <a class="reference internal" href="skiboot-5.4.0-rc3.html#skiboot-5-4-0-rc3"><span class="std std-ref">skiboot-5.4.0-rc3</span></a>, we have a few changes:</p>
+<ul>
+<li><p>Add BMC platform to enable correct OEM IPMI commands</p>
+<p>An out of tree platform (p8dtu) uses a different IPMI OEM command
+for IPMI_PARTIAL_ADD_ESEL. This exposed some assumptions about the BMC
+implementation in our core code.</p>
+<p>Now, with platform.bmc, each platform can dictate (or detect) the BMC
+that is present. We allow it to be set at runtime rather than purely
+statically in struct platform as it’s possible to have differing BMC
+implementations on the one machine (e.g. AMI BMC or OpenBMC).</p>
+</li>
+<li><p>hw/ipmi-sensor: Fix setting of firmware progress sensor properly.</p>
+<p>On FSP systems, OPAL was incorrectly setting firmware status
+on a sensor id “00” which doesn’t exist.</p>
+</li>
+<li><p>pflash: remove stray d in from info message</p></li>
+<li><p>libflash/pflash: support whole chip erase on mtd access</p></li>
+<li><p>boot_test: fix typo in console message</p></li>
+<li><p>core/pci: Fix criteria in pci_cfg_reg_filter(), i.e. NVLink didn’t work.</p></li>
+<li><p>Remove KERNEL_COMMAND_LINE mention from config.h</p>
+<p>We removed the functionality but not the define.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.4.0-rc3.html"
+                        title="previous chapter">skiboot-5.4.0-rc3</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.4.1.html"
+                        title="next chapter">skiboot-5.4.1</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.4.0-rc4.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.1.html" title="skiboot-5.4.1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc3.html" title="skiboot-5.4.0-rc3"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc4</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

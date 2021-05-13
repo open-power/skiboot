@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.2.3 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.2.4" href="skiboot-6.2.4.html" />
+    <link rel="prev" title="skiboot-6.2.2" href="skiboot-6.2.2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.2.4.html" title="skiboot-6.2.4"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.2.2.html" title="skiboot-6.2.2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-2-3">
+<span id="id1"></span><h1>skiboot-6.2.3<a class="headerlink" href="#skiboot-6-2-3" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.2.3 was released on Tuesday March 19th, 2019. It replaces
+<a class="reference internal" href="skiboot-6.2.2.html#skiboot-6-2-2"><span class="std std-ref">skiboot-6.2.2</span></a> as the current stable release in the 6.2.x series.</p>
+<p>It is recommended that 6.2.3 be used instead of any previous 6.2.x version
+due to the bug fixes it contains.</p>
+<p>Bug fixes included in this release are:</p>
+<ul>
+<li><p>p9dsu: Undo slot label name changes</p>
+<p>During some code updates the slot labels were updated to reflect
+the phb layout, however expectations were that the slot labels be
+aligned with the riser card slots and not the system planar slots.</p>
+<p>[stewart: The tale of how we got here is long and varied and not at
+all clear. The first ESS systems went out with a skiboot v5.9.8 with
+additional SuperMicro patches. It was probably a slot table, but who knows,
+we don’t have the code so can’t check. It’s possible it was all coming
+in through HDAT instead). The op-build tree (thus the exact patches)
+shipped on systems that work correct seems to not be around anywhere anymore
+(if it ever was). It was only in skiboot v6.0 that a slot table made
+it in, and, of course, only having remote machines in random configs,
+including possibly with riser cards from Briggs&amp;Stratton rather than
+the ones destined for this system, doesn’t make for verifying this
+at all. It also doesn’t help that <em>consistently</em> there is <em>never</em>
+any review on slot tables, and we’ve had things be wrong in the past.
+Combine this with not upstream Hostboot patches.]</p>
+</li>
+<li><p>p9dsu: Fix slot labels for p9dsu2u</p>
+<p>Update the slot labels for the p9dsu2u tables.</p>
+</li>
+<li><p>fast-reboot: occ: Call occ_pstates_init() on fast-reset on all machines</p>
+<p>Commit 815417dcda2e (“init, occ: Initialise OCC earlier on BMC systems”)
+conditionally invoked occ_pstates_init() only on FSP based systems in
+load_and_boot_kernel(). Due to this pstate table is re-parsed on FSP
+system and skipped on BMC system during fast-reboot. So this patch fixes
+this by invoking occ_pstates_init() on all boxes during fast-reboot.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.2.2.html"
+                        title="previous chapter">skiboot-6.2.2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.2.4.html"
+                        title="next chapter">skiboot-6.2.4</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.2.3.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.2.4.html" title="skiboot-6.2.4"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.2.2.html" title="skiboot-6.2.2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.4.0-rc3 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.4.0-rc4" href="skiboot-5.4.0-rc4.html" />
+    <link rel="prev" title="skiboot-5.4.0-rc2" href="skiboot-5.4.0-rc2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc4.html" title="skiboot-5.4.0-rc4"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc2.html" title="skiboot-5.4.0-rc2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-4-0-rc3">
+<span id="id1"></span><h1>skiboot-5.4.0-rc3<a class="headerlink" href="#skiboot-5-4-0-rc3" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.4.0-rc3 was released on Wednesday November 2nd 2016. It is the
+third release candidate of skiboot 5.4, which will become the new stable
+release of skiboot following the 5.3 release, first released August 2nd 2016.</p>
+<p>skiboot-5.4.0-rc3 contains all bug fixes as of <a class="reference internal" href="skiboot-5.3.7.html#skiboot-5-3-7"><span class="std std-ref">skiboot-5.3.7</span></a>
+and <a class="reference internal" href="skiboot-5.1.18.html#skiboot-5-1-18"><span class="std std-ref">skiboot-5.1.18</span></a> (the currently maintained stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>Since this is a release candidate, it should <em>NOT</em> be put into production.</p>
+<p>The current plan is to release a new release candidate every week until we
+feel good about it. The aim is for skiboot-5.4.x to be in op-build v1.13, which
+is due by November 23rd 2016.</p>
+<p>Over <a class="reference internal" href="skiboot-5.4.0-rc2.html#skiboot-5-4-0-rc2"><span class="std std-ref">skiboot-5.4.0-rc2</span></a>, we have a few changes:</p>
+<ul class="simple">
+<li><p>pflash: Fail when file is larger than partition
+You can still shoot yourself in the foot by passing –force.</p></li>
+<li><p>core/flash: Don’t do anything clever for OPAL_FLASH_{READ, WRITE, ERASE}
+This fixes a bug where opal-prd and opal-gard could fail.
+Fixes: <a class="reference external" href="https://github.com/open-power/skiboot/issues/44">https://github.com/open-power/skiboot/issues/44</a></p></li>
+<li><p>boot-tests: force BMC to boot from non-golden side</p></li>
+<li><p>fast-reset: Send special reset sequence to operational CPUs only.
+Fixes fast-reset for cases where there are garded CPUs</p></li>
+<li><p>Secure/Trusted boot: be much clearer about what is being measured where.</p></li>
+<li><p>Secure/Trusted boot: be more resilient to disabled TPM(s).</p></li>
+<li><p>Secure/Trusted boot: The <code class="docutils literal notranslate"><span class="pre">force-secure-mode</span></code> NVRAM setting introduced
+temporarily in <a class="reference internal" href="skiboot-5.4.0-rc2.html#skiboot-5-4-0-rc2"><span class="std std-ref">skiboot-5.4.0-rc2</span></a> has changed behaviour. Now, by
+default, the <code class="docutils literal notranslate"><span class="pre">secure-mode</span></code> flag in the device tree is obeyed. As always,
+any skiboot NVRAM options are in no way ABI, API or supported and may cause
+unfinished verbose analogies to appear in release notes relating to the
+dangers of using developer only options.</p></li>
+<li><p>gard: Fix compiler warning on modern GCC targetting ARM 32-bit</p></li>
+<li><p>opal-prd: systemd scripts improvements, only run on supported systems</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.4.0-rc2.html"
+                        title="previous chapter">skiboot-5.4.0-rc2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.4.0-rc4.html"
+                        title="next chapter">skiboot-5.4.0-rc4</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.4.0-rc3.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc4.html" title="skiboot-5.4.0-rc4"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc2.html" title="skiboot-5.4.0-rc2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

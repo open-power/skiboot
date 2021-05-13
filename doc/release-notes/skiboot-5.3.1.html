@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.3.1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.3.2" href="skiboot-5.3.2.html" />
+    <link rel="prev" title="skiboot-5.3.0-rc2" href="skiboot-5.3.0-rc2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.3.2.html" title="skiboot-5.3.2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.3.0-rc2.html" title="skiboot-5.3.0-rc2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.3.1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-3-1">
+<h1>skiboot-5.3.1<a class="headerlink" href="#skiboot-5-3-1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.3.1 was released on Wednesday August 10th, 2016.</p>
+<p>This is the 2nd stable release of skiboot 5.3, the new stable release of
+skiboot (first released with 5.3.0 on August 2nd, 2016).</p>
+<p>Skiboot 5.3.1 replaces skiboot-5.3.0 as the current stable version. It contains
+a few minor bug fixes.</p>
+<p>This release follows the Skiboot stable rules, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a>.</p>
+<p>Over skiboot-5.3.0, the following fixes are included:</p>
+<p>FSP systems:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>FSP/ELOG: elog_enable flag should be false by default</dt><dd><p>This issue is one of the corner case, which is related to recent change
+went upstream and only observed in the petitboot prompt, where we see
+only one error log instead of getting all error log in
+/sys/firmware/opal/elog.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>NVLink systems (i.e. Garrison):</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>npu: reword “error” to indicate it’s actually a warning</dt><dd><p>Without this patch, you get spurious FirmWare Test Suite (FWTS) warnings
+about NVLink not working on machines that aren’t fully populated with
+GPUs.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>hmi: Clean up NPU FIR debug messages</dt><dd><p>With the skiboot log set to debug, the FIR (and related registers) were
+logged all in the same message.  It was too much for one line, didn’t
+clarify if the numbers were in hex, and didn’t show leading zeroes.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>General:</p>
+<ul class="simple">
+<li><p>asm: Fix backtrace for unexpected exception</p></li>
+<li><p>correct the log level from PR_ERROR down to PR_INFO for some skiboot
+log messages.</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.3.0-rc2.html"
+                        title="previous chapter">skiboot-5.3.0-rc2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.3.2.html"
+                        title="next chapter">skiboot-5.3.2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.3.1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.3.2.html" title="skiboot-5.3.2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.3.0-rc2.html" title="skiboot-5.3.0-rc2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.3.1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

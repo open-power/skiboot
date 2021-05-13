@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.1.3 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.1.4" href="skiboot-5.1.4.html" />
+    <link rel="prev" title="skiboot-5.1.21" href="skiboot-5.1.21.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.4.html" title="skiboot-5.1.4"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.21.html" title="skiboot-5.1.21"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-1-3">
+<h1>skiboot-5.1.3<a class="headerlink" href="#skiboot-5-1-3" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.1.3 was released on September 15th, 2015.</p>
+<p>skiboot-5.1.3 is the 4th stable release of 5.1, it follows skiboot-5.1.2
+(which was released September 9th, 2015).</p>
+<p>Skiboot 5.1.3 contains all fixes from skiboot-5.1.2 and is a minor bugfix
+release.</p>
+<div class="section" id="changes">
+<h2>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h2>
+<p>Over skiboot-5.1.2, we have the following changes:</p>
+<ul>
+<li><p>slot names for firestone platform</p></li>
+<li><p>fix display of LPC errors</p></li>
+<li><p>SBE based timer support</p>
+<ul class="simple">
+<li><p>on supported platforms limits reliance on Linux heartbeat</p></li>
+</ul>
+</li>
+<li><p>fix use-after-free in fsp/ipmi</p></li>
+<li><p>fix hang on TOD/TB errors (time-of-day/timebase) on OpenPower systems</p>
+<ul class="simple">
+<li><p>On getting a Hypervizor Maintenance Interrupt to get the timebase
+back into a running state, we would call prlog which would use
+the LPC UART console driver on OpenPower systems, which depends on
+a working timebase, leading to a hang.
+We now don’t depend on a working timebase in this recovery codepath.</p></li>
+</ul>
+</li>
+<li><p>enable prd for garrison platform</p></li>
+<li><p>PCI: Clear error bits after changing MPS
+Chaning MPS on PCI upstream bridge might cause error bits set on
+downstream endpoints when system boots into Linux as below case
+shows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">host</span><span class="c1"># lspci -vvs 0001:06:00.0</span>
+<span class="mi">0001</span><span class="p">:</span><span class="mi">06</span><span class="p">:</span><span class="mf">00.0</span> <span class="n">Ethernet</span> <span class="n">controller</span><span class="p">:</span> <span class="n">Broadcom</span> <span class="n">Corporation</span> \
+             <span class="n">NetXtreme</span> <span class="n">II</span> <span class="n">BCM57810</span> <span class="mi">10</span> <span class="n">Gigabit</span> <span class="n">Ethernet</span> <span class="p">(</span><span class="n">rev</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">DevSta</span><span class="p">:</span>      <span class="n">CorrErr</span><span class="o">+</span> <span class="n">UncorrErr</span><span class="o">-</span> <span class="n">FatalErr</span><span class="o">-</span> <span class="n">UnsuppReq</span><span class="o">+</span> <span class="n">AuxPwr</span><span class="o">-</span> <span class="n">TransPend</span><span class="o">-</span>
+<span class="n">CESta</span><span class="p">:</span>       <span class="n">RxErr</span><span class="o">-</span> <span class="n">BadTLP</span><span class="o">-</span> <span class="n">BadDLLP</span><span class="o">-</span> <span class="n">Rollover</span><span class="o">-</span> <span class="n">Timeout</span><span class="o">-</span> <span class="n">NonFatalErr</span><span class="o">+</span>
+</pre></div>
+</div>
+<p>This clears those error bits in AER and PCIe capability after MPS
+is changed. With the patch applied, no more error bits are seen.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<p>Processed 14 csets from 6 developers
+1 employers found
+A total of 462 lines added, 163 removed (delta 299)</p>
+<p>Developers with the most changesets</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 76%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>5 (35.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>4 (28.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>2 (14.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>1 (7.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>1 (7.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Neelesh Gupta</p></td>
+<td><p>1 (7.1%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most changed lines</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 70%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>407 (80.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>23 (4.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>19 (3.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>18 (3.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>5 (1.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Neelesh Gupta</p></td>
+<td><p>2 (0.4%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most lines removed</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 70%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>8 (4.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Jeremy Kerr</p></td>
+<td><p>3 (1.8%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Neelesh Gupta</p></td>
+<td><p>1 (0.6%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most signoffs (total 10)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>10 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most reviews (total 1)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Joel Stanley</p></td>
+<td><p>1 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most test credits (total 0)</p>
+<p>Developers who gave the most tested-by credits (total 0)</p>
+<p>Developers with the most report credits (total 1)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>John Walthour</p></td>
+<td><p>1 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers who gave the most report credits (total 1)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>1 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Top changeset contributors by employer</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>14 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Top lines changed by employer</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>504 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Employers with the most signoffs (total 10)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>10 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Employers with the most hackers (total 6)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>6 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.1.3</a><ul>
+<li><a class="reference internal" href="#changes">Changes</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.1.21.html"
+                        title="previous chapter">skiboot-5.1.21</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.1.4.html"
+                        title="next chapter">skiboot-5.1.4</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.1.3.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.4.html" title="skiboot-5.1.4"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.21.html" title="skiboot-5.1.21"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

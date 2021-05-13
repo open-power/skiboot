@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.6.0-rc2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.7" href="skiboot-5.7.html" />
+    <link rel="prev" title="skiboot-5.6.0-rc1" href="skiboot-5.6.0-rc1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.7.html" title="skiboot-5.7"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.6.0-rc1.html" title="skiboot-5.6.0-rc1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.6.0-rc2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-6-0-rc2">
+<span id="id1"></span><h1>skiboot-5.6.0-rc2<a class="headerlink" href="#skiboot-5-6-0-rc2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.6.0-rc2 was released on Friday May 19th 2017. It is the second
+release candidate of skiboot 5.6, which will become the new stable release
+of skiboot following the 5.5 release, first released April 7th 2017.</p>
+<p>skiboot-5.6.0-rc2 contains all bug fixes as of <a class="reference internal" href="skiboot-5.4.4.html#skiboot-5-4-4"><span class="std std-ref">skiboot-5.4.4</span></a>
+and <a class="reference internal" href="skiboot-5.1.19.html#skiboot-5-1-19"><span class="std std-ref">skiboot-5.1.19</span></a> (the currently maintained stable releases). We
+do not currently expect to do any 5.5.x stable releases.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.6.0 by May 22nd, with skiboot 5.6.0
+being for all POWER8 and POWER9 platforms in op-build v1.17 (Due May 24th).
+This is a short cycle as this release is mainly targetted towards POWER9
+bringup efforts.</p>
+<p>With skiboot 5.6.0, we are moving to a regular six week release cycle,
+similar to op-build, but slightly offset to allow for a short stabilisation
+period. Expected release dates and contents are tracked using GitHub milestone
+and issues: <a class="reference external" href="https://github.com/open-power/skiboot/milestones">https://github.com/open-power/skiboot/milestones</a></p>
+<p>Over <a class="reference internal" href="skiboot-5.6.0-rc1.html#skiboot-5-6-0-rc1"><span class="std std-ref">skiboot-5.6.0-rc1</span></a>, we have the following changes:</p>
+<ul>
+<li><p>hw/i2c: Fix early lock drop</p>
+<p>When interacting with an I2C master the p8-i2c driver (common to p9)
+aquires a per-master lock which it holds for the duration of it’s
+interaction with the master.  Unfortunately, when
+p8_i2c_check_initial_status() detects that the master is busy with
+another transaction it drops the lock and returns OPAL_BUSY. This is
+contrary to the driver’s locking strategy which requires that the
+caller aquire and drop the lock. This leads to a crash due to the
+double unlock(), which skiboot treats as fatal.</p>
+</li>
+<li><p>mambo: Add skiboot/linux symbol lookup</p>
+<p>Adds the skisym and linsym commands which can be used to find the
+address of a Linux or Skiboot symbol. To function this requires
+the user to provide the SKIBOOT_MAP and VMLINUX_MAP environmental
+variables which indicate which skiboot.map and System.map files
+should be used.</p>
+<p>Examples:</p>
+<ul>
+<li><p>Look up a symbol address:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">systemsim</span> <span class="o">%</span> <span class="n">skisym</span> <span class="o">.</span><span class="n">load_and_boot_kernel</span>
+<span class="mh">0x0000000030013a08</span>
+</pre></div>
+</div>
+</li>
+<li><p>Set a breakpoint there:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">systemsim</span> <span class="o">%</span> <span class="n">b</span> <span class="p">[</span><span class="n">skisym</span> <span class="o">.</span><span class="n">load_and_boot_kernel</span><span class="p">]</span>
+<span class="n">breakpoint</span> <span class="nb">set</span> <span class="n">at</span> <span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0000000030013a08</span> <span class="p">(</span><span class="mh">0x0000000030013A08</span><span class="p">)</span> <span class="n">Enc</span><span class="p">:</span><span class="mh">0x7D800026</span> <span class="p">:</span> <span class="n">mfcr</span>    <span class="n">r12</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>libstb: Fix build in OpenSSL 1.1</p>
+<p>The build failure was as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[ HOSTCC ] libstb/create-container.c
+In file included from /usr/include/openssl/asn1.h:24:0,
+                 from /usr/include/openssl/ec.h:30,
+                 from libstb/create-container.c:36:
+libstb/create-container.c: In function ‘getSigRaw’:
+libstb/create-container.c:104:31: error: dereferencing pointer to incomplete
+                                  type ‘ECDSA_SIG {aka struct ECDSA_SIG_st}’
+  rlen = BN_num_bytes(signature-&gt;r);
+                               ^
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.6.0-rc1.html"
+                        title="previous chapter">skiboot-5.6.0-rc1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.7.html"
+                        title="next chapter">skiboot-5.7</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.6.0-rc2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.7.html" title="skiboot-5.7"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.6.0-rc1.html" title="skiboot-5.6.0-rc1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.6.0-rc2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

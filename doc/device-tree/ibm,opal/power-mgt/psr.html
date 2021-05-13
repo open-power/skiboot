@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>power-mgt/psr &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Secvar Binding" href="../secvar.html" />
+    <link rel="prev" title="power-mgt/powercap" href="powercap.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../secvar.html" title="Secvar Binding"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="powercap.html" title="power-mgt/powercap"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../power-mgt.html" accesskey="U">ibm,opal/power-mgt device tree entries</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">power-mgt/psr</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="power-mgt-psr">
+<h1>power-mgt/psr<a class="headerlink" href="#power-mgt-psr" title="Permalink to this headline">¶</a></h1>
+<p>Some systems allow modification of how power consumption throttling
+is balanced between entities in a system. A typical one may be how the power
+management complex should balance throttling CPU versus the GPU. An OPAL
+call can be used to set these ratios, which are described in the device
+tree.</p>
+<p>In the future, there may be more available settings than just CPU
+versus GPU.</p>
+<p>Each child node in the “psr” node represents a configurable psr
+sensor.</p>
+<dl class="simple">
+<dt>For example<span class="classifier">::</span></dt><dd><p>cpu-to-gpu&#64;1</p>
+</dd>
+</dl>
+<p>The compatible property is set to “ibm,opal-power-shift-ratio”.</p>
+<p>Each child node has below properties:</p>
+<dl class="simple">
+<dt><cite>handle</cite></dt><dd><p>Handle to indicate the type of psr</p>
+</dd>
+<dt><cite>label</cite></dt><dd><p>Name of the psr sensor</p>
+</dd>
+</dl>
+<p>The format of the handle is internal, and <code class="docutils literal notranslate"><span class="pre">not</span></code> ABI, although
+currently it uses the following encoding</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">|</span> <span class="n">Class</span> <span class="o">|</span><span class="n">Reserved</span><span class="o">|</span>  <span class="n">RID</span> <span class="o">|</span> <span class="n">Type</span> <span class="o">|</span>
+<span class="o">|-------|--------|------|------|</span>
+</pre></div>
+</div>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">power-mgt</span> <span class="p">{</span>
+  <span class="nc">psr</span> <span class="p">{</span>
+     <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-power-shift-ratio&quot;</span><span class="p">;</span>
+
+     <span class="nc">cpu-to-gpu</span><span class="nf">@0</span> <span class="p">{</span>
+             <span class="nf">name</span> <span class="o">=</span> <span class="s">&quot;cpu-to-gpu&quot;</span><span class="p">;</span>
+             <span class="nf">handle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x00000000</span><span class="p">&gt;;</span>
+             <span class="nf">label</span> <span class="o">=</span> <span class="s">&quot;cpu_to_gpu_0&quot;</span><span class="p">;</span>
+     <span class="p">};</span>
+
+     <span class="nc">cpu-to-gpu</span><span class="nf">@1</span> <span class="p">{</span>
+             <span class="nf">name</span> <span class="o">=</span> <span class="s">&quot;cpu-to-gpu&quot;</span><span class="p">;</span>
+             <span class="nf">handle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x00000100</span><span class="p">&gt;;</span>
+             <span class="nf">label</span> <span class="o">=</span> <span class="s">&quot;cpu_to_gpu_1&quot;</span><span class="p">;</span>
+     <span class="p">};</span>
+  <span class="p">};</span>
+ <span class="p">};</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="powercap.html"
+                        title="previous chapter">power-mgt/powercap</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../secvar.html"
+                        title="next chapter">Secvar Binding</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/device-tree/ibm,opal/power-mgt/psr.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../secvar.html" title="Secvar Binding"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="powercap.html" title="power-mgt/powercap"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../power-mgt.html" >ibm,opal/power-mgt device tree entries</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">power-mgt/psr</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

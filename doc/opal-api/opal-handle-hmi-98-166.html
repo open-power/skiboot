@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hypervisor Maintenance Interrupt (HMI) &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_HANDLE_INTERRUPT" href="opal-handle-interrupt.html" />
+    <link rel="prev" title="OPAL_GET_XIVE" href="opal-get-xive-20.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-handle-interrupt.html" title="OPAL_HANDLE_INTERRUPT"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-get-xive-20.html" title="OPAL_GET_XIVE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Hypervisor Maintenance Interrupt (HMI)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="hypervisor-maintenance-interrupt-hmi">
+<h1>Hypervisor Maintenance Interrupt (HMI)<a class="headerlink" href="#hypervisor-maintenance-interrupt-hmi" title="Permalink to this headline">¶</a></h1>
+<p>Hypervisor Maintenance Interrupt usually reports error related to processor
+recovery/checkstop, NX/NPU checkstop and Timer facility. Hypervisor then
+takes this opportunity to analyze and recover from some of these errors.
+Hypervisor takes assistance from OPAL layer to handle and recover from HMI.
+After handling HMI, OPAL layer sends the summary of error report and status
+of recovery action using HMI event. See ref:<cite>opal-messages</cite> for HMI
+event structure under <a class="reference internal" href="opal-messages.html#opal-msg-hmi-evt"><span class="std std-ref">OPAL_MSG_HMI_EVT</span></a> section.</p>
+<p>HMI is thread specific. The reason for HMI is available in a per thread
+Hypervisor Maintenance Exception Register (HMER). A Hypervisor Maintenance
+Exception Enable Register (HMEER) is per core. Bits from the HMER need to
+be enabled by the corresponding bits in the HMEER in order to cause an HMI.</p>
+<p>Several interrupt reasons are routed in parallel to each of the thread
+specific copies. Each thread can only clear bits in its own HMER. OPAL
+handler from each thread clears the respective bit from HMER register
+after handling the error.</p>
+</div>
+<div class="section" id="list-of-errors-that-causes-hmi">
+<h1>List of errors that causes HMI<a class="headerlink" href="#list-of-errors-that-causes-hmi" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><ul>
+<li><p>CPU Errors</p>
+<ul class="simple">
+<li><p>Processor Core checkstop</p></li>
+<li><p>Processor retry recovery</p></li>
+<li><p>NX/NPU/CAPP checkstop.</p></li>
+</ul>
+</li>
+<li><p>Timer facility Errors</p>
+<ul class="simple">
+<li><p>ChipTOD Errors</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>ChipTOD sync check and parity errors</p></li>
+<li><p>ChipTOD configuration register parity errors</p></li>
+<li><p>ChiTOD topology failover</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Timebase (TB) errors</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>TB parity/residue error</p></li>
+<li><p>TFMR parity and firmware control error</p></li>
+<li><p>DEC/HDEC/PURR/SPURR parity errors</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="hmi-handling">
+<h1>HMI handling<a class="headerlink" href="#hmi-handling" title="Permalink to this headline">¶</a></h1>
+<p>A core/NX/NPU checkstops are reported as malfunction alert (HMER bit 0).
+OPAL handler scans through Fault Isolation Register (FIR) for each
+core/nx/npu to detect the exact reason for checkstop and reports it back
+to the host alongwith the disposition.</p>
+<p>A processor recovery is reported through HMER bits 2, 3 and 11. These are
+just an informational messages and no extra recovery is required.</p>
+<p>Timer facility errors are reported through HMER bit 4. These are all
+recoverable errors. The exact reason for the errors are stored in
+Timer Facility Management Register (TFMR). Some of the Timer facility
+errors affects TB and some of them affects TOD. TOD is a per chip
+Time-Of-Day logic that holds the actual time value of the chip and
+communicates with every TOD in the system to achieve synchronized
+timer value within a system. TB is per core register (64-bit) derives its
+value from ChipTOD at startup and then it gets periodically incremented
+by STEP signal provided by the TOD. In a multi-socket system TODs are
+always configured as master/backup TOD under primary/secondary
+topology configuration respectively.</p>
+<p>TB error generates HMI on all threads of the affected core. TB errors
+except DEC/HDEC/PURR/SPURR parity errors, causes TB to stop running
+making it invalid. As part of TB recovery, OPAL hmi handler synchronizes
+with all threads, clears the TB errors and then re-sync the TB with TOD
+value putting it back in running state.</p>
+<p>TOD errors generates HMI on every core/thread of affected chip. The reason
+for TOD errors are stored in TOD ERROR register (0x40030). As part of the
+recovery OPAL hmi handler clears the TOD error and then requests new TOD
+value from another running chipTOD in the system. Sometimes, if a primary
+chipTOD is in error, it may need a TOD topology switch to recover from
+error. A TOD topology switch basically makes a backup as new active master.</p>
+</div>
+<div class="section" id="opal-handle-hmi">
+<span id="id1"></span><h1>OPAL_HANDLE_HMI<a class="headerlink" href="#opal-handle-hmi" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_HANDLE_HMI      98</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_handle_hmi</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Superseded by <a class="reference internal" href="#opal-handle-hmi2"><span class="std std-ref">OPAL_HANDLE_HMI2</span></a>, meaning that <a class="reference internal" href="#opal-handle-hmi"><span class="std std-ref">OPAL_HANDLE_HMI</span></a>
+should only be called if <a class="reference internal" href="#opal-handle-hmi2"><span class="std std-ref">OPAL_HANDLE_HMI2</span></a> is not available.</p>
+<p>Since <a class="reference internal" href="#opal-handle-hmi2"><span class="std std-ref">OPAL_HANDLE_HMI2</span></a> has been available since the start of POWER9
+systems being supported, if you only target POWER9 and above, you can
+assume the presence of <a class="reference internal" href="#opal-handle-hmi2"><span class="std std-ref">OPAL_HANDLE_HMI2</span></a>.</p>
+</div>
+<div class="section" id="opal-handle-hmi2">
+<span id="id2"></span><h1>OPAL_HANDLE_HMI2<a class="headerlink" href="#opal-handle-hmi2" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_HANDLE_HMI2     166</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_handle_hmi2</span><span class="p">(</span><span class="n">__be64</span> <span class="o">*</span><span class="n">out_flags</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>When OS host gets an Hypervisor Maintenance Interrupt (HMI), it must call
+<a class="reference internal" href="#opal-handle-hmi"><span class="std std-ref">OPAL_HANDLE_HMI</span></a> or <a class="reference internal" href="#opal-handle-hmi2"><span class="std std-ref">OPAL_HANDLE_HMI2</span></a>. The <a class="reference internal" href="#opal-handle-hmi"><span class="std std-ref">OPAL_HANDLE_HMI</span></a>
+is an old interface. <a class="reference internal" href="#opal-handle-hmi2"><span class="std std-ref">OPAL_HANDLE_HMI2</span></a> is newly introduced opal call
+that returns direct info to the OS. It returns a 64-bit flag mask currently
+set to provide info about which timer facilities were lost, and whether an
+event was generated. This information will help OS to take respective
+actions.</p>
+<p>In case where opal hmi handler is unable to recover from TOD or TB errors,
+it would flag <code class="docutils literal notranslate"><span class="pre">OPAL_HMI_FLAGS_TOD_TB_FAIL</span></code> to indicate OS that TB is
+dead. This information then can be used by OS to make sure that the
+functions relying on TB value (e.g. udelay()) are aware of TB not ticking.
+This will avoid OS getting stuck or hang during its way to panic path.</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">__be64</span> <span class="o">*</span><span class="n">out_flags</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Returns the 64-bit flag mask that provides info about which timer facilities
+were lost, and whether an event was generated.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* OPAL_HANDLE_HMI2 out_flags */</span>
+<span class="k">enum</span> <span class="p">{</span>
+     <span class="n">OPAL_HMI_FLAGS_TB_RESYNC</span>        <span class="o">=</span> <span class="p">(</span><span class="mi">1ull</span> <span class="o">&lt;&lt;</span> <span class="mi">0</span><span class="p">),</span> <span class="cm">/* Timebase has been resynced */</span>
+     <span class="n">OPAL_HMI_FLAGS_DEC_LOST</span>         <span class="o">=</span> <span class="p">(</span><span class="mi">1ull</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">),</span> <span class="cm">/* DEC lost, needs to be reprogrammed */</span>
+     <span class="n">OPAL_HMI_FLAGS_HDEC_LOST</span>        <span class="o">=</span> <span class="p">(</span><span class="mi">1ull</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">),</span> <span class="cm">/* HDEC lost, needs to be reprogrammed */</span>
+     <span class="n">OPAL_HMI_FLAGS_TOD_TB_FAIL</span>      <span class="o">=</span> <span class="p">(</span><span class="mi">1ull</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">),</span> <span class="cm">/* TOD/TB recovery failed. */</span>
+     <span class="n">OPAL_HMI_FLAGS_NEW_EVENT</span>        <span class="o">=</span> <span class="p">(</span><span class="mi">1ull</span> <span class="o">&lt;&lt;</span> <span class="mi">63</span><span class="p">),</span> <span class="cm">/* An event has been created */</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<dl class="simple" id="opal-hmi-flags-tod-tb-fail">
+<dt>OPAL_HMI_FLAGS_TOD_TB_FAIL</dt><dd><p>The Time of Day (TOD) / Timebase facility has failed. This is probably fatal
+for the OS, and requires the OS to be very careful to not call any function
+that may rely on it, usually as it heads down a <cite>panic()</cite> code path.
+This code path should be <a class="reference internal" href="opal-cec-reboot-6-116.html#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a> with the OPAL_REBOOT_PLATFORM_ERROR
+option. Details of the failure are likely delivered as part of HMI events if
+<cite>OPAL_HMI_FLAGS_NEW_EVENT</cite> is set.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Hypervisor Maintenance Interrupt (HMI)</a></li>
+<li><a class="reference internal" href="#list-of-errors-that-causes-hmi">List of errors that causes HMI</a></li>
+<li><a class="reference internal" href="#hmi-handling">HMI handling</a></li>
+<li><a class="reference internal" href="#opal-handle-hmi">OPAL_HANDLE_HMI</a></li>
+<li><a class="reference internal" href="#opal-handle-hmi2">OPAL_HANDLE_HMI2</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-get-xive-20.html"
+                        title="previous chapter">OPAL_GET_XIVE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-handle-interrupt.html"
+                        title="next chapter">OPAL_HANDLE_INTERRUPT</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-handle-hmi-98-166.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-handle-interrupt.html" title="OPAL_HANDLE_INTERRUPT"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-get-xive-20.html" title="OPAL_GET_XIVE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Hypervisor Maintenance Interrupt (HMI)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

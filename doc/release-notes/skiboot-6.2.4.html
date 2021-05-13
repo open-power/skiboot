@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.2.4 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.3" href="skiboot-6.3.html" />
+    <link rel="prev" title="skiboot-6.2.3" href="skiboot-6.2.3.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.html" title="skiboot-6.3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.2.3.html" title="skiboot-6.2.3"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.4</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-2-4">
+<span id="id1"></span><h1>skiboot-6.2.4<a class="headerlink" href="#skiboot-6-2-4" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.2.4 was released on Thursday May 9th, 2019. It replaces
+<a class="reference internal" href="skiboot-6.2.3.html#skiboot-6-2-3"><span class="std std-ref">skiboot-6.2.3</span></a> as the current stable release in the 6.2.x series.</p>
+<p>It is recommended that 6.2.4 be used instead of any previous 6.2.x version
+due to the bug fixes it contains.</p>
+<p>Bug fixes included in this release are:</p>
+<ul>
+<li><p>core/flash: Retry requests as necessary in flash_load_resource()</p>
+<p>We would like to successfully boot if we have a dependency on the BMC
+for flash even if the BMC is not current ready to service flash
+requests. On the assumption that it will become ready, retry for several
+minutes to cover a BMC reboot cycle and <em>eventually</em> rather than
+<em>immediately</em> crash out with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[  269.549748] reboot: Restarting system
+[  390.297462587,5] OPAL: Reboot request...
+[  390.297737995,5] RESET: Initiating fast reboot 1...
+[  391.074707590,5] Clearing unused memory:
+[  391.075198880,5] PCI: Clearing all devices...
+[  391.075201618,7] Clearing region 201ffe000000-201fff800000
+[  391.086235699,5] PCI: Resetting PHBs and training links...
+[  391.254089525,3] FFS: Error 17 reading flash header
+[  391.254159668,3] FLASH: Can&#39;t open ffs handle: 17
+[  392.307245135,5] PCI: Probing slots...
+[  392.363723191,5] PCI Summary:
+...
+[  393.423255262,5] OCC: All Chip Rdy after 0 ms
+[  393.453092828,5] INIT: Starting kernel at 0x20000000, fdt at
+0x30800a88 390645 bytes
+[  393.453202605,0] FATAL: Kernel is zeros, can&#39;t execute!
+[  393.453247064,0] Assert fail: core/init.c:593:0
+[  393.453289682,0] Aborting!
+CPU 0040 Backtrace:
+ S: 0000000031e03ca0 R: 000000003001af60   ._abort+0x4c
+ S: 0000000031e03d20 R: 000000003001afdc   .assert_fail+0x34
+ S: 0000000031e03da0 R: 00000000300146d8   .load_and_boot_kernel+0xb30
+ S: 0000000031e03e70 R: 0000000030026cf0   .fast_reboot_entry+0x39c
+ S: 0000000031e03f00 R: 0000000030002a4c   fast_reset_entry+0x2c
+ --- OPAL boot ---
+</pre></div>
+</div>
+<p>The OPAL flash API hooks directly into the blocklevel layer, so there’s
+no delay for e.g. the host kernel, just for asynchronously loaded
+resources during boot.</p>
+</li>
+<li><p>pci/iov: Remove skiboot VF tracking</p>
+<p>This feature was added a few years ago in response to a request to make
+the MaxPayloadSize (MPS) field of a Virtual Function match the MPS of the
+Physical Function that hosts it.</p>
+<p>The SR-IOV specification states the the MPS field of the VF is “ResvP”.
+This indicates the VF will use whatever MPS is configured on the PF and
+that the field should be treated as a reserved field in the config space
+of the VF. In other words, a SR-IOV spec compliant VF should always return
+zero in the MPS field.  Adding hacks in OPAL to make it non-zero is…
+misguided at best.</p>
+<p>Additionally, there is a bug in the way pci_device structures are handled
+by VFs that results in a crash on fast-reboot that occurs if VFs are
+enabled and then disabled prior to rebooting. This patch fixes the bug by
+removing the code entirely. This patch has no impact on SR-IOV support on
+the host operating system.</p>
+</li>
+<li><p>astbmc: Handle failure to initialise raw flash</p>
+<p>Initialising raw flash lead to a dead assignment to rc. Check the return
+code and take the failure path as necessary. Both before and after the
+fix we see output along the lines of the following when flash_init()
+fails:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">53.283182881</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mf">0800..0</span><span class="n">ff7</span> <span class="n">ops</span> <span class="o">@</span><span class="mh">0x300d4b98</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
+<span class="p">[</span>   <span class="mf">53.283184335</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mi">0</span><span class="n">ff8</span><span class="o">.</span><span class="mf">.0</span><span class="n">fff</span> <span class="n">ops</span> <span class="o">@</span><span class="mh">0x300d4bc8</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
+<span class="p">[</span>   <span class="mf">53.283185513</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000: Initializing PHB...</span>
+<span class="p">[</span>   <span class="mf">53.288260827</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Can</span><span class="s1">&#39;t load resource id:0. No system flash found</span>
+<span class="p">[</span>   <span class="mf">53.288354442</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Can</span><span class="s1">&#39;t load resource id:1. No system flash found</span>
+<span class="p">[</span>   <span class="mf">53.342933439</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">CAPP</span><span class="p">:</span> <span class="n">Error</span> <span class="n">loading</span> <span class="n">ucode</span> <span class="n">lid</span><span class="o">.</span> <span class="n">index</span><span class="o">=</span><span class="mi">200</span><span class="n">ea</span>
+<span class="p">[</span>   <span class="mf">53.462749486</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="n">NVRAM</span><span class="p">:</span> <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span>
+<span class="p">[</span>   <span class="mf">53.462819095</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="n">NVRAM</span><span class="p">:</span> <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span>
+<span class="p">[</span>   <span class="mf">53.462894236</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="n">NVRAM</span><span class="p">:</span> <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span>
+<span class="p">[</span>   <span class="mf">53.462967071</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="n">NVRAM</span><span class="p">:</span> <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span>
+<span class="p">[</span>   <span class="mf">53.463033077</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="n">NVRAM</span><span class="p">:</span> <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span>
+<span class="p">[</span>   <span class="mf">53.463144847</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="n">NVRAM</span><span class="p">:</span> <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span>
+</pre></div>
+</div>
+<p>Eventually followed by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[   57.216942479,5] INIT: platform wait for kernel load failed
+[   57.217051132,5] INIT: Assuming kernel at 0x20000000
+[   57.217127508,3] INIT: ELF header not found. Assuming raw binary.
+[   57.217249886,2] NVRAM: Failed to load
+[   57.221294487,0] FATAL: Kernel is zeros, can&#39;t execute!
+[   57.221397429,0] Assert fail: core/init.c:615:0
+[   57.221471414,0] Aborting!
+CPU 0028 Backtrace:
+ S: 0000000031d43c60 R: 000000003001b274   ._abort+0x4c
+ S: 0000000031d43ce0 R: 000000003001b2f0   .assert_fail+0x34
+ S: 0000000031d43d60 R: 0000000030014814   .load_and_boot_kernel+0xae4
+ S: 0000000031d43e30 R: 0000000030015164   .main_cpu_entry+0x680
+ S: 0000000031d43f00 R: 0000000030002718   boot_entry+0x1c0
+ --- OPAL boot ---
+</pre></div>
+</div>
+<p>Analysis of the execution paths suggests we’ll always “safely” end this
+way due the setup sequence for the blocklevel callbacks in flash_init()
+and error handling in blocklevel_get_info(), and there’s no current risk
+of executing from unexpected memory locations. As such the issue is
+reduced to down to a fix for poor error hygene in the original change
+and a resolution for a Coverity warning (famous last words etc).</p>
+</li>
+<li><p>hw/xscom: Enable sw xstop by default on p9</p>
+<p>This was disabled at some point during bringup to make life easier for
+the lab folks trying to debug NVLink issues. This hack really should
+have never made it out into the wild though, so we now have the
+following situation occuring in the field:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>A bad happens</p></li>
+<li><p>The host kernel recieves an unrecoverable HMI and calls into OPAL to
+request a platform reboot.</p></li>
+<li><p>OPAL rejects the reboot attempt and returns to the kernel with
+OPAL_PARAMETER.</p></li>
+<li><p>Kernel panics and attempts to kexec into a kdump kernel.</p></li>
+</ol>
+</div></blockquote>
+<p>A side effect of the HMI seems to be CPUs becoming stuck which results
+in the initialisation of the kdump kernel taking a extremely long time
+(6+ hours). It’s also been observed that after performing a dump the
+kdump kernel then crashes itself because OPAL has ended up in a bad
+state as a side effect of the HMI.</p>
+<p>All up, it’s not very good so re-enable the software checkstop by
+default. If people still want to turn it off they can using the nvram
+override.</p>
+</li>
+<li><p>opal/hmi: Initialize the hmi event with old value of TFMR.</p>
+<p>Do this before we fix TFAC errors. Otherwise the event at host console
+shows no thread error reported in TFMR register.</p>
+<p>Without this patch the console event show TFMR with no thread error:
+(DEC parity error TFMR[59] injection)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">53.737572</span><span class="p">]</span> <span class="n">Severe</span> <span class="n">Hypervisor</span> <span class="n">Maintenance</span> <span class="n">interrupt</span> <span class="p">[</span><span class="n">Recovered</span><span class="p">]</span>
+<span class="p">[</span>   <span class="mf">53.737596</span><span class="p">]</span>  <span class="n">Error</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Timer</span> <span class="n">facility</span> <span class="n">experienced</span> <span class="n">an</span> <span class="n">error</span>
+<span class="p">[</span>   <span class="mf">53.737611</span><span class="p">]</span>  <span class="n">HMER</span><span class="p">:</span> <span class="mi">0840000000000000</span>
+<span class="p">[</span>   <span class="mf">53.737621</span><span class="p">]</span>  <span class="n">TFMR</span><span class="p">:</span> <span class="mf">3212000870e04000</span>
+</pre></div>
+</div>
+<p>After this patch it shows old TFMR value on host console:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mf">2302.267271</span><span class="p">]</span> <span class="n">Severe</span> <span class="n">Hypervisor</span> <span class="n">Maintenance</span> <span class="n">interrupt</span> <span class="p">[</span><span class="n">Recovered</span><span class="p">]</span>
+<span class="p">[</span> <span class="mf">2302.267305</span><span class="p">]</span>  <span class="n">Error</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Timer</span> <span class="n">facility</span> <span class="n">experienced</span> <span class="n">an</span> <span class="n">error</span>
+<span class="p">[</span> <span class="mf">2302.267320</span><span class="p">]</span>  <span class="n">HMER</span><span class="p">:</span> <span class="mi">0840000000000000</span>
+<span class="p">[</span> <span class="mf">2302.267330</span><span class="p">]</span>  <span class="n">TFMR</span><span class="p">:</span> <span class="mf">3212000870e14010</span>
+</pre></div>
+</div>
+</li>
+<li><p>libflash/ipmi-hiomap: Fix blocks count issue</p>
+<p>We convert data size to block count and pass block count to BMC.
+If data size is not block aligned then we endup sending block count
+less than actual data. BMC will write partial data to flash memory.</p>
+<p>Sample log</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">594.388458416</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Marked</span> <span class="n">flash</span> <span class="n">dirty</span> <span class="n">at</span> <span class="mh">0x42010</span> <span class="k">for</span> <span class="mi">8</span>
+<span class="p">[</span>  <span class="mf">594.398756487</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Flushed</span> <span class="n">writes</span>
+<span class="p">[</span>  <span class="mf">594.409596439</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Marked</span> <span class="n">flash</span> <span class="n">dirty</span> <span class="n">at</span> <span class="mh">0x42018</span> <span class="k">for</span> <span class="mi">3970</span>
+<span class="p">[</span>  <span class="mf">594.419897507</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Flushed</span> <span class="n">writes</span>
+</pre></div>
+</div>
+<p>In this case HIOMAP sent data with block count=0 and hence BMC didn’t
+flush data to flash.</p>
+<p>Lets fix this issue by adjusting block count before sending it to BMC.</p>
+</li>
+<li><p>Fix hang in pnv_platform_error_reboot path due to TOD failure.</p>
+<p>On TOD failure, with TB stuck, when linux heads down to
+pnv_platform_error_reboot() path due to unrecoverable hmi event, the panic
+cpu gets stuck in OPAL inside ipmi_queue_msg_sync(). At this time, rest
+all other cpus are in smp_handle_nmi_ipi() waiting for panic cpu to proceed.
+But with panic cpu stuck inside OPAL, linux never recovers/reboot.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p0</span> <span class="n">c1</span> <span class="n">t0</span>
+<span class="n">NIA</span> <span class="p">:</span> <span class="mh">0x000000003001dd3c</span> <span class="o">&lt;.</span><span class="n">time_wait</span><span class="o">+</span><span class="mh">0x64</span><span class="o">&gt;</span>
+<span class="n">CFAR</span> <span class="p">:</span> <span class="mh">0x000000003001dce4</span> <span class="o">&lt;.</span><span class="n">time_wait</span><span class="o">+</span><span class="mh">0xc</span><span class="o">&gt;</span>
+<span class="n">MSR</span> <span class="p">:</span> <span class="mh">0x9000000002803002</span>
+<span class="n">LR</span> <span class="p">:</span> <span class="mh">0x000000003002ecf8</span> <span class="o">&lt;.</span><span class="n">ipmi_queue_msg_sync</span><span class="o">+</span><span class="mh">0xec</span><span class="o">&gt;</span>
+
+<span class="n">STACK</span><span class="p">:</span> <span class="n">SP</span> <span class="n">NIA</span>
+<span class="mh">0x0000000031c236e0</span> <span class="mh">0x0000000031c23760</span> <span class="p">(</span><span class="n">big</span><span class="o">-</span><span class="n">endian</span><span class="p">)</span>
+<span class="mh">0x0000000031c23760</span> <span class="mh">0x000000003002ecf8</span> <span class="o">&lt;.</span><span class="n">ipmi_queue_msg_sync</span><span class="o">+</span><span class="mh">0xec</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c237f0</span> <span class="mh">0x00000000300aa5f8</span> <span class="o">&lt;.</span><span class="n">hiomap_queue_msg_sync</span><span class="o">+</span><span class="mh">0x7c</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c23880</span> <span class="mh">0x00000000300aaadc</span> <span class="o">&lt;.</span><span class="n">hiomap_window_move</span><span class="o">+</span><span class="mh">0x150</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c23950</span> <span class="mh">0x00000000300ab1d8</span> <span class="o">&lt;.</span><span class="n">ipmi_hiomap_write</span><span class="o">+</span><span class="mh">0xcc</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c23a90</span> <span class="mh">0x00000000300a7b18</span> <span class="o">&lt;.</span><span class="n">blocklevel_raw_write</span><span class="o">+</span><span class="mh">0xbc</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c23b30</span> <span class="mh">0x00000000300a7c34</span> <span class="o">&lt;.</span><span class="n">blocklevel_write</span><span class="o">+</span><span class="mh">0xfc</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c23bf0</span> <span class="mh">0x0000000030030be0</span> <span class="o">&lt;.</span><span class="n">flash_nvram_write</span><span class="o">+</span><span class="mh">0xd4</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c23c90</span> <span class="mh">0x000000003002c128</span> <span class="o">&lt;.</span><span class="n">opal_write_nvram</span><span class="o">+</span><span class="mh">0xd0</span><span class="o">&gt;</span>
+<span class="mh">0x0000000031c23d20</span> <span class="mh">0x00000000300051e4</span> <span class="o">&lt;</span><span class="n">opal_entry</span><span class="o">+</span><span class="mh">0x134</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7870</span> <span class="mh">0xc0000000000a9060</span> <span class="o">&lt;</span><span class="n">opal_nvram_write</span><span class="o">+</span><span class="mh">0x80</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e78c0</span> <span class="mh">0xc000000000030b84</span> <span class="o">&lt;</span><span class="n">nvram_write_os_partition</span><span class="o">+</span><span class="mh">0x94</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7960</span> <span class="mh">0xc0000000000310b0</span> <span class="o">&lt;</span><span class="n">nvram_pstore_write</span><span class="o">+</span><span class="mh">0xb0</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7990</span> <span class="mh">0xc0000000004792d4</span> <span class="o">&lt;</span><span class="n">pstore_dump</span><span class="o">+</span><span class="mh">0x1d4</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7ad0</span> <span class="mh">0xc00000000018a570</span> <span class="o">&lt;</span><span class="n">kmsg_dump</span><span class="o">+</span><span class="mh">0x140</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7b40</span> <span class="mh">0xc000000000028e5c</span> <span class="o">&lt;</span><span class="n">panic_flush_kmsg_end</span><span class="o">+</span><span class="mh">0x2c</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7b60</span> <span class="mh">0xc0000000000a7168</span> <span class="o">&lt;</span><span class="n">pnv_platform_error_reboot</span><span class="o">+</span><span class="mh">0x68</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7bd0</span> <span class="mh">0xc0000000000ac9b8</span> <span class="o">&lt;</span><span class="n">hmi_event_handler</span><span class="o">+</span><span class="mh">0x1d8</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7c80</span> <span class="mh">0xc00000000012d6c8</span> <span class="o">&lt;</span><span class="n">process_one_work</span><span class="o">+</span><span class="mh">0x1b8</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7d20</span> <span class="mh">0xc00000000012da28</span> <span class="o">&lt;</span><span class="n">worker_thread</span><span class="o">+</span><span class="mh">0x88</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7db0</span> <span class="mh">0xc0000000001366f4</span> <span class="o">&lt;</span><span class="n">kthread</span><span class="o">+</span><span class="mh">0x164</span><span class="o">&gt;</span>
+<span class="mh">0xc000001fea6e7e20</span> <span class="mh">0xc00000000000b65c</span> <span class="o">&lt;</span><span class="n">ret_from_kernel_thread</span><span class="o">+</span><span class="mh">0x5c</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>This is because, there is a while loop towards the end of
+ipmi_queue_msg_sync() which keeps looping until “sync_msg” does not match
+with “msg”. It loops over time_wait_ms() until exit condition is met. In
+normal scenario time_wait_ms() calls run pollers so that ipmi backend gets
+a chance to check ipmi response and set sync_msg to NULL.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">while</span> <span class="p">(</span><span class="n">sync_msg</span> <span class="o">==</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="n">time_wait_ms</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>But in the event when TB is in failed state time_wait_ms()-&gt;time_wait_poll()
+returns immediately without calling pollers and hence we end up looping
+forever. This patch fixes this hang by calling opal_run_pollers() in TB
+failed state as well.</p>
+</li>
+<li><p>core/ipmi: Print correct netfn value</p></li>
+<li><p>libffs: Fix string truncation gcc warning.</p>
+<p>Use memcpy as other libffs functions do.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.2.3.html"
+                        title="previous chapter">skiboot-6.2.3</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.3.html"
+                        title="next chapter">skiboot-6.3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.2.4.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3.html" title="skiboot-6.3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.2.3.html" title="skiboot-6.2.3"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.4</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

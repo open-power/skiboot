@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.9.9 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0" href="skiboot-6.0.html" />
+    <link rel="prev" title="skiboot-5.9.8" href="skiboot-5.9.8.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.html" title="skiboot-6.0"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9.8.html" title="skiboot-5.9.8"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.9</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-9-9">
+<span id="id1"></span><h1>skiboot-5.9.9<a class="headerlink" href="#skiboot-5-9-9" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 5.9.9 was released on Monday May 28th, 2018. It replaces
+<a class="reference internal" href="skiboot-5.9.8.html#skiboot-5-9-8"><span class="std std-ref">skiboot-5.9.8</span></a> as the current stable release in the 5.9.x series.</p>
+<p>Over <a class="reference internal" href="skiboot-5.9.8.html#skiboot-5-9-8"><span class="std std-ref">skiboot-5.9.8</span></a>, we have two bug fixes and a build fix, they are:</p>
+<ul>
+<li><p>OPAL_PCI_SET_POWER_STATE: fix locking in error paths</p>
+<p>Otherwise we could exit OPAL holding locks, potentially leading
+to all sorts of problems later on.</p>
+</li>
+<li><p>lpc: Clear pending IRQs at boot</p>
+<p>When we come in from hostboot the LPC master has the bus reset indicator
+set. This error isn’t handled until the host kernel unmasks interrupts,
+at which point we get the following suprious error:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[   20.053560375,3] LPC: Got LPC reset on chip 0x0 !
+[   20.053564560,3] LPC[000]: Unknown LPC error Error address reg: 0x00000000
+</pre></div>
+</div>
+<p>Fix this by clearing the various error bits in the LPC status register
+before we initalise the skiboot LPC bus driver.</p>
+</li>
+<li><p>stb: Build fixes in constructing secure and trusted boot header</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.9.8.html"
+                        title="previous chapter">skiboot-5.9.8</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0.html"
+                        title="next chapter">skiboot-6.0</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.9.9.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.html" title="skiboot-6.0"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9.8.html" title="skiboot-5.9.8"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.9</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

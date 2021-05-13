@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.1.19 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.1.2" href="skiboot-5.1.2.html" />
+    <link rel="prev" title="skiboot-5.1.18" href="skiboot-5.1.18.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.2.html" title="skiboot-5.1.2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.18.html" title="skiboot-5.1.18"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.19</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-1-19">
+<span id="id1"></span><h1>skiboot-5.1.19<a class="headerlink" href="#skiboot-5-1-19" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.1.19 was released on Monday 16th January 2017.</p>
+<p>skiboot-5.1.19 is the 20th stable release of 5.1, it follows skiboot-5.1.18
+(which was released 26th August 2016).</p>
+<p>This release contains a few minor bug fixes.</p>
+<p>Changes are:</p>
+<p>Generic:</p>
+<ul class="simple">
+<li><p>Makefile: Disable stack protector due to gcc problems</p></li>
+<li><p>stack: Don’t recurse into __stack_chk_fail</p></li>
+<li><p>Makefile: Use -ffixed-r13
+We did not find evidence of this ever being a problem, but this fix
+is good and preventative.</p></li>
+<li><p>Limit number of “Poller recursion detected” errors to display
+In some error conditions, we could spiral out of control on this
+and spend all of our time printing the exact same backtrace.
+Limit it to 16 times, because 16 is a nice number.</p></li>
+</ul>
+<p>FSP based Systems:</p>
+<ul class="simple">
+<li><p>fsp: Don’t recurse pollers in ibm_fsp_terminate
+If we were to terminate in a poller, we’d call op_display() which
+called pollers which hit the recursive poller warning, which ended
+in not much fun at all.</p></li>
+</ul>
+<p>PCI:</p>
+<ul class="simple">
+<li><p>hw/phb3: set PHB retry state correctly when fresetting during a creset</p></li>
+<li><dl class="simple">
+<dt>phb3: Lock the PHB on set_xive callbacks</dt><dd><p>Those are called by the interrupts core and thus skip the locking
+implicit in the PCI opal calls.</p>
+</dd>
+</dl>
+</li>
+<li><p>hw/{phb3, p7ioc}: Return success for freset on empty PHB
+OPAL_CLOSED is returned when fundamental reset is issued on the
+PHB who doesn’t have subordinate devices (root port excluded).
+The kernel raises an error message, which is unnecessary. This
+returns OPAL_SUCCESS for this case to avoid the error message.</p></li>
+<li><p>hw/phb3: fix error handling in complete reset
+During a complete reset, when we get a timeout waiting for pending
+transaction in state PHB3_STATE_CRESET_WAIT_CQ, we mark the PHB as broken
+and return OPAL_PARAMETER.
+Change the return code to OPAL_HARDWARE which is way more sensible, and set
+the state to PHB3_STATE_FENCED so that the kernel can retry the complete
+reset.</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.1.18.html"
+                        title="previous chapter">skiboot-5.1.18</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.1.2.html"
+                        title="next chapter">skiboot-5.1.2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.1.19.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.2.html" title="skiboot-5.1.2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.18.html" title="skiboot-5.1.18"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.19</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

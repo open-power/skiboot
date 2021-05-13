@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Firmware &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ibm,opal/flash device tree entries" href="flash.html" />
+    <link rel="prev" title="Dump (MPIPL) Device Tree Binding" href="dump.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="flash.html" title="ibm,opal/flash device tree entries"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dump.html" title="Dump (MPIPL) Device Tree Binding"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" accesskey="U">ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">System Firmware</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-firmware">
+<h1>System Firmware<a class="headerlink" href="#system-firmware" title="Permalink to this headline">¶</a></h1>
+<p>The ‘firmware’ node under ‘ibm,opal’ lists system and OPAL firmware version.</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">firmware</span> <span class="p">{</span>
+      <span class="nf">symbol-map</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x300ac650</span> <span class="mh">0x0</span> <span class="mh">0x1b3f5</span><span class="p">&gt;;</span>
+      <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-firmware&quot;</span><span class="p">;</span>
+      <span class="nf">ml-version</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="err">d</span> <span class="mi">4</span><span class="err">c</span> <span class="mi">20</span> <span class="mi">46</span> <span class="mi">57</span> <span class="mi">37</span> <span class="mi">37</span> <span class="mi">30</span> <span class="mi">2</span><span class="err">e</span> <span class="mi">32</span> <span class="mi">30</span> <span class="mi">20</span> <span class="mi">46</span> <span class="mi">57</span> <span class="mi">37</span> <span class="mi">37</span> <span class="mi">30</span> <span class="mi">2</span><span class="err">e</span> <span class="mi">32</span> <span class="mi">30</span> <span class="mi">20</span> <span class="mi">46</span> <span class="mi">57</span> <span class="mi">37</span> <span class="mi">37</span> <span class="mi">30</span> <span class="mi">2</span><span class="err">e</span> <span class="mi">32</span> <span class="mi">30</span><span class="p">];</span>
+      <span class="nf">mi-version</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4d49205a</span> <span class="mh">0x4c373730</span> <span class="mh">0x5f303735</span> <span class="mh">0x205a4c37</span> <span class="mh">0x37305f30</span> <span class="mh">0x3735205a</span> <span class="mh">0x4c373730</span> <span class="mh">0x5f303735</span><span class="p">&gt;;</span>
+      <span class="nf">version</span> <span class="o">=</span> <span class="s">&quot;skiboot-5.0-rc2&quot;</span><span class="p">;</span>
+      <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8e</span><span class="p">&gt;;</span>
+      <span class="nf">linux,phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8e</span><span class="p">&gt;;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">compatible</span></code></dt><dd><p>property describes OPAL compatibility.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">symbol-map</span></code></dt><dd><p>property describes OPAL symbol start address and size.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">version</span></code></dt><dd><p>property describes OPAL version. It replaced a property named ‘git-id’ early
+in the POWER8 lifecycle, so may not always be present. It will be absent on
+IBM FSP based systems running firmware prior to FW840. The ‘version’ property
+is present on all GA POWER8 BMC systems.</p>
+<p>On POWER9 and above, it is always present.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mi-version</span></code></dt><dd><p>property describes Microcode Image. Only on IBM FSP systems.
+Will (likely) not be present on POWER9 systems.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ml-version</span></code></dt><dd><p>property describes Microcode Level. Only on IBM FSP systems.
+Will (likely) not be present on POWER9 systems.</p>
+</dd>
+</dl>
+<div class="section" id="mi-ml-format">
+<h2>MI/ML format<a class="headerlink" href="#mi-ml-format" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">ML</span><span class="o">/</span><span class="n">MI</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">T</span> <span class="n">side</span> <span class="n">version</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">P</span> <span class="n">side</span> <span class="n">version</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">boot</span> <span class="n">side</span> <span class="n">version</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">System Firmware</a><ul>
+<li><a class="reference internal" href="#mi-ml-format">MI/ML format</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dump.html"
+                        title="previous chapter">Dump (MPIPL) Device Tree Binding</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="flash.html"
+                        title="next chapter">ibm,opal/flash device tree entries</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/device-tree/ibm,opal/firmware.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="flash.html" title="ibm,opal/flash device tree entries"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dump.html" title="Dump (MPIPL) Device Tree Binding"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">System Firmware</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

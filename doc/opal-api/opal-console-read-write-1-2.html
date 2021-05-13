@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL Console calls &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL Dumps" href="opal-dump-81-82-83-84-94-101-102.html" />
+    <link rel="prev" title="OPAL_CONFIG_CPU_IDLE_STATE" href="opal-config-cpu-idle-state-99.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-dump-81-82-83-84-94-101-102.html" title="OPAL Dumps"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-config-cpu-idle-state-99.html" title="OPAL_CONFIG_CPU_IDLE_STATE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL Console calls</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-console-calls">
+<h1>OPAL Console calls<a class="headerlink" href="#opal-console-calls" title="Permalink to this headline">¶</a></h1>
+<p>There are four OPAL calls relating to the OPAL console:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 41%" />
+<col style="width: 13%" />
+<col style="width: 22%" />
+<col style="width: 9%" />
+<col style="width: 15%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Name</p></td>
+<td><p>API Token ID</p></td>
+<td><p>Introduced</p></td>
+<td><p>Required
+as of</p></td>
+<td><p>Notes</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-console-write"><span class="std std-ref">OPAL_CONSOLE_WRITE</span></a></p></td>
+<td><p>1</p></td>
+<td><p>v1.0 (Initial Release)</p></td>
+<td><p>POWER8</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-console-read"><span class="std std-ref">OPAL_CONSOLE_READ</span></a></p></td>
+<td><p>2</p></td>
+<td><p>v1.0 (Initial Release)</p></td>
+<td><p>POWER8</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-console-write-buffer-space"><span class="std std-ref">OPAL_CONSOLE_WRITE_BUFFER_SPACE</span></a></p></td>
+<td><p>25</p></td>
+<td><p>v1.0 (Initial Release)</p></td>
+<td><p>POWER8</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-console-flush"><span class="std std-ref">OPAL_CONSOLE_FLUSH</span></a></p></td>
+<td><p>117</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.13.html#skiboot-5-1-13"><span class="std std-ref">skiboot-5.1.13</span></a></p></td>
+<td><p>POWER9</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The OPAL console calls can support multiple consoles. Each console MUST
+be represented in the device tree.</p>
+<p>A conforming implementation SHOULD have at least one console. It is valid
+for it to simply be an in-memory buffer and only support writing.</p>
+<p>[TODO: details on device tree specs for console]</p>
+<div class="section" id="opal-console-write">
+<span id="id1"></span><h2>OPAL_CONSOLE_WRITE<a class="headerlink" href="#opal-console-write" title="Permalink to this headline">¶</a></h2>
+<p>Parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int64_t</span> <span class="n">term_number</span>
+<span class="n">int64_t</span> <span class="o">*</span><span class="n">length</span><span class="p">,</span>
+<span class="n">const</span> <span class="n">uint8_t</span> <span class="o">*</span><span class="n">buffer</span>
+</pre></div>
+</div>
+<p>Returns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a> on invalid term_number</p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-closed"><span class="std std-ref">OPAL_CLOSED</span></a> if console device closed</p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a> if unable to write any of buffer</p></li>
+</ul>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">term_number</span></code> is the terminal number as represented in the device tree.
+<code class="docutils literal notranslate"><span class="pre">length</span></code> is a pointer to the length of buffer.</p>
+<p>A conforming implementation SHOULD try to NOT do partial writes, although
+partial writes and not writing anything are valid.</p>
+</div>
+<div class="section" id="opal-console-write-buffer-space">
+<span id="id2"></span><h2>OPAL_CONSOLE_WRITE_BUFFER_SPACE<a class="headerlink" href="#opal-console-write-buffer-space" title="Permalink to this headline">¶</a></h2>
+<p>Parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int64_t</span> <span class="n">term_number</span>
+<span class="n">int64_t</span> <span class="o">*</span><span class="n">length</span>
+</pre></div>
+</div>
+<p>Returns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a> on invalid term_number</p></li>
+</ul>
+</div></blockquote>
+<p>Returns the available buffer length for OPAL_CONSOLE_WRITE in <code class="docutils literal notranslate"><span class="pre">length</span></code>.
+This call can be used to help work out if there is sufficient buffer
+space to write your full message to the console with OPAL_CONSOLE_WRITE.</p>
+</div>
+<div class="section" id="opal-console-read">
+<span id="id3"></span><h2>OPAL_CONSOLE_READ<a class="headerlink" href="#opal-console-read" title="Permalink to this headline">¶</a></h2>
+<p>Parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int64_t</span> <span class="n">term_number</span>
+<span class="n">int64_t</span> <span class="o">*</span><span class="n">length</span>
+<span class="n">uint8_t</span> <span class="o">*</span><span class="n">buffer</span>
+</pre></div>
+</div>
+<p>Returns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a> on invalid term_number</p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-closed"><span class="std std-ref">OPAL_CLOSED</span></a></p></li>
+</ul>
+</div></blockquote>
+<p>Use <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> for how to determine</p>
+</div>
+<div class="section" id="opal-console-flush">
+<span id="id4"></span><h2>OPAL_CONSOLE_FLUSH<a class="headerlink" href="#opal-console-flush" title="Permalink to this headline">¶</a></h2>
+<p>Parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int64_t</span> <span class="n">term_number</span>
+</pre></div>
+</div>
+<p>Returns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a> if the console does not implement a flush call</p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a> on invalid term_number</p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-partial"><span class="std std-ref">OPAL_PARTIAL</span></a> if more to flush, call again</p></li>
+<li><p><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a> if nothing was flushed this call</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL Console calls</a><ul>
+<li><a class="reference internal" href="#opal-console-write">OPAL_CONSOLE_WRITE</a></li>
+<li><a class="reference internal" href="#opal-console-write-buffer-space">OPAL_CONSOLE_WRITE_BUFFER_SPACE</a></li>
+<li><a class="reference internal" href="#opal-console-read">OPAL_CONSOLE_READ</a></li>
+<li><a class="reference internal" href="#opal-console-flush">OPAL_CONSOLE_FLUSH</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-config-cpu-idle-state-99.html"
+                        title="previous chapter">OPAL_CONFIG_CPU_IDLE_STATE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-dump-81-82-83-84-94-101-102.html"
+                        title="next chapter">OPAL Dumps</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-console-read-write-1-2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-dump-81-82-83-84-94-101-102.html" title="OPAL Dumps"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-config-cpu-idle-state-99.html" title="OPAL_CONFIG_CPU_IDLE_STATE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL Console calls</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

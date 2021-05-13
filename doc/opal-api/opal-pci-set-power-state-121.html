@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_SET_POWER_STATE &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_SET_XIVE_PE" href="opal-pci-set-xive-pe-37.html" />
+    <link rel="prev" title="OPAL_PCI_SET_PHB_MEM_WINDOW" href="opal-pci-set-phb-mem-window-28.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-xive-pe-37.html" title="OPAL_PCI_SET_XIVE_PE"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-phb-mem-window-28.html" title="OPAL_PCI_SET_PHB_MEM_WINDOW"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_POWER_STATE</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-set-power-state">
+<span id="id1"></span><h1>OPAL_PCI_SET_POWER_STATE<a class="headerlink" href="#opal-pci-set-power-state" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_POWER_STATE             121</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_set_power_state</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">async_token</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">data</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Set PCI slot power state</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">async_token</span></code></dt><dd><p>Token of asynchronous message to be sent
+on completion of OPAL_PCI_SLOT_POWER_{OFF, ON}. It is
+ignored when &#64;data is OPAL_PCI_SLOT_{OFFLINE, ONLINE}.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">id</span></code></dt><dd><p>PCI slot ID</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">data</span></code></dt><dd><p>memory buffer pointer for the power state which
+can be one of OPAL_PCI_SLOT_POWER_{OFF, ON, OFFLINE, ONLINE}.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="calling">
+<h2>Calling<a class="headerlink" href="#calling" title="Permalink to this headline">¶</a></h2>
+<p>Set PCI slot’s power state. The power state is stored in buffer pointed
+by &#64;data. The typical use is to hot add or remove adapters behind the
+indicated PCI slot (by &#64;id) in PCI hotplug path.</p>
+<p>User will receive an asychronous message after calling the API. The message
+contains the API completion status: event (Power off or on), device node’s
+phandle identifying the PCI slot, errcode (e.g. <a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a>). The API returns
+<a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a> for the case.</p>
+<p>The states OPAL_PCI_SLOT_OFFLINE and OPAL_PCI_SLOT_ONLINE are used for removing
+or adding devices behind the slot. The device nodes in the device tree are
+removed or added accordingly, without actually changing the slot’s power state.
+The API call will return OPAL_SUCCESS immediately and no further asynchronous
+message will be sent.</p>
+</div>
+<div class="section" id="return-codes">
+<h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>PCI hotplug on the slot is completed successfully</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt><dd><p>PCI hotplug needs further message to confirm</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>The indicated PCI slot isn’t found</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Setting power state not supported on the PCI slot</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_PCI_SET_POWER_STATE</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#calling">Calling</a></li>
+<li><a class="reference internal" href="#return-codes">Return Codes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-set-phb-mem-window-28.html"
+                        title="previous chapter">OPAL_PCI_SET_PHB_MEM_WINDOW</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-set-xive-pe-37.html"
+                        title="next chapter">OPAL_PCI_SET_XIVE_PE</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-set-power-state-121.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-xive-pe-37.html" title="OPAL_PCI_SET_XIVE_PE"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-phb-mem-window-28.html" title="OPAL_PCI_SET_PHB_MEM_WINDOW"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_POWER_STATE</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

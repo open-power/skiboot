@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.3-rc2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.3-rc3" href="skiboot-6.3-rc3.html" />
+    <link rel="prev" title="skiboot-6.3-rc1" href="skiboot-6.3-rc1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3-rc3.html" title="skiboot-6.3-rc3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3-rc1.html" title="skiboot-6.3-rc1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3-rc2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-3-rc2">
+<span id="id1"></span><h1>skiboot-6.3-rc2<a class="headerlink" href="#skiboot-6-3-rc2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v6.3-rc2 was released on Thursday April 11th 2019. It is the second
+release candidate of skiboot 6.3, which will become the new stable release
+of skiboot following the 6.2 release, first released December 14th 2018.</p>
+<p>Skiboot 6.3 will mark the basis for op-build v2.3. I expect to tag the final
+skiboot 6.3 in the next week.</p>
+<p>skiboot v6.3-rc2 contains all bug fixes as of <a class="reference internal" href="skiboot-6.0.19.html#skiboot-6-0-19"><span class="std std-ref">skiboot-6.0.19</span></a>,
+and <a class="reference internal" href="skiboot-6.2.3.html#skiboot-6-2-3"><span class="std std-ref">skiboot-6.2.3</span></a> (the currently maintained
+stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>Over <a class="reference internal" href="skiboot-6.3-rc1.html#skiboot-6-3-rc1"><span class="std std-ref">skiboot-6.3-rc1</span></a>, we have the following changes:</p>
+<ul>
+<li><p>libflash/ipmi-hiomap: Fix blocks count issue</p>
+<p>We convert data size to block count and pass block count to BMC.
+If data size is not block aligned then we endup sending block count
+less than actual data. BMC will write partial data to flash memory.</p>
+<p>Sample log</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">594.388458416</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Marked</span> <span class="n">flash</span> <span class="n">dirty</span> <span class="n">at</span> <span class="mh">0x42010</span> <span class="k">for</span> <span class="mi">8</span>
+<span class="p">[</span>  <span class="mf">594.398756487</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Flushed</span> <span class="n">writes</span>
+<span class="p">[</span>  <span class="mf">594.409596439</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Marked</span> <span class="n">flash</span> <span class="n">dirty</span> <span class="n">at</span> <span class="mh">0x42018</span> <span class="k">for</span> <span class="mi">3970</span>
+<span class="p">[</span>  <span class="mf">594.419897507</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HIOMAP</span><span class="p">:</span> <span class="n">Flushed</span> <span class="n">writes</span>
+</pre></div>
+</div>
+<p>In this case HIOMAP sent data with block count=0 and hence BMC didn’t
+flush data to flash.</p>
+</li>
+<li><p>opal/hmi: Never trust a cow!</p>
+<p>With opencapi, it’s fairly common to trigger HMIs during AFU
+development on the FPGA, by not replying in time to an NPU command,
+for example. So shift the blame reported by that cow to avoid crowding
+my mailbox.</p>
+</li>
+<li><p>hw/npu2: Dump (more) npu2 registers on link error and HMIs</p>
+<p>We were already logging some NPU registers during an HMI. This patch
+cleans up a bit how it is done and separates what is global from what
+is specific to nvlink or opencapi.</p>
+<p>Since we can now receive an error interrupt when an opencapi link goes
+down unexpectedly, we also dump the NPU state but we limit it to the
+registers of the brick which hit the error.</p>
+<p>The list of registers to dump was worked out with the hw team to
+allow for proper debugging. For each register, we print the name as
+found in the NPU workbook, the scom address and the register value.</p>
+</li>
+<li><p>hw/npu2: Report errors to the OS if an OpenCAPI brick is fenced</p>
+<p>Now that the NPU may report interrupts due to the link going down
+unexpectedly, report those errors to the OS when queried by the
+‘next_error’ PHB callback.</p>
+<p>The hardware doesn’t support recovery of the link when it goes down
+unexpectedly. So we report the PHB as dead, so that the OS can log the
+proper message, notify the drivers and take the devices down.</p>
+</li>
+<li><p>hw/npu2: Fix OpenCAPI PE assignment</p>
+<p>When we support mixing NVLink and OpenCAPI devices on the same NPU, we’re
+going to have to share the same range of 16 PE numbers between NVLink and
+OpenCAPI PHBs.</p>
+<p>For OpenCAPI devices, PE assignment is only significant for determining
+which System Interrupt Log register is used for a particular brick - unlike
+NVLink, it doesn’t play any role in determining how links are fenced.</p>
+<p>Split the PE range into a lower half which is used for NVLink, and an upper
+half that is used for OpenCAPI, with a fixed PE number assigned per brick.</p>
+<p>As the PE assignment for OpenCAPI devices is fixed, set the PE once
+during device init and then ignore calls to the set_pe() operation.</p>
+</li>
+<li><p>opal-api: Reserve 2 OPAL API calls for future OpenCAPI LPC use</p>
+<p>OpenCAPI Lowest Point of Coherency (LPC) memory is going to require
+some extra OPAL calls to set up NPU BARs. These calls will most likely be
+called OPAL_NPU_LPC_ALLOC and OPAL_NPU_LPC_RELEASE, we’re not quite ready
+to upstream that code yet though.</p>
+</li>
+<li><p>cpufeatures: Add tm-suspend-hypervisor-assist and tm-suspend-xer-so-bug node</p>
+<p>tm-suspend-hypervisor-assist for P9 &gt;=DD2.2
+And a tm-suspend-xer-so-bug node for P9 DD2.2 only.</p>
+<p>I also treat P9P as P9 DD2.3 and add a unit test for the cpufeatures
+infrastructure.</p>
+<p>Fixes: <a class="reference external" href="https://github.com/open-power/skiboot/issues/233">https://github.com/open-power/skiboot/issues/233</a></p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.3-rc1.html"
+                        title="previous chapter">skiboot-6.3-rc1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.3-rc3.html"
+                        title="next chapter">skiboot-6.3-rc3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.3-rc2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.3-rc3.html" title="skiboot-6.3-rc3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.3-rc1.html" title="skiboot-6.3-rc1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3-rc2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

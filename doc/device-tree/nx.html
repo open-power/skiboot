@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nest (NX) Accelerator Coprocessor &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OpenCAPI Device Tree Bindings" href="opencapi.html" />
+    <link rel="prev" title="Nvlink Device Tree Bindings" href="nvlink.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opencapi.html" title="OpenCAPI Device Tree Bindings"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="nvlink.html" title="Nvlink Device Tree Bindings"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Nest (NX) Accelerator Coprocessor</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="nest-nx-accelerator-coprocessor">
+<h1>Nest (NX) Accelerator Coprocessor<a class="headerlink" href="#nest-nx-accelerator-coprocessor" title="Permalink to this headline">¶</a></h1>
+<p>The NX coprocessor is present in P7+ or later processors.  Each NX node
+represents a unique NX coprocessor.  The nodes are located under an
+xscom node, as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">xscom</span><span class="o">@&lt;</span><span class="n">xscom_addr</span><span class="o">&gt;/</span><span class="n">nx</span><span class="o">@&lt;</span><span class="n">nx_addr</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>With unique xscom and nx addresses.  Their compatible node contains
+“ibm,power-nx”.</p>
+<div class="section" id="nx-compression-coprocessor">
+<h2>NX Compression Coprocessor<a class="headerlink" href="#nx-compression-coprocessor" title="Permalink to this headline">¶</a></h2>
+<p>This is the memory compression coprocessor. which uses the IBM proprietary
+842 compression algorithm and format. Each NX node contains an 842 engine.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ibm</span><span class="p">,</span><span class="mi">842</span><span class="o">-</span><span class="n">coprocessor</span><span class="o">-</span><span class="nb">type</span>     <span class="p">:</span> <span class="n">CT</span> <span class="n">value</span> <span class="n">common</span> <span class="n">to</span> <span class="nb">all</span> <span class="mi">842</span> <span class="n">coprocessors</span>
+<span class="n">ibm</span><span class="p">,</span><span class="mi">842</span><span class="o">-</span><span class="n">coprocessor</span><span class="o">-</span><span class="n">instance</span> <span class="p">:</span> <span class="n">CI</span> <span class="n">value</span> <span class="n">unique</span> <span class="n">to</span> <span class="nb">all</span> <span class="mi">842</span> <span class="n">coprocessors</span>
+</pre></div>
+</div>
+<p>Access to the coprocessor requires using the ICSWX instruction, which uses
+a specific format including a Coprocessor Type (CT) and Coprocessor Instance
+(CI) value to address each request to the right coprocessor.  The driver should
+use the CT and CI values for a particular node to communicate with it.  For
+all 842 coprocessors in the system, the CT value will (should) be the same,
+while each will have a different CI value.  The driver can use CI 0 to allow
+the hardware to automatically select which coprocessor instance to use.</p>
+<p>On P9, this compression coprocessor also supports standard GZIP/ZLIB
+compression algorithm and format. Virtual Accelerator Swirchboard (VAS) is used
+to access this coprocessor. VAS writes each request to receive FIFOs (RXFIFO)
+which are either high or normal priority  and these FIFOs are bound to
+coprocessor types (842 and gzip).</p>
+<p>VAS distinguishes NX requests for the target engines based on logical
+partition ID (lpid), process ID (pid) and Thread ID (tid). So (lpid, pid, tid)
+combination has to be unique in the system. Each NX node contains high and
+normal FIFOs for each  842 and GZIP engines.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="mi">842</span><span class="o">-</span><span class="n">high</span><span class="o">-</span><span class="n">fifo</span>            <span class="p">:</span> <span class="n">High</span> <span class="n">priority</span> <span class="mi">842</span> <span class="n">RxFIFO</span>
+<span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="mi">842</span><span class="o">-</span><span class="n">normal</span><span class="o">-</span><span class="n">fifo</span>          <span class="p">:</span> <span class="n">Normal</span> <span class="n">priority</span> <span class="mi">842</span> <span class="n">RxFIFO</span>
+<span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">gzip</span><span class="o">-</span><span class="n">high</span><span class="o">-</span><span class="n">fifo</span>           <span class="p">:</span> <span class="n">High</span> <span class="n">priority</span> <span class="n">gzip</span> <span class="n">RxFIFO</span>
+<span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">gzip</span><span class="o">-</span><span class="n">normal</span><span class="o">-</span><span class="n">fifo</span>         <span class="p">:</span> <span class="n">Normal</span> <span class="n">priority</span> <span class="n">gzip</span> <span class="n">RxFIFO</span>
+</pre></div>
+</div>
+<p>Each RxFIFO node contains:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">compatible</span>              <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">p9</span><span class="o">-</span><span class="n">nx</span><span class="o">-</span><span class="mi">842</span> <span class="ow">or</span> <span class="n">ibm</span><span class="p">,</span><span class="n">p9</span><span class="o">-</span><span class="n">nx</span><span class="o">-</span><span class="n">gzip</span>
+<span class="n">priority</span>                <span class="p">:</span> <span class="n">High</span> <span class="ow">or</span> <span class="n">Normal</span>
+<span class="n">rx</span><span class="o">-</span><span class="n">fifo</span><span class="o">-</span><span class="n">address</span>         <span class="p">:</span> <span class="n">RxFIFO</span> <span class="n">buffer</span> <span class="n">address</span>
+<span class="n">rx</span><span class="o">-</span><span class="n">fifo</span><span class="o">-</span><span class="n">size</span>            <span class="p">:</span> <span class="n">RxFIFO</span> <span class="n">size</span>
+<span class="n">lpid</span>                    <span class="p">:</span> <span class="mh">0xfff</span> <span class="p">(</span><span class="mi">1</span><span class="s1">&#39;s for 12 bits in UMAC notify match</span>
+                          <span class="n">register</span><span class="p">)</span>
+<span class="n">pid</span>                     <span class="p">:</span> <span class="n">Coprocessor</span> <span class="nb">type</span> <span class="p">(</span><span class="n">either</span> <span class="mi">842</span> <span class="ow">or</span> <span class="n">gzip</span><span class="p">)</span>
+<span class="n">tid</span>                     <span class="p">:</span> <span class="n">counter</span> <span class="ow">in</span> <span class="n">each</span> <span class="n">coprocessor</span> <span class="nb">type</span>
+</pre></div>
+</div>
+<p>During initialization, the driver invokes VAS interface for each coprocessor
+type (842 and gzip) to configure the RxFIFO with rx_fifo_address, lpid, pid
+and tid for high and nornmal priority FIFOs.</p>
+</div>
+<div class="section" id="nx-rng-coprocessor">
+<h2>NX RNG Coprocessor<a class="headerlink" href="#nx-rng-coprocessor" title="Permalink to this headline">¶</a></h2>
+<p>This is the Random Number Generator (RNG) coprocessor, which is a part
+of each NX coprocessor.  Each node represents a unique RNG coprocessor.
+Its nodes are not under the main nx node, they are located at:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">hwrng</span><span class="o">@&lt;</span><span class="n">addr</span><span class="o">&gt;</span>         <span class="p">:</span> <span class="n">RNG</span> <span class="n">at</span> <span class="n">address</span> <span class="o">&lt;</span><span class="n">addr</span><span class="o">&gt;</span>
+<span class="n">ibm</span><span class="p">,</span><span class="n">chip</span><span class="o">-</span><span class="nb">id</span>           <span class="p">:</span> <span class="n">chip</span> <span class="nb">id</span> <span class="n">where</span> <span class="n">the</span> <span class="n">RNG</span> <span class="ow">is</span>
+<span class="n">reg</span>                   <span class="p">:</span> <span class="n">address</span> <span class="n">of</span> <span class="n">the</span> <span class="n">register</span> <span class="n">to</span> <span class="n">read</span> <span class="kn">from</span>
+</pre></div>
+</div>
+<p>Each read from the RNG register will provide a new random number.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Nest (NX) Accelerator Coprocessor</a><ul>
+<li><a class="reference internal" href="#nx-compression-coprocessor">NX Compression Coprocessor</a></li>
+<li><a class="reference internal" href="#nx-rng-coprocessor">NX RNG Coprocessor</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="nvlink.html"
+                        title="previous chapter">Nvlink Device Tree Bindings</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opencapi.html"
+                        title="next chapter">OpenCAPI Device Tree Bindings</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/nx.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opencapi.html" title="OpenCAPI Device Tree Bindings"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="nvlink.html" title="Nvlink Device Tree Bindings"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Nest (NX) Accelerator Coprocessor</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

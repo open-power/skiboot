@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MPIPL (aka FADUMP) Overview &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Virtual Accelerator Switchboard (VAS)" href="vas.html" />
+    <link rel="prev" title="Power Management" href="power-management.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="vas.html" title="Virtual Accelerator Switchboard (VAS)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="power-management.html" title="Power Management"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MPIPL (aka FADUMP) Overview</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mpipl-aka-fadump-overview">
+<span id="mpipl"></span><h1>MPIPL (aka FADUMP) Overview<a class="headerlink" href="#mpipl-aka-fadump-overview" title="Permalink to this headline">¶</a></h1>
+<p>Memory Preserving Initial Program Load (MPIPL) is a Power feature where the
+contents of memory are preserved while the system reboots after a failure.
+This is accomplished by the firmware/OS publishing ranges of memory to be
+preserved across boots.</p>
+<div class="section" id="registration">
+<h2>Registration<a class="headerlink" href="#registration" title="Permalink to this headline">¶</a></h2>
+<p>In the OPAL context, OPAL and host Linux communicate the memory ranges to be
+preserved via source descriptor tables in the HDAT (MDST and MDDT table inside
+SPIRAH). Host Linux can register/unregister using OPAL_MPIPL_UPDATE API (see
+<a class="reference internal" href="opal-api/opal-mpipl-173-174.html#opal-api-mpipl"><span class="std std-ref">OPAL MPIPL APIs</span></a>).</p>
+</div>
+<div class="section" id="initiating-dump">
+<h2>Initiating dump<a class="headerlink" href="#initiating-dump" title="Permalink to this headline">¶</a></h2>
+<p>Whenever Linux crashes, it makes reboot2 OPAL call with type as MPIPL. (see
+<a class="reference internal" href="opal-api/opal-cec-reboot-6-116.html#opal-api-cec-reboot"><span class="std std-ref">OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2</span></a>). Depending on sevice processor type OPAL makes
+appropriate call to initiate MPIPL. On FSP system we call <cite>attn</cite> instruction
+(see <code class="docutils literal notranslate"><span class="pre">__trigger_attn()</span></code>) and on BMC system we call SBE <cite>S0 interrupt</cite>
+(see <code class="docutils literal notranslate"><span class="pre">p9_sbe_terminate()</span></code>).</p>
+</div>
+<div class="section" id="dump-collection">
+<h2>Dump collection<a class="headerlink" href="#dump-collection" title="Permalink to this headline">¶</a></h2>
+<p>Hostboot then re-IPLs the machine taking care to copy over contents of the
+source memory to a alternate memory locations as specified in descriptor table.
+Hostboot publishes this information in the result descriptor tables (MDRT table
+inside SPIRAH structure). The success/failure of the copy is indicated by a
+results table.</p>
+<p>SBE/Hostboot also does the requisite procedures to gather hardware register
+states for all active threads at the time of the crash.</p>
+</div>
+<div class="section" id="mpipl-boot">
+<h2>MPIPL boot<a class="headerlink" href="#mpipl-boot" title="Permalink to this headline">¶</a></h2>
+<p>On MPIPL boot, OPAL adds device tree entry (<code class="docutils literal notranslate"><span class="pre">/ibm,opal/dump/mpipl-boot</span></code>)
+to indicate its MPIPL boot. Kernel will use OPAL_MPIPL_QUERY_TAG API
+(<a class="reference internal" href="opal-api/opal-mpipl-173-174.html#opal-api-mpipl"><span class="std std-ref">OPAL MPIPL APIs</span></a>) to retrieve metadata tag. Kernel then uses its
+existing logic (kdump/fadump) to write out a core dump of OPAL and Linux
+kernel in a format that GDB and crash can understand.</p>
+</div>
+<div class="section" id="device-tree">
+<h2>Device tree<a class="headerlink" href="#device-tree" title="Permalink to this headline">¶</a></h2>
+<p>We create new device tree node (<code class="docutils literal notranslate"><span class="pre">/ibm,opal/dump</span></code>) to pass dump details to Linux
+kernel from OPAL (see <a class="reference internal" href="device-tree/ibm%2Copal/dump.html#device-tree-ibm-opal-dump"><span class="std std-ref">Dump (MPIPL) Device Tree Binding</span></a>).</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">MPIPL (aka FADUMP) Overview</a><ul>
+<li><a class="reference internal" href="#registration">Registration</a></li>
+<li><a class="reference internal" href="#initiating-dump">Initiating dump</a></li>
+<li><a class="reference internal" href="#dump-collection">Dump collection</a></li>
+<li><a class="reference internal" href="#mpipl-boot">MPIPL boot</a></li>
+<li><a class="reference internal" href="#device-tree">Device tree</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="power-management.html"
+                        title="previous chapter">Power Management</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="vas.html"
+                        title="next chapter">Virtual Accelerator Switchboard (VAS)</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mpipl.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="vas.html" title="Virtual Accelerator Switchboard (VAS)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="power-management.html" title="Power Management"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MPIPL (aka FADUMP) Overview</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Indicators (LEDS) &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_LPC_READ" href="opal-lpc-read-write-67-68.html" />
+    <link rel="prev" title="OPAL_IPMI_SEND" href="opal-ipmi-send-recv-107-108.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-ipmi-send-recv-107-108.html" title="OPAL_IPMI_SEND"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Service Indicators (LEDS)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="service-indicators-leds">
+<span id="opal-api-leds"></span><h1>Service Indicators (LEDS)<a class="headerlink" href="#service-indicators-leds" title="Permalink to this headline">¶</a></h1>
+<p>The service indicator is one element of an overall hardware service strategy
+where end user simplicity is a high priority. The goal is system firmware or
+operating system code to isolate hardware failures to the failing FRU and
+automatically activate the fault indicator associated with the failing FRU.
+The end user then needs only to look for the FRU with the active fault
+indicator to know which part to replace.</p>
+<p>Different types of indicators handled by LED code:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>System attention indicator (Check log indicator)</dt><dd><p>Indicates there is a problem with the system that needs attention.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Identify</dt><dd><p>Helps the user locate/identify a particular FRU or resource in the
+system.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Fault</dt><dd><p>Indicates there is a problem with the FRU or resource at the
+location with which the indicator is associated.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>All LEDs are defined in the device tree (see <a class="reference internal" href="../device-tree/ibm%2Copal/led.html#device-tree-ibm-opal-leds"><span class="std std-ref">Service Indicators (LEDS)</span></a>).</p>
+<div class="section" id="led-design">
+<h2>LED Design<a class="headerlink" href="#led-design" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>When it comes to implementation we can classify LEDs into two
+categories:</p>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>Hypervisor (OPAL) controlled LEDs (All identify &amp; fault indicators)
+During boot, we read/cache these LED details in OPAL (location code,
+state, etc). We use cached data to serve read request from FSP/Host.
+And we use SPCN passthrough MBOX command to update these LED state.</p></li>
+<li><p>Service processor (FSP) controlled LEDs (System Attention Indicator)
+During boot, we read/cache this LED info using MBOX command. Later
+anytime FSP updates this LED, it sends update system parameter
+notification MBOX command. We use that data to update cached data.
+LED update request is sent via set/reset attn MBOX command.</p></li>
+</ol>
+<dl class="simple">
+<dt>LED update request:</dt><dd><p>Both FSP and Host will send LED update requests. We have to serialize
+SPCN passthrough command. Hence we maintain local queue.</p>
+</dd>
+</dl>
+<p>Note:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>For more information regarding service indicator refer to PAPR spec
+(Service Indicators chapter).</p></li>
+</ul>
+</div></blockquote>
+<p>There are two OPAL calls relating to LED operations.</p>
+</div>
+<div class="section" id="opal-leds-get-indicator">
+<span id="id1"></span><h2>OPAL_LEDS_GET_INDICATOR<a class="headerlink" href="#opal-leds-get-indicator" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_LEDS_GET_INDICATOR                      114</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_leds_get_indicator</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">loc_code</span><span class="p">,</span> <span class="n">u64</span> <span class="o">*</span><span class="n">led_mask</span><span class="p">,</span>
+                                <span class="n">u64</span> <span class="o">*</span><span class="n">led_value</span><span class="p">,</span> <span class="n">u64</span> <span class="o">*</span><span class="n">max_led_type</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Returns LED state for the given location code.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">loc_code</span></code></dt><dd><p>Location code of the LEDs.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">led_mask</span></code></dt><dd><p>LED types whose status is available (return by OPAL)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">led_value</span></code></dt><dd><p>Status of the available LED types (return by OPAL)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">max_led_type</span></code></dt><dd><p>Maximum number of supported LED types (Host/OPAL)</p>
+</dd>
+</dl>
+<p>The host will pass the location code of the LED types (loc_code) and
+maximum number of LED types it understands (max_led_type). OPAL will
+update the ‘led_mask’ with set bits pointing to LED types whose status
+is available and updates the ‘led_value’ with actual status. OPAL checks
+the ‘max_led_type’ to understand whether the host is newer or older
+compared to itself. In the case where the OPAL is newer compared
+to host (OPAL’s max_led_type &gt; host’s max_led_type), it will update
+led_mask and led_value according to max_led_type requested by the host.
+When the host is newer compared to the OPAL (host’s max_led_type &gt;
+OPAL’s max_led_type), OPAL updates ‘max_led_type’ to the maximum
+number of LED type it understands and updates ‘led_mask’, ‘led_value’
+based on that maximum value of LED types.</p>
+<p>Currently this is only implemented on FSP basde machines, see
+hw/fsp/fsp-leds.c for more deatails.</p>
+</div>
+<div class="section" id="opal-leds-set-indicator">
+<span id="id2"></span><h2>OPAL_LEDS_SET_INDICATOR<a class="headerlink" href="#opal-leds-set-indicator" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_LEDS_SET_INDICATOR                      115</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_leds_set_indicator</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">async_token</span><span class="p">,</span>
+                                <span class="kt">char</span> <span class="o">*</span><span class="n">loc_code</span><span class="p">,</span> <span class="k">const</span> <span class="n">u64</span> <span class="n">led_mask</span><span class="p">,</span>
+                                <span class="k">const</span> <span class="n">u64</span> <span class="n">led_value</span><span class="p">,</span> <span class="n">u64</span> <span class="o">*</span><span class="n">max_led_type</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Sets LED state for the given location code.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">loc_code</span></code></dt><dd><p>Location code of the LEDs to be set.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">led_mask</span></code></dt><dd><p>LED types whose status will be updated</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">led_value</span></code></dt><dd><p>Requested status of various LED types.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">max_led_type</span></code></dt><dd><p>Maximum number of supported LED types. If OPAL supports fewer LED types
+than requested, it will set <code class="docutils literal notranslate"><span class="pre">max_led_type</span></code> to the maximum it does support.</p>
+</dd>
+</dl>
+<p>The host will pass the location code of the LED types, mask, value
+and maximum number of LED types it understands. OPAL will update
+LED status for all the LED types mentioned in the mask with their
+value mentioned. OPAL checks the ‘max_led_type’ to understand
+whether the host is newer or older compared to itself. In case where
+the OPAL is newer compared to the host (OPAL’s max_led_type &gt;
+host’s max_led_type), it updates LED status based on max_led_type
+requested from the host. When the host is newer compared to the OPAL
+(host’s max_led_type &gt; OPAL’s max_led_type), OPAL updates
+‘max_led_type’ to the maximum number of LED type it understands and
+then it updates LED status based on that updated  maximum value of LED
+types. Host needs to check the returned updated value of max_led_type
+to figure out which part of it’s request got served and which ones got
+ignored.</p>
+<p>Currently this is only implemented on FSP basde machines, see
+hw/fsp/fsp-leds.c for more deatails.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Service Indicators (LEDS)</a><ul>
+<li><a class="reference internal" href="#led-design">LED Design</a></li>
+<li><a class="reference internal" href="#opal-leds-get-indicator">OPAL_LEDS_GET_INDICATOR</a></li>
+<li><a class="reference internal" href="#opal-leds-set-indicator">OPAL_LEDS_SET_INDICATOR</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-ipmi-send-recv-107-108.html"
+                        title="previous chapter">OPAL_IPMI_SEND</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-lpc-read-write-67-68.html"
+                        title="next chapter">OPAL_LPC_READ</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-led-get-set-114-115.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-ipmi-send-recv-107-108.html" title="OPAL_IPMI_SEND"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Service Indicators (LEDS)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,532 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.4.0-rc2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.4.0-rc3" href="skiboot-5.4.0-rc3.html" />
+    <link rel="prev" title="skiboot-5.4.0-rc1" href="skiboot-5.4.0-rc1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc3.html" title="skiboot-5.4.0-rc3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc1.html" title="skiboot-5.4.0-rc1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-4-0-rc2">
+<span id="id1"></span><h1>skiboot-5.4.0-rc2<a class="headerlink" href="#skiboot-5-4-0-rc2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.4.0-rc2 was released on Wednesday October 26th 2016. It is the
+second release candidate of skiboot 5.4, which will become the new stable
+release of skiboot following the 5.3 release, first released August 2nd 2016.</p>
+<p>skiboot-5.4.0-rc2 contains all bug fixes as of <a class="reference internal" href="skiboot-5.3.7.html#skiboot-5-3-7"><span class="std std-ref">skiboot-5.3.7</span></a>
+and <a class="reference internal" href="skiboot-5.1.18.html#skiboot-5-1-18"><span class="std std-ref">skiboot-5.1.18</span></a> (the currently maintained stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>Since this is a release candidate, it should <em>NOT</em> be put into production.</p>
+<p>The current plan is to release a new release candidate every week until we
+feel good about it. The aim is for skiboot-5.4.x to be in op-build v1.13, which
+is due by November 23rd 2016.</p>
+<p>Over <a class="reference internal" href="skiboot-5.4.0-rc1.html#skiboot-5-4-0-rc1"><span class="std std-ref">skiboot-5.4.0-rc1</span></a>, we have a few changes:</p>
+<div class="section" id="secure-and-trusted-boot">
+<h2>Secure and Trusted Boot<a class="headerlink" href="#secure-and-trusted-boot" title="Permalink to this headline">¶</a></h2>
+<p>skiboot 5.4.0-rc2 improves upon the progress towards Secure and Trusted Boot
+in rc1. It is important to note that this is <em>not</em> a complete, end-to-end
+secure/trusted boot implementation.</p>
+<p>With the current code, it is now possible to verify and measure resources
+loaded from PNOR by skiboot (namely the CAPP and BOOTKERNEL partitions).</p>
+<p>Note that this functionality is currently <em>only</em> available on systems that
+use the libflash backend. It is <em>NOT</em> enabled on IBM FSP based systems.
+There is some support for some simulators though.</p>
+<ul>
+<li><p>libstb/stb.c: ignore the secure mode flag unless forced in NVRAM</p>
+<p>For this stage in Trusted Boot development, we are wishing to not
+force Secure Mode through the whole firmware boot process, but we
+are wanting to be able to test it (classic chicken and egg problem with
+build infrastructure).</p>
+<p>We disabled secure mode if the secure-enabled devtree property is
+read from the device tree <em>IF</em> we aren’t overriding it through NVRAM.
+Seeing as we can only increase (not decrease) what we’re checking through
+the NVRAM variable, it is safe.</p>
+<p>The NVRAM setting is force-secure-mode=true in the ibm,skiboot partition.</p>
+<p>However, if you want to force secure mode even if Hostboot has <em>not</em> set
+the secure-enabled proprety in the device tree, set force-secure-mode
+to “always”.</p>
+<p>There is also a force-trusted-mode NVRAM setting to force trusted mode
+even if Hostboot has not enabled it int the device tree.</p>
+<p>To indicate to Linux that we haven’t gone through the whole firmware
+process in secure mode, we replace the ‘secure-enabled’ property with
+‘partial-secure-enabled’, to indicate that only part of the firmware
+boot process has gone through secure mode.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="command-line-arguments-to-bootkernel">
+<h2>Command line arguments to BOOTKERNEL<a class="headerlink" href="#command-line-arguments-to-bootkernel" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>core/init.c: Fix bootargs parsing</p>
+<p>Currently the bootargs are unconditionally deleted, which causes
+a bug where the bootargs passed in by the device tree are lost.</p>
+<p>This patch deletes bootargs only if it needs to be replaced by the NVRAM
+entry.</p>
+<p>This patch also removes KERNEL_COMMAND_LINE config option in favour of
+using the NVRAM or a device tree.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pflash-utility">
+<h2>pflash utility<a class="headerlink" href="#pflash-utility" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>external/pflash: Make MTD accesses the default</p>
+<p>Now that BMC and host kernel mtd drivers exist and have matured we
+should use them by default.</p>
+<p>This is especially important since we seem to be telling everyone to use
+pflash (pflash world domination plans are continuing on schedule).</p>
+</li>
+<li><p>external/pflash: Catch incompatible combination of flags</p></li>
+<li><p>external/common: arm: Don’t error trying to wrprotect with MTD access</p></li>
+<li><p>libflash/libffs: Use blocklevel_smart_write() when updating partitions</p></li>
+</ul>
+</div>
+<div class="section" id="other-changes">
+<h2>Other changes<a class="headerlink" href="#other-changes" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>extract-gcov: build with -m64 if compiler supports it.</p>
+<p>Fixes build break on 32bit ppc64 (e.g. PowerMac G5, where user space
+is mostly 32bit).</p>
+</li>
+</ul>
+</div>
+<div class="section" id="fast-reset">
+<h2>Fast Reset<a class="headerlink" href="#fast-reset" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>fast-reset: disable fast reboot in event of platform error</p>
+<p>Most of the time, if we’re rebooting due to a platform error, we should
+trigger a checkstop. However, if we haven’t been told what we should do
+to trigger a checkstop (e.g. on an FSP machine), then we should still
+fail to fast-reboot.</p>
+<p>So, disable fast-reboot in the OPAL_CEC_REBOOT2 code path
+for OPAL_REBOOT_PLATFORM_ERROR reboot type.</p>
+</li>
+<li><p>fast-reboot: disable on FSP code update or unrecoverable HMI</p></li>
+<li><p>fast-reboot: abort fast reboot if CAPP attached</p>
+<p>If a PHB is in CAPI mode, we cannot safely fast reboot - the PHB will be
+fenced during the reboot resulting in major problems when we load the new
+kernel.</p>
+<p>In order to handle this safely, we need to disable CAPI mode before
+resetting PHBs during the fast reboot. However, we don’t currently support
+this.</p>
+<p>In the meantime, when fast rebooting, check if there are any PHBs with a
+CAPP attached, and if so, abort the fast reboot and revert to a normal
+reboot instead.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="openpower-platforms">
+<h2>OpenPOWER Platforms<a class="headerlink" href="#openpower-platforms" title="Permalink to this headline">¶</a></h2>
+<p>For all hardware platforms that aren’t IBM FSP machines:</p>
+<ul>
+<li><p>Revert “flash: Move flash node under ibm,opal/flash/”</p>
+<p>This reverts commit e1e6d009860d0ef60f9daf7a0fbe15f869516bd0.</p>
+<p>Breaks DT enough that it makes people cranky, reverting for now.
+This could break access to flash with existing kernels in POWER9 simulators</p>
+</li>
+<li><p>flash: rework flash_load_resource to correctly read FFS/STB</p>
+<p>This fixes the previous reverts of loading the CAPP partition with
+STB headers (which broke CAPP partitions without STB headers).</p>
+<p>The new logic fixes both CAPP partition loading with STB headers <em>and</em>
+addresses a long standing bug due to differing interpretations of FFS.</p>
+<p>The f_part utility that <em>constructs</em> PNOR files just sets actualSize=totalSize
+no matter on what the size of the partition is. Prior to this patch,
+skiboot would always load actualSize, leading to longer than needed IPL.</p>
+<p>The pflash utility updates actualSize, so no developer has really ever
+noticed this, apart from maybe an inkling that it’s odd that a freshly
+baked PNOR from op-build takes ever so slightly longer to boot than one
+that has had individual partitions pflashed in.</p>
+<p>With this patch, we now compute actualSize. For partitions with a STB
+header, we take the payload size from the STB header. For partitions
+that don’t have a STB header, we compute the size either by parsing
+the ELF header or by looking at the subpartition header and computing it.</p>
+<p>We now need to read the entire partition for partitions with subpartitions
+so that we pass consistent values to be measured as part of Trusted Boot.</p>
+<p>As of this patch, the actualSize field in FFS is <em>not</em> relied on for
+partition size, we determine it from the content of the partition.</p>
+<p>However, this patch <em>will</em> break loading of partitions that are not ELF
+and do not contain subpartitions. Luckily, nothing in-tree makes use of
+that.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pci">
+<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>pci: Check power state before powering off slot</p>
+<p>Prevents the erroneous “Error -1 powering off slot” error message.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<p>Since <a class="reference internal" href="skiboot-5.4.0-rc1.html#skiboot-5-4-0-rc1"><span class="std std-ref">skiboot-5.4.0-rc1</span></a>, we have 23 csets from 8 developers.</p>
+<p>A total of 876 lines added, 621 removed (delta 255)</p>
+<p>Developers with the most changesets</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 78%" />
+<col style="width: 3%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>7</p></td>
+<td><p>(30.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>5</p></td>
+<td><p>(21.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Mukesh Ojha</p></td>
+<td><p>3</p></td>
+<td><p>(13.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>3</p></td>
+<td><p>(13.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Claudio Carvalho</p></td>
+<td><p>2</p></td>
+<td><p>(8.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chris Smart</p></td>
+<td><p>1</p></td>
+<td><p>(4.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>1</p></td>
+<td><p>(4.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Nageswara R Sastry</p></td>
+<td><p>1</p></td>
+<td><p>(4.3%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most changed lines</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>424</p></td>
+<td><p>(45.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mukesh Ojha</p></td>
+<td><p>204</p></td>
+<td><p>(22.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>173</p></td>
+<td><p>(18.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>69</p></td>
+<td><p>(7.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Claudio Carvalho</p></td>
+<td><p>35</p></td>
+<td><p>(3.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>13</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Chris Smart</p></td>
+<td><p>8</p></td>
+<td><p>(0.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Nageswara R Sastry</p></td>
+<td><p>2</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most lines removed</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 78%" />
+<col style="width: 3%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>9</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chris Smart</p></td>
+<td><p>4</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most signoffs (total 16)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 73%" />
+<col style="width: 5%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>16</p></td>
+<td><p>(100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most reviews (total 4)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 78%" />
+<col style="width: 3%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>2</p></td>
+<td><p>(50.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>2</p></td>
+<td><p>(50.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most test credits (total 1)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 76%" />
+<col style="width: 3%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1</p></td>
+<td><p>(100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers who gave the most tested-by credits (total 1)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 76%" />
+<col style="width: 3%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>1</p></td>
+<td><p>(100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most report credits (total 3)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 78%" />
+<col style="width: 3%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1</p></td>
+<td><p>(33.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrei Warkenti</p></td>
+<td><p>1</p></td>
+<td><p>(33.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>1</p></td>
+<td><p>(33.3%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers who gave the most report credits (total 3)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 78%" />
+<col style="width: 3%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>2</p></td>
+<td><p>(66.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>1</p></td>
+<td><p>(33.3%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.4.0-rc2</a><ul>
+<li><a class="reference internal" href="#secure-and-trusted-boot">Secure and Trusted Boot</a></li>
+<li><a class="reference internal" href="#command-line-arguments-to-bootkernel">Command line arguments to BOOTKERNEL</a></li>
+<li><a class="reference internal" href="#pflash-utility">pflash utility</a></li>
+<li><a class="reference internal" href="#other-changes">Other changes</a></li>
+<li><a class="reference internal" href="#fast-reset">Fast Reset</a></li>
+<li><a class="reference internal" href="#openpower-platforms">OpenPOWER Platforms</a></li>
+<li><a class="reference internal" href="#pci">PCI</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.4.0-rc1.html"
+                        title="previous chapter">skiboot-5.4.0-rc1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.4.0-rc3.html"
+                        title="next chapter">skiboot-5.4.0-rc3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.4.0-rc2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc3.html" title="skiboot-5.4.0-rc3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.0-rc1.html" title="skiboot-5.4.0-rc1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

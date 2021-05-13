@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ibm,opal/sensors/ device tree nodes &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="sysparams" href="sysparams.html" />
+    <link rel="prev" title="ibm,opal/sensor-groups" href="sensor-groups.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="sysparams.html" title="sysparams"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sensor-groups.html" title="ibm,opal/sensor-groups"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" accesskey="U">ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal/sensors/ device tree nodes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ibm-opal-sensors-device-tree-nodes">
+<h1>ibm,opal/sensors/ device tree nodes<a class="headerlink" href="#ibm-opal-sensors-device-tree-nodes" title="Permalink to this headline">¶</a></h1>
+<p>All sensors of a POWER8 system are made available to the OS in the
+ibm,opal/sensors/ directory. Each sensor is identified with a node
+which name follows this pattern :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">resource</span> <span class="k">class</span> <span class="nc">name</span><span class="o">&gt;@&lt;</span><span class="n">resource</span> <span class="n">identifier</span><span class="o">&gt;/</span>
+</pre></div>
+</div>
+<p>For example :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">core</span><span class="o">-</span><span class="n">temp</span><span class="o">@</span><span class="mi">20</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>Each node has a minimum set of properties describing the sensor :</p>
+<ul>
+<li><p>a “compatible” property which should be “ibm,opal-sensor”</p></li>
+<li><p>a “sensor-type” property, which can be “temp”, “fan”, “power”.
+More will be added when new resources are supported. This type
+is used “as is” by the Linux driver to map sensors in the sysfs
+interface of the hwmon framework of Linux.</p></li>
+<li><p>a “sensor-data” property giving a unique handler for the
+OPAL_SENSOR_READ call to be used by Linux to get the value of
+a sensor attribute. This value is opaque to the OS but is <em>currently</em>
+constructed using the following encoding :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">|</span>  <span class="n">Attr</span><span class="o">.</span> <span class="o">|</span><span class="n">Fam</span><span class="o">|</span><span class="n">Res</span><span class="o">.</span> <span class="o">|</span>   <span class="n">Resource</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">Number</span> <span class="o">|</span><span class="n">ily</span><span class="o">|</span><span class="n">Class</span><span class="o">|</span>      <span class="n">Id</span>        <span class="o">|</span>
+<span class="o">|--------|---|-----|----------------|</span>
+</pre></div>
+</div>
+<p>The sensor family (FSP, DTS, etc) is used to dispatch the call to
+the appriopriate skiboot component.</p>
+</li>
+<li><p>a “sensor-status” property giving the state of the sensor. The
+status bits have the slightly meanings depending on the resource
+type but testing against 0x6 should raise an alarm.</p></li>
+<li><p>an optional “label” property</p></li>
+</ul>
+<p>Each node can have some extra properties depending on the resource
+they represent. See the tree below for more information.</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,opal</span> <span class="p">{</span>
+  <span class="nc">sensors</span> <span class="p">{</span>
+
+      <span class="cm">/*</span>
+<span class="cm">       * Core temperatures (DTS) nodes.</span>
+<span class="cm">       *</span>
+<span class="cm">       * We use the PIR of the core as a resource identifier.</span>
+<span class="cm">       */</span>
+      <span class="nc">core-temp</span><span class="nf">@20</span> <span class="p">{</span>
+              <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-sensor&quot;</span><span class="p">;</span>
+              <span class="nf">name</span> <span class="o">=</span> <span class="s">&quot;core-temp&quot;</span><span class="p">;</span>
+              <span class="nf">sensor-type</span> <span class="o">=</span> <span class="s">&quot;temp&quot;</span><span class="p">;</span>
+
+              <span class="cm">/* Status bits :</span>
+<span class="cm">               *</span>
+<span class="cm">               * 0x0003       FATAL</span>
+<span class="cm">               * 0x0002       CRITICAL</span>
+<span class="cm">               * 0x0001       WARNING</span>
+<span class="cm">               */</span>
+              <span class="nf">sensor-data</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x00800020</span><span class="p">&gt;;</span>
+
+              <span class="cm">/*</span>
+<span class="cm">               * These are extra properties to help Linux output.</span>
+<span class="cm">               */</span>
+              <span class="nf">ibm,pir</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x20</span><span class="p">&gt;;</span>
+              <span class="nf">label</span> <span class="o">=</span> <span class="s">&quot;Core&quot;</span><span class="p">;</span>
+      <span class="p">};</span>
+
+      <span class="cm">/*</span>
+<span class="cm">       * Centaur temperatures (DTS) nodes. Open Power only.</span>
+<span class="cm">       *</span>
+<span class="cm">       * We use the PIR of the core as a resource identifier.</span>
+<span class="cm">       */</span>
+      <span class="nc">mem-temp</span><span class="nf">@1</span> <span class="p">{</span>
+              <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-sensor&quot;</span><span class="p">;</span>
+              <span class="nf">name</span> <span class="o">=</span> <span class="s">&quot;mem-temp&quot;</span><span class="p">;</span>
+              <span class="nf">sensor-type</span> <span class="o">=</span> <span class="s">&quot;temp&quot;</span><span class="p">;</span>
+
+              <span class="cm">/* Status bits :</span>
+<span class="cm">               *</span>
+<span class="cm">               * 0x0003       FATAL</span>
+<span class="cm">               * 0x0002       CRITICAL</span>
+<span class="cm">               * 0x0001       WARNING</span>
+<span class="cm">               */</span>
+              <span class="nf">sensor-data</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x00810001</span><span class="p">&gt;;</span>
+
+              <span class="cm">/*</span>
+<span class="cm">               * These are extra properties to help Linux output.</span>
+<span class="cm">               */</span>
+              <span class="nf">ibm,chip-id</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x80000001</span><span class="p">&gt;;</span>
+              <span class="nf">label</span> <span class="o">=</span> <span class="s">&quot;Centaur&quot;</span><span class="p">;</span>
+      <span class="p">};</span>
+  <span class="p">};</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sensor-groups.html"
+                        title="previous chapter">ibm,opal/sensor-groups</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sysparams.html"
+                        title="next chapter">sysparams</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/device-tree/ibm,opal/sensors.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="sysparams.html" title="sysparams"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sensor-groups.html" title="ibm,opal/sensor-groups"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal/sensors/ device tree nodes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

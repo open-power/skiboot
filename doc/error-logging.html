@@ -1,0 +1,633 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How to log errors on OPAL &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="OPAL &lt;–&gt; BMC interactions" href="bmc.html" />
+    <link rel="prev" title="SkiBoot Console Log" href="console-log.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="bmc.html" title="OPAL &lt;–&gt; BMC interactions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="console-log.html" title="SkiBoot Console Log"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">How to log errors on OPAL</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="how-to-log-errors-on-opal">
+<h1>How to log errors on OPAL<a class="headerlink" href="#how-to-log-errors-on-opal" title="Permalink to this headline">¶</a></h1>
+<p>Currently the errors reported by OPAL interfaces are in free form, where as
+errors reported by service processor is in standard Platform Error Log (PEL)
+format. For out-of band management via IPMI interfaces, it is necessary to
+push down the errors to service processor via mailbox (reported by OPAL)
+in PEL format.</p>
+<p>PEL size can vary from 2K-16K bytes, fields of which needs to populated based
+on the kind of event and error that needs to be reported. All the information
+needed to be reported as part of the error, is passed by user using the
+error-logging interfaces outlined below. Following which, PEL structure is
+generated based on the input and then passed on to service processor.</p>
+<p>We do create eSEL error log format for some service processors but it’s just
+a wrapper around PEL format. Actual data still stays in PEL format.</p>
+<div class="section" id="error-logging-interfaces-in-opal">
+<h2>Error logging interfaces in OPAL<a class="headerlink" href="#error-logging-interfaces-in-opal" title="Permalink to this headline">¶</a></h2>
+<p>Interfaces are provided for the user to log/report an error in OPAL. Using
+these interfaces relevant error information is collected and later converted
+to PEL format and then pushed to service processor.</p>
+<p>Step 1: To report an error, invoke <code class="docutils literal notranslate"><span class="pre">opal_elog_create()</span></code> with required argument.</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">errorlog</span> <span class="pre">*opal_elog_create(struct</span> <span class="pre">opal_err_info</span> <span class="pre">*e_info,</span> <span class="pre">uint32_t</span> <span class="pre">tag);</span></code></p>
+</div></blockquote>
+<p>Parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_err_info</span> <span class="pre">*e_info</span></code>
+Struct to hold information identifying error/event source.</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">tag:</span></code> Unique value to identify the data.</dt><dd><p>Ideal to have ASCII value for 4-byte string.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The opal_err_info struct holds several pieces of information to help
+identify the error/event. The struct can be obtained via the
+<code class="docutils literal notranslate"><span class="pre">DEFINE_LOG_ENTRY</span></code> macro as below - it only needs to be called once.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DEFINE_LOG_ENTRY</span><span class="p">(</span><span class="n">OPAL_RC_ATTN</span><span class="p">,</span> <span class="n">OPAL_PLATFORM_ERR_EVT</span><span class="p">,</span> <span class="n">OPAL_CHIP</span><span class="p">,</span>
+               <span class="n">OPAL_PLATFORM_FIRMWARE</span><span class="p">,</span> <span class="n">OPAL_PREDICTIVE_ERR_GENERAL</span><span class="p">,</span>
+               <span class="n">OPAL_NA</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The various attributes set by this macro are described below.</p>
+<p><code class="docutils literal notranslate"><span class="pre">uint8_t</span> <span class="pre">opal_error_event_type</span></code>: Classification of error/events
+type reported on OPAL.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Platform</span> <span class="n">Events</span><span class="o">/</span><span class="n">Errors</span><span class="p">:</span> <span class="n">Report</span> <span class="n">Machine</span> <span class="n">Check</span> <span class="n">Interrupt</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_PLATFORM_ERR_EVT           0x01</span>
+<span class="o">/*</span> <span class="n">INPUT_OUTPUT</span><span class="p">:</span> <span class="n">Report</span> <span class="nb">all</span> <span class="n">I</span><span class="o">/</span><span class="n">O</span> <span class="n">related</span> <span class="n">events</span><span class="o">/</span><span class="n">errors</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_INPUT_OUTPUT_ERR_EVT       0x02</span>
+<span class="o">/*</span> <span class="n">RESOURCE_DEALLOC</span><span class="p">:</span> <span class="n">Hotplug</span> <span class="n">events</span> <span class="ow">and</span> <span class="n">errors</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_RESOURCE_DEALLOC_ERR_EVT   0x03</span>
+<span class="o">/*</span> <span class="n">MISC</span><span class="p">:</span> <span class="n">Miscellaneous</span> <span class="n">error</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_MISC_ERR_EVT               0x04</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">uint16_t</span> <span class="pre">component_id</span></code>: Component ID of OPAL component as
+listed in <code class="docutils literal notranslate"><span class="pre">include/errorlog.h</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">uint8_t</span> <span class="pre">subsystem_id</span></code>: ID of the sub-system reporting error.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">OPAL</span> <span class="n">Subsystem</span> <span class="n">IDs</span> <span class="n">listed</span> <span class="k">for</span> <span class="n">reporting</span> <span class="n">events</span><span class="o">/</span><span class="n">errors</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_PROCESSOR_SUBSYSTEM        0x10</span>
+<span class="c1">#define OPAL_MEMORY_SUBSYSTEM           0x20</span>
+<span class="c1">#define OPAL_IO_SUBSYSTEM               0x30</span>
+<span class="c1">#define OPAL_IO_DEVICES                 0x40</span>
+<span class="c1">#define OPAL_CEC_HARDWARE               0x50</span>
+<span class="c1">#define OPAL_POWER_COOLING              0x60</span>
+<span class="c1">#define OPAL_MISC                       0x70</span>
+<span class="c1">#define OPAL_SURVEILLANCE_ERR           0x7A</span>
+<span class="c1">#define OPAL_PLATFORM_FIRMWARE          0x80</span>
+<span class="c1">#define OPAL_SOFTWARE                   0x90</span>
+<span class="c1">#define OPAL_EXTERNAL_ENV               0xA0</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">uint8_t</span> <span class="pre">event_severity</span></code>: Severity of the event/error to be reported.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define OPAL_INFO                                   0x00</span>
+<span class="c1">#define OPAL_RECOVERED_ERR_GENERAL                  0x10</span>
+
+<span class="o">/*</span> <span class="mh">0x2</span><span class="n">X</span> <span class="n">series</span> <span class="ow">is</span> <span class="n">to</span> <span class="n">denote</span> <span class="nb">set</span> <span class="n">of</span> <span class="n">Predictive</span> <span class="n">Error</span> <span class="o">*/</span>
+<span class="o">/*</span> <span class="mh">0x20</span> <span class="n">Generic</span> <span class="n">predictive</span> <span class="n">error</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_PREDICTIVE_ERR_GENERAL                         0x20</span>
+<span class="o">/*</span> <span class="mh">0x21</span> <span class="n">Predictive</span> <span class="n">error</span><span class="p">,</span> <span class="n">degraded</span> <span class="n">performance</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_PREDICTIVE_ERR_DEGRADED_PERF                   0x21</span>
+<span class="o">/*</span> <span class="mh">0x22</span> <span class="n">Predictive</span> <span class="n">error</span><span class="p">,</span> <span class="n">fault</span> <span class="n">may</span> <span class="n">be</span> <span class="n">corrected</span> <span class="n">after</span> <span class="n">reboot</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT            0x22</span>
+<span class="o">/*</span>
+ <span class="o">*</span> <span class="mh">0x23</span> <span class="n">Predictive</span> <span class="n">error</span><span class="p">,</span> <span class="n">fault</span> <span class="n">may</span> <span class="n">be</span> <span class="n">corrected</span> <span class="n">after</span> <span class="n">reboot</span><span class="p">,</span>
+ <span class="o">*</span> <span class="n">degraded</span> <span class="n">performance</span>
+ <span class="o">*/</span>
+<span class="c1">#define OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_BOOT_DEGRADE_PERF 0x23</span>
+<span class="o">/*</span> <span class="mh">0x24</span> <span class="n">Predictive</span> <span class="n">error</span><span class="p">,</span> <span class="n">loss</span> <span class="n">of</span> <span class="n">redundancy</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_PREDICTIVE_ERR_LOSS_OF_REDUNDANCY              0x24</span>
+
+<span class="o">/*</span> <span class="mh">0x4</span><span class="n">X</span> <span class="n">series</span> <span class="k">for</span> <span class="n">Unrecoverable</span> <span class="n">Error</span> <span class="o">*/</span>
+<span class="o">/*</span> <span class="mh">0x40</span> <span class="n">Generic</span> <span class="n">Unrecoverable</span> <span class="n">error</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_UNRECOVERABLE_ERR_GENERAL                      0x40</span>
+<span class="o">/*</span> <span class="mh">0x41</span> <span class="n">Unrecoverable</span> <span class="n">error</span> <span class="n">bypassed</span> <span class="k">with</span> <span class="n">degraded</span> <span class="n">performance</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_UNRECOVERABLE_ERR_DEGRADE_PERF                 0x41</span>
+<span class="o">/*</span> <span class="mh">0x44</span> <span class="n">Unrecoverable</span> <span class="n">error</span> <span class="n">bypassed</span> <span class="k">with</span> <span class="n">loss</span> <span class="n">of</span> <span class="n">redundancy</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_UNRECOVERABLE_ERR_LOSS_REDUNDANCY              0x44</span>
+<span class="o">/*</span> <span class="mh">0x45</span> <span class="n">Unrecoverable</span> <span class="n">error</span> <span class="n">bypassed</span> <span class="k">with</span> <span class="n">loss</span> <span class="n">of</span> <span class="n">redundancy</span>
+ <span class="o">*</span> <span class="ow">and</span> <span class="n">performance</span>
+ <span class="o">*/</span>
+<span class="c1">#define OPAL_UNRECOVERABLE_ERR_LOSS_REDUNDANCY_PERF         0x45</span>
+<span class="o">/*</span> <span class="mh">0x48</span> <span class="n">Unrecoverable</span> <span class="n">error</span> <span class="n">bypassed</span> <span class="k">with</span> <span class="n">loss</span> <span class="n">of</span> <span class="n">function</span> <span class="o">*/</span>
+<span class="c1">#define OPAL_UNRECOVERABLE_ERR_LOSS_OF_FUNCTION             0x48</span>
+
+<span class="c1">#define OPAL_ERROR_PANIC                                    0x50</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">uint8_t</span>&#160; <span class="pre">event_subtype</span></code>: Event Sub-type</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define OPAL_NA                                         0x00</span>
+<span class="c1">#define OPAL_MISCELLANEOUS_INFO_ONLY                    0x01</span>
+<span class="c1">#define OPAL_PREV_REPORTED_ERR_RECTIFIED                0x10</span>
+<span class="c1">#define OPAL_SYS_RESOURCES_DECONFIG_BY_USER             0x20</span>
+<span class="c1">#define OPAL_SYS_RESOURCE_DECONFIG_PRIOR_ERR            0x21</span>
+<span class="c1">#define OPAL_RESOURCE_DEALLOC_EVENT_NOTIFY              0x22</span>
+<span class="c1">#define OPAL_CONCURRENT_MAINTENANCE_EVENT               0x40</span>
+<span class="c1">#define OPAL_CAPACITY_UPGRADE_EVENT                     0x60</span>
+<span class="c1">#define OPAL_RESOURCE_SPARING_EVENT                     0x70</span>
+<span class="c1">#define OPAL_DYNAMIC_RECONFIG_EVENT                     0x80</span>
+<span class="c1">#define OPAL_NORMAL_SYS_PLATFORM_SHUTDOWN               0xD0</span>
+<span class="c1">#define OPAL_ABNORMAL_POWER_OFF                         0xE0</span>
+</pre></div>
+</div>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">uint8_t</span> <span class="pre">opal_srctype</span></code>: SRC type, value should be OPAL_SRC_TYPE_ERROR.</dt><dd><p>SRC refers to System Reference Code.
+It is 4 byte hexa-decimal number that reflects the
+current system state.
+Eg: BB821010,</p>
+<ul class="simple">
+<li><p>1st byte -&gt; BB -&gt; SRC Type</p></li>
+<li><p>2nd byte -&gt; 82 -&gt; Subsystem</p></li>
+<li><p>3rd, 4th byte -&gt; Component ID and Reason Code</p></li>
+</ul>
+<p>SRC needs to be generated on the fly depending on the state
+of the system. All the parameters needed to generate a SRC
+should be provided during reporting of an event/error.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">reason_code</span></code>: Reason for failure as stated in <code class="docutils literal notranslate"><span class="pre">include/errorlog.h</span></code> for OPAL.</dt><dd><p>Eg: Reason code for code-update failures can be</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">OPAL_RC_CU_INIT</span></code>  -&gt; Initialisation failure</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OPAL_RC_CU_FLASH</span></code> -&gt; Flash failure</p></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+<dl>
+<dt>Step 2: Data can be appended to the user data section using the either of</dt><dd><p>the below two interfaces:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">log_append_data</span><span class="p">(</span><span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">unsigned</span> <span class="n">char</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+                      <span class="n">uint16_t</span> <span class="n">size</span><span class="p">);</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Parameters:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_errorlog</span> <span class="pre">*buf</span></code>: <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_errorlog</span></code> pointer
+returned by <code class="docutils literal notranslate"><span class="pre">opal_elog_create()</span></code> call.</p>
+<p><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">char</span> <span class="pre">*data</span></code>: Pointer to the dump data</p>
+<p><code class="docutils literal notranslate"><span class="pre">uint16_t</span> <span class="pre">size</span></code>: Size of the dump data.</p>
+<p><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">log_append_msg(struct</span> <span class="pre">errorlog</span> <span class="pre">*buf,</span> <span class="pre">const</span> <span class="pre">char</span> <span class="pre">*fmt,</span> <span class="pre">...);</span></code></p>
+</div></blockquote>
+<p>Parameters:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_errorlog</span> <span class="pre">*buf</span></code>: pointer returned by <code class="docutils literal notranslate"><span class="pre">opal_elog_create()</span></code>
+call.</p>
+<p><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*fmt</span></code>: Formatted error log string.</p>
+<p>Additional user data sections can be added to the error log to
+separate data (eg. readable text vs binary data) by calling
+<code class="docutils literal notranslate"><span class="pre">log_add_section()</span></code>. The interfaces in Step 2 operate on the ‘last’
+user data section of the error log.</p>
+<p><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">log_add_section(struct</span> <span class="pre">errorlog</span> <span class="pre">*buf,</span> <span class="pre">uint32_t</span> <span class="pre">tag);</span></code></p>
+</div></blockquote>
+<p>Parameters:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_errorlog</span> <span class="pre">*buf</span></code>: pointer returned by <code class="docutils literal notranslate"><span class="pre">opal_elog_create()</span></code> call.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">tag</span></code>: Unique value to identify the data.</dt><dd><p>Ideal to have ASCII value for 4-byte string.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl>
+<dt>Step 3: There is a platform hook for the OPAL error log to be committed on any</dt><dd><p>service processor(Currently used for FSP and BMC based machines).</p>
+<p>Below is snippet of the code of how this hook is called.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">log_commit</span><span class="p">(</span><span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">elog</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="o">....</span>
+        <span class="o">....</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">platform</span><span class="o">.</span><span class="n">elog_commit</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">rc</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">elog_commit</span><span class="p">(</span><span class="n">elog</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">rc</span><span class="p">)</span>
+                        <span class="n">prerror</span><span class="p">(</span><span class="s2">&quot;ELOG: Platform commit error </span><span class="si">%d</span><span class="s2">&quot;</span>
+                                <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">rc</span><span class="p">);</span>
+                <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="o">....</span>
+        <span class="o">....</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+<dt>Step 3.1 FSP:</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">elog_commit</span>            <span class="o">=</span> <span class="n">elog_fsp_commit</span>
+</pre></div>
+</div>
+<p>Once all the data for an error is logged in, the error needs to
+be committed in FSP.</p>
+<p>In the process of committing an error to FSP, log info is first
+internally converted to PEL format and then pushed to the FSP.
+FSP then take cares of sending all logs including its own and
+OPAL’s one to the POWERNV.</p>
+<p>OPAL maintains timeout field for all error logs it is sending to
+FSP. If it is not logged within allotted time period (e.g if FSP
+is down), in that case OPAL sends those logs to POWERNV.</p>
+</dd>
+<dt>Step 3.2 BMC:</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">elog_commit</span>            <span class="o">=</span> <span class="n">ipmi_elog_commit</span>
+</pre></div>
+</div>
+<p>In case of BMC machines, error logs are first converted to eSEL format.
+i.e:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">eSEL</span> <span class="o">=</span> <span class="n">SEL</span> <span class="n">header</span> <span class="o">+</span> <span class="n">PEL</span> <span class="n">data</span>
+</pre></div>
+</div>
+<p>SEL header contains below fields.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">sel_header</span> <span class="p">{</span>
+        <span class="n">uint16_t</span> <span class="nb">id</span><span class="p">;</span>
+        <span class="n">uint8_t</span> <span class="n">record_type</span><span class="p">;</span>
+        <span class="n">uint32_t</span> <span class="n">timestamp</span><span class="p">;</span>
+        <span class="n">uint16_t</span> <span class="n">genid</span><span class="p">;</span>
+        <span class="n">uint8_t</span> <span class="n">evmrev</span><span class="p">;</span>
+        <span class="n">uint8_t</span> <span class="n">sensor_type</span><span class="p">;</span>
+        <span class="n">uint8_t</span> <span class="n">sensor_num</span><span class="p">;</span>
+        <span class="n">uint8_t</span> <span class="n">dir_type</span><span class="p">;</span>
+        <span class="n">uint8_t</span> <span class="n">signature</span><span class="p">;</span>
+        <span class="n">uint8_t</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>After filling up the SEL header fields, OPAL copies the error log
+PEL data after the header section in the error log buffer. Then using
+IPMI interface, eSEL gets logged in BMC.</p>
+</dd>
+</dl>
+<p>If the user does not intend to dump various user data sections, but just
+log the error with some amount of description around that error, they can do
+so using just the simple error logging interface.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">log_simple_error</span><span class="p">(</span><span class="n">uint32_t</span> <span class="n">reason_code</span><span class="p">,</span> <span class="n">char</span> <span class="o">*</span><span class="n">fmt</span><span class="p">,</span> <span class="o">...</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">log_simple_error</span><span class="p">(</span><span class="n">OPAL_RC_SURVE_STATUS</span><span class="p">,</span>
+                <span class="s2">&quot;SURV: Error retrieving surveillance status: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+                                                        <span class="n">err_len</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Using the reason code, an error log is generated with the information derived
+from the look-up table, populated and committed to service processor. All of it
+is done with just one call.</p>
+</div>
+</div>
+<div class="section" id="error-logging-retrieval-from-fsp">
+<h1>Error logging retrieval from FSP:<a class="headerlink" href="#error-logging-retrieval-from-fsp" title="Permalink to this headline">¶</a></h1>
+<p>FSP sends error log notification to OPAL via mailbox protocol.</p>
+<p>OPAL maintains below lists:</p>
+<ul class="simple">
+<li><p>Free list      : List of free nodes.</p></li>
+<li><p>Pending list   : List of nodes which is yet to be read by the POWERNV.</p></li>
+<li><p>Processed list : List of nodes which has been read but still waiting for
+acknowledgement.</p></li>
+</ul>
+<p>Below is the structure of the node:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">fsp_log_entry</span> <span class="p">{</span>
+        <span class="n">uint32_t</span> <span class="n">log_id</span><span class="p">;</span>
+        <span class="n">size_t</span> <span class="n">log_size</span><span class="p">;</span>
+        <span class="n">struct</span> <span class="n">list_node</span> <span class="n">link</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>OPAL maintains a state machine which has following states.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">enum</span> <span class="n">elog_head_state</span> <span class="p">{</span>
+        <span class="n">ELOG_STATE_FETCHING</span><span class="p">,</span>    <span class="o">/*</span><span class="n">In</span> <span class="n">the</span> <span class="n">process</span> <span class="n">of</span> <span class="n">reading</span> <span class="n">log</span> <span class="kn">from</span> <span class="nn">FSP.</span> <span class="o">*/</span>
+        <span class="n">ELOG_STATE_FETCHED_INFO</span><span class="p">,</span><span class="o">/*</span> <span class="n">Indicates</span> <span class="n">reading</span> <span class="n">log</span> <span class="n">info</span> <span class="ow">is</span> <span class="n">completed</span> <span class="o">*/</span>
+        <span class="n">ELOG_STATE_FETCHED_DATA</span><span class="p">,</span><span class="o">/*</span> <span class="n">Indicates</span> <span class="n">reading</span> <span class="n">log</span> <span class="ow">is</span> <span class="n">completed</span> <span class="o">*/</span>
+        <span class="n">ELOG_STATE_HOST_INFO</span><span class="p">,</span>   <span class="o">/*</span> <span class="n">Host</span> <span class="n">read</span> <span class="n">log</span> <span class="n">info</span> <span class="o">*/</span>
+        <span class="n">ELOG_STATE_NONE</span><span class="p">,</span>        <span class="o">/*</span> <span class="n">Indicates</span> <span class="n">to</span> <span class="n">fetch</span> <span class="nb">next</span> <span class="n">log</span> <span class="o">*/</span>
+        <span class="n">ELOG_STATE_REJECTED</span><span class="p">,</span>    <span class="o">/*</span> <span class="n">resend</span> <span class="nb">all</span> <span class="n">pending</span> <span class="n">logs</span> <span class="n">to</span> <span class="n">linux</span> <span class="o">*/</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Initially, state of the state machine is <code class="docutils literal notranslate"><span class="pre">ELOG_STATE_NONE</span></code>. When OPAL gets
+the notification about the error log, it takes out the node from free list
+and put it into pending list and update the state machine to fetching state
+(<code class="docutils literal notranslate"><span class="pre">ELOG_STATE_FETCHING</span></code>). It also gives response back to FSP about the
+received error log notification.</p>
+<p>It then queue mailbox message to get the error log data in OPAL error log
+buffer, once it is done state machine gets into fetched state
+(<code class="docutils literal notranslate"><span class="pre">ELOG_STATE_FETCHED_DATA</span></code>). After that, OPAL notifies POWERNV host to
+fetch new error log.</p>
+<p>POWERNV uses the OPAL interface to get the error log info(elogid, elog_size,
+elog_type) first then it reads the error log data in its buffer that moves
+the pending error log to processed list. After reading, the state machine
+moves to <code class="docutils literal notranslate"><span class="pre">ELOG_STATE_NONE</span></code> state.</p>
+<p>It acknowledges the error log id after reading error log data by sending the
+call to OPAL, which in turn sends the acknowledgement mbox message to FSP and
+moves error log id from processed list to again back to free node list and this
+process goes on every FSP error log.</p>
+<div class="section" id="design-constraints">
+<h2>Design constraints:<a class="headerlink" href="#design-constraints" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define ELOG_READ_MAX_RECORD            128</span>
+</pre></div>
+</div>
+<p>Currently, the number of error logs from FSP, OPAL can hold is limited to
+128. If OPAL run out of free node in the list for the new error log, it sends
+‘Discarded by OPAL’ message to the FSP. At some point in the future, it is
+upto FSP when it notifies again to OPAL about the discarded error log.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define ELOG_WRITE_MAX_RECORD           64</span>
+</pre></div>
+</div>
+<p>There is also limitation on the number of OPAL error logs OPAL can hold is 64.
+If it is run out of the buffers in the pool, it will log the message saying
+‘Failed to get the buffer’.</p>
+</div>
+<div class="section" id="note">
+<h2>Note<a class="headerlink" href="#note" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>For more information regarding error logging and PEL format
+refer to PAPR doc and P7 PEL and SRC PLDD document.</p></li>
+<li><p>Refer to <code class="docutils literal notranslate"><span class="pre">include/errorlog.h</span></code> for all the error logging
+interface parameters and <code class="docutils literal notranslate"><span class="pre">include/pel.h</span></code> for PEL
+structures.</p></li>
+</ul>
+</div>
+<div class="section" id="sample-error-logging">
+<h2>Sample error logging<a class="headerlink" href="#sample-error-logging" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="n">DEFINE_LOG_ENTRY</span><span class="p">(</span><span class="n">OPAL_RC_ATTN</span><span class="p">,</span> <span class="n">OPAL_PLATFORM_ERR_EVT</span><span class="p">,</span> <span class="n">OPAL_ATTN</span><span class="p">,</span>
+                <span class="n">OPAL_PLATFORM_FIRMWARE</span><span class="p">,</span> <span class="n">OPAL_PREDICTIVE_ERR_GENERAL</span><span class="p">,</span>
+                <span class="n">OPAL_NA</span><span class="p">);</span>
+
+ <span class="n">void</span> <span class="n">report_error</span><span class="p">(</span><span class="nb">int</span> <span class="n">index</span><span class="p">)</span>
+ <span class="p">{</span>
+       <span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">buf</span><span class="p">;</span>
+       <span class="n">char</span> <span class="n">data1</span><span class="p">[]</span> <span class="o">=</span> <span class="s2">&quot;This is a sample user defined data section1&quot;</span><span class="p">;</span>
+       <span class="n">char</span> <span class="n">data2</span><span class="p">[]</span> <span class="o">=</span> <span class="s2">&quot;Error logging sample. These are dummy errors. Section 2&quot;</span><span class="p">;</span>
+       <span class="n">char</span> <span class="n">data3</span><span class="p">[]</span> <span class="o">=</span> <span class="s2">&quot;Sample error Sample error Sample error Sample error </span><span class="se">\</span>
+<span class="s2">                        Sample error abcdefghijklmnopqrstuvwxyz&quot;</span><span class="p">;</span>
+       <span class="nb">int</span> <span class="n">tag</span><span class="p">;</span>
+
+       <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;ELOG: In machine check report error index: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">index</span><span class="p">);</span>
+
+       <span class="o">/*</span> <span class="n">To</span> <span class="n">report</span> <span class="n">an</span> <span class="n">error</span><span class="p">,</span> <span class="n">create</span> <span class="n">an</span> <span class="n">error</span> <span class="n">log</span> <span class="k">with</span> <span class="n">relevant</span> <span class="n">information</span>
+        <span class="o">*</span> <span class="n">opal_elog_create</span><span class="p">()</span><span class="o">.</span> <span class="n">Call</span> <span class="n">returns</span> <span class="n">a</span> <span class="n">pre</span><span class="o">-</span><span class="n">allocated</span> <span class="n">buffer</span> <span class="n">of</span> <span class="nb">type</span>
+        <span class="o">*</span> <span class="s1">&#39;struct errorlog&#39;</span> <span class="n">buffer</span> <span class="k">with</span> <span class="n">relevant</span> <span class="n">fields</span> <span class="n">updated</span><span class="o">.</span>
+        <span class="o">*/</span>
+
+       <span class="o">/*</span> <span class="n">tag</span> <span class="o">-&gt;</span> <span class="n">unique</span> <span class="n">ascii</span> <span class="n">tag</span> <span class="n">to</span> <span class="n">identify</span> <span class="n">a</span> <span class="n">particular</span> <span class="n">data</span> <span class="n">dump</span> <span class="n">section</span> <span class="o">*/</span>
+       <span class="n">tag</span> <span class="o">=</span> <span class="mh">0x4b4b4b4b</span><span class="p">;</span>
+       <span class="n">buf</span> <span class="o">=</span> <span class="n">opal_elog_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">e_info</span><span class="p">(</span><span class="n">OPAL_RC_ATTN</span><span class="p">),</span> <span class="n">tag</span><span class="p">);</span>
+       <span class="k">if</span> <span class="p">(</span><span class="n">buf</span> <span class="o">==</span> <span class="n">NULL</span><span class="p">)</span> <span class="p">{</span>
+               <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;ELOG: Error getting buffer.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+               <span class="k">return</span><span class="p">;</span>
+       <span class="p">}</span>
+
+       <span class="o">/*</span> <span class="n">Append</span> <span class="n">data</span> <span class="ow">or</span> <span class="n">text</span> <span class="k">with</span> <span class="n">log_append_data</span><span class="p">()</span> <span class="ow">or</span> <span class="n">log_append_msg</span><span class="p">()</span> <span class="o">*/</span>
+       <span class="n">log_append_data</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">data1</span><span class="p">,</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">data1</span><span class="p">));</span>
+
+       <span class="o">/*</span> <span class="n">In</span> <span class="n">case</span> <span class="n">of</span> <span class="n">user</span> <span class="n">wanting</span> <span class="n">to</span> <span class="n">add</span> <span class="n">multiple</span> <span class="n">sections</span> <span class="n">of</span> <span class="n">various</span> <span class="n">dump</span> <span class="n">data</span>
+        <span class="o">*</span> <span class="k">for</span> <span class="n">better</span> <span class="n">debug</span><span class="p">,</span> <span class="n">data</span> <span class="n">sections</span> <span class="n">can</span> <span class="n">be</span> <span class="n">added</span> <span class="n">using</span> <span class="n">this</span> <span class="n">interface</span>
+        <span class="o">*</span> <span class="n">void</span> <span class="n">log_add_section</span><span class="p">(</span><span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">tag</span><span class="p">);</span>
+        <span class="o">*/</span>
+       <span class="n">tag</span> <span class="o">=</span> <span class="mh">0x4c4c4c4c</span><span class="p">;</span>
+       <span class="n">log_add_section</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">tag</span><span class="p">);</span>
+       <span class="n">log_append_data</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">data2</span><span class="p">));</span>
+       <span class="n">log_append_data</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">data3</span><span class="p">,</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">data3</span><span class="p">));</span>
+
+       <span class="o">/*</span> <span class="n">Once</span> <span class="nb">all</span> <span class="n">info</span> <span class="ow">is</span> <span class="n">updated</span><span class="p">,</span> <span class="n">ready</span> <span class="n">to</span> <span class="n">be</span> <span class="n">sent</span> <span class="n">to</span> <span class="n">FSP</span> <span class="o">*/</span>
+       <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;ELOG:commit to FSP</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+       <span class="n">log_commit</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sample-output-pel-dump-got-from-fsp">
+<h2>Sample output PEL dump got from FSP<a class="headerlink" href="#sample-output-pel-dump-got-from-fsp" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ errl -d -x 0x533C9B37
+|   00000000     50480030  01004154  20150728  02000500     PH.0..AT ..(....   |
+|   00000010     20150728  02000566  4B000107  00000000      ..(...fK.......   |
+|   00000020     00000000  00000000  B0000002  533C9B37     ............S..7   |
+|   00000030     55480018  01004154  80002000  00000000     UH....AT.. .....   |
+|   00000040     00002000  01005300  50530050  01004154     .. ...S.PS.P..AT   |
+|   00000050     02000008  00000048  00000080  00000000     .......H........   |
+|   00000060     00000000  00000000  00000000  00000000     ................   |
+|   00000070     00000000  00000000  42423832  31343130     ........BB821410   |
+|   00000080     20202020  20202020  20202020  20202020                        |
+|   00000090     20202020  20202020  4548004C  01004154             EH.L..AT   |
+|   000000A0     38323836  2D343241  31303738  34415400     8286-42A10784AT.   |
+|   000000B0     00000000  00000000  00000000  00000000     ................   |
+|   000000C0     00000000  00000000  00000000  00000000     ................   |
+|   000000D0     00000000  00000000  20150728  02000500     ........ ..(....   |
+|   000000E0     00000000  4D54001C  01004154  38323836     ....MT....AT8286   |
+|   000000F0     2D343241  31303738  34415400  00000000     -42A10784AT.....   |
+|   00000100     5544003C  01004154  4B4B4B4B  00340000     UD....ATKKKK.4..   |
+|   00000110     54686973  20697320  61207361  6D706C65     This is a sample   |
+|   00000120     20757365  72206465  66696E65  64206461      user defined da   |
+|   00000130     74612073  65637469  6F6E3100  554400A7     ta section1.UD..   |
+|   00000140     01004154  4C4C4C4C  009F0000  4572726F     ..ATLLLL....Erro   |
+|   00000150     72206C6F  6767696E  67207361  6D706C65     r logging sample   |
+|   00000160     2E205468  65736520  61726520  64756D6D     . These are dumm   |
+|   00000170     79206572  726F7273  2E205365  6374696F     y errors. Sectio   |
+|   00000180     6E203200  53616D70  6C652065  72726F72     n 2.Sample error   |
+|   00000190     2053616D  706C6520  6572726F  72205361      Sample error Sa   |
+|   000001A0     6D706C65  20657272  6F722053  616D706C     mple error Sampl   |
+|   000001B0     65206572  726F7220  09090953  616D706C     e error ...Sampl   |
+|   000001C0     65206572  726F7220  61626364  65666768     e error abcdefgh   |
+|   000001D0     696A6B6C  6D6E6F70  71727374  75767778     ijklmnopqrstuvwx   |
+|   000001E0     797A00                                     yz.                |
+|------------------------------------------------------------------------------|
+|                       Platform Event Log - 0x533C9B37                        |
+|------------------------------------------------------------------------------|
+|                                Private Header                                |
+|------------------------------------------------------------------------------|
+| Section Version          : 1                                                 |
+| Sub-section type         : 0                                                 |
+| Created by               : 4154                                              |
+| Created at               : 07/28/2015 02:00:05                               |
+| Committed at             : 07/28/2015 02:00:05                               |
+| Creator Subsystem        : OPAL                                              |
+| CSSVER                   :                                                   |
+| Platform Log Id          : 0xB0000002                                        |
+| Entry Id                 : 0x533C9B37                                        |
+| Total Log Size           : 483                                               |
+|------------------------------------------------------------------------------|
+|                                 User Header                                  |
+|------------------------------------------------------------------------------|
+| Section Version          : 1                                                 |
+| Sub-section type         : 0                                                 |
+| Log Committed by         : 4154                                              |
+| Subsystem                : Platform Firmware                                 |
+| Event Scope              : Unknown - 0x00000000                              |
+| Event Severity           : Predictive Error                                  |
+| Event Type               : Not Applicable                                    |
+| Return Code              : 0x00000000                                        |
+| Action Flags             : Report Externally                                 |
+| Action Status            : Sent to Hypervisor                                |
+|------------------------------------------------------------------------------|
+|                        Primary System Reference Code                         |
+|------------------------------------------------------------------------------|
+| Section Version          : 1                                                 |
+| Sub-section type         : 0                                                 |
+| Created by               : 4154                                              |
+| SRC Format               : 0x80                                              |
+| SRC Version              : 0x02                                              |
+| Virtual Progress SRC     : False                                             |
+| I5/OS Service Event Bit  : False                                             |
+| Hypervisor Dump Initiated: False                                             |
+| Power Control Net Fault  : False                                             |
+|                                                                              |
+| Valid Word Count         : 0x08                                              |
+| Reference Code           : BB821410                                          |
+| Hex Words 2 - 5          : 00000080 00000000 00000000 00000000               |
+| Hex Words 6 - 9          : 00000000 00000000 00000000 00000000               |
+|                                                                              |
+|------------------------------------------------------------------------------|
+|                             Extended User Header                             |
+|------------------------------------------------------------------------------|
+| Section Version          : 1                                                 |
+| Sub-section type         : 0                                                 |
+| Created by               : 4154                                              |
+| Reporting Machine Type   : 8286-42A                                          |
+| Reporting Serial Number  : 10784AT                                           |
+| FW Released Ver          :                                                   |
+| FW SubSys Version        :                                                   |
+| Common Ref Time          : 07/28/2015 02:00:05                               |
+| Symptom Id Len           : 0                                                 |
+| Symptom Id               :                                                   |
+|------------------------------------------------------------------------------|
+|                      Machine Type/Model &amp; Serial Number                      |
+|------------------------------------------------------------------------------|
+| Section Version          : 1                                                 |
+| Sub-section type         : 0                                                 |
+| Created by               : 4154                                              |
+| Machine Type Model       : 8286-42A                                          |
+| Serial Number            : 10784AT                                           |
+|------------------------------------------------------------------------------|
+|                              User Defined Data                               |
+|------------------------------------------------------------------------------|
+| Section Version          : 1                                                 |
+| Sub-section type         : 0                                                 |
+| Created by               : 4154                                              |
+|                                                                              |
+|   00000000     4B4B4B4B  00340000  54686973  20697320     KKKK.4..This is    |
+|   00000010     61207361  6D706C65  20757365  72206465     a sample user de   |
+|   00000020     66696E65  64206461  74612073  65637469     fined data secti   |
+|   00000030     6F6E3100                                   on1.               |
+|                                                                              |
+|------------------------------------------------------------------------------|
+|                              User Defined Data                               |
+|------------------------------------------------------------------------------|
+| Section Version          : 1                                                 |
+| Sub-section type         : 0                                                 |
+| Created by               : 4154                                              |
+|                                                                              |
+|   00000000     4C4C4C4C  009F0000  4572726F  72206C6F     LLLL....Error lo   |
+|   00000010     6767696E  67207361  6D706C65  2E205468     gging sample. Th   |
+|   00000020     65736520  61726520  64756D6D  79206572     ese are dummy er   |
+|   00000030     726F7273  2E205365  6374696F  6E203200     rors. Section 2.   |
+|   00000040     53616D70  6C652065  72726F72  2053616D     Sample error Sam   |
+|   00000050     706C6520  6572726F  72205361  6D706C65     ple error Sample   |
+|   00000060     20657272  6F722053  616D706C  65206572      error Sample er   |
+|   00000070     726F7220  09090953  616D706C  65206572     ror ...Sample er   |
+|   00000080     726F7220  61626364  65666768  696A6B6C     ror abcdefghijkl   |
+|   00000090     6D6E6F70  71727374  75767778  797A00       mnopqrstuvwxyz.    |
+|                                                                              |
+|------------------------------------------------------------------------------|
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">How to log errors on OPAL</a><ul>
+<li><a class="reference internal" href="#error-logging-interfaces-in-opal">Error logging interfaces in OPAL</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#error-logging-retrieval-from-fsp">Error logging retrieval from FSP:</a><ul>
+<li><a class="reference internal" href="#design-constraints">Design constraints:</a></li>
+<li><a class="reference internal" href="#note">Note</a></li>
+<li><a class="reference internal" href="#sample-error-logging">Sample error logging</a></li>
+<li><a class="reference internal" href="#sample-output-pel-dump-got-from-fsp">Sample output PEL dump got from FSP</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="console-log.html"
+                        title="previous chapter">SkiBoot Console Log</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="bmc.html"
+                        title="next chapter">OPAL &lt;–&gt; BMC interactions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/error-logging.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="bmc.html" title="OPAL &lt;–&gt; BMC interactions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="console-log.html" title="SkiBoot Console Log"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">How to log errors on OPAL</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

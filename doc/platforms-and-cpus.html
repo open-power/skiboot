@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supported platforms &amp; CPUs &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Development and Release Process" href="process/dev-release-process.html" />
+    <link rel="prev" title="OPAL Specification" href="opal-spec.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="process/dev-release-process.html" title="Development and Release Process"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-spec.html" title="OPAL Specification"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Supported platforms &amp; CPUs</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="supported-platforms-cpus">
+<h1>Supported platforms &amp; CPUs<a class="headerlink" href="#supported-platforms-cpus" title="Permalink to this headline">¶</a></h1>
+<p>NB. This file should only contain publicly available information.</p>
+<div class="section" id="cpus">
+<h2>CPUs<a class="headerlink" href="#cpus" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28%" />
+<col style="width: 28%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>PVR</p></th>
+<th class="head"><p>Other names</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Power8E</p></td>
+<td><p>0x004bxxxx</p></td>
+<td><p>Murano</p></td>
+</tr>
+<tr class="row-odd"><td><p>Power8</p></td>
+<td><p>0x004dxxxx</p></td>
+<td><p>Venice</p></td>
+</tr>
+<tr class="row-even"><td><p>Power8NVL</p></td>
+<td><p>0x004cxxxx</p></td>
+<td><p>Naples (P8 with NVLink)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Power9N</p></td>
+<td><p>0x004e0xxx</p></td>
+<td><p>Nimbus 12 small core</p></td>
+</tr>
+<tr class="row-even"><td><p>Power9N</p></td>
+<td><p>0x004e1xxx</p></td>
+<td><p>Nimbus 24 small core</p></td>
+</tr>
+<tr class="row-odd"><td><p>Power9C</p></td>
+<td><p>0x004e2xxx</p></td>
+<td><p>Cumulus 12 small core</p></td>
+</tr>
+<tr class="row-even"><td><p>Power9C</p></td>
+<td><p>0x004e3xxx</p></td>
+<td><p>Cumulus 24 small core</p></td>
+</tr>
+<tr class="row-odd"><td><p>Power9P</p></td>
+<td><p>0x004fxxxx</p></td>
+<td><p>Axone</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="platforms">
+<h2>Platforms<a class="headerlink" href="#platforms" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 11%" />
+<col style="width: 10%" />
+<col style="width: 16%" />
+<col style="width: 23%" />
+<col style="width: 26%" />
+<col style="width: 8%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>Sub platform</p></th>
+<th class="head"><p>Host CPU(s)</p></th>
+<th class="head"><p>Manufacturer</p></th>
+<th class="head"><p>compatible</p></th>
+<th class="head"><p>Other names/Notes</p></th>
+<th class="head"><p>Link(s)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>barreleye</p></td>
+<td><p>Power8</p></td>
+<td><p>Ingrasys (Foxconn)</p></td>
+<td><p>“ingrasys,barreleye”</p></td>
+<td><p>Barreleye, Rackspace machine</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>firestone</p></td>
+<td><p>Power8</p></td>
+<td><p>Wistron, IBM</p></td>
+<td><p>“ibm,firestone”</p></td>
+<td><p>Firestone, S822LC</p></td>
+<td><p><a class="footnote-reference brackets" href="#id10" id="id1">1</a></p></td>
+</tr>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>garrison</p></td>
+<td><p>Power8NVL</p></td>
+<td><p>IBM</p></td>
+<td><p>“ibm,garrison”</p></td>
+<td><p>Minsky, “S822LC for HPC”</p></td>
+<td><p><a class="footnote-reference brackets" href="#id11" id="id2">2</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>habanero</p></td>
+<td><p>Power8</p></td>
+<td><p>Tyan</p></td>
+<td><p>“tyan,habanero”</p></td>
+<td><p>Habanero, TN71-BP012</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>p8dtu</p></td>
+<td><p>Power8</p></td>
+<td><p>Supermicro</p></td>
+<td><p>“supermicro,p8dtu1u”</p></td>
+<td><p>Briggs, “S822LC for Big Data”</p></td>
+<td><p><a class="footnote-reference brackets" href="#id12" id="id3">3</a> <a class="footnote-reference brackets" href="#id14" id="id4">4</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>p8dtu</p></td>
+<td><p>Power8</p></td>
+<td><p>Supermicro</p></td>
+<td><p>“supermicro,p8dtu2u”</p></td>
+<td><p>Stratton, S821LC</p></td>
+<td><p><a class="footnote-reference brackets" href="#id15" id="id5">5</a> <a class="footnote-reference brackets" href="#id17" id="id6">6</a></p></td>
+</tr>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>p8dnu</p></td>
+<td><p>Power8NVL</p></td>
+<td><p>Supermicro</p></td>
+<td><p>“supermicro,p8dnu(1u|2u)?”</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>palmetto</p></td>
+<td><p>Power8</p></td>
+<td><p>Tyan</p></td>
+<td><p>“tyan,palmetto”</p></td>
+<td><p>Palmetto, GN70-BP010</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>vesnin</p></td>
+<td><p>Power8</p></td>
+<td><p>Yadro</p></td>
+<td><p>“YADRO,vesnin”</p></td>
+<td><p>VESNIN</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>ibm-fsp</p></td>
+<td><p>firenze</p></td>
+<td><p>Power8E</p></td>
+<td><p>IBM</p></td>
+<td><p>“ibm,firenze”</p></td>
+<td><p>Tuleta, S812L, S822L</p></td>
+<td><p><a class="footnote-reference brackets" href="#id18" id="id7">7</a></p></td>
+</tr>
+<tr class="row-even"><td><p>rhesus</p></td>
+<td><p>n/a</p></td>
+<td><p>Power8E</p></td>
+<td></td>
+<td><p>“ibm,powernv”</p></td>
+<td><p>Rhesus, Google machine</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 11%" />
+<col style="width: 10%" />
+<col style="width: 16%" />
+<col style="width: 23%" />
+<col style="width: 26%" />
+<col style="width: 6%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>Sub platform</p></th>
+<th class="head"><p>Host CPU(s)</p></th>
+<th class="head"><p>Manufacturer</p></th>
+<th class="head"><p>compatible</p></th>
+<th class="head"><p>Other names/Notes</p></th>
+<th class="head"><p>Link(s)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>p9sdu</p></td>
+<td><p>Power9</p></td>
+<td><p>Supermicro</p></td>
+<td><p>“supermicro,p9dsu”</p></td>
+<td><p>Boston, LC921/LC922</p></td>
+<td><p><a class="footnote-reference brackets" href="#id19" id="id8">8</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>romulus</p></td>
+<td><p>Power9</p></td>
+<td></td>
+<td><p>“ibm,romulus”</p></td>
+<td><p>Romulus</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>talos</p></td>
+<td><p>Power9</p></td>
+<td><p>Raptor</p></td>
+<td><p>“rcs,talos”</p></td>
+<td><p>Talos II, similar to Romulus</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>blackbird</p></td>
+<td><p>Power9</p></td>
+<td><p>Raptor</p></td>
+<td><p>“rcs,blackbird”</p></td>
+<td><p>Blackbrid</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>witherspoon</p></td>
+<td><p>Power9</p></td>
+<td></td>
+<td><p>“ibm,witherspoon”</p></td>
+<td><p>Witherspoon, Newell, AC922</p></td>
+<td><p><a class="footnote-reference brackets" href="#id20" id="id9">9</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>zaius</p></td>
+<td><p>Power9</p></td>
+<td><p>Ingrasys (Foxconn)</p></td>
+<td><p>“ingrasys,zaius”</p></td>
+<td><p>Zaius, Barreleye Gen2</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>astbmc</p></td>
+<td><p>mihawk</p></td>
+<td><p>Power9</p></td>
+<td></td>
+<td><p>“{wistron,ibm},mihawk”</p></td>
+<td><p>Mihawk, IC922</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>astbmc</p></td>
+<td><p>nicole</p></td>
+<td><p>Power9</p></td>
+<td><p>Yadro</p></td>
+<td><p>“YADRO,nicole”</p></td>
+<td><p>Nicole</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>ibm-fsp</p></td>
+<td><p>zz</p></td>
+<td><p>Power9</p></td>
+<td></td>
+<td><p>“ibm,zz-(1|2)s(2|4)u”</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="dropped-platforms">
+<h2>Dropped Platforms<a class="headerlink" href="#dropped-platforms" title="Permalink to this headline">¶</a></h2>
+<p>Support for Power7 based systems was removed in <cite>v6.3-191-g16b7ae641037</cite>.
+Power7 hardware was supported largely because it was the initial bringup
+platform for Skiboot. Once P8 hardware became available almost all
+development (and testing) on P7 ceased. Anyone interested in using OPAL on
+a P7 should look at one of the early <cite>v5.x</cite> releases.</p>
+<p class="rubric">Footnotes</p>
+<dl class="footnote brackets">
+<dt class="label" id="id10"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p><a class="reference external" href="https://www.nextplatform.com/2015/10/08/ibm-back-in-hpc-with-power-systems-lc-clusters/">IBM Back In HPC With Power Systems LC Clusters</a></p>
+</dd>
+</dl>
+<dl class="footnote brackets">
+<dt class="label" id="id11"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
+<dd><p><a class="reference external" href="https://www.nextplatform.com/2016/09/08/refreshed-ibm-power-linux-systems-add-nvlink/">Refreshed IBM Power Linux Systems Add NVLink</a></p>
+</dd>
+</dl>
+<dl class="footnote brackets">
+<dt class="label" id="id12"><span class="brackets"><a class="fn-backref" href="#id3">3</a></span></dt>
+<dd><p><a class="reference external" href="https://www.nextplatform.com/2016/09/08/refreshed-ibm-power-linux-systems-add-nvlink/">Refreshed IBM Power Linux Systems Add NVLink</a></p>
+</dd>
+<dt class="label" id="id14"><span class="brackets"><a class="fn-backref" href="#id4">4</a></span></dt>
+<dd><p><a class="reference external" href="https://www.youtube.com/watch?v=TnW-NcLR28g">First Look IBM POWER8 S822LC 8001-22C (Briggs)</a></p>
+</dd>
+</dl>
+<dl class="footnote brackets">
+<dt class="label" id="id15"><span class="brackets"><a class="fn-backref" href="#id5">5</a></span></dt>
+<dd><p><a class="reference external" href="https://www.nextplatform.com/2016/09/08/refreshed-ibm-power-linux-systems-add-nvlink/">Refreshed IBM Power Linux Systems Add NVLink</a></p>
+</dd>
+<dt class="label" id="id17"><span class="brackets"><a class="fn-backref" href="#id6">6</a></span></dt>
+<dd><p><a class="reference external" href="https://www.youtube.com/watch?v=OM3wU4Uu8LI">First Look IBM POWER8 S821LC 8001-12C (Stratton)</a></p>
+</dd>
+<dt class="label" id="id18"><span class="brackets"><a class="fn-backref" href="#id7">7</a></span></dt>
+<dd><p><a class="reference external" href="https://www.itjungle.com/2018/05/14/boston-power9s-set-to-debut/">Boston Power9s Set To Debut</a></p>
+</dd>
+<dt class="label" id="id19"><span class="brackets"><a class="fn-backref" href="#id8">8</a></span></dt>
+<dd><p><a class="reference external" href="https://www.nextplatform.com/2017/12/05/power9-to-the-people/">POWER9 TO THE PEOPLE</a></p>
+</dd>
+</dl>
+<dl class="footnote brackets">
+<dt class="label" id="id20"><span class="brackets"><a class="fn-backref" href="#id9">9</a></span></dt>
+<dd><p><a class="reference external" href="https://www.ibm.com/au-en/marketplace/power-system-s812l-s822l">IBM Power System S812L and IBM Power System S822L</a></p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Supported platforms &amp; CPUs</a><ul>
+<li><a class="reference internal" href="#cpus">CPUs</a></li>
+<li><a class="reference internal" href="#platforms">Platforms</a></li>
+<li><a class="reference internal" href="#dropped-platforms">Dropped Platforms</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-spec.html"
+                        title="previous chapter">OPAL Specification</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="process/dev-release-process.html"
+                        title="next chapter">Development and Release Process</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/platforms-and-cpus.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="process/dev-release-process.html" title="Development and Release Process"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-spec.html" title="OPAL Specification"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Supported platforms &amp; CPUs</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

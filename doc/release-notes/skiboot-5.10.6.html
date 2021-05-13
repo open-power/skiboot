@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.10.6 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.11" href="skiboot-5.11.html" />
+    <link rel="prev" title="skiboot-5.10.5" href="skiboot-5.10.5.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.11.html" title="skiboot-5.11"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.5.html" title="skiboot-5.10.5"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10.6</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-10-6">
+<span id="id1"></span><h1>skiboot-5.10.6<a class="headerlink" href="#skiboot-5-10-6" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 5.10.6 was released on Monday May 28th, 2018. It replaces
+<a class="reference internal" href="skiboot-5.10.5.html#skiboot-5-10-5"><span class="std std-ref">skiboot-5.10.5</span></a> as the current stable release in the 5.10.x series.</p>
+<p>It is recommended that 5.10.6 be used instead of any previous 5.10.x version,
+especially due to the locking bug fixes.</p>
+<p>It is expected that this will be the final 5.10.x version, with 6.0.x taking
+over as the main stable branch.</p>
+<p>Over <a class="reference internal" href="skiboot-5.10.5.html#skiboot-5-10-5"><span class="std std-ref">skiboot-5.10.5</span></a>, we have the following fixes:</p>
+<ul>
+<li><p>opal-prd: Do not error out on first failure for soft/hard offline.</p>
+<p>The memory errors (CEs and UEs) that are detected as part of background
+memory scrubbing are reported by PRD asynchronously to opal-prd along with
+affected memory ranges. hservice_memory_error() converts these ranges into
+page granularity before hooking up them to soft/hard offline-ing
+infrastructure.</p>
+<p>But the current implementation of hservice_memory_error() does not hookup
+all the pages to soft/hard offline-ing if any of the page offline action
+fails. e.g hard offline can fail for:</p>
+<ul class="simple">
+<li><p>Pages that are not part of buddy managed pool.</p></li>
+<li><p>Pages that are reserved by kernel using memblock_reserved()</p></li>
+<li><p>Pages that are in use by kernel.</p></li>
+</ul>
+<p>But for the pages that are in use by user space application, the hard
+offline marks the page as hwpoison, sends SIGBUS signal to kill the
+affected application as recovery action and returns success.</p>
+<p>Hence, It is possible that some of the pages in that memory range are in
+use by application or free. By stopping on first error we loose the
+opportunity to hwpoison the subsequent pages which may be free or in use by
+application. This patch fixes this issue.</p>
+</li>
+<li><p>xive: fix missing unlock in error path</p>
+<p>Found with sparse and some added lock annotations.</p>
+</li>
+<li><p>OPAL_PCI_SET_POWER_STATE: fix locking in error paths</p>
+<p>Otherwise we could exit OPAL holding locks, potentially leading
+to all sorts of problems later on.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.10.5.html"
+                        title="previous chapter">skiboot-5.10.5</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.11.html"
+                        title="next chapter">skiboot-5.11</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.10.6.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.11.html" title="skiboot-5.11"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10.5.html" title="skiboot-5.10.5"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10.6</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

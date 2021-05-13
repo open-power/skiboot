@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_INT_EOI &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_INT_GET_XIRR" href="opal-int-get-xirr-122.html" />
+    <link rel="prev" title="OPAL_IMC_COUNTERS_INIT" href="opal-imc-counters.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-int-get-xirr-122.html" title="OPAL_INT_GET_XIRR"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-imc-counters.html" title="OPAL_IMC_COUNTERS_INIT"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_INT_EOI</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-int-eoi">
+<span id="id1"></span><h1>OPAL_INT_EOI<a class="headerlink" href="#opal-int-eoi" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_INT_EOI                         124</span>
+
+<span class="k">static</span> <span class="kt">int64_t</span> <span class="nf">opal_int_eoi</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">xirr</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Modelled on the <code class="docutils literal notranslate"><span class="pre">H_EOI</span></code> PAPR call.</p>
+<p>This can return a positive value, which means more interrupts
+are queued for that CPU/priority and must be fetched as the XIVE is not
+guaranteed to assert the CPU external interrupt line again until the
+pending queue for the current priority has been emptied.</p>
+<p>For P9 and above systems where host doesn’t know about interrupt controller.
+An OS can instead make OPAL calls for XICS emulation.</p>
+<p>For an OS to use this OPAL call, an <code class="docutils literal notranslate"><span class="pre">ibm,opal-intc</span></code> compatible device must
+exist in the device tree (see <a class="reference internal" href="../xive.html#xive-device-tree"><span class="std std-ref">I - Device-tree updates</span></a>). If OPAL does not create
+such a device, the host OS MUST NOT use this call.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-imc-counters.html"
+                        title="previous chapter">OPAL_IMC_COUNTERS_INIT</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-int-get-xirr-122.html"
+                        title="next chapter">OPAL_INT_GET_XIRR</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-int-eoi-124.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-int-get-xirr-122.html" title="OPAL_INT_GET_XIRR"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-imc-counters.html" title="OPAL_IMC_COUNTERS_INIT"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_INT_EOI</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

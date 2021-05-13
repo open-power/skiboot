@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_CHECK_ASYNC_COMPLETION &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_CHECK_TOKEN" href="opal-check-token-80.html" />
+    <link rel="prev" title="OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2" href="opal-cec-reboot-6-116.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-check-token-80.html" title="OPAL_CHECK_TOKEN"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-cec-reboot-6-116.html" title="OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_CHECK_ASYNC_COMPLETION</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-check-async-completion">
+<span id="id1"></span><h1>OPAL_CHECK_ASYNC_COMPLETION<a class="headerlink" href="#opal-check-async-completion" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="#opal-check-async-completion"><span class="std std-ref">OPAL_CHECK_ASYNC_COMPLETION</span></a> checks if an async OPAL pending message was
+completed. (see <a class="reference internal" href="opal-messages.html#opal-messages"><span class="std std-ref">OPAL_MESSAGE</span></a>).</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CHECK_ASYNC_COMPLETION          86</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_check_completion</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">token</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Parameters:</p>
+<dl class="simple">
+<dt>buffer</dt><dd><p>buffer to copy message into</p>
+</dd>
+<dt>size</dt><dd><p>sizeof buffer to copy message into</p>
+</dd>
+<dt>token</dt><dd><p>async message token</p>
+</dd>
+</dl>
+<p>Currently unused by Linux, but it is used by FreeBSD.</p>
+<div class="section" id="return-values">
+<h2>Return values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>buffer parameter is an invalid pointer (NULL or &gt; top of RAM).</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>message successfully copied to buffer.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt><dd><p>message is still pending and should be re-checked later.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_CHECK_ASYNC_COMPLETION</a><ul>
+<li><a class="reference internal" href="#return-values">Return values</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-cec-reboot-6-116.html"
+                        title="previous chapter">OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-check-token-80.html"
+                        title="next chapter">OPAL_CHECK_TOKEN</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-check-async-completion-86.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-check-token-80.html" title="OPAL_CHECK_TOKEN"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-cec-reboot-6-116.html" title="OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_CHECK_ASYNC_COMPLETION</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

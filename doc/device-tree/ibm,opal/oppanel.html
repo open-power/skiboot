@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Operator Panel (oppanel) &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ibm,opal/power-mgt device tree entries" href="power-mgt.html" />
+    <link rel="prev" title="nvram Device Tree Node" href="nvram.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="power-mgt.html" title="ibm,opal/power-mgt device tree entries"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="nvram.html" title="nvram Device Tree Node"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" accesskey="U">ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Operator Panel (oppanel)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="operator-panel-oppanel">
+<span id="device-tree-ibm-opal-oppanel"></span><h1>Operator Panel (oppanel)<a class="headerlink" href="#operator-panel-oppanel" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">oppanel</span> <span class="p">{</span>
+      <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-oppanel&quot;</span><span class="p">;</span>
+      <span class="nf">#lines</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x2</span><span class="p">&gt;;</span>
+      <span class="nf">#length</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10</span><span class="p">&gt;;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The Operator Panel is a device for displaying small amounts of textual
+data to an administrator. On IBM POWER8 systems with an FSP, this is a
+small 16x2 LCD panel that can be viewed either from the Web UI of the FSP
+(known as ASM) or by physically going to the machine and looking at the
+panel.</p>
+<p>The operator panel does not have to be present.</p>
+<p>If it is, there are OPAL calls to read and write to it.</p>
+<p>The device tree entry is so that the host OS knows the size of the panel
+and can pass buffers of the appropriate size to the OPAL calls.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="nvram.html"
+                        title="previous chapter">nvram Device Tree Node</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="power-mgt.html"
+                        title="next chapter">ibm,opal/power-mgt device tree entries</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/device-tree/ibm,opal/oppanel.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="power-mgt.html" title="ibm,opal/power-mgt device tree entries"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="nvram.html" title="nvram Device Tree Node"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Operator Panel (oppanel)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

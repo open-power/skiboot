@@ -1,0 +1,656 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL API Return Codes &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Release Notes" href="../release-notes/index.html" />
+    <link rel="prev" title="POWER9 Changes to OPAL API" href="power9-changes.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../release-notes/index.html" title="Release Notes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="power9-changes.html" title="POWER9 Changes to OPAL API"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL API Return Codes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-api-return-codes">
+<h1>OPAL API Return Codes<a class="headerlink" href="#opal-api-return-codes" title="Permalink to this headline">¶</a></h1>
+<p>All OPAL calls return an integer relaying the success/failure of the OPAL
+call.</p>
+<p>Success is typically indicated by OPAL_SUCCESS. Failure is always indicated
+by a negative return code.</p>
+<p>Conforming host Operating Systems MUST handle return codes other than those
+listed here. In future OPAL versions, additional return codes may be added.</p>
+<p>In the reference implementation (skiboot) these are all in <a class="reference external" href="https://github.com/open-power/skiboot/blob/master/include/opal-api.h">include/opal-api.h</a></p>
+<p>There have been additions to the return codes from OPAL over time. A conforming
+host OS should gracefully handle receiving a new error code for existing calls.</p>
+<p>An OS running on a POWER8 system only has to know about error codes that existed
+when POWER8 with OPAL was introduced (indicated by YES in the POWER8 column below).
+Additional OPAL error codes <em>may be returned on POWER8 systems</em> and as such OSs
+need to gracefully handle unknown error codes.</p>
+<p>An OS running on POWER9 or above must handle all error codes as they were when
+POWER9 was introduced. We use the placeholder “v1.0” version for
+“since the dawn of time” even though there never was a skiboot v1.0</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 17%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 32%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Name</p></td>
+<td><p>Return Code</p></td>
+<td><p>POWER8 GA</p></td>
+<td><p>POWER9 GA</p></td>
+<td><p>skiboot version where introduced</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></p></td>
+<td><p>0</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></p></td>
+<td><p>-1</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></p></td>
+<td><p>-2</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-partial"><span class="std std-ref">OPAL_PARTIAL</span></a></p></td>
+<td><p>-3</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-constrained"><span class="std std-ref">OPAL_CONSTRAINED</span></a></p></td>
+<td><p>-4</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-closed"><span class="std std-ref">OPAL_CLOSED</span></a></p></td>
+<td><p>-5</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></p></td>
+<td><p>-6</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></p></td>
+<td><p>-7</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-permission"><span class="std std-ref">OPAL_PERMISSION</span></a></p></td>
+<td><p>-8</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-no-mem"><span class="std std-ref">OPAL_NO_MEM</span></a></p></td>
+<td><p>-9</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-resource"><span class="std std-ref">OPAL_RESOURCE</span></a></p></td>
+<td><p>-10</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></p></td>
+<td><p>-11</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></p></td>
+<td><p>-12</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-hardware-frozen"><span class="std std-ref">OPAL_HARDWARE_FROZEN</span></a></p></td>
+<td><p>-13</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></p></td>
+<td><p>-14</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></p></td>
+<td><p>-15</p></td>
+<td><p>YES</p></td>
+<td><p>YES</p></td>
+<td><p>v1.0 (initial release)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-empty"><span class="std std-ref">OPAL_EMPTY</span></a></p></td>
+<td><p>-16</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p>v4.0</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-i2c-timeout"><span class="std std-ref">OPAL_I2C_TIMEOUT</span></a></p></td>
+<td><p>-17</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-i2c-invalid-cmd"><span class="std std-ref">OPAL_I2C_INVALID</span></a></p></td>
+<td><p>-18</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-i2c-lbus-parity"><span class="std std-ref">OPAL_I2C_LBUS_PARITY</span></a></p></td>
+<td><p>-19</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-i2c-bkend-overrun"><span class="std std-ref">OPAL_I2C_BKEND_OVERRUN</span></a></p></td>
+<td><p>-20</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-i2c-bkend-access"><span class="std std-ref">OPAL_I2C_BKEND_ACCESS</span></a></p></td>
+<td><p>-21</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-i2c-arbt-lost"><span class="std std-ref">OPAL_I2C_ARBT_LOST</span></a></p></td>
+<td><p>-22</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-i2c-nack-rcvd"><span class="std std-ref">OPAL_I2C_NACK_RCVD</span></a></p></td>
+<td><p>-23</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-i2c-stop-err"><span class="std std-ref">OPAL_I2C_STOP_ERR</span></a></p></td>
+<td><p>-24</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.1.0.html#skiboot-5-1-0"><span class="std std-ref">skiboot-5.1.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-xscom-busy"><span class="std std-ref">OPAL_XSCOM_BUSY</span></a></p></td>
+<td><p>OPAL_BUSY</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-xscom-chiplet-off"><span class="std std-ref">OPAL_XSCOM_CHIPLET_OFF</span></a></p></td>
+<td><p>OPAL_WRONG_STATE</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-xscom-partial-good"><span class="std std-ref">OPAL_XSCOM_PARTIAL_GOOD</span></a></p></td>
+<td><p>-25</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-xscom-addr-error"><span class="std std-ref">OPAL_XSCOM_ADDR_ERROR</span></a></p></td>
+<td><p>-26</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-xscom-clock-error"><span class="std std-ref">OPAL_XSCOM_CLOCK_ERROR</span></a></p></td>
+<td><p>-27</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-xscom-parity-error"><span class="std std-ref">OPAL_XSCOM_PARITY_ERROR</span></a></p></td>
+<td><p>-28</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-xscom-timeout"><span class="std std-ref">OPAL_XSCOM_TIMEOUT</span></a></p></td>
+<td><p>-29</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-xscom-ctr-offlined"><span class="std std-ref">OPAL_XSCOM_CTR_OFFLINED</span></a></p></td>
+<td><p>-30</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.4.0.html#skiboot-5-4-0"><span class="std std-ref">skiboot-5.4.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-xive-provisioning"><span class="std std-ref">OPAL_XIVE_PROVISIONING</span></a></p></td>
+<td><p>-31</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.5.0.html#skiboot-5-5-0"><span class="std std-ref">skiboot-5.5.0</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-xive-free-active"><span class="std std-ref">OPAL_XIVE_FREE_ACTIVE</span></a></p></td>
+<td><p>-32</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.5.0.html#skiboot-5-5-0"><span class="std std-ref">skiboot-5.5.0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-timeout"><span class="std std-ref">OPAL_TIMEOUT</span></a></p></td>
+<td><p>-33</p></td>
+<td><p>NO</p></td>
+<td><p>YES</p></td>
+<td><p><a class="reference internal" href="../release-notes/skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<p>The core set of return codes are:</p>
+<div class="section" id="opal-success">
+<span id="id1"></span><h2>OPAL_SUCCESS<a class="headerlink" href="#opal-success" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_SUCCESS           0</span>
+</pre></div>
+</div>
+<p>Success!</p>
+</div>
+<div class="section" id="opal-parameter">
+<span id="id2"></span><h2>OPAL_PARAMETER<a class="headerlink" href="#opal-parameter" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PARAMETER         -1</span>
+</pre></div>
+</div>
+<p>A parameter was invalid. This will also be returned if you call an
+invalid OPAL call. To determine if a specific OPAL call is supported
+or not, OPAL_CHECK_TOKEN should be called rather than relying on
+OPAL_PARAMETER being returned for an invalid token.</p>
+</div>
+<div class="section" id="opal-busy">
+<span id="id3"></span><h2>OPAL_BUSY<a class="headerlink" href="#opal-busy" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_BUSY            -2</span>
+</pre></div>
+</div>
+<p>Try again later. Related to <cite>OPAL_BUSY_EVENT</cite>, but <cite>OPAL_BUSY</cite> indicates that the
+caller need not call <cite>OPAL_POLL_EVENTS</cite> itself. <strong>TODO</strong> Clarify current situation.</p>
+</div>
+<div class="section" id="opal-partial">
+<span id="id4"></span><h2>OPAL_PARTIAL<a class="headerlink" href="#opal-partial" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PARTIAL         -3</span>
+</pre></div>
+</div>
+<p>The operation partially succeeded.</p>
+</div>
+<div class="section" id="opal-constrained">
+<span id="id5"></span><h2>OPAL_CONSTRAINED<a class="headerlink" href="#opal-constrained" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CONSTRAINED     -4</span>
+</pre></div>
+</div>
+<p><strong>FIXME</strong></p>
+</div>
+<div class="section" id="opal-closed">
+<span id="id6"></span><h2>OPAL_CLOSED<a class="headerlink" href="#opal-closed" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CLOSED          -5</span>
+</pre></div>
+</div>
+<p><strong>FIXME</strong> document these</p>
+</div>
+<div class="section" id="opal-hardware">
+<span id="id7"></span><h2>OPAL_HARDWARE<a class="headerlink" href="#opal-hardware" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_HARDWARE                -6</span>
+</pre></div>
+</div>
+<p><strong>FIXME</strong> document these</p>
+</div>
+<div class="section" id="opal-unsupported">
+<span id="id8"></span><h2>OPAL_UNSUPPORTED<a class="headerlink" href="#opal-unsupported" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_UNSUPPORTED     -7</span>
+</pre></div>
+</div>
+<p>Unsupported operation. Non-fatal.</p>
+</div>
+<div class="section" id="opal-permission">
+<span id="id9"></span><h2>OPAL_PERMISSION<a class="headerlink" href="#opal-permission" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PERMISSION              -8</span>
+</pre></div>
+</div>
+<p>Inadequate permission to perform the operation.</p>
+</div>
+<div class="section" id="opal-no-mem">
+<span id="id10"></span><h2>OPAL_NO_MEM<a class="headerlink" href="#opal-no-mem" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_NO_MEM          -9</span>
+</pre></div>
+</div>
+<p>Indicates a temporary or permanent lack of adequate memory to perform the
+operation. Ideally, this should never happen. Skiboot reserves a small amount
+of memory for its heap and some operations (such as I2C requests) are allocated
+from this heap.</p>
+<p>If this is ever hit, you should likely file a bug.</p>
+</div>
+<div class="section" id="opal-resource">
+<span id="id11"></span><h2>OPAL_RESOURCE<a class="headerlink" href="#opal-resource" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_RESOURCE                -10</span>
+</pre></div>
+</div>
+<p>When trying to use a limited resource, OPAL found that there were none free.
+While OPAL_BUSY indicates that OPAL may soon be able to proces the requent,
+OPAL_RESOURCE is a more permanent error and while the resource <em>may</em> become
+available again in the future, it is not certain that it will.</p>
+</div>
+<div class="section" id="opal-internal-error">
+<span id="id12"></span><h2>OPAL_INTERNAL_ERROR<a class="headerlink" href="#opal-internal-error" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_INTERNAL_ERROR  -11</span>
+</pre></div>
+</div>
+<p>Something has gone wrong inside OPAL. This is likely a bug somewhere and we
+return OPAL_INTERNAL_ERROR for safety.</p>
+</div>
+<div class="section" id="opal-busy-event">
+<span id="id13"></span><h2>OPAL_BUSY_EVENT<a class="headerlink" href="#opal-busy-event" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_BUSY_EVENT              -12</span>
+</pre></div>
+</div>
+<p>The same as <cite>OPAL_BUSY</cite> but signals that the OS should call <cite>OPAL_POLL_EVENTS</cite> as
+that may be required to get into a state where the call will succeed.</p>
+</div>
+<div class="section" id="opal-hardware-frozen">
+<span id="id14"></span><h2>OPAL_HARDWARE_FROZEN<a class="headerlink" href="#opal-hardware-frozen" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_HARDWARE_FROZEN -13</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-wrong-state">
+<span id="id15"></span><h2>OPAL_WRONG_STATE<a class="headerlink" href="#opal-wrong-state" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_WRONG_STATE     -14</span>
+</pre></div>
+</div>
+<p>The requested operation requires a (hardware or software) component to be in
+a different state. For example, you cannot call OPAL_START_CPU on a CPU that
+is not currently in OPAL.</p>
+</div>
+<div class="section" id="opal-async-completion">
+<span id="id16"></span><h2>OPAL_ASYNC_COMPLETION<a class="headerlink" href="#opal-async-completion" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_ASYNC_COMPLETION        -15</span>
+</pre></div>
+</div>
+<p>For asynchronous calls, successfully queueing/starting executing the
+command is indicated by the OPAL_ASYNC_COMPLETION return code.
+pseudo-code for an async call:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">token</span> <span class="o">=</span> <span class="n">opal_async_get_token</span><span class="p">();</span>
+<span class="n">rc</span> <span class="o">=</span> <span class="n">opal_async_example</span><span class="p">(</span><span class="n">foo</span><span class="p">,</span> <span class="n">token</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">!=</span> <span class="n">OPAL_ASYNC_COMPLETION</span><span class="p">)</span>
+    <span class="n">handle_error</span><span class="p">(</span><span class="n">rc</span><span class="p">);</span>
+<span class="n">rc</span> <span class="o">=</span> <span class="n">opal_async_wait</span><span class="p">(</span><span class="n">token</span><span class="p">);</span>
+<span class="o">//</span> <span class="n">handle</span> <span class="n">result</span> <span class="n">here</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-empty">
+<span id="id17"></span><h2>OPAL_EMPTY<a class="headerlink" href="#opal-empty" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_EMPTY           -16</span>
+</pre></div>
+</div>
+<p>The call was successful and the correct result is empty. For example, the
+OPAL_IPMI_RECV call can succeed and return that there is no waiting IPMI
+message.</p>
+</div>
+<div class="section" id="opal-i2c-timeout">
+<span id="id18"></span><h2>OPAL_I2C_TIMEOUT<a class="headerlink" href="#opal-i2c-timeout" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_TIMEOUT      -17</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-i2c-invalid">
+<span id="opal-i2c-invalid-cmd"></span><h2>OPAL_I2C_INVALID<a class="headerlink" href="#opal-i2c-invalid" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_INVALID_CMD  -18</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-i2c-lbus-parity">
+<span id="id19"></span><h2>OPAL_I2C_LBUS_PARITY<a class="headerlink" href="#opal-i2c-lbus-parity" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_LBUS_PARITY  -19</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-i2c-bkend-overrun">
+<span id="id20"></span><h2>OPAL_I2C_BKEND_OVERRUN<a class="headerlink" href="#opal-i2c-bkend-overrun" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_BKEND_OVERRUN        -20</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-i2c-bkend-access">
+<span id="id21"></span><h2>OPAL_I2C_BKEND_ACCESS<a class="headerlink" href="#opal-i2c-bkend-access" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_BKEND_ACCESS -21</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-i2c-arbt-lost">
+<span id="id22"></span><h2>OPAL_I2C_ARBT_LOST<a class="headerlink" href="#opal-i2c-arbt-lost" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_ARBT_LOST    -22</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-i2c-nack-rcvd">
+<span id="id23"></span><h2>OPAL_I2C_NACK_RCVD<a class="headerlink" href="#opal-i2c-nack-rcvd" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_NACK_RCVD    -23</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-i2c-stop-err">
+<span id="id24"></span><h2>OPAL_I2C_STOP_ERR<a class="headerlink" href="#opal-i2c-stop-err" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_STOP_ERR     -24</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xscom-busy">
+<span id="id25"></span><h2>OPAL_XSCOM_BUSY<a class="headerlink" href="#opal-xscom-busy" title="Permalink to this headline">¶</a></h2>
+<p>An alias for <a class="reference internal" href="#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></p>
+</div>
+<div class="section" id="opal-xscom-chiplet-off">
+<span id="id26"></span><h2>OPAL_XSCOM_CHIPLET_OFF<a class="headerlink" href="#opal-xscom-chiplet-off" title="Permalink to this headline">¶</a></h2>
+<p>An alias for <a class="reference internal" href="#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></p>
+</div>
+<div class="section" id="opal-xscom-partial-good">
+<span id="id27"></span><h2>OPAL_XSCOM_PARTIAL_GOOD<a class="headerlink" href="#opal-xscom-partial-good" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_PARTIAL_GOOD -25</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xscom-addr-error">
+<span id="id28"></span><h2>OPAL_XSCOM_ADDR_ERROR<a class="headerlink" href="#opal-xscom-addr-error" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_ADDR_ERROR -26</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xscom-clock-error">
+<span id="id29"></span><h2>OPAL_XSCOM_CLOCK_ERROR<a class="headerlink" href="#opal-xscom-clock-error" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_CLOCK_ERROR       -27</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xscom-parity-error">
+<span id="id30"></span><h2>OPAL_XSCOM_PARITY_ERROR<a class="headerlink" href="#opal-xscom-parity-error" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_PARITY_ERROR      -28</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xscom-timeout">
+<span id="id31"></span><h2>OPAL_XSCOM_TIMEOUT<a class="headerlink" href="#opal-xscom-timeout" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_TIMEOUT   -29</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xscom-ctr-offlined">
+<span id="id32"></span><h2>OPAL_XSCOM_CTR_OFFLINED<a class="headerlink" href="#opal-xscom-ctr-offlined" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_CTR_OFFLINED      -30</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xive-provisioning">
+<span id="id33"></span><h2>OPAL_XIVE_PROVISIONING<a class="headerlink" href="#opal-xive-provisioning" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XIVE_PROVISIONING       -31</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-xive-free-active">
+<span id="id34"></span><h2>OPAL_XIVE_FREE_ACTIVE<a class="headerlink" href="#opal-xive-free-active" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XIVE_FREE_ACTIVE        -32</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opal-timeout">
+<span id="id35"></span><h2>OPAL_TIMEOUT<a class="headerlink" href="#opal-timeout" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_TIMEOUT         -33</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL API Return Codes</a><ul>
+<li><a class="reference internal" href="#opal-success">OPAL_SUCCESS</a></li>
+<li><a class="reference internal" href="#opal-parameter">OPAL_PARAMETER</a></li>
+<li><a class="reference internal" href="#opal-busy">OPAL_BUSY</a></li>
+<li><a class="reference internal" href="#opal-partial">OPAL_PARTIAL</a></li>
+<li><a class="reference internal" href="#opal-constrained">OPAL_CONSTRAINED</a></li>
+<li><a class="reference internal" href="#opal-closed">OPAL_CLOSED</a></li>
+<li><a class="reference internal" href="#opal-hardware">OPAL_HARDWARE</a></li>
+<li><a class="reference internal" href="#opal-unsupported">OPAL_UNSUPPORTED</a></li>
+<li><a class="reference internal" href="#opal-permission">OPAL_PERMISSION</a></li>
+<li><a class="reference internal" href="#opal-no-mem">OPAL_NO_MEM</a></li>
+<li><a class="reference internal" href="#opal-resource">OPAL_RESOURCE</a></li>
+<li><a class="reference internal" href="#opal-internal-error">OPAL_INTERNAL_ERROR</a></li>
+<li><a class="reference internal" href="#opal-busy-event">OPAL_BUSY_EVENT</a></li>
+<li><a class="reference internal" href="#opal-hardware-frozen">OPAL_HARDWARE_FROZEN</a></li>
+<li><a class="reference internal" href="#opal-wrong-state">OPAL_WRONG_STATE</a></li>
+<li><a class="reference internal" href="#opal-async-completion">OPAL_ASYNC_COMPLETION</a></li>
+<li><a class="reference internal" href="#opal-empty">OPAL_EMPTY</a></li>
+<li><a class="reference internal" href="#opal-i2c-timeout">OPAL_I2C_TIMEOUT</a></li>
+<li><a class="reference internal" href="#opal-i2c-invalid">OPAL_I2C_INVALID</a></li>
+<li><a class="reference internal" href="#opal-i2c-lbus-parity">OPAL_I2C_LBUS_PARITY</a></li>
+<li><a class="reference internal" href="#opal-i2c-bkend-overrun">OPAL_I2C_BKEND_OVERRUN</a></li>
+<li><a class="reference internal" href="#opal-i2c-bkend-access">OPAL_I2C_BKEND_ACCESS</a></li>
+<li><a class="reference internal" href="#opal-i2c-arbt-lost">OPAL_I2C_ARBT_LOST</a></li>
+<li><a class="reference internal" href="#opal-i2c-nack-rcvd">OPAL_I2C_NACK_RCVD</a></li>
+<li><a class="reference internal" href="#opal-i2c-stop-err">OPAL_I2C_STOP_ERR</a></li>
+<li><a class="reference internal" href="#opal-xscom-busy">OPAL_XSCOM_BUSY</a></li>
+<li><a class="reference internal" href="#opal-xscom-chiplet-off">OPAL_XSCOM_CHIPLET_OFF</a></li>
+<li><a class="reference internal" href="#opal-xscom-partial-good">OPAL_XSCOM_PARTIAL_GOOD</a></li>
+<li><a class="reference internal" href="#opal-xscom-addr-error">OPAL_XSCOM_ADDR_ERROR</a></li>
+<li><a class="reference internal" href="#opal-xscom-clock-error">OPAL_XSCOM_CLOCK_ERROR</a></li>
+<li><a class="reference internal" href="#opal-xscom-parity-error">OPAL_XSCOM_PARITY_ERROR</a></li>
+<li><a class="reference internal" href="#opal-xscom-timeout">OPAL_XSCOM_TIMEOUT</a></li>
+<li><a class="reference internal" href="#opal-xscom-ctr-offlined">OPAL_XSCOM_CTR_OFFLINED</a></li>
+<li><a class="reference internal" href="#opal-xive-provisioning">OPAL_XIVE_PROVISIONING</a></li>
+<li><a class="reference internal" href="#opal-xive-free-active">OPAL_XIVE_FREE_ACTIVE</a></li>
+<li><a class="reference internal" href="#opal-timeout">OPAL_TIMEOUT</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="power9-changes.html"
+                        title="previous chapter">POWER9 Changes to OPAL API</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../release-notes/index.html"
+                        title="next chapter">Release Notes</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/return-codes.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../release-notes/index.html" title="Release Notes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="power9-changes.html" title="POWER9 Changes to OPAL API"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL API Return Codes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

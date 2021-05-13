@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL/Skiboot In-Memory Collection (IMC) interface Documentation &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Power Management" href="power-management.html" />
+    <link rel="prev" title="P9 XIVE Exploitation" href="xive.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="power-management.html" title="Power Management"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="xive.html" title="P9 XIVE Exploitation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-skiboot-in-memory-collection-imc-interface-documentation">
+<span id="imc"></span><h1>OPAL/Skiboot In-Memory Collection (IMC) interface Documentation<a class="headerlink" href="#opal-skiboot-in-memory-collection-imc-interface-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview:<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>In-Memory-Collection (IMC) is performance monitoring infrastrcuture
+for counters that (once started) can be read from memory at any time by
+an operating system. Such counters include those for the Nest and Core
+units, enabling continuous monitoring of resource utilisation on the chip.</p>
+<p>The API is agnostic as to how these counters are implemented. For the
+Nest units, they’re implemented by having microcode in an on-chip
+microcontroller and for core units, they are implemented as part of core logic
+to gather data and periodically write it to the memory locations.</p>
+</div>
+<div class="section" id="nest-on-chip-off-core-unit">
+<h2>Nest (On-Chip, Off-Core) unit:<a class="headerlink" href="#nest-on-chip-off-core-unit" title="Permalink to this headline">¶</a></h2>
+<p>Nest units have dedicated hardware counters which can be programmed
+to monitor various chip resources such as memory bandwidth,
+xlink bandwidth, alink bandwidth, PCI, NVlink and so on. These Nest
+unit PMU counters can be programmed in-band via scom. But alternatively,
+programming of these counters and periodically moving the counter data
+to memory are offloaded to a hardware engine part of OCC (On-Chip Controller).</p>
+<p>Microcode, starts to run at system boot in OCC complex, initialize these
+Nest unit PMUs and periodically accumulate the nest pmu counter values
+to memory. List of supported events by the microcode is packages as a DTS
+and stored in IMA_CATALOG partition.</p>
+</div>
+<div class="section" id="core-unit">
+<h2>Core unit:<a class="headerlink" href="#core-unit" title="Permalink to this headline">¶</a></h2>
+<p>Core IMC PMU counters are handled in the core-imc unit. Each core has
+4 Core Performance Monitoring Counters (CPMCs) which are used by Core-IMC logic.
+Two of these are dedicated to count core cycles and instructions.
+The 2 remaining CPMCs have to multiplex 128 events each.</p>
+<p>Core IMC hardware does not support interrupts and it peridocially (based on
+sampling duration) fetches the counter data and accumulate to main memory.
+Memory to accumulate counter data are refered from “PDBAR” (per-core scom)
+and “LDBAR” per-thread spr.</p>
+</div>
+<div class="section" id="trace-mode-of-imc">
+<h2>Trace mode of IMC:<a class="headerlink" href="#trace-mode-of-imc" title="Permalink to this headline">¶</a></h2>
+<p>POWER9 support two modes for IMC which are the Accumulation mode and
+Trace mode. In Accumulation mode event counts are accumulated in system
+memory. Hypervisor/kernel then reads the posted counts periodically, or
+when requested. In IMC Trace mode, the 64 bit trace scom value is initialized
+with the event information. The CPMC*SEL and CPMC_LOAD in the trace scom, specifies
+the event to be monitored and the sampling duration. On each overflow in the
+CPMC*SEL, hardware snapshots the program counter along with event counts
+and writes into memory pointed by LDBAR. LDBAR has bits to indicate whether
+hardware is configured for accumulation or trace mode.
+Currently the event monitored for trace-mode is fixed as cycle.</p>
+<p>PMI interrupt handling is avoided, since IMC trace mode snapshots the
+program counter and update to the memory. And this also provide a way for
+the operating system to do instruction sampling in real time without
+PMI(Performance Monitoring Interrupts) processing overhead.</p>
+<p><strong>Example:</strong></p>
+<p>Performance data using ‘perf top’ with and without trace-imc event:</p>
+<p><em>PMI interrupts count when `perf top` command is executed without trace-imc event.</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># cat /proc/interrupts  (a snippet from the output)</span>
+<span class="mi">9944</span>      <span class="mi">1072</span>        <span class="mi">804</span>        <span class="mi">804</span>       <span class="mi">1644</span>        <span class="mi">804</span>       <span class="mi">1306</span>
+<span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>
+<span class="mi">804</span>        <span class="mi">804</span>       <span class="mi">1961</span>       <span class="mi">1602</span>        <span class="mi">804</span>        <span class="mi">804</span>       <span class="mi">1258</span>
+<span class="p">[</span><span class="o">-----------------------------------------------------------------</span><span class="p">]</span>
+<span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>
+<span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>
+<span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">803</span>
+<span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>       <span class="mi">1306</span>        <span class="mi">803</span>
+<span class="mi">803</span>   <span class="n">Performance</span> <span class="n">monitoring</span> <span class="n">interrupts</span>
+</pre></div>
+</div>
+<p><em>PMI interrupts count when `perf top` command executed with trace-imc event
+(executed right after ‘perf top’ without trace-imc event).</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># perf top -e trace_imc/trace_cycles/</span>
+<span class="mf">12.50</span><span class="o">%</span>  <span class="p">[</span><span class="n">kernel</span><span class="p">]</span>          <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="n">arch_cpu_idle</span>
+<span class="mf">11.81</span><span class="o">%</span>  <span class="p">[</span><span class="n">kernel</span><span class="p">]</span>          <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="n">__next_timer_interrupt</span>
+<span class="mf">11.22</span><span class="o">%</span>  <span class="p">[</span><span class="n">kernel</span><span class="p">]</span>          <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="n">rcu_idle_enter</span>
+<span class="mf">10.25</span><span class="o">%</span>  <span class="p">[</span><span class="n">kernel</span><span class="p">]</span>          <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="n">find_next_bit</span>
+ <span class="mf">7.91</span><span class="o">%</span>  <span class="p">[</span><span class="n">kernel</span><span class="p">]</span>          <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="n">do_idle</span>
+ <span class="mf">7.69</span><span class="o">%</span>  <span class="p">[</span><span class="n">kernel</span><span class="p">]</span>          <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="n">rcu_dynticks_eqs_exit</span>
+ <span class="mf">5.20</span><span class="o">%</span>  <span class="p">[</span><span class="n">kernel</span><span class="p">]</span>          <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="n">tick_nohz_idle_stop_tick</span>
+     <span class="p">[</span><span class="o">-----------------------</span><span class="p">]</span>
+
+<span class="c1"># cat /proc/interrupts (a snippet from the output)</span>
+
+<span class="mi">9944</span>      <span class="mi">1072</span>        <span class="mi">804</span>        <span class="mi">804</span>       <span class="mi">1644</span>        <span class="mi">804</span>       <span class="mi">1306</span>
+<span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>
+<span class="mi">804</span>        <span class="mi">804</span>       <span class="mi">1961</span>       <span class="mi">1602</span>        <span class="mi">804</span>        <span class="mi">804</span>       <span class="mi">1258</span>
+<span class="p">[</span><span class="o">-----------------------------------------------------------------</span><span class="p">]</span>
+<span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>
+<span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>
+<span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">804</span>        <span class="mi">803</span>
+<span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>        <span class="mi">803</span>       <span class="mi">1306</span>        <span class="mi">803</span>
+<span class="mi">803</span>   <span class="n">Performance</span> <span class="n">monitoring</span> <span class="n">interrupts</span>
+</pre></div>
+</div>
+<p>Here the PMI interrupts count remains the same.</p>
+</div>
+<div class="section" id="opal-apis">
+<h2>OPAL APIs:<a class="headerlink" href="#opal-apis" title="Permalink to this headline">¶</a></h2>
+<p>The OPAL API is simple: a call to init a counter type, and calls to
+start and stop collection. The memory locations are described in the
+device tree.</p>
+<p>See <a class="reference internal" href="opal-api/opal-imc-counters.html#opal-imc-counters"><span class="std std-ref">OPAL_IMC_COUNTERS_INIT</span></a> and <a class="reference internal" href="device-tree/imc.html#device-tree-imc"><span class="std std-ref">IMC Device Tree Bindings</span></a></p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</a><ul>
+<li><a class="reference internal" href="#overview">Overview:</a></li>
+<li><a class="reference internal" href="#nest-on-chip-off-core-unit">Nest (On-Chip, Off-Core) unit:</a></li>
+<li><a class="reference internal" href="#core-unit">Core unit:</a></li>
+<li><a class="reference internal" href="#trace-mode-of-imc">Trace mode of IMC:</a></li>
+<li><a class="reference internal" href="#opal-apis">OPAL APIs:</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="xive.html"
+                        title="previous chapter">P9 XIVE Exploitation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="power-management.html"
+                        title="next chapter">Power Management</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/imc.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="power-management.html" title="Power Management"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="xive.html" title="P9 XIVE Exploitation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

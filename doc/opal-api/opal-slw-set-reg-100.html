@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_SLW_SET_REG &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Starting and stopping secondary CPUs" href="opal-start-return-cpu-41-69.html" />
+    <link rel="prev" title="OPAL_SIGNAL_SYSTEM_RESET" href="opal-signal-system-reset-145.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-start-return-cpu-41-69.html" title="Starting and stopping secondary CPUs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-signal-system-reset-145.html" title="OPAL_SIGNAL_SYSTEM_RESET"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_SLW_SET_REG</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-slw-set-reg">
+<span id="id1"></span><h1>OPAL_SLW_SET_REG<a class="headerlink" href="#opal-slw-set-reg" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_SLW_SET_REG                     100</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_slw_set_reg</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">cpu_pir</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">sprn</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">val</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#opal-slw-set-reg"><span class="std std-ref">OPAL_SLW_SET_REG</span></a> is used to inform low-level firmware to restore a
+given value of SPR when there is a state loss.  The actual set of SPRs
+that are supported is platform dependent.</p>
+<p>In Power 8, it uses p8_pore_gen_cpufreq_fixed(), api provided by pore engine,
+to inform the spr with their corresponding values with which they
+must be restored.</p>
+<p>In Power 9, it uses p9_stop_save_cpureg(), api provided by self restore code,
+to inform the spr with their corresponding values with which they
+must be restored.</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">cpu_pir</span></code></dt><dd><p>This parameter specifies the pir of the cpu for which the call is being made.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">sprn</span></code></dt><dd><p>This parameter specifies the spr number as mentioned in p9_stop_api.H for
+Power9 and p8_pore_table_gen_api.H for Power8.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">val</span></code></dt><dd><p>This parameter specifices value with which the spr should be restored.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>On failure. The actual error code from the platform specific code is logged in the OPAL logs</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>If spr restore is not supported by pore engine.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>On success</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_SLW_SET_REG</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-signal-system-reset-145.html"
+                        title="previous chapter">OPAL_SIGNAL_SYSTEM_RESET</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-start-return-cpu-41-69.html"
+                        title="next chapter">Starting and stopping secondary CPUs</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-slw-set-reg-100.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-start-return-cpu-41-69.html" title="Starting and stopping secondary CPUs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-signal-system-reset-145.html" title="OPAL_SIGNAL_SYSTEM_RESET"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_SLW_SET_REG</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

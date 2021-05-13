@@ -1,0 +1,164 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_SIGNAL_SYSTEM_RESET &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_SLW_SET_REG" href="opal-slw-set-reg-100.html" />
+    <link rel="prev" title="OPAL_SET_XIVE" href="opal-set-xive-19.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-slw-set-reg-100.html" title="OPAL_SLW_SET_REG"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-set-xive-19.html" title="OPAL_SET_XIVE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_SIGNAL_SYSTEM_RESET</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-signal-system-reset">
+<span id="id1"></span><h1>OPAL_SIGNAL_SYSTEM_RESET<a class="headerlink" href="#opal-signal-system-reset" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int64_t</span> <span class="n">signal_system_reset</span><span class="p">(</span><span class="n">int32_t</span> <span class="n">cpu_nr</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This OPAL call causes the specified cpu(s) to be reset to the system
+reset exception handler (0x100).</p>
+<p>The SRR1 register will indicate a power-saving wakeup when appropriate,
+and the wake reason will be System Reset (see Power ISA).</p>
+<p>This interrupt may not be recoverable in some cases (e.g., if it is
+raised when the target has MSR[RI]=0), so it should not be used in
+normal operation, but only for crashing, debugging, and similar
+exceptional cases.</p>
+<p>OPAL_SIGNAL_SYSTEM_RESET can pull CPUs out of OPAL, which may be
+undesirable in a crash or shutdown situation (e.g., because they may
+hold locks which are required to access the console, or may be halfway
+through setting hardware registers), so OPAL_QUIESCE can be used
+before OPAL_SIGNAL_SYSTEM_RESET to (attempt to) ensure all CPUs are
+out of OPAL before being interrupted.</p>
+<div class="section" id="arguments">
+<h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int32_t</span> <span class="n">cpu_nr</span>
+  <span class="n">cpu_nr</span> <span class="o">&gt;=</span> <span class="mi">0</span>        <span class="n">The</span> <span class="n">cpu</span> <span class="n">server</span> <span class="n">number</span> <span class="n">of</span> <span class="n">the</span> <span class="n">target</span> <span class="n">cpu</span> <span class="n">to</span> <span class="n">reset</span><span class="o">.</span>
+  <span class="n">SYS_RESET_ALL</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">All</span> <span class="n">cpus</span> <span class="n">should</span> <span class="n">be</span> <span class="n">reset</span><span class="o">.</span>
+  <span class="n">SYS_RESET_ALL_OTHERS</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="n">All</span> <span class="n">but</span> <span class="n">the</span> <span class="n">current</span> <span class="n">cpu</span> <span class="n">should</span> <span class="n">be</span> <span class="n">reset</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>OPAL_SUCCESS</dt><dd><p>The system reset requests to target CPU(s) was successful. This returns
+asynchronously without acknowledgement from targets that system reset
+interrupt processing has completed or even started.</p>
+</dd>
+<dt>OPAL_PARAMETER</dt><dd><p>A parameter was incorrect.</p>
+</dd>
+<dt>OPAL_HARDWARE</dt><dd><p>Hardware indicated failure during reset, some or all of the target CPUs
+may have the system reset delivered.</p>
+</dd>
+<dt>OPAL_CONSTRAINED</dt><dd><p>Platform does not support broadcast operations.</p>
+</dd>
+<dt>OPAL_PARTIAL</dt><dd><p>Platform can not reset sibling threads on the same core as requested.
+None of the specified CPUs are reset in this case.</p>
+</dd>
+<dt>OPAL_UNSUPPORTED</dt><dd><p>This processor/platform is not supported.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_SIGNAL_SYSTEM_RESET</a><ul>
+<li><a class="reference internal" href="#arguments">Arguments</a></li>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-set-xive-19.html"
+                        title="previous chapter">OPAL_SET_XIVE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-slw-set-reg-100.html"
+                        title="next chapter">OPAL_SLW_SET_REG</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-signal-system-reset-145.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-slw-set-reg-100.html" title="OPAL_SLW_SET_REG"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-set-xive-19.html" title="OPAL_SET_XIVE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_SIGNAL_SYSTEM_RESET</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

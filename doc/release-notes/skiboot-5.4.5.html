@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.4.5 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.4.6" href="skiboot-5.4.6.html" />
+    <link rel="prev" title="skiboot-5.4.4" href="skiboot-5.4.4.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.6.html" title="skiboot-5.4.6"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.4.html" title="skiboot-5.4.4"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.5</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-4-5">
+<span id="id1"></span><h1>skiboot-5.4.5<a class="headerlink" href="#skiboot-5-4-5" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.4.5 was released on Friday June 9th, 2017. It replaces
+<a class="reference internal" href="skiboot-5.4.4.html#skiboot-5-4-4"><span class="std std-ref">skiboot-5.4.4</span></a> as the current stable release in the 5.4.x series.</p>
+<p>Over <a class="reference internal" href="skiboot-5.4.4.html#skiboot-5-4-4"><span class="std std-ref">skiboot-5.4.4</span></a>, we have a small number of bug fixes:</p>
+<ul>
+<li><p>On FSP platforms: notify FSP of Platform Log ID after Host Initiated Reset Reload
+Trigging a Host Initiated Reset (when the host detects the FSP has gone
+out to lunch and should be rebooted), would cause “Unknown Command” messages
+to appear in the OPAL log.</p>
+<p>This patch implements those messages.</p>
+<p>Log showing unknown command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span> <span class="c1"># cat /sys/firmware/opal/msglog | grep -i ,3</span>
+<span class="p">[</span>  <span class="mf">110.232114723</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">fsp_trigger_reset</span><span class="p">()</span> <span class="n">entry</span>
+<span class="p">[</span>  <span class="mf">188.431793837</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span> <span class="c1">#0: Link down, starting R&amp;R</span>
+<span class="p">[</span>  <span class="mf">464.109239162</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span> <span class="c1">#0: Got XUP with no pending message !</span>
+<span class="p">[</span>  <span class="mf">466.340598554</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="o">-</span><span class="n">DPO</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">command</span> <span class="mh">0xce0900</span>
+<span class="p">[</span>  <span class="mf">466.340600126</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">Unhandled</span> <span class="n">message</span> <span class="n">ce0900</span>
+</pre></div>
+</div>
+</li>
+<li><p>hw/i2c: Fix early lock drop</p>
+<p>When interacting with an I2C master the p8-i2c driver (common to p9)
+aquires a per-master lock which it holds for the duration of it’s
+interaction with the master.  Unfortunately, when
+p8_i2c_check_initial_status() detects that the master is busy with
+another transaction it drops the lock and returns OPAL_BUSY. This is
+contrary to the driver’s locking strategy which requires that the
+caller aquire and drop the lock. This leads to a crash due to the
+double unlock(), which skiboot treats as fatal.</p>
+</li>
+<li><p>head.S: store all of LR and CTR</p>
+<p>When saving the CTR and LR registers the skiboot exception handlers use the
+‘stw’ instruction which only saves the lower 32 bits of the register. Given
+these are both 64 bit registers this leads to some strange register dumps,
+for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>***********************************************
+Unexpected exception 200 !
+SRR0 : 0000000030016968 SRR1 : 9000000000201000
+HSRR0: 0000000000000180 HSRR1: 9000000000001000
+LR   : 3003438830823f50 CTR  : 3003438800000018
+CFAR : 00000000300168fc
+CR   : 40004208  XER: 00000000
+</pre></div>
+</div>
+<p>In this dump the upper 32 bits of LR and CTR are actually stack gunk
+which obscures the underlying issue.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.4.4.html"
+                        title="previous chapter">skiboot-5.4.4</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.4.6.html"
+                        title="next chapter">skiboot-5.4.6</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.4.5.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.6.html" title="skiboot-5.4.6"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.4.html" title="skiboot-5.4.4"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.5</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

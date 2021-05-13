@@ -1,0 +1,787 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.3.0-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.3.0-rc2" href="skiboot-5.3.0-rc2.html" />
+    <link rel="prev" title="skiboot-5.3.0" href="skiboot-5.3.0.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.3.0-rc2.html" title="skiboot-5.3.0-rc2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.3.0.html" title="skiboot-5.3.0"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.3.0-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-3-0-rc1">
+<h1>skiboot-5.3.0-rc1<a class="headerlink" href="#skiboot-5-3-0-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.3.0-rc1 was released on Monday July 25th, 2016</p>
+<p>skiboot-5.3.0-rc1 is the first release candidate of skiboot 5.3, which will
+become the new stable release of skiboot following the 5.2 release, first
+released March 16th 2016.</p>
+<p>skiboot-5.3.0-rc1 contains all bug fixes as of skiboot-5.1.16
+and skiboot-5.2.4 (the existing stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a>.</p>
+<p>The current plan is to release skiboot-5.3.0 August 1st 2016.</p>
+<p>Over skiboot-5.2, we have the following changes:</p>
+<div class="section" id="opal-api-device-tree">
+<h2>OPAL API/Device Tree<a class="headerlink" href="#opal-api-device-tree" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Reserve OPAL API numbers for XICS emulation for XIVE</dt><dd><p>Additionally, we put in some skeleton docs for what’s coming,
+key points being that this is for P9 and above, relies on a device
+being present in the device tree and is modelled on the PAPR calls.</p>
+</dd>
+</dl>
+</li>
+<li><p>interrupts: Remove #interrupt-cells from ICP nodes</p></li>
+<li><p>Stop adding legacy linux, phandle to device tree, just add phandle
+No Linux kernel has ever existed for powernv that only knows linux,phandle.</p></li>
+</ul>
+</div>
+<div class="section" id="power9">
+<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Add base POWER9 support
+In <em>NO WAY</em> is this geared towards real POWER9 hardware.
+Suitable for use in simulators <em>only</em>, and even then, only if you
+intensely know what you’re doing.</p></li>
+<li><p>Document changes in OPAL API for POWER9
+Some things are going to change, we start documenting them.</p></li>
+<li><p>cpu: supply ibm,dec-bits via devicetree</p></li>
+<li><p>power9: Add example device tree for phb4</p></li>
+<li><p>device-tree: Only advertise ibm, opal-v3 (not v2) on POWER9 and above</p></li>
+</ul>
+</div>
+<div class="section" id="capi">
+<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>phb3: Test CAPI mode on both CAPP units on Naples</p></li>
+<li><p>hmi: Recover both CAPP units on Naples after malfunction alert</p></li>
+<li><p>chiptod: Sync timebase in both CAPP units on Naples</p></li>
+<li><p>phb3: Set CAPI mode for both CAPP units on Naples</p></li>
+<li><p>phb3: Load CAPP ucode to both CAPP units on Naples</p></li>
+<li><dl class="simple">
+<dt>phb3: Add support for CAPP DMA mode</dt><dd><p>The XSL used in the Mellanox CX4 card uses a DMA mode of CAPI, which
+requires a few registers configured specially. This adds a new mode to
+the OPAL_PCI_SET_PHB_CAPI_MODE API to enable CAPI in DMA mode.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="pci">
+<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>pci: Do a dummy config write to devices to establish bus number</p></li>
+<li><p>phb: Work around XSL bug sending PTE updates with wrong scope</p></li>
+<li><p>Support for PCI hotplug (if a platform supports it)</p></li>
+</ul>
+</div>
+<div class="section" id="garrison">
+<h2>Garrison<a class="headerlink" href="#garrison" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>NVLink/NPU support</p></li>
+<li><p>Full garrison platform support.</p></li>
+</ul>
+</div>
+<div class="section" id="bmc-based-platforms">
+<h2>BMC based platforms<a class="headerlink" href="#bmc-based-platforms" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>bt: use the maximum retry count returned by the BMC</p></li>
+<li><dl class="simple">
+<dt>SEL: Fix eSEL ID while logging eSEL event</dt><dd><p>Commit 127a7dac added eSEL ID to SEL event in reverse order (0700 instead
+of 0007). This code fixes this issue by adding ID in proper order.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="tests-simulation">
+<h2>Tests/Simulation<a class="headerlink" href="#tests-simulation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>test/hello_world: always use shutdown type zero</p></li>
+<li><p>make check: make test runs less noisy</p></li>
+<li><p>boot-tests: force booting from primary (non-golden) side</p></li>
+<li><p>mambo: Enable multicore configurations</p></li>
+<li><p>mambo: Flatten device tree at the end</p></li>
+<li><p>mambo: Increase memory to 4GB and change memory map</p></li>
+<li><p>Timebase quirk for slow simulators like AWAN and SIMICS</p></li>
+<li><p>chip: Add simics specific quirks</p></li>
+<li><p>mambo: Flash driver using bogus disk</p></li>
+<li><p>platform/mambo: Add a heartbeat time, making console more responsive</p></li>
+<li><p>mambo: Fix bt command and add little endian support</p></li>
+</ul>
+</div>
+<div class="section" id="fsp-platforms">
+<h2>FSP platforms<a class="headerlink" href="#fsp-platforms" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>beginnings of support for SPIRA-S structure</p></li>
+<li><p>Handle mbox response with bad status:0x24 during FSP termination</p></li>
+<li><p>FSP: Validate fsp_msg response memory allocation</p></li>
+<li><p>FSP/ELOG: Fix OPAL generated elog event notification</p></li>
+<li><p>FSP/ELOG: Disable event notification during kexec
+Possible crash if error log timing around kexec is unfortunate</p></li>
+<li><p>fsp/console: Ignore data on unresponsive consoles</p>
+<blockquote>
+<div><p>Linux kernels from v4.1 onwards will try to request an irq for each hvc
+console using OPAL_EVENT_CONSOLE_INPUT, however because the IRQF_SHARED
+flag is not set any console after the first will fail. If there is data
+on one of these failed consoles OPAL will set OPAL_EVENT_CONSOLE_INPUT
+every time fsp_console_read is called, leading to RCU stalls in the
+kernel.</p>
+<p>As a workaround for unpatched kernels, cease setting
+OPAL_EVENT_CONSOLE_INPUT for consoles that we have noticed are not being
+read.</p>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="hmi">
+<h2>HMI<a class="headerlink" href="#hmi" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>hmi: Fix a bug where partial hmi event was reported to host.</p></li>
+<li><p>hmi: Add handling for NPU checkstops</p></li>
+<li><p>hmi: Only raise a catchall HMI if no other components have</p></li>
+<li><p>hmi: Rework HMI event handling of FIR read failure</p></li>
+</ul>
+</div>
+<div class="section" id="tools">
+<h2>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><dl class="simple">
+<dt>external: Add a getsram command</dt><dd><p>The getsram command reads the OCC SRAM. This is useful for debug.</p>
+</dd>
+</dl>
+</li>
+<li><p>bug fixes in flash utilities (pflash/gard)</p></li>
+<li><p>pflash: Allow building under yocto.</p></li>
+<li><p>external/opal-prd: Ensure that struct host_interfaces matches the thunk</p></li>
+<li><p>external/pflash: Handle incorrect cmd-line options better</p></li>
+<li><p>libflash: fix bug on reading truncated flash file</p></li>
+<li><p>pflash: add support for manipulating file rather than flash</p></li>
+<li><p>gard: fix compile error on ARM</p></li>
+<li><p>libflash: Add sanity checks to ffs init code.</p></li>
+<li><p>external: Add dynamically linked pflash</p></li>
+</ul>
+</div>
+<div class="section" id="mambo">
+<h2>Mambo<a class="headerlink" href="#mambo" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Test device tree for kernel location</dt><dd><p>This can reduce the boot time since the kernel no longer needs to
+relocate itself when loaded directly at 0.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="generic">
+<h2>Generic<a class="headerlink" href="#generic" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>hw/lpc: Log LPC SYNC errors as OPAL_PLATFORM_ERR_EVT errors</p></li>
+<li><p>Explicitly disable the attn instruction on all CPUs on boot.</p></li>
+<li><p>hw/xscom: Reset XSCOM engine after finite number of retries when busy</p></li>
+<li><p>hw/xscom: Reset XSCOM engine after querying sleeping core FIR</p></li>
+<li><p>core/timer: Add support for platform specific heartbeat</p></li>
+<li><p>Fix GCOV_COUNTERS ifdef logic for GCC 6.0</p></li>
+<li><p>core: Fix backtrace for gcc 6
+fixes a compiler warning on GCC 6 and above</p></li>
+<li><dl class="simple">
+<dt>cpu: Don’t call time_wait with lock held</dt><dd><p>Also make the locking around re-init safer, properly block the
+OS from restarting a thread that was caught for re-init.</p>
+</dd>
+</dl>
+</li>
+<li><p>flash: Increase the maximum number of flash devices</p></li>
+</ul>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<p>Extending the analysis done for the last few releases, we can see our trends
+in code review across versions:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 14%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Release</p></th>
+<th class="head"><p>csets</p></th>
+<th class="head"><p>Ack</p></th>
+<th class="head"><p>Reviews</p></th>
+<th class="head"><p>Tested</p></th>
+<th class="head"><p>Reported</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>5.0</p></td>
+<td><p>329</p></td>
+<td><p>15</p></td>
+<td><p>20</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>5.1</p></td>
+<td><p>372</p></td>
+<td><p>13</p></td>
+<td><p>38</p></td>
+<td><p>1</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-even"><td><p>5.2-rc1</p></td>
+<td><p>334</p></td>
+<td><p>20</p></td>
+<td><p>34</p></td>
+<td><p>6</p></td>
+<td><p>11</p></td>
+</tr>
+<tr class="row-odd"><td><p>5.3-rc1</p></td>
+<td><p>302</p></td>
+<td><p>36</p></td>
+<td><p>53</p></td>
+<td><p>4</p></td>
+<td><p>5</p></td>
+</tr>
+</tbody>
+</table>
+<p>An increase in reviews this cycle is great!</p>
+<p>Detailed statistics for 5.3.0-rc1 are below:</p>
+<p>Processed 302 csets from 31 developers
+A total of 20887 lines added, 4540 removed (delta 16347)</p>
+<p>Developers with the most changesets</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 31%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>82 (27.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>36 (11.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>28 (9.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>25 (8.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>24 (7.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Russell Currey</p></td>
+<td><p>14 (4.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Brad Bishop</p></td>
+<td><p>12 (4.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vipin K Parashar</p></td>
+<td><p>10 (3.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cédric Le Goater</p></td>
+<td><p>9 (3.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Shreyas B. Prabhu</p></td>
+<td><p>8 (2.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>7 (2.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Philippe Bergheaud</p></td>
+<td><p>6 (2.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>5 (1.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mukesh Ojha</p></td>
+<td><p>4 (1.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>4 (1.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ian Munsie</p></td>
+<td><p>4 (1.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>3 (1.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chris Smart</p></td>
+<td><p>3 (1.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Sam Mendoza-Jonas</p></td>
+<td><p>2 (0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Joel Stanley</p></td>
+<td><p>2 (0.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Dinar Valeev</p></td>
+<td><p>2 (0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Shilpasri G Bhat</p></td>
+<td><p>2 (0.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Patrick Williams</p></td>
+<td><p>2 (0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Deb McLemore</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Balbir Singh</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Suraj Jitindar Singh</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Frederic Bonnard</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Kamalesh Babulal</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mamatha</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>1 (0.3%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most changed lines</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>7491 (34.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>4821 (22.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>4740 (21.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>1294 (5.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>620 (2.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
+<td><p>470 (2.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>338 (1.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Shreyas B. Prabhu</p></td>
+<td><p>330 (1.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vipin K Parashar</p></td>
+<td><p>305 (1.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Russell Currey</p></td>
+<td><p>295 (1.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>229 (1.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Philippe Bergheaud</p></td>
+<td><p>170 (0.8%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Ian Munsie</p></td>
+<td><p>133 (0.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Dinar Valeev</p></td>
+<td><p>126 (0.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Brad Bishop</p></td>
+<td><p>80 (0.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
+<td><p>80 (0.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>62 (0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Frederic Bonnard</p></td>
+<td><p>61 (0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Sam Mendoza-Jonas</p></td>
+<td><p>32 (0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chris Smart</p></td>
+<td><p>27 (0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
+<td><p>20 (0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Patrick Williams</p></td>
+<td><p>18 (0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Suraj Jitindar Singh</p></td>
+<td><p>17 (0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mamatha</p></td>
+<td><p>15 (0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Mukesh Ojha</p></td>
+<td><p>8 (0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>8 (0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Joel Stanley</p></td>
+<td><p>4 (0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Balbir Singh</p></td>
+<td><p>4 (0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Kamalesh Babulal</p></td>
+<td><p>2 (0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Deb McLemore</p></td>
+<td><p>1 (0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>1 (0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most lines removed</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Dinar Valeev</p></td>
+<td><p>68 (1.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Patrick Williams</p></td>
+<td><p>10 (0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Mukesh Ojha</p></td>
+<td><p>4 (0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Kamalesh Babulal</p></td>
+<td><p>1 (0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most signoffs (total 249)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>236 (94.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>6 (2.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>3 (1.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>2 (0.8%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>1 (0.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vipin K Parashar</p></td>
+<td><p>1 (0.4%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most reviews (total 53)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>11 (20.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Russell Currey</p></td>
+<td><p>9 (17.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Joel Stanley</p></td>
+<td><p>7 (13.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>7 (13.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Mukesh Ojha</p></td>
+<td><p>5 (9.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>3 (5.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>2 (3.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>2 (3.8%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>2 (3.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>1 (1.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>1 (1.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vipin K Parashar</p></td>
+<td><p>1 (1.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Frederic Barrat</p></td>
+<td><p>1 (1.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
+<td><p>1 (1.9%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most test credits (total 4)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>2 (50.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Russell Currey</p></td>
+<td><p>1 (25.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vaibhav Jain</p></td>
+<td><p>1 (25.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers who gave the most tested-by credits (total 4)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>3 (75.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>1 (25.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most report credits (total 5)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Mukesh Ojha</p></td>
+<td><p>2 (40.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Russell Currey</p></td>
+<td><p>1 (20.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1 (20.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Balbir Singh</p></td>
+<td><p>1 (20.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers who gave the most report credits (total 5)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>2 (40.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>2 (40.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>1 (20.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.3.0-rc1</a><ul>
+<li><a class="reference internal" href="#opal-api-device-tree">OPAL API/Device Tree</a></li>
+<li><a class="reference internal" href="#power9">POWER9</a></li>
+<li><a class="reference internal" href="#capi">CAPI</a></li>
+<li><a class="reference internal" href="#pci">PCI</a></li>
+<li><a class="reference internal" href="#garrison">Garrison</a></li>
+<li><a class="reference internal" href="#bmc-based-platforms">BMC based platforms</a></li>
+<li><a class="reference internal" href="#tests-simulation">Tests/Simulation</a></li>
+<li><a class="reference internal" href="#fsp-platforms">FSP platforms</a></li>
+<li><a class="reference internal" href="#hmi">HMI</a></li>
+<li><a class="reference internal" href="#tools">Tools</a></li>
+<li><a class="reference internal" href="#mambo">Mambo</a></li>
+<li><a class="reference internal" href="#generic">Generic</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.3.0.html"
+                        title="previous chapter">skiboot-5.3.0</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.3.0-rc2.html"
+                        title="next chapter">skiboot-5.3.0-rc2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.3.0-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.3.0-rc2.html" title="skiboot-5.3.0-rc2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.3.0.html" title="skiboot-5.3.0"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.3.0-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

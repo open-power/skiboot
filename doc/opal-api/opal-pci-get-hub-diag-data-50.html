@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_GET_HUB_DIAG_DATA &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_GET_PHB_DIAG_DATA2" href="opal-pci-get-phb-diag-data2-64.html" />
+    <link rel="prev" title="OPAL_PCI_ERR_INJECT" href="opal-pci-err-inject-96.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-get-phb-diag-data2-64.html" title="OPAL_PCI_GET_PHB_DIAG_DATA2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-err-inject-96.html" title="OPAL_PCI_ERR_INJECT"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_GET_HUB_DIAG_DATA</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-get-hub-diag-data">
+<span id="id1"></span><h1>OPAL_PCI_GET_HUB_DIAG_DATA<a class="headerlink" href="#opal-pci-get-hub-diag-data" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_GET_HUB_DIAG_DATA           50</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_get_hub_diag_data</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">hub_id</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">diag_buffer</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">diag_buffer_len</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Fetch diagnostic data for an IO hub. This was only implemented for hardware
+specific to POWER7 systems, something that was only ever available
+internally to IBM for development purposes.</p>
+<p>It is currently not used.</p>
+<p>If <a class="reference internal" href="opal-pci-next-error-60.html#opal-pci-next-error"><span class="std std-ref">OPAL_PCI_NEXT_ERROR</span></a> error type is <cite>OPAL_EEH_IOC_ERROR</cite> and severity
+is <cite>OPAL_EEH_SEV_INF</cite>, then the OS should call <a class="reference internal" href="#opal-pci-get-hub-diag-data"><span class="std std-ref">OPAL_PCI_GET_HUB_DIAG_DATA</span></a>
+to retreive diagnostic data to log appropriately.</p>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Diagnostic data copied successfully</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid address, invalid hub ID, or insufficient space in buffer for
+diagnostic data.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>hub doesn’t support retreiving diagnostic data.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-closed"><span class="std std-ref">OPAL_CLOSED</span></a></dt><dd><p>No pending error.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Something went wrong.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_PCI_GET_HUB_DIAG_DATA</a><ul>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-err-inject-96.html"
+                        title="previous chapter">OPAL_PCI_ERR_INJECT</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-get-phb-diag-data2-64.html"
+                        title="next chapter">OPAL_PCI_GET_PHB_DIAG_DATA2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-get-hub-diag-data-50.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-get-phb-diag-data2-64.html" title="OPAL_PCI_GET_PHB_DIAG_DATA2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-err-inject-96.html" title="OPAL_PCI_ERR_INJECT"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_GET_HUB_DIAG_DATA</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

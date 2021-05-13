@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POWER9 Changes to OPAL API &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL API Return Codes" href="return-codes.html" />
+    <link rel="prev" title="OPAL_NX_COPROC_INIT" href="opal_nx_coproc_init-167.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="return-codes.html" title="OPAL API Return Codes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal_nx_coproc_init-167.html" title="OPAL_NX_COPROC_INIT"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">POWER9 Changes to OPAL API</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="power9-changes-to-opal-api">
+<h1>POWER9 Changes to OPAL API<a class="headerlink" href="#power9-changes-to-opal-api" title="Permalink to this headline">¶</a></h1>
+<p>This document is a summary of POWER9 changes to the OPAL API over what it
+was for POWER7 and POWER8. As the POWER series of processors (at least up
+to POWER9) require changes in the hypervisor to work on a new processor
+generation, this gives us an opportunity with POWER9 to clean up several
+parts of the OPAL API.</p>
+<p>Eventually, when the kernel drops support for POWER8 and before, we can then
+remove the associated kernel code too.</p>
+<div class="section" id="opal-reinit-cpus">
+<h2>OPAL_REINIT_CPUS<a class="headerlink" href="#opal-reinit-cpus" title="Permalink to this headline">¶</a></h2>
+<p>Can now be extended beyond HILE BE/LE bits. If invalid flags are set on
+POWER9, OPAL_UNSUPPORTED will be returned.</p>
+</div>
+<div class="section" id="device-tree">
+<h2>Device Tree<a class="headerlink" href="#device-tree" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/ibm,opal/</span></code> compatible property now just lists <code class="docutils literal notranslate"><span class="pre">ibm,opal-v3</span></code> and no longer <code class="docutils literal notranslate"><span class="pre">ibm,opal-v2</span></code> (power9 and above only)</p></li>
+<li><p>Use only <code class="docutils literal notranslate"><span class="pre">stdout-path</span></code> property from POWER9 and above as usage of <code class="docutils literal notranslate"><span class="pre">linux,stdout-path</span></code> is deprecated</p></li>
+<li><p>Rename <code class="docutils literal notranslate"><span class="pre">fsp-ipl-side</span></code> as <code class="docutils literal notranslate"><span class="pre">sp-ipl-side</span></code> in <code class="docutils literal notranslate"><span class="pre">/ipl-params</span></code></p></li>
+<li><p>Add interrupt-parent property for <code class="docutils literal notranslate"><span class="pre">/ibm,opal/ipmi</span></code> node on POWER9 and above
+to make use of OPAL irqchip rather than event interface in linux.</p></li>
+</ul>
+</div>
+<div class="section" id="todo">
+<h2>TODO<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h2>
+<p>Things we still have to do for POWER9:</p>
+<ul>
+<li><p>PCI to use async API rather than returning delays</p></li>
+<li><p>deprecate/remove v1 APIs where there’s a V2</p></li>
+<li><p>Fix this FWTS warning:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">FAILED</span> <span class="p">[</span><span class="n">MEDIUM</span><span class="p">]</span> <span class="n">DeviceTreeBaseDTCWarnings</span><span class="p">:</span> <span class="n">Test</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dtc</span> <span class="n">reports</span> <span class="n">warnings</span> <span class="kn">from</span>
+<span class="nn">device</span> <span class="n">tree</span><span class="p">:</span> <span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">flash</span><span class="o">@</span><span class="mi">0</span> <span class="n">has</span>
+<span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">8</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 0, #size-cells == 0)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Remove mi-version / ml-version from <code class="docutils literal notranslate"><span class="pre">/ibm,opal/firmware</span></code> and replace with something better and more portable</p></li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">POWER9 Changes to OPAL API</a><ul>
+<li><a class="reference internal" href="#opal-reinit-cpus">OPAL_REINIT_CPUS</a></li>
+<li><a class="reference internal" href="#device-tree">Device Tree</a></li>
+<li><a class="reference internal" href="#todo">TODO</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal_nx_coproc_init-167.html"
+                        title="previous chapter">OPAL_NX_COPROC_INIT</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="return-codes.html"
+                        title="next chapter">OPAL API Return Codes</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/power9-changes.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="return-codes.html" title="OPAL API Return Codes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal_nx_coproc_init-167.html" title="OPAL_NX_COPROC_INIT"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">POWER9 Changes to OPAL API</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

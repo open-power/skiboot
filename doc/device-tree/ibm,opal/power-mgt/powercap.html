@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>power-mgt/powercap &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="power-mgt/psr" href="psr.html" />
+    <link rel="prev" title="ibm,opal/power-mgt/occ device tree entries" href="occ.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="psr.html" title="power-mgt/psr"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="occ.html" title="ibm,opal/power-mgt/occ device tree entries"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../power-mgt.html" accesskey="U">ibm,opal/power-mgt device tree entries</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">power-mgt/powercap</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="power-mgt-powercap">
+<span id="device-tree-ibm-opal-power-mgt-powercap"></span><h1>power-mgt/powercap<a class="headerlink" href="#power-mgt-powercap" title="Permalink to this headline">¶</a></h1>
+<p>The powercap sensors are populated in this node. Each child node in
+the “powercap” node represents a power-cappable component.</p>
+<p>For example :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">system</span><span class="o">-</span><span class="n">powercap</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="../../../opal-api/opal-powercap.html#opal-get-powercap"><span class="std std-ref">OPAL_GET_POWERCAP</span></a> and <a class="reference internal" href="../../../opal-api/opal-powercap.html#opal-set-powercap"><span class="std std-ref">OPAL_SET_POWERCAP</span></a> calls take a handle for
+what powercap property to get/set which is defined in the child node.</p>
+<p>The compatible property for the linux driver which will be
+“ibm,opal-powercap”</p>
+<p>Each child node has below properties:</p>
+<dl class="simple">
+<dt><cite>powercap-current</cite></dt><dd><p>Handle to indicate the current powercap</p>
+</dd>
+<dt><cite>powercap-min</cite></dt><dd><p>Absolute minimum possible powercap. This points to the soft powercap minimum
+limit as exported by OCC. The powercap set in the soft powercap range may or
+may not be maintained.</p>
+</dd>
+<dt><cite>powercap-max</cite></dt><dd><p>Maximum possible powercap</p>
+</dd>
+<dt><cite>powercap-hard-min</cite></dt><dd><p>This value points to the hard minimum powercap limit. The powercap set above
+this limit is guaranteed unless there is a hardware failure</p>
+</dd>
+</dl>
+<p>Powercap handle uses the following encoding:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">|</span> <span class="n">Class</span> <span class="o">|</span>    <span class="n">Reserved</span>   <span class="o">|</span> <span class="n">Attribute</span> <span class="o">|</span>
+<span class="o">|-------|---------------|-----------|</span>
+</pre></div>
+</div>
+<p>Note: The format of the powercap handle is <code class="docutils literal notranslate"><span class="pre">NOT</span></code> ABI and may change in
+the future.</p>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">power-mgt</span> <span class="p">{</span>
+  <span class="nc">powercap</span> <span class="p">{</span>
+     <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-powercap&quot;</span><span class="p">;</span>
+
+     <span class="nc">system-powercap</span> <span class="p">{</span>
+             <span class="nf">name</span> <span class="o">=</span> <span class="s">&quot;system-powercap&quot;</span><span class="p">;</span>
+             <span class="nf">powercap-current</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x00000002</span><span class="p">&gt;;</span>
+             <span class="nf">powercap-min</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x00000000</span><span class="p">&gt;;</span>
+             <span class="nf">powercap-max</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x00000001</span><span class="p">&gt;;</span>
+             <span class="nf">powercap-hard-min</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x000000003</span><span class="p">&gt;;</span>
+     <span class="p">};</span>
+  <span class="p">};</span>
+ <span class="p">};</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="occ.html"
+                        title="previous chapter">ibm,opal/power-mgt/occ device tree entries</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="psr.html"
+                        title="next chapter">power-mgt/psr</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/device-tree/ibm,opal/power-mgt/powercap.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="psr.html" title="power-mgt/psr"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="occ.html" title="ibm,opal/power-mgt/occ device tree entries"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../power-mgt.html" >ibm,opal/power-mgt device tree entries</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">power-mgt/powercap</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

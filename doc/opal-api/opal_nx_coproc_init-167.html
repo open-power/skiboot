@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_NX_COPROC_INIT &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="POWER9 Changes to OPAL API" href="power9-changes.html" />
+    <link rel="prev" title="OPAL_XSCOM_READ" href="opal-xscom-read-write-65-66.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="power9-changes.html" title="POWER9 Changes to OPAL API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-xscom-read-write-65-66.html" title="OPAL_XSCOM_READ"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_NX_COPROC_INIT</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-nx-coproc-init">
+<span id="id1"></span><h1>OPAL_NX_COPROC_INIT<a class="headerlink" href="#opal-nx-coproc-init" title="Permalink to this headline">¶</a></h1>
+<p>This OPAL call resets read offset and queued entries in high and normal
+priority receive FIFO control registers. The kernel initializes read
+offset entry in RXFIFO that it maintains during initialization. So this
+register reset is needed for NX module reload or in kexec boot to make sure
+read offset value matches with kernel entries. Otherwise NX reads requests
+with wrong offset in RxFIFO which could cause NX request failures.</p>
+<p>The kernel initiates this call for each coprocessor type such as 842 and
+GZIP per NX instance.</p>
+<div class="section" id="arguments">
+<h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>``uint32_t chip_id``
+  Contains value of the chip number identified at boot time.
+
+``uint32_t pid``
+  Contains NX coprocessor type (pid from the device tree).
+</pre></div>
+</div>
+</div>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>OPAL_SUCCESS</dt><dd><p>The call to reset readOffset and queued entries for high and normal
+FIFOs was successful.</p>
+</dd>
+<dt>OPAL_PARAMETER</dt><dd><p>Indicates invalid chip ID or NX coprocessor type.</p>
+</dd>
+<dt>OPAL_UNSUPPORTED</dt><dd><p>Not supported on P7 and P8.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_NX_COPROC_INIT</a><ul>
+<li><a class="reference internal" href="#arguments">Arguments</a></li>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-xscom-read-write-65-66.html"
+                        title="previous chapter">OPAL_XSCOM_READ</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="power9-changes.html"
+                        title="next chapter">POWER9 Changes to OPAL API</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal_nx_coproc_init-167.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="power9-changes.html" title="POWER9 Changes to OPAL API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-xscom-read-write-65-66.html" title="OPAL_XSCOM_READ"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_NX_COPROC_INIT</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

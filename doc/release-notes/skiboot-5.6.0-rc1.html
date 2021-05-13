@@ -1,0 +1,920 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.6.0-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.6.0-rc2" href="skiboot-5.6.0-rc2.html" />
+    <link rel="prev" title="skiboot-5.6.0" href="skiboot-5.6.0.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.6.0-rc2.html" title="skiboot-5.6.0-rc2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.6.0.html" title="skiboot-5.6.0"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.6.0-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-6-0-rc1">
+<span id="id1"></span><h1>skiboot-5.6.0-rc1<a class="headerlink" href="#skiboot-5-6-0-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.6.0-rc1 was released on Tuesday May 16th 2017. It is the first
+release candidate of skiboot 5.6, which will become the new stable release
+of skiboot following the 5.5 release, first released April 7th 2017.</p>
+<p>skiboot-5.6.0-rc1 contains all bug fixes as of <a class="reference internal" href="skiboot-5.4.4.html#skiboot-5-4-4"><span class="std std-ref">skiboot-5.4.4</span></a>
+and <a class="reference internal" href="skiboot-5.1.19.html#skiboot-5-1-19"><span class="std std-ref">skiboot-5.1.19</span></a> (the currently maintained stable releases). We
+do not currently expect to do any 5.5.x stable releases.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.6.0 by May 22nd, with skiboot 5.6.0
+being for all POWER8 and POWER9 platforms in op-build v1.17 (Due May 24th).
+This is a short cycle as this release is mainly targetted towards POWER9
+bringup efforts.</p>
+<p>This is the first release using the new regular six week release cycle,
+similar to op-build, but slightly offset to allow for a short stabilisation
+period. Expected release dates and contents are tracked using GitHub milestone
+and issues: <a class="reference external" href="https://github.com/open-power/skiboot/milestones">https://github.com/open-power/skiboot/milestones</a></p>
+<p>Over skiboot-5.5, we have the following changes:</p>
+<div class="section" id="new-platforms">
+<h2>New Platforms<a class="headerlink" href="#new-platforms" title="Permalink to this headline">¶</a></h2>
+<p>Thanks to SuperMicro for submitting support for the p9dsu platform, AKA Boston.</p>
+</div>
+<div class="section" id="power9">
+<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<p>XIVE:</p>
+<blockquote>
+<div><ul>
+<li><p>xive: Clear emulation mode queue on reset</p></li>
+<li><p>xive: Fixes/improvements to xive reset for multi-chip systems</p></li>
+<li><p>xive: Synchronize after disable IRQs in opal_xive_reset()</p></li>
+<li><p>xive: Workaround a problem with indirect TM access</p></li>
+<li><p>hdata: Make FSPv1 work again
+One less thing to work around for those crazy enough to try.</p></li>
+<li><p>xive: Log more information in opal_xive_dump() for emulation state</p>
+<p>Add a counter of total interrupts taken by a CPU, dump the
+queue buffer both before and after the current pointer,
+and also display the HW state of the queue descriptor and
+the PQ state of the IPI.</p>
+</li>
+<li><p>xive: Add a per-cpu logging mechanism to XICS emulation</p>
+<p>This is a small 32-entries rolling buffer that logs a few
+operations. It’s useful to debug odd problems. The output
+is printed when opal_xive_dump() is called.</p>
+</li>
+<li><p>xive: Check queues for duplicates in DEBUG builds.</p>
+<p>There should never be duplicate interrupts in a queue.
+This adds code to check that when looking at the queue
+content. Since it can be a performance loss, this is only
+done for debug builds.</p>
+</li>
+<li><p>xive+phb4: Fix exposing trigger page to Linux</p></li>
+</ul>
+</div></blockquote>
+<p>HDAT Parsing:</p>
+<blockquote>
+<div><ul>
+<li><p>hdata/spira.c: Add device-tree bindings for nest mmu</p></li>
+<li><p>hdata/i2c: Workaround broken i2c devices</p></li>
+<li><p>hdata: indicate when booted with elevated risk level</p>
+<p>When the system is IPLed with an elevated risk level Hostboot will
+set a flag in the IPL parameters structure. Parse and export this
+in the device tree at: /ipl-params/sys-params/elevated-risk-level</p>
+</li>
+<li><p>hdata: Respect OCC and HOMER resevations</p>
+<p>In the past we’ve ignored these since Hostboot insisted in exporting
+broken reservations and the OCC was not being used yet. This situation
+seems to have resolved itself so we should respect the reservations that
+hostboot provides.</p>
+</li>
+</ul>
+</div></blockquote>
+<p>I2C:</p>
+<ul>
+<li><p>i2c: Add interrupts support on P9</p>
+<p>Some older revisions of hostboot populate the host i2c device fields
+with all zero entires. Detect and ignore these so we don’t crash on
+boot.</p>
+<p>Without this we get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[  151.251240444,3] DT: dt_attach_root failed, duplicate unknown@0
+[  151.251300274,3] ***********************************************
+[  151.251339330,3] Unexpected exception 200 !
+[  151.251363654,3] SRR0 : 0000000030090c28 SRR1 : 9000000000201000
+[  151.251409207,3] HSRR0: 0000000000000010 HSRR1: 9000000000001000
+[  151.251444114,3] LR   : 30034018300c5ab0 CTR  : 30034018300a343c
+[  151.251478314,3] CFAR : 0000000030024804
+[  151.251500346,3] CR   : 40004208  XER: 00000000
+    &lt;snip GPRS&gt;
+[  151.252083372,0] Aborting!
+CPU 0034 Backtrace:
+ S: 0000000031cd36a0 R: 000000003001364c   .backtrace+0x2c
+ S: 0000000031cd3730 R: 0000000030018db8   ._abort+0x4c
+ S: 0000000031cd37b0 R: 0000000030025c6c   .exception_entry+0x114
+ S: 0000000031cd3840 R: 0000000000001f00 * +0x1f00
+ S: 0000000031cd3a10 R: 0000000031cd3ab0 *
+ S: 0000000031cd3aa0 R: 00000000300248b8   .new_property+0x90
+ S: 0000000031cd3b30 R: 0000000030024b50   .__dt_add_property_cells+0x30
+ S: 0000000031cd3bd0 R: 000000003009abec   .parse_i2c_devs+0x350
+ S: 0000000031cd3cf0 R: 0000000030093ffc   .parse_hdat+0x11e4
+ S: 0000000031cd3e30 R: 00000000300144c8   .main_cpu_entry+0x138
+ S: 0000000031cd3f00 R: 0000000030002648   boot_entry+0x198
+</pre></div>
+</div>
+</li>
+</ul>
+<p>PHB4:</p>
+<blockquote>
+<div><ul>
+<li><p>phb4: Enforce root complex config space size of 2048</p>
+<p>The root complex config space size on PHB4 is 2048. This patch sets
+that size and enforces it when trying to read/write the config space
+in the root complex.</p>
+<p>Without this someone reading the config space via /sysfs in linux will
+cause an EEH on the PHB.</p>
+<p>If too high, reads returns 1s and writes are silently dropped.</p>
+</li>
+<li><p>phb4: Add an option for disabling EEH MMIO in nvram</p>
+<p>Having the option to disable EEH for MMIO without rebuilding skiboot
+could be useful for testing, so check for pci-eeh-mmio=disabled in nvram.</p>
+<p>This is not designed to be a supported option or configuration, just
+an option that’s useful in bringup and development of POWER9 systems.</p>
+</li>
+<li><p>phb4: Fix slot presence detect</p>
+<p>This has the nice side effect of improving boot times since we no
+longer waste time tring to train links that don’t have anything
+present.</p>
+</li>
+<li><p>phb4: Enable EEH for MMIO</p></li>
+<li><p>phb4: Implement fence check</p></li>
+<li><p>phb4: Implement diag data</p></li>
+</ul>
+</div></blockquote>
+<p>OCC:</p>
+<blockquote>
+<div><ul>
+<li><p>occ/irq: Fix SCOM address and irq reasons for P9 OCC</p>
+<p>This patch fixes the SCOM address for OCC_MISC register which is used
+for OCC interupts. In P9, OCC sends an interrupt to notify change in
+the shared memory like throttle status. This patch handles this
+interrupt reason.</p>
+</li>
+</ul>
+</div></blockquote>
+<p>PRD:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>prd: Fix PRD scoms for P9</p></li>
+</ul>
+</div></blockquote>
+<p>NX/DARN:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>nx: Add POWER9 DARN support</p></li>
+</ul>
+</div></blockquote>
+<p>NPU2:</p>
+<blockquote>
+<div><ul>
+<li><p>npu2: Do not attempt to initialise non DD1 hardware</p>
+<p>There are significant changes to hardware register addresses and
+meanings on newer chip revisions making them unlikely to work
+correctly with the existing code. Better to fail clearly and early.</p>
+</li>
+<li><p>npu, npu2: Describe diag data size in device tree</p></li>
+</ul>
+</div></blockquote>
+<p>Memory Reservation:</p>
+<blockquote>
+<div><ul>
+<li><p>mem_region: Add reserved regions after memory init</p>
+<p>When a new memory region is added (e.g for memory reserved by firmware)
+the list of existing memory regions is iterated through and a cut-out is
+made in any existing region that overlaps with the new one. Prior to the
+HDAT reservations being made the region init process was always:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Create regions from the memory&#64;&lt;addr&gt; DT nodes. (mostly large)</p></li>
+<li><p>Create reserved regions from the device-tree. (mostly small)</p></li>
+</ol>
+</div></blockquote>
+<p>When adding new regions we have assumed that the new region will only
+every intersect with at most one existing region, which it will split.
+Adding reservations inside the HDAT parser breaks this because when
+adding the memory&#64;&lt;addr&gt; node regions we can potentially overlap with
+multiple reserved regions. This patch fixes this by maintaining a
+seperate list of memory reservations and delaying merging them until
+after the normal memory init has finished, similar to how DT
+reservations are handled.</p>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="pci">
+<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>pci: Describe PHB diag data size in device tree</p>
+<p>Linux hardcodes the PHB diag data buffer at (as of this commit) 8192 bytes.
+This has been enough for P7IOC and PHB3, but the 512 PEs of PHB4 pushes
+the diag data blob over this size.  Rather than just increasing the
+hardcoded size in Linux, provide the size of the diag data blob in the
+device tree so that the OS can dynamically allocate as much as it needs.
+This both enables more space for PHB4 and less wasted memory for P7IOC
+and PHB3.</p>
+<p>P7IOC communicates both hub and PHB data using this buffer, so when
+setting the size, use whichever struct is largest.</p>
+</li>
+<li><p>hdata/i2c: Fix bus and clock frequencies</p></li>
+<li><p>ibm-fsp: use opal-prd on p9 and above</p>
+<p>Previously the PRD tooling ran on the FSP, but it was moved into
+userspace on the host for OpenPower systems. For P9 this system
+was adopted for FSP systems too.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="i2c">
+<h2>I2C<a class="headerlink" href="#i2c" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>i2c: Remove old hack for bad clock frequency</p>
+<p>This hack dates back to ancient P8 hostboots. The value
+it would use if it detected the “bad” value was incorrect
+anyway.</p>
+</li>
+<li><p>i2c: Log the engine clock frequency at boot</p></li>
+</ul>
+</div>
+<div class="section" id="fsp-systems">
+<h2>FSP Systems<a class="headerlink" href="#fsp-systems" title="Permalink to this headline">¶</a></h2>
+<p>These include the Apollo, Firenze and ZZ platforms.</p>
+<ul>
+<li><p>Remove multiple logging for un-handled fsp sub commands.</p>
+<p>If any new or unknown command need to be handled, just log
+un-hnadled message from only fsp, not required from fsp-dpo.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">firmware</span><span class="o">/</span><span class="n">opal</span><span class="o">/</span><span class="n">msglog</span> <span class="o">|</span> <span class="n">grep</span> <span class="o">-</span><span class="n">i</span> <span class="p">,</span><span class="mi">3</span>
+<span class="p">[</span>  <span class="mf">110.232114723</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">fsp_trigger_reset</span><span class="p">()</span> <span class="n">entry</span>
+<span class="p">[</span>  <span class="mf">188.431793837</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span> <span class="c1">#0: Link down, starting R&amp;R</span>
+<span class="p">[</span>  <span class="mf">464.109239162</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span> <span class="c1">#0: Got XUP with no pending message !</span>
+<span class="p">[</span>  <span class="mf">466.340598554</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="o">-</span><span class="n">DPO</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">command</span> <span class="mh">0xce0900</span>
+<span class="p">[</span>  <span class="mf">466.340600126</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">FSP</span><span class="p">:</span> <span class="n">Unhandled</span> <span class="n">message</span> <span class="n">ce0900</span>
+</pre></div>
+</div>
+</li>
+<li><p>FSP: Notify FSP of Platform Log ID after Host Initiated Reset Reload</p>
+<p>Trigging a Host Initiated Reset (when the host detects the FSP has gone
+out to lunch and should be rebooted), would cause “Unknown Command” messages
+to appear in the OPAL log.</p>
+<p>This patch implements those messages</p>
+<p>How to trigger FSP RR(HIR):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ putmemproc 300000f8 0x00000000deadbeef
+s1      k0:n0:s0:p00
+ecmd_ppc putmemproc 300000f8 0x00000000deadbeef
+
+Log showing unknown command:
+/ # cat /sys/firmware/opal/msglog | grep -i ,3
+[  110.232114723,3] FSP: fsp_trigger_reset() entry
+[  188.431793837,3] FSP #0: Link down, starting R&amp;R
+[  464.109239162,3] FSP #0: Got XUP with no pending message !
+[  466.340598554,3] FSP-DPO: Unknown command 0xce0900
+[  466.340600126,3] FSP: Unhandled message ce0900
+</pre></div>
+</div>
+<p>The message we need to handle is “Get PLID after host initiated FipS
+reset/reload”. When the FSP comes back from HIR, it asks “hey, so, which
+error log explains why you rebooted me?”. So, we tell it.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="misc">
+<h2>Misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>hdata_to_dt: Misc improvements in the utility and unit test</p></li>
+<li><p>GCC7: fixes for -Wimplicit-fallthrough expected regexes</p>
+<p>It turns out GCC7 adds a useful warning and does fancy things like
+parsing your comments to work out that you intended to do the fallthrough.
+There’s a few places where we don’t match the regex. Fix them, as it’s
+harmless to do so.</p>
+<p>Found by building on Fedora Rawhide in Travis.</p>
+<p>While we do not have everything needed to start building successfully
+with GCC7 (well, at least doing so warning clean), it’s a start.</p>
+</li>
+<li><p>hdata/i2c: avoid possible int32_t overflow</p>
+<p>We’re safe up until engine number 524288. Found by static analysis (of course)</p>
+</li>
+<li><p>tpm_i2c_nuvoton: fix use-after-free in tpm_register_chip failure path</p></li>
+<li><p>mambo: Fix reserved-ranges node</p></li>
+<li><p>external/mambo: add helper for machine checks</p></li>
+<li><p>console: Set log level from nvram</p>
+<p>This adds two new nvram options to set the console log level for the
+driver/uart and in memory.  These are called log-level-memory and
+log-level-driver.</p>
+<p>These are only set once we have nvram inited.</p>
+<p>To set them you do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span><span class="o">-</span><span class="n">memory</span><span class="o">=</span><span class="mi">9</span>
+<span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span><span class="o">-</span><span class="n">driver</span><span class="o">=</span><span class="mi">9</span>
+</pre></div>
+</div>
+<p>You can also use the named versions of emerg, alert, crit, err,
+warning, notice, printf, info, debug, trace or insane.  ie.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span><span class="o">-</span><span class="n">driver</span><span class="o">=</span><span class="n">insane</span>
+</pre></div>
+</div>
+</li>
+<li><p>npu: Implement Function Level Reset (FLR)</p></li>
+<li><p>mbox: Sanitize interrupts registers</p></li>
+<li><p>xive: Fix potential for lost IPIs when manipulating CPPR</p></li>
+<li><p>xive: Don’t double EOI interrupts that have an EOI override</p></li>
+<li><p>libflash/file: Only use 64bit MTD erase ioctl() when needed</p>
+<p>We recently made MTD 64 bit safe in e5720d3fe94 which now requires the
+64 bit MTD erase ioctl. Unfortunately this ioctl is not present in
+older kernels used by some BMC vendors that use pflash.</p>
+<p>This patch addresses this by only using the 64bit version of the erase
+ioctl() if the parameters exceed 32bit in size.</p>
+<p>If an erase requires the 64bit ioctl() on a kernel which does not
+support it, the code will still attempt it. There is no way of knowing
+beforehand if the kernel supports it. The ioctl() will fail and an error
+will be returned from from the function.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<p>This release contains 81 csets from 15 developers, working at 2 employers.
+A total of 2496 lines added, 641 removed (delta 1855)</p>
+<div class="section" id="developers-with-the-most-changesets">
+<h3>Developers with the most changesets<a class="headerlink" href="#developers-with-the-most-changesets" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 75%" />
+<col style="width: 6%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>17</p></td>
+<td><p>(21.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>17</p></td>
+<td><p>(21.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>16</p></td>
+<td><p>(19.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>9</p></td>
+<td><p>(11.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>8</p></td>
+<td><p>(9.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>5</p></td>
+<td><p>(6.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="mailto:ppaidipe&#37;&#52;&#48;linux&#46;vnet&#46;ibm&#46;com">ppaidipe<span>&#64;</span>linux<span>&#46;</span>vnet<span>&#46;</span>ibm<span>&#46;</span>com</a></p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Dave Heller</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeff Scheel</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Nicholas Piggin</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alexey Kardashevskiy</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Jim Yuan</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-changed-lines">
+<h3>Developers with the most changed lines<a class="headerlink" href="#developers-with-the-most-changed-lines" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 73%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>748</p></td>
+<td><p>(28.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>405</p></td>
+<td><p>(15.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>360</p></td>
+<td><p>(13.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
+<td><p>297</p></td>
+<td><p>(11.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Nicholas Piggin</p></td>
+<td><p>187</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>183</p></td>
+<td><p>(7.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>175</p></td>
+<td><p>(6.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Shilpasri G Bhat</p></td>
+<td><p>79</p></td>
+<td><p>(3.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jim Yuan</p></td>
+<td><p>56</p></td>
+<td><p>(2.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>45</p></td>
+<td><p>(1.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>38</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alexey Kardashevskiy</p></td>
+<td><p>37</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeff Scheel</p></td>
+<td><p>19</p></td>
+<td><p>(0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Dave Heller</p></td>
+<td><p>2</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-lines-removed">
+<h3>Developers with the most lines removed<a class="headerlink" href="#developers-with-the-most-lines-removed" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 73%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-signoffs">
+<h3>Developers with the most signoffs<a class="headerlink" href="#developers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
+<p>Total of 73.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 71%" />
+<col style="width: 9%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>56</p></td>
+<td><p>(76.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>16</p></td>
+<td><p>(21.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>1</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-reviews">
+<h3>Developers with the most reviews<a class="headerlink" href="#developers-with-the-most-reviews" title="Permalink to this headline">¶</a></h3>
+<p>Total of 6.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 71%" />
+<col style="width: 9%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>3</p></td>
+<td><p>(50.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>1</p></td>
+<td><p>(16.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>1</p></td>
+<td><p>(16.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>1</p></td>
+<td><p>(16.7%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-test-credits">
+<h3>Developers with the most test credits<a class="headerlink" href="#developers-with-the-most-test-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total of 5.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 71%" />
+<col style="width: 9%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>2</p></td>
+<td><p>(40.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>1</p></td>
+<td><p>(20.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>1</p></td>
+<td><p>(20.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Ellerman</p></td>
+<td><p>1</p></td>
+<td><p>(20.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-who-gave-the-most-tested-by-credits">
+<h3>Developers who gave the most tested-by credits<a class="headerlink" href="#developers-who-gave-the-most-tested-by-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total of 5.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 71%" />
+<col style="width: 9%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>2</p></td>
+<td><p>(40.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>2</p></td>
+<td><p>(40.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Nicholas Piggin</p></td>
+<td><p>1</p></td>
+<td><p>(20.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-report-credits">
+<h3>Developers with the most report credits<a class="headerlink" href="#developers-with-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total of 2.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 73%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>1</p></td>
+<td><p>(50.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1</p></td>
+<td><p>(50.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-who-gave-the-most-report-credits">
+<h3>Developers who gave the most report credits<a class="headerlink" href="#developers-who-gave-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total of 2.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 8%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>2</p></td>
+<td><p>(100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="top-changeset-contributors-by-employer">
+<h3>Top changeset contributors by employer<a class="headerlink" href="#top-changeset-contributors-by-employer" title="Permalink to this headline">¶</a></h3>
+<p>Total of 2.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 71%" />
+<col style="width: 9%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>80</p></td>
+<td><p>(98.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>SuperMicro</p></td>
+<td><p>1</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="top-lines-changed-by-employer">
+<h3>Top lines changed by employer<a class="headerlink" href="#top-lines-changed-by-employer" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 11%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>2576</p></td>
+<td><p>(97.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>SuperMicro</p></td>
+<td><p>56</p></td>
+<td><p>(2.1%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="employers-with-the-most-signoffs">
+<h3>Employers with the most signoffs<a class="headerlink" href="#employers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
+<p>Total 73.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 8%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>73</p></td>
+<td><p>(100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="employers-with-the-most-hackers">
+<h3>Employers with the most hackers<a class="headerlink" href="#employers-with-the-most-hackers" title="Permalink to this headline">¶</a></h3>
+<p>Total 15.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 71%" />
+<col style="width: 9%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>14</p></td>
+<td><p>(93.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>SuperMicro</p></td>
+<td><p>1</p></td>
+<td><p>(6.7%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.6.0-rc1</a><ul>
+<li><a class="reference internal" href="#new-platforms">New Platforms</a></li>
+<li><a class="reference internal" href="#power9">POWER9</a></li>
+<li><a class="reference internal" href="#pci">PCI</a></li>
+<li><a class="reference internal" href="#i2c">I2C</a></li>
+<li><a class="reference internal" href="#fsp-systems">FSP Systems</a></li>
+<li><a class="reference internal" href="#misc">Misc</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a><ul>
+<li><a class="reference internal" href="#developers-with-the-most-changesets">Developers with the most changesets</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-changed-lines">Developers with the most changed lines</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-lines-removed">Developers with the most lines removed</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-signoffs">Developers with the most signoffs</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-reviews">Developers with the most reviews</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-test-credits">Developers with the most test credits</a></li>
+<li><a class="reference internal" href="#developers-who-gave-the-most-tested-by-credits">Developers who gave the most tested-by credits</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-report-credits">Developers with the most report credits</a></li>
+<li><a class="reference internal" href="#developers-who-gave-the-most-report-credits">Developers who gave the most report credits</a></li>
+<li><a class="reference internal" href="#top-changeset-contributors-by-employer">Top changeset contributors by employer</a></li>
+<li><a class="reference internal" href="#top-lines-changed-by-employer">Top lines changed by employer</a></li>
+<li><a class="reference internal" href="#employers-with-the-most-signoffs">Employers with the most signoffs</a></li>
+<li><a class="reference internal" href="#employers-with-the-most-hackers">Employers with the most hackers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.6.0.html"
+                        title="previous chapter">skiboot-5.6.0</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.6.0-rc2.html"
+                        title="next chapter">skiboot-5.6.0-rc2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.6.0-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.6.0-rc2.html" title="skiboot-5.6.0-rc2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.6.0.html" title="skiboot-5.6.0"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.6.0-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

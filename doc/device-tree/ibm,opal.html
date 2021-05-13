@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ibm,opal &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ibm,opal/diagnostics device tree entries" href="ibm%2Copal/diagnostics.html" />
+    <link rel="prev" title="ibm,firmware-versions node" href="ibm%2Cfirmware-versions.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ibm%2Copal/diagnostics.html" title="ibm,opal/diagnostics device tree entries"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Cfirmware-versions.html" title="ibm,firmware-versions node"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ibm-opal">
+<span id="device-tree-ibm-opal"></span><h1>ibm,opal<a class="headerlink" href="#ibm-opal" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/diagnostics.html">ibm,opal/diagnostics device tree entries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/dump.html">Dump (MPIPL) Device Tree Binding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/firmware.html">System Firmware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/flash.html">ibm,opal/flash device tree entries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/led.html">Service Indicators (LEDS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/nvram.html">nvram Device Tree Node</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/oppanel.html">Operator Panel (oppanel)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/power-mgt.html">ibm,opal/power-mgt device tree entries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/secvar.html">Secvar Binding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/sensor-groups.html">ibm,opal/sensor-groups</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/sensors.html">ibm,opal/sensors/ device tree nodes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ibm%2Copal/sysparams.html">sysparams</a></li>
+</ul>
+</div>
+<div class="section" id="top-level-ibm-opal-node">
+<h2>Top level ibm,opal node<a class="headerlink" href="#top-level-ibm-opal-node" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,opal</span> <span class="p">{</span>
+             <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+             <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span><span class="p">&gt;;</span>
+             <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-v2&quot;, &quot;ibm,opal-v3&quot;</span><span class="p">;</span>
+
+<span class="cm">/* v2 is maintained for possible compatibility with very, very old kernels</span>
+<span class="cm"> * it will go away at some point in the future. Detect and rely on ibm,opal-v3</span>
+<span class="cm"> * ibm,opal-v2 is *NOT* present on POWER9 and above.</span>
+<span class="cm"> */</span>
+
+             <span class="nf">ibm,associativity-reference-points</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x4</span> <span class="mh">0x3</span><span class="p">,</span> <span class="mh">0x2</span><span class="p">&gt;;</span>
+             <span class="nf">ibm,heartbeat-ms</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x7d0</span><span class="p">&gt;;</span>
+
+<span class="cm">/* how often any OPAL call needs to be made to avoid a watchdog timer on BMC</span>
+<span class="cm"> * from kicking in</span>
+<span class="cm"> */</span>
+
+             <span class="nf">ibm,opal-memcons</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x3007a000</span><span class="p">&gt;;</span>
+
+<span class="cm">/* location of in memory OPAL console buffer. */</span>
+
+             <span class="nf">ibm,opal-trace-mask</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x3008c3f0</span><span class="p">&gt;;</span>
+             <span class="nf">ibm,opal-traces</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x3007b010</span> <span class="mh">0x0</span> <span class="mh">0x10077</span> <span class="mh">0x0</span> <span class="mh">0x3b001010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x0</span> <span class="mh">0x3b103010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x0</span> <span class="mh">0x3b205010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x0</span> <span class="mh">0x3b307010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x0</span> <span class="mh">0x3b409010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1801010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1903010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1a05010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1b07010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1c09010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1d0b010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1e0d010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x1f0f010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x2011010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x2113010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x2215010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x2317010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x2419010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x251b010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span> <span class="mh">0x10</span> <span class="mh">0x261d010</span> <span class="mh">0x0</span> <span class="mh">0x1000a7</span><span class="p">&gt;;</span>
+
+<span class="cm">/* see docs on tracing */</span>
+
+             <span class="nf">linux,phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000003</span><span class="p">&gt;;</span>
+             <span class="nf">opal-base-address</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x30000000</span><span class="p">&gt;;</span>
+             <span class="nf">opal-entry-address</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x300050c0</span><span class="p">&gt;;</span>
+             <span class="nf">opal-interrupts</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10</span> <span class="mh">0x11</span> <span class="mh">0x12</span> <span class="mh">0x13</span> <span class="mh">0x14</span> <span class="mh">0x20010</span> <span class="mh">0x20011</span> <span class="mh">0x20012</span> <span class="mh">0x20013</span> <span class="mh">0x20014</span> <span class="mh">0xffe</span> <span class="mh">0xfff</span> <span class="mh">0x17fe</span> <span class="mh">0x17ff</span> <span class="mh">0x2ffe</span> <span class="mh">0x2fff</span> <span class="mh">0x37fe</span> <span class="mh">0x37ff</span> <span class="mh">0x20ffe</span> <span class="mh">0x20fff</span> <span class="mh">0x22ffe</span> <span class="mh">0x22fff</span> <span class="mh">0x237fe</span> <span class="mh">0x237ff</span><span class="p">&gt;;</span>
+             <span class="nf">opal-msg-async-num</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x8</span><span class="p">&gt;;</span>
+             <span class="nf">opal-msg-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x48</span><span class="p">&gt;;</span>
+             <span class="nf">opal-runtime-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x0</span> <span class="mh">0x9a00000</span><span class="p">&gt;;</span>
+             <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10000003</span><span class="p">&gt;;</span>
+ <span class="p">};</span>
+</pre></div>
+</div>
+<div class="section" id="ibm-heartbeat-ms">
+<h3>ibm,heartbeat-ms<a class="headerlink" href="#ibm-heartbeat-ms" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,opal</span> <span class="p">{</span>
+             <span class="nf">ibm,heartbeat-ms</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x7d0</span><span class="p">&gt;;</span>
+<span class="err">}</span>
+</pre></div>
+</div>
+<p>Any OS targetting POWER9 processors <em>must</em> respect <cite>ibm,heartbeat-ms</cite>.</p>
+<p>Linux kernels prior to v4.1-rc1 would ignore <cite>ibm,heartbeat-ms</cite>. These only
+supported POWER8 systems.</p>
+<p>On the earliest POWER8 OPAL systems, there was <cite>ibm,heartbeat-freq</cite> instead.
+However, no OS at the time ever looked at that value, so it can be ignored
+by any new operating systems.</p>
+</div>
+<div class="section" id="fast-reboot-property">
+<h3>fast-reboot property<a class="headerlink" href="#fast-reboot-property" title="Permalink to this headline">¶</a></h3>
+<p>This property of the <cite>ibm,opal</cite> node is an option property that will either be
+the string <cite>okay</cite> or the reason the fast reboot feature was disabled on boot.</p>
+<p>The motivation behind adding this property is to help the OPAL test suite work
+out if it should even try the fast reboot test on a particular platform
+(without it having to resort to grepping firmware logs).</p>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ibm,opal</a><ul>
+<li><a class="reference internal" href="#top-level-ibm-opal-node">Top level ibm,opal node</a><ul>
+<li><a class="reference internal" href="#ibm-heartbeat-ms">ibm,heartbeat-ms</a></li>
+<li><a class="reference internal" href="#fast-reboot-property">fast-reboot property</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ibm%2Cfirmware-versions.html"
+                        title="previous chapter">ibm,firmware-versions node</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ibm%2Copal/diagnostics.html"
+                        title="next chapter">ibm,opal/diagnostics device tree entries</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/ibm,opal.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ibm%2Copal/diagnostics.html" title="ibm,opal/diagnostics device tree entries"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ibm%2Cfirmware-versions.html" title="ibm,firmware-versions node"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

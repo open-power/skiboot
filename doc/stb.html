@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secure and Trusted Boot Library (LibSTB) Documentation &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Device Tree" href="device-tree.html" />
+    <link rel="prev" title="Virtual Accelerator Switchboard (VAS)" href="vas.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="device-tree.html" title="Device Tree"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="vas.html" title="Virtual Accelerator Switchboard (VAS)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Secure and Trusted Boot Library (LibSTB) Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="secure-and-trusted-boot-library-libstb-documentation">
+<span id="stb-overview"></span><h1>Secure and Trusted Boot Library (LibSTB) Documentation<a class="headerlink" href="#secure-and-trusted-boot-library-libstb-documentation" title="Permalink to this headline">¶</a></h1>
+<p><em>LibSTB</em> provides APIs to support Secure Boot and Trusted Boot in skiboot.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Secure</span> <span class="pre">Boot:</span> <span class="pre">verify</span> <span class="pre">and</span> <span class="pre">enforce.</span></code></dt><dd><p>When the system is booting in secure mode, Secure Boot MUST ensure that
+only trusted code is executed during system boot by verifying if the
+code is signed with trusted keys and halting the system boot if the
+verification fails.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Trusted</span> <span class="pre">Boot:</span> <span class="pre">measure</span> <span class="pre">and</span> <span class="pre">record.</span></code></dt><dd><p>When the system is booting in trusted mode, Trusted Boot MUST create
+artifacts during system boot to prove that a particular chain of events
+have happened during boot. Interested parties can subsequently assess
+the artifacts to check whether or not only trusted events happened and
+then make security decisions. These artifacts comprise a log of
+measurements and the digests extended into the TPM PCRs. Platform
+Configuration Registers (PCRs) are registers in the Trusted Platform
+Module (TPM) that are shielded from direct access by the CPU.</p>
+</dd>
+</dl>
+<p>In order to support Secure and Trusted Boot, the flash driver calls libSTB to
+verify and measure the code it fetches from PNOR.</p>
+<p>LibSTB is initialized by calling <em>secureboot_init()</em>, see <code class="docutils literal notranslate"><span class="pre">libstb/secureboot.h</span></code>.</p>
+<div class="section" id="secure-boot">
+<h2>Secure Boot<a class="headerlink" href="#secure-boot" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Requirements:</span></code></dt><dd><ol class="arabic simple">
+<li><p>CVC-verify service to verify signed firmware code.</p></li>
+</ol>
+</dd>
+</dl>
+<p>Secure boot is initialized by calling <em>secureboot_init()</em> and its API is quite
+simple, see <code class="docutils literal notranslate"><span class="pre">libstb/secureboot.h</span></code>.</p>
+<p>The flash driver calls <code class="docutils literal notranslate"><span class="pre">secureboot_verify()</span></code> to verify if the fetched firmware
+blob is properly signed with keys trusted by the platform owner. This
+verification is performed only when the system is booting in secure mode. If
+the verification fails, it enforces a halt of the system boot.</p>
+<p>The verification itself is performed by the <a class="reference internal" href="#container-verification-code"><span class="std std-ref">Container Verification Code</span></a>,
+precisely the <em>CVC-verify</em> service, which requires both the fetched code and the
+hardware key hash trusted by the platform owner.</p>
+<p>The secure mode status, hardware key hash and hardware key hash size
+information is found in the device tree, see
+<a class="reference internal" href="device-tree/ibm%2Csecureboot.html#device-tree-ibm-secureboot"><span class="std std-ref">doc/device-tree/ibm,secureboot.rst</span></a>.</p>
+<div class="section" id="signing-firmware-code">
+<span id="id1"></span><h3>Signing Firmware Code<a class="headerlink" href="#signing-firmware-code" title="Permalink to this headline">¶</a></h3>
+<p>Fimware code is signed using the <code class="docutils literal notranslate"><span class="pre">sb-signing-utils</span></code> utilities by running it
+standalone or just calling op-build. The latter will automatically sign the
+various firmware components that comprise the PNOR image if SECUREBOOT is
+enabled for the platform.</p>
+<p>The signing utilities also allow signing firmware code using published hardware
+keys (a.k.a. imprint keys, only for development) or production hardware keys,
+see <a class="reference external" href="https://github.com/open-power/sb-signing-utils">sb-signing-utils</a>.</p>
+<p>The hardware keys are the root keys. The signing tool uses three hardware keys
+to sign up to three firmware keys, which are then used to sign the firmware
+code. The resulting signed firmware code is then assembled following the secure
+boot container format. All the information required to verify the signatures is
+placed in the first 4K reserved for the container header (e.g.  public keys,
+hashes and signatures). The firmware code itself is placed in the container
+payload.</p>
+</div>
+</div>
+<div class="section" id="container-verification-code">
+<span id="id2"></span><h2>Container Verification Code<a class="headerlink" href="#container-verification-code" title="Permalink to this headline">¶</a></h2>
+<p>The <em>Container Verification Code</em> (a.k.a. ROM code) is stored in a secure
+memory region and it provides basic Secure and Trusted Boot services for the
+entire firmware stack. See <cite>doc/device-tree/ibm,secureboot.rst
+&lt;device-tree/ibm,secureboot&gt;</cite> and <cite>doc/device-tree/ibm,cvc.rst
+&lt;device-tree/ibm,cvc&gt;</cite>.</p>
+<p>LibSTB uses function wrappers to call into each CVC service, see
+<code class="docutils literal notranslate"><span class="pre">libstb/cvc.h</span></code>.</p>
+<div class="section" id="cvc-verify-service">
+<h3>CVC-verify Service<a class="headerlink" href="#cvc-verify-service" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">call_cvc_verify</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">hw_key_hash</span><span class="p">,</span>
+                    <span class="kt">size_t</span> <span class="n">hw_key_hash_size</span><span class="p">,</span> <span class="n">__be64</span> <span class="o">*</span><span class="n">log</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This function wrapper calls into the <em>CVC-verify</em>, which verifies if the
+firmware code provided in <code class="docutils literal notranslate"><span class="pre">&#64;buf</span></code> is properly signed with the keys trusted by
+the platform owner. Its parameters are documented in <code class="docutils literal notranslate"><span class="pre">libstb/cvc.h</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;hw_key_hash</span></code> is used to check if the firware keys used to sign
+the firmware blob can be trusted.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;log</span></code> is optional. If the verification fails, the caller can interpret
+it to find out what checks has failed.</p>
+<p>Enforcement is caller’s responsibility.</p>
+</div>
+<div class="section" id="cvc-sha512-service">
+<h3>CVC-sha512 Service<a class="headerlink" href="#cvc-sha512-service" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">call_cvc_sha512</span><span class="p">(</span><span class="k">const</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">data_len</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">digest</span><span class="p">,</span>
+                    <span class="kt">size_t</span> <span class="n">digest_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This function wrapper calls into the <em>CVC-sha512</em>, which calculates the
+sha512 hash of what is provided in &#64;data. Its parameters are documented in
+<code class="docutils literal notranslate"><span class="pre">libstb/cvc.h</span></code>.</p>
+</div>
+</div>
+<div class="section" id="trusted-boot">
+<h2>Trusted Boot<a class="headerlink" href="#trusted-boot" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Requirements:</span></code></dt><dd><ol class="arabic simple">
+<li><p>TPM device and TPM driver. See devices supported in
+<a class="reference internal" href="device-tree/tpm.html#device-tree-tpm"><span class="std std-ref">doc/device-tree/tpm.rst</span></a>.</p></li>
+<li><p>TCG Software Stack (TSS) to send commands to the TPM device.</p></li>
+<li><p>Firmware Event Log driver to add new events to the log. Event log
+address and size information is found in the device tree, see
+<a class="reference internal" href="device-tree/tpm.html#device-tree-tpm"><span class="std std-ref">doc/device-tree/tpm.rst</span></a>.</p></li>
+<li><p>CVC-sha512 service to calculate the sha512 hash of the data that
+will be measured.</p></li>
+</ol>
+</dd>
+</dl>
+<p>The Trusted Boot API is quite simple, see <code class="docutils literal notranslate"><span class="pre">libstb/trustedboot.h</span></code>.</p>
+<p>The flash driver calls <code class="docutils literal notranslate"><span class="pre">trustedboot_measure()</span></code> to measure the firmware code
+fetched from PNOR and also record its measurement in two places. This is
+performed only when the system is booting in trusted mode (information found in
+the device tree, see <a class="reference internal" href="device-tree/ibm%2Csecureboot.html#device-tree-ibm-secureboot"><span class="std std-ref">doc/device-tree/ibm,secureboot.rst</span></a>).</p>
+<p>Once the firmware code is measured by calling the <em>CVC-sha512</em> service, its
+measurement is first recorded in a TPM PCR statically defined for each event.
+In order to record it, the skiboot TCG Software Stack (TSS) API is called to
+extend the measurement into the PCR number of both the sha1 and sha256 banks.
+The skiboot TSS is a light TSS implementation and its source code is shared
+between hostboot and skiboot, see <code class="docutils literal notranslate"><span class="pre">libstb/tss/trustedbootCmds.H</span></code>.</p>
+<p>PCR extend is an TPM operation that uses a hash function to combine a new
+measurement with the existing digest saved in the PCR. Basically, it
+concatenates the existing PCR value with the received measurement, and then
+records the hash of this new string in the PCR.</p>
+<p>The measurement is also recorded in the event log. The <code class="docutils literal notranslate"><span class="pre">TpmLogMgr_addEvent()</span></code>
+function is called to add the measurement to the log, see
+<code class="docutils literal notranslate"><span class="pre">libstb/tss/tpmLogMgr.H</span></code>.</p>
+<p>When the system boot is complete, each non-zero PCR value represents one or more
+events measured during the boot in chronological order. Interested parties
+can make inferences about the system’s state by using an attestation tool to
+remotely compare the PCR values of a TPM against known good values, and also
+identify unexpected events by replaying the Event Log against known good Event
+Log entries.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Secure and Trusted Boot Library (LibSTB) Documentation</a><ul>
+<li><a class="reference internal" href="#secure-boot">Secure Boot</a><ul>
+<li><a class="reference internal" href="#signing-firmware-code">Signing Firmware Code</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#container-verification-code">Container Verification Code</a><ul>
+<li><a class="reference internal" href="#cvc-verify-service">CVC-verify Service</a></li>
+<li><a class="reference internal" href="#cvc-sha512-service">CVC-sha512 Service</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trusted-boot">Trusted Boot</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="vas.html"
+                        title="previous chapter">Virtual Accelerator Switchboard (VAS)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="device-tree.html"
+                        title="next chapter">Device Tree</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/stb.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="device-tree.html" title="Device Tree"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="vas.html" title="Virtual Accelerator Switchboard (VAS)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Secure and Trusted Boot Library (LibSTB) Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

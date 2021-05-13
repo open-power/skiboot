@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.4.4 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.4.5" href="skiboot-5.4.5.html" />
+    <link rel="prev" title="skiboot-5.4.3" href="skiboot-5.4.3.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.5.html" title="skiboot-5.4.5"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.3.html" title="skiboot-5.4.3"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.4</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-4-4">
+<span id="id1"></span><h1>skiboot-5.4.4<a class="headerlink" href="#skiboot-5-4-4" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.4.4 was released on Wednesday May 3rd, 2017. It replaces
+<a class="reference internal" href="skiboot-5.4.3.html#skiboot-5-4-3"><span class="std std-ref">skiboot-5.4.3</span></a> as the current stable release in the 5.4.x series.</p>
+<p>Over <a class="reference internal" href="skiboot-5.4.3.html#skiboot-5-4-3"><span class="std std-ref">skiboot-5.4.3</span></a>, we have a small number of bug fixes:</p>
+<ul>
+<li><p>hw/fsp: Do not queue SP and SPCN class messages during reset/reload
+In certain cases of communicating with the FSP (e.g. sensors), the OPAL FSP
+driver returns a default code (async
+completion) even though there is no known bound from the time of this error
+return to the actual data being available. The kernel driver keeps waiting
+leading to soft-lockup on the host side.</p>
+<p>Mitigate both these (known) cases by returning OPAL_BUSY so the host driver
+knows to retry later.</p>
+</li>
+<li><p>core/pci: Fix PCIe slot’s presence
+According to PCIe spec, the presence bit is hardcoded to 1 if PCIe
+switch downstream port doesn’t support slot capability. The register
+used for the check in pcie_slot_get_presence_state() is wrong. It
+should be PCIe capability register instead of PCIe slot capability
+register. Otherwise, we always have present bit on the PCI topology.</p>
+<p>The issue is found on Supermicro’s p8dtu2u machine:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="c1"># lspci -t</span>
+ <span class="o">-+-</span><span class="p">[</span><span class="mi">0022</span><span class="p">:</span><span class="mi">00</span><span class="p">]</span><span class="o">---</span><span class="mf">00.0</span><span class="o">-</span><span class="p">[</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span><span class="p">]</span><span class="o">----</span><span class="mf">00.0</span><span class="o">-</span><span class="p">[</span><span class="mi">02</span><span class="o">-</span><span class="mi">08</span><span class="p">]</span><span class="o">--+-</span><span class="mf">01.0</span><span class="o">-</span><span class="p">[</span><span class="mi">03</span><span class="p">]</span><span class="o">----</span><span class="mf">00.0</span>
+  <span class="o">|</span>                                           \<span class="o">-</span><span class="mf">02.0</span><span class="o">-</span><span class="p">[</span><span class="mi">04</span><span class="o">-</span><span class="mi">08</span><span class="p">]</span><span class="o">--</span>
+ <span class="c1"># cat /sys/bus/pci/slots/S002204/adapter</span>
+ <span class="mi">1</span>
+ <span class="c1"># lspci -vvs 0022:02:02.0</span>
+ <span class="c1"># lspci -vvs 0022:02:02.0</span>
+ <span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">02.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">8718</span> <span class="mi">16</span><span class="o">-</span><span class="n">Lane</span><span class="p">,</span> \
+ <span class="mi">5</span><span class="o">-</span><span class="n">Port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">ab</span><span class="p">)</span> <span class="p">(</span><span class="n">prog</span><span class="o">-</span><span class="k">if</span> <span class="mi">00</span> <span class="p">[</span><span class="n">Normal</span> <span class="n">decode</span><span class="p">])</span>
+    <span class="p">:</span>
+ <span class="n">Capabilities</span><span class="p">:</span> <span class="p">[</span><span class="mi">68</span><span class="p">]</span> <span class="n">Express</span> <span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="n">Downstream</span> <span class="n">Port</span> <span class="p">(</span><span class="n">Slot</span><span class="o">+</span><span class="p">),</span> <span class="n">MSI</span> <span class="mi">00</span>
+    <span class="p">:</span>
+    <span class="n">SltSta</span><span class="p">:</span>    <span class="n">Status</span><span class="p">:</span> <span class="n">AttnBtn</span><span class="o">-</span> <span class="n">PowerFlt</span><span class="o">-</span> <span class="n">MRL</span><span class="o">-</span> <span class="n">CmdCplt</span><span class="o">-</span> <span class="n">PresDet</span><span class="o">-</span> <span class="n">Interlock</span><span class="o">-</span>
+               <span class="n">Changed</span><span class="p">:</span> <span class="n">MRL</span><span class="o">-</span> <span class="n">PresDet</span><span class="o">-</span> <span class="n">LinkState</span><span class="o">-</span>
+
+<span class="n">This</span> <span class="n">fixes</span> <span class="n">the</span> <span class="n">issue</span> <span class="n">by</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">correct</span> <span class="n">register</span> <span class="p">(</span><span class="n">PCIe</span> <span class="n">capability</span><span class="p">)</span><span class="o">.</span>
+<span class="n">Also</span><span class="p">,</span> <span class="n">the</span> <span class="n">register</span><span class="s1">&#39;s value is cached in advance as we did for slot and</span>
+<span class="n">link</span> <span class="n">capability</span><span class="o">.</span>
+</pre></div>
+</div>
+</li>
+<li><p>core/pci: More reliable way to update PCI slot power state</p>
+<p>The power control bit (SLOT_CTL, offset: PCIe cap + 0x18) isn’t
+reliable enough to reflect the PCI slot’s power state. Instead,
+the power indication bits are more reliable comparatively. This
+leads to mismatch between the cached power state and PCI slot’s
+presence state, resulting in the hotplug driver in kernel refuses
+to unplug the devices properly on the request. The issue was
+found on below NVMe card on “supermicro,p8dtu2u” machine. We don’t
+have this issue on the integrated PLX 8718 switch.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># lspci</span>
+<span class="mi">0022</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mf">00.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+             <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+<span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">01.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+             <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+<span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">04.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+             <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+<span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">05.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+             <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+<span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">06.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+             <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+<span class="mi">0022</span><span class="p">:</span><span class="mi">02</span><span class="p">:</span><span class="mf">07.0</span> <span class="n">PCI</span> <span class="n">bridge</span><span class="p">:</span> <span class="n">PLX</span> <span class="n">Technology</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">PEX</span> <span class="mi">9733</span> <span class="mi">33</span><span class="o">-</span><span class="n">lane</span><span class="p">,</span> \
+             <span class="mi">9</span><span class="o">-</span><span class="n">port</span> <span class="n">PCI</span> <span class="n">Express</span> <span class="n">Gen</span> <span class="mi">3</span> <span class="p">(</span><span class="mf">8.0</span> <span class="n">GT</span><span class="o">/</span><span class="n">s</span><span class="p">)</span> <span class="n">Switch</span> <span class="p">(</span><span class="n">rev</span> <span class="n">aa</span><span class="p">)</span>
+<span class="mi">0022</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mf">00.0</span> <span class="n">Non</span><span class="o">-</span><span class="n">Volatile</span> <span class="n">memory</span> <span class="n">controller</span><span class="p">:</span> <span class="n">Device</span> <span class="mf">19e5</span><span class="p">:</span><span class="mi">0123</span> <span class="p">(</span><span class="n">rev</span> <span class="mi">45</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This updates the cached PCI slot’s power state using the power
+indication bits instead of power control bit, to fix above issue.</p>
+</li>
+<li><p>core/pci: Avoid hreset after freset</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.4.3.html"
+                        title="previous chapter">skiboot-5.4.3</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.4.5.html"
+                        title="next chapter">skiboot-5.4.5</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.4.4.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.4.5.html" title="skiboot-5.4.5"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.3.html" title="skiboot-5.4.3"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.4</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

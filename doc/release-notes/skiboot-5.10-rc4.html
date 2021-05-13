@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.10-rc4 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.10.1" href="skiboot-5.10.1.html" />
+    <link rel="prev" title="skiboot-5.10-rc3" href="skiboot-5.10-rc3.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10.1.html" title="skiboot-5.10.1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc3.html" title="skiboot-5.10-rc3"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc4</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-10-rc4">
+<span id="id1"></span><h1>skiboot-5.10-rc4<a class="headerlink" href="#skiboot-5-10-rc4" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v5.10-rc4 was released on Wednesday February 21st 2018. It is the fourth
+release candidate of skiboot 5.10, which will become the new stable release
+of skiboot following the 5.9 release, first released October 31st 2017.</p>
+<p>skiboot v5.10-rc4 contains all bug fixes as of <a class="reference internal" href="skiboot-5.9.8.html#skiboot-5-9-8"><span class="std std-ref">skiboot-5.9.8</span></a>
+and <a class="reference internal" href="skiboot-5.4.9.html#skiboot-5-4-9"><span class="std std-ref">skiboot-5.4.9</span></a> (the currently maintained stable releases). There
+may be more 5.9.x stable releases, it will depend on demand.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.10 in February, with skiboot 5.10
+being for all POWER8 and POWER9 platforms in op-build v1.21.
+This release will be targeted to early POWER9 systems.</p>
+<p>Over skiboot-5.10-rc3, we have the following changes:</p>
+<ul>
+<li><p>core: Fix mismatched names between reserved memory nodes &amp; properties</p>
+<p>OPAL exposes reserved memory regions through the device tree in both new
+(nodes) and old (properties) formats.</p>
+<p>However, the names used for these don’t match - we use a generated cell
+address for the nodes, but the plain region name for the properties.</p>
+<p>This fixes a warning from FWTS</p>
+</li>
+<li><p>sensor-groups: occ: Add support to disable/enable sensor group</p>
+<p>This patch adds a new opal call to enable/disable a sensor group. This
+call is used to select the sensor groups that needs to be copied to
+main memory by OCC at runtime.</p>
+</li>
+<li><p>sensors: occ: Add energy counters</p>
+<p>Export the accumulated power values as energy sensors. The accumulator
+field of power sensors are used for representing energy counters which
+can be exported as energy counters in Linux hwmon interface.</p>
+</li>
+<li><p>sensors: Support reading u64 sensor values</p>
+<p>This patch adds support to read u64 sensor values. This also adds
+changes to the core and the backend implementation code to make this
+API as the base call. Host can use this new API to read sensors
+upto 64bits.</p>
+<p>This adds a list to store the pointer to the kernel u32 buffer, for
+older kernels making async sensor u32 reads.</p>
+</li>
+<li><p>dt: add /cpus/ibm,powerpc-cpu-features device tree bindings</p>
+<p>This is a new CPU feature advertising interface that is fine-grained,
+extensible, aware of privilege levels, and gives control of features
+to all levels of the stack (firmware, hypervisor, and OS).</p>
+<p>The design and binding specification is described in detail in doc/.</p>
+</li>
+<li><p>phb3/phb4/p7ioc: Document supported TCE sizes in DT</p>
+<p>Add a new property, “ibm,supported-tce-sizes”, to advertise to Linux how
+big the available TCE sizes are.  Each value is a bit shift, from
+smallest to largest.</p>
+</li>
+<li><p>phb4: Fix TCE page size</p>
+<p>The page sizes for TCEs on P9 were inaccurate and just copied from PHB3,
+so correct them.</p>
+</li>
+<li><p>Revert “pci: Shared slot state synchronisation for hot reset”</p>
+<p>An issue was found in shared slot reset where the system can be stuck in
+an infinite loop, pull the code out until there’s a proper fix.</p>
+<p>This reverts commit 1172a6c57ff3c66f6361e572a1790cbcc0e5ff37.</p>
+</li>
+<li><p>hdata/iohub: Use only wildcard slots for pluggables</p>
+<p>We don’t want to cause a VID:DID check against pluggable devices, as
+they may use multiple devids.</p>
+<p>Narrow the condition under which VID:DID is listed in the dt, so that
+we’ll end up creating a wildcard slot for these instead.</p>
+</li>
+<li><p>increase log verbosity in debug builds</p></li>
+<li><p>Add -debug to version on DEBUG builds</p></li>
+<li><p>cpu_wait_job: Correctly report time spent waiting for job</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.10-rc3.html"
+                        title="previous chapter">skiboot-5.10-rc3</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.10.1.html"
+                        title="next chapter">skiboot-5.10.1</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.10-rc4.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10.1.html" title="skiboot-5.10.1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc3.html" title="skiboot-5.10-rc3"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc4</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

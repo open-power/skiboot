@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Accelerator Switchboard (VAS) &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Secure and Trusted Boot Library (LibSTB) Documentation" href="stb.html" />
+    <link rel="prev" title="MPIPL (aka FADUMP) Overview" href="mpipl.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpipl.html" title="MPIPL (aka FADUMP) Overview"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Virtual Accelerator Switchboard (VAS)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="virtual-accelerator-switchboard-vas">
+<h1>Virtual Accelerator Switchboard (VAS)<a class="headerlink" href="#virtual-accelerator-switchboard-vas" title="Permalink to this headline">¶</a></h1>
+<p>This document provides information about using VAS from user space.
+Applications send NX requests using COPY/PASTE instructions. NX raises
+an interrupt when it sees fault on the request buffer. Kernel handles
+the interrupt and process the fault.</p>
+<p>Skiboot allocates the IRQ and exports it with interrupts property. To
+provide backward compatibility for older kernels, enable VAS user space
+support with NVRAM command.</p>
+<blockquote>
+<div><p>nvram -p ibm,skiboot –update-config vas-user-space=enable</p>
+</div></blockquote>
+<p>This nvram config update is temporary and can be removed in future if
+not needed.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpipl.html"
+                        title="previous chapter">MPIPL (aka FADUMP) Overview</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="stb.html"
+                        title="next chapter">Secure and Trusted Boot Library (LibSTB) Documentation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/vas.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpipl.html" title="MPIPL (aka FADUMP) Overview"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Virtual Accelerator Switchboard (VAS)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

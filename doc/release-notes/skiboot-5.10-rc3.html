@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.10-rc3 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.10-rc4" href="skiboot-5.10-rc4.html" />
+    <link rel="prev" title="skiboot-5.10-rc2" href="skiboot-5.10-rc2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc4.html" title="skiboot-5.10-rc4"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc2.html" title="skiboot-5.10-rc2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-10-rc3">
+<span id="id1"></span><h1>skiboot-5.10-rc3<a class="headerlink" href="#skiboot-5-10-rc3" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v5.10-rc3 was released on Thursday February 15th 2018. It is the third
+release candidate of skiboot 5.10, which will become the new stable release
+of skiboot following the 5.9 release, first released October 31st 2017.</p>
+<p>skiboot v5.10-rc3 contains all bug fixes as of <a class="reference internal" href="skiboot-5.9.8.html#skiboot-5-9-8"><span class="std std-ref">skiboot-5.9.8</span></a>
+and <a class="reference internal" href="skiboot-5.4.9.html#skiboot-5-4-9"><span class="std std-ref">skiboot-5.4.9</span></a> (the currently maintained stable releases). There
+may be more 5.9.x stable releases, it will depend on demand.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 5.10 in February, with skiboot 5.10
+being for all POWER8 and POWER9 platforms in op-build v1.21.
+This release will be targeted to early POWER9 systems.</p>
+<p>Over skiboot-5.10-rc2, we have the following changes:</p>
+<ul>
+<li><p>vas: Disable VAS/NX-842 on some P9 revisions</p>
+<p>VAS/NX-842 are not functional on some P9 revisions, so disable them
+in hardware and skip creating their device tree nodes.</p>
+<p>Since the intent is to prevent OS from configuring VAS/NX, we remove
+only the platform device nodes but leave the VAS/NX DT nodes under
+xscom (i.e we don’t skip add_vas_node() in hdata/spira.c)</p>
+</li>
+<li><p>phb4: Only escalate freezes on MMIO load where necessary</p>
+<p>In order to work around a hardware issue, MMIO load freezes were
+escalated to fences on every chip.  Now that hardware no longer requires
+this, restrict escalation to the chips that actually need it.</p>
+</li>
+<li><p>pflash: Fix makefile dependency issue</p></li>
+<li><p>DT: Add “version” property under ibm, firmware-versions node</p>
+<p>First line of VERSION section in PNOR contains firmware version.
+Use that to add “version” property under firmware versions dt node.</p>
+<p>Sample output:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@xxx2:/proc/device-tree/ibm,firmware-versions# </span>lsprop
+<span class="go">version          &quot;witherspoon-ibm-OP9_v1.19_1.94&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p>npu2: Disable TVT range check when in bypass mode</p>
+<p>On POWER9 the GPUs need to be able to access the MMIO memory space. Therefore
+the TVT range check needs to include the MMIO address space. As any possible
+range check would cover all of memory anyway this patch just disables the TVT
+range check all together when bypassing the TCE tables.</p>
+</li>
+<li><p>hw/npu2: support creset of npu2 devices</p>
+<p>creset calls in the hw procedure that resets the PHY, we don’t
+take them out of reset, just put them in reset.</p>
+<p>this fixes a kexec issue.</p>
+</li>
+<li><p>ATTN: Enable flush instruction cache bit in HID register</p>
+<p>In P9, we have to enable “flush the instruction cache” bit along with
+“attn instruction support” bit to trigger attention.</p>
+</li>
+<li><p>capi: Enable channel tag streaming for PHB in CAPP mode</p>
+<p>We re-enable channel tag streaming for PHB in CAPP mode as without it
+PEC was waiting for cresp for each DMA write command before sending a
+new DMA write command on the Powerbus. This resulted in much lower DMA
+write performance than expected.</p>
+<p>The patch updates enable_capi_mode() to remove the masking of
+channel_streaming_en bit in PBCQ Hardware Configuration Register. Also
+does some re-factoring of the code that updates this register to use
+xscom_write_mask instead of xscom_read followed by a xscom_write.</p>
+</li>
+<li><p>core/device.c: Fix dt_find_compatible_node</p>
+<p>dt_find_compatible_node() and dt_find_compatible_node_on_chip() are used to
+find device nodes under a parent/root node with a given compatible
+property.</p>
+<p>dt_next(root, prev) is used to walk the child nodes of the given parent and
+takes two arguments - root contains the parent node to walk whilst prev
+contains the previous child to search from so that it can be used as an
+iterator over all children nodes.</p>
+<p>The first iteration of dt_find_compatible_node(root, prev) calls
+dt_next(root, root) which is not a well defined operation as prev is
+assumed to be child of the root node. The result is that when a node
+contains no children it will start returning the parent nodes siblings
+until it hits the top of the tree at which point a NULL derefence is
+attempted when looking for the root nodes parent.</p>
+<p>Dereferencing NULL can result in undesirable data exceptions during system
+boot and untimely non-hilarious system crashes. dt_next() should not be
+called with prev == root. Instead we add a check to dt_next() such that
+passing prev = NULL will cause it to start iterating from the first child
+node (if any).</p>
+</li>
+<li><p>stb: Put correct label (for skiboot) into container</p>
+<p>Hostboot will expect the label field of the stb header to contain
+“PAYLOAD” for skiboot or it will fail to load and run skiboot.</p>
+<p>The failure looks something like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">53.40896</span><span class="o">|</span><span class="n">ISTEP</span> <span class="mf">20.</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">host_load_payload</span>
+<span class="mf">53.65840</span><span class="o">|</span><span class="n">secure</span><span class="o">|</span><span class="n">Secureboot</span> <span class="n">Failure</span> <span class="n">plid</span> <span class="o">=</span> <span class="mh">0x90000755</span><span class="p">,</span> <span class="n">rc</span> <span class="o">=</span> <span class="mh">0x1E07</span>
+
+<span class="mf">53.65881</span><span class="o">|</span><span class="n">System</span> <span class="n">shutting</span> <span class="n">down</span> <span class="k">with</span> <span class="n">error</span> <span class="n">status</span> <span class="mh">0x1E07</span>
+<span class="mf">53.67547</span><span class="o">|================================================</span>
+<span class="mf">53.67954</span><span class="o">|</span><span class="n">Error</span> <span class="n">reported</span> <span class="n">by</span> <span class="n">secure</span> <span class="p">(</span><span class="mh">0x1E00</span><span class="p">)</span> <span class="n">PLID</span> <span class="mh">0x90000755</span>
+<span class="mf">53.67560</span><span class="o">|</span>  <span class="n">Container</span><span class="s1">&#39;s component ID does not match expected component ID</span>
+<span class="mf">53.67561</span><span class="o">|</span>  <span class="n">ModuleId</span>   <span class="mh">0x09</span> <span class="n">SECUREBOOT</span><span class="p">::</span><span class="n">MOD_SECURE_VERIFY_COMPONENT</span>
+<span class="mf">53.67845</span><span class="o">|</span>  <span class="n">ReasonCode</span> <span class="mh">0x1e07</span> <span class="n">SECUREBOOT</span><span class="p">::</span><span class="n">RC_ROM_VERIFY</span>
+<span class="mf">53.67998</span><span class="o">|</span>  <span class="n">UserData1</span>   <span class="p">:</span> <span class="mh">0x0000000000000000</span>
+<span class="mf">53.67999</span><span class="o">|</span>  <span class="n">UserData2</span>   <span class="p">:</span> <span class="mh">0x0000000000000000</span>
+<span class="mf">53.67999</span><span class="o">|------------------------------------------------</span>
+<span class="mf">53.68000</span><span class="o">|</span>  <span class="n">Callout</span> <span class="nb">type</span>             <span class="p">:</span> <span class="n">Procedure</span> <span class="n">Callout</span>
+<span class="mf">53.68000</span><span class="o">|</span>  <span class="n">Procedure</span>                <span class="p">:</span> <span class="n">EPUB_PRC_HB_CODE</span>
+<span class="mf">53.68001</span><span class="o">|</span>  <span class="n">Priority</span>                 <span class="p">:</span> <span class="n">SRCI_PRIORITY_HIGH</span>
+<span class="mf">53.68001</span><span class="o">|------------------------------------------------</span>
+<span class="mf">53.68002</span><span class="o">|</span>  <span class="n">Callout</span> <span class="nb">type</span>             <span class="p">:</span> <span class="n">Procedure</span> <span class="n">Callout</span>
+<span class="mf">53.68003</span><span class="o">|</span>  <span class="n">Procedure</span>                <span class="p">:</span> <span class="n">EPUB_PRC_FW_VERIFICATION_ERR</span>
+<span class="mf">53.68003</span><span class="o">|</span>  <span class="n">Priority</span>                 <span class="p">:</span> <span class="n">SRCI_PRIORITY_HIGH</span>
+<span class="mf">53.68004</span><span class="o">|------------------------------------------------</span>
+</pre></div>
+</div>
+</li>
+<li><p>hw/occ: Fix fast-reboot crash in P8 platforms.</p>
+<p>commit 85a1de35cbe4 (“fast-boot: occ: Re-parse the pstate table during fast-boot” )
+breaks the fast-reboot on P8 platforms while reiniting the OCC pstates. On P8
+platforms OPAL adds additional two properties #address-cells and #size-cells
+under ibm,opal/power-mgmt/ DT node. While in fast-reboot same properties adding
+back to the same node results in Duplicate properties and hence fast-reboot fails
+with below traces.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[  541.410373292,5] OCC: All Chip Rdy after 0 ms
+[  541.410488745,3] Duplicate property &quot;#address-cells&quot; in node /ibm,opal/power-mgt
+[  541.410694290,0] Aborting!
+CPU 0058 Backtrace:
+ S: 0000000031d639d0 R: 000000003001367c   .backtrace+0x48
+ S: 0000000031d63a60 R: 000000003001a03c   ._abort+0x4c
+ S: 0000000031d63ae0 R: 00000000300267d8   .new_property+0xd8
+ S: 0000000031d63b70 R: 0000000030026a28   .__dt_add_property_cells+0x30
+ S: 0000000031d63c10 R: 000000003003ea3c   .occ_pstates_init+0x984
+ S: 0000000031d63d90 R: 00000000300142d8   .load_and_boot_kernel+0x86c
+ S: 0000000031d63e70 R: 000000003002586c   .fast_reboot_entry+0x358
+ S: 0000000031d63f00 R: 00000000300029f4   fast_reset_entry+0x2c
+</pre></div>
+</div>
+<p>This patch fixes this issue by removing these two properties on P8 while doing
+OCC pstates re-init in fast-reboot code path.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.10-rc2.html"
+                        title="previous chapter">skiboot-5.10-rc2</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.10-rc4.html"
+                        title="next chapter">skiboot-5.10-rc4</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.10-rc3.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc4.html" title="skiboot-5.10-rc4"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.10-rc2.html" title="skiboot-5.10-rc2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

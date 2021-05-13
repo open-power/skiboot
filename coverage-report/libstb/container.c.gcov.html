@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - libstb/container.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">libstb</a> - container.c<span style="font-size: 80%;"> (source / <a href="container.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">47</td>
+            <td class="headerCovTableEntryLo">14.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-05-13 12:18:09</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntryLo">16.7 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</a>
+<a name="2"><span class="lineNum">       2 </span>                :            : /* Copyright 2013-2016 IBM Corp. */</a>
+<a name="3"><span class="lineNum">       3 </span>                :            : </a>
+<a name="4"><span class="lineNum">       4 </span>                :            : #include &lt;skiboot.h&gt;</a>
+<a name="5"><span class="lineNum">       5 </span>                :            : #include &quot;container.h&quot;</a>
+<a name="6"><span class="lineNum">       6 </span>                :            : </a>
+<a name="7"><span class="lineNum">       7 </span>                :<span class="lineCov">         17 : bool stb_is_container(const void *buf, size_t size)</span></a>
+<a name="8"><span class="lineNum">       8 </span>                :            : {</a>
+<a name="9"><span class="lineNum">       9 </span>                :            :         ROM_container_raw *c;</a>
+<a name="10"><span class="lineNum">      10 </span>                :            : </a>
+<a name="11"><span class="lineNum">      11 </span>                :<span class="lineCov">         17 :         c = (ROM_container_raw*) buf;</span></a>
+<a name="12"><span class="lineNum">      12 </span>                :<span class="lineCov">         17 :         if (!buf || size &lt; SECURE_BOOT_HEADERS_SIZE)</span></a>
+<a name="13"><span class="lineNum">      13 </span>                :<span class="lineCov">          6 :                 return false;</span></a>
+<a name="14"><span class="lineNum">      14 </span>                :<span class="lineCov">         11 :         if (be32_to_cpu(c-&gt;magic_number) != ROM_MAGIC_NUMBER )</span></a>
+<a name="15"><span class="lineNum">      15 </span>                :<span class="lineCov">         10 :                 return false;</span></a>
+<a name="16"><span class="lineNum">      16 </span>                :<span class="lineCov">          1 :         return true;</span></a>
+<a name="17"><span class="lineNum">      17 </span>                :            : }</a>
+<a name="18"><span class="lineNum">      18 </span>                :            : </a>
+<a name="19"><span class="lineNum">      19 </span>                :<span class="lineNoCov">          0 : uint32_t stb_payload_magic(const void *buf, size_t size)</span></a>
+<a name="20"><span class="lineNum">      20 </span>                :            : {</a>
+<a name="21"><span class="lineNum">      21 </span>                :            :         uint8_t *p;</a>
+<a name="22"><span class="lineNum">      22 </span>                :<span class="lineNoCov">          0 :         if (!stb_is_container(buf, size))</span></a>
+<a name="23"><span class="lineNum">      23 </span>                :<span class="lineNoCov">          0 :                 return 0;</span></a>
+<a name="24"><span class="lineNum">      24 </span>                :<span class="lineNoCov">          0 :         p = (uint8_t*) buf;</span></a>
+<a name="25"><span class="lineNum">      25 </span>                :<span class="lineNoCov">          0 :         return be32_to_cpu(*(be32*)(p+SECURE_BOOT_HEADERS_SIZE));</span></a>
+<a name="26"><span class="lineNum">      26 </span>                :            : }</a>
+<a name="27"><span class="lineNum">      27 </span>                :            : </a>
+<a name="28"><span class="lineNum">      28 </span>                :<span class="lineNoCov">          0 : uint64_t stb_sw_payload_size(const void *buf, size_t size)</span></a>
+<a name="29"><span class="lineNum">      29 </span>                :            : {</a>
+<a name="30"><span class="lineNum">      30 </span>                :            :         struct parsed_stb_container c;</a>
+<a name="31"><span class="lineNum">      31 </span>                :<span class="lineNoCov">          0 :         if (!stb_is_container(buf, size))</span></a>
+<a name="32"><span class="lineNum">      32 </span>                :<span class="lineNoCov">          0 :                 return 0;</span></a>
+<a name="33"><span class="lineNum">      33 </span>                :<span class="lineNoCov">          0 :         if (parse_stb_container(buf, size, &amp;c) != 0)</span></a>
+<a name="34"><span class="lineNum">      34 </span>                :<span class="lineNoCov">          0 :                 return 0;</span></a>
+<a name="35"><span class="lineNum">      35 </span>                :<span class="lineNoCov">          0 :         return be64_to_cpu(c.sh-&gt;payload_size);</span></a>
+<a name="36"><span class="lineNum">      36 </span>                :            : }</a>
+<a name="37"><span class="lineNum">      37 </span>                :            : </a>
+<a name="38"><span class="lineNum">      38 </span>                :<span class="lineNoCov">          0 : int parse_stb_container(const void* data, size_t len, struct parsed_stb_container *c)</span></a>
+<a name="39"><span class="lineNum">      39 </span>                :            : {</a>
+<a name="40"><span class="lineNum">      40 </span>                :<span class="lineNoCov">          0 :         const size_t prefix_data_min_size = 3 * (EC_COORDBYTES * 2);</span></a>
+<a name="41"><span class="lineNum">      41 </span>                :<span class="lineNoCov">          0 :         c-&gt;buf = data;</span></a>
+<a name="42"><span class="lineNum">      42 </span>                :<span class="lineNoCov">          0 :         c-&gt;bufsz = len;</span></a>
+<a name="43"><span class="lineNum">      43 </span>                :<span class="lineNoCov">          0 :         c-&gt;c = data;</span></a>
+<a name="44"><span class="lineNum">      44 </span>                :<span class="lineNoCov">          0 :         c-&gt;ph = data += sizeof(ROM_container_raw);</span></a>
+<a name="45"><span class="lineNum">      45 </span>                :<span class="lineNoCov">          0 :         c-&gt;pd = data += sizeof(ROM_prefix_header_raw) + (c-&gt;ph-&gt;ecid_count * ECID_SIZE);</span></a>
+<a name="46"><span class="lineNum">      46 </span>                :<span class="lineNoCov">          0 :         c-&gt;sh = data += prefix_data_min_size + c-&gt;ph-&gt;sw_key_count * (EC_COORDBYTES * 2);</span></a>
+<a name="47"><span class="lineNum">      47 </span>                :<span class="lineNoCov">          0 :         c-&gt;ssig = data += sizeof(ROM_sw_header_raw) +</span></a>
+<a name="48"><span class="lineNum">      48 </span>                :<span class="lineNoCov">          0 :                 c-&gt;sh-&gt;ecid_count * ECID_SIZE;</span></a>
+<a name="49"><span class="lineNum">      49 </span>                :            : </a>
+<a name="50"><span class="lineNum">      50 </span>                :<span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="51"><span class="lineNum">      51 </span>                :            : }</a>
+<a name="52"><span class="lineNum">      52 </span>                :            : </a>
+<a name="53"><span class="lineNum">      53 </span>                :<span class="lineNoCov">          0 : const uint8_t* stb_sw_payload_hash(const void *buf, size_t size)</span></a>
+<a name="54"><span class="lineNum">      54 </span>                :            : {</a>
+<a name="55"><span class="lineNum">      55 </span>                :            :         struct parsed_stb_container c;</a>
+<a name="56"><span class="lineNum">      56 </span>                :            : </a>
+<a name="57"><span class="lineNum">      57 </span>                :<span class="lineNoCov">          0 :         if (!stb_is_container(buf, size))</span></a>
+<a name="58"><span class="lineNum">      58 </span>                :<span class="lineNoCov">          0 :                 return NULL;</span></a>
+<a name="59"><span class="lineNum">      59 </span>                :<span class="lineNoCov">          0 :         if (parse_stb_container(buf, size, &amp;c) != 0)</span></a>
+<a name="60"><span class="lineNum">      60 </span>                :<span class="lineNoCov">          0 :                 return NULL;</span></a>
+<a name="61"><span class="lineNum">      61 </span>                :            : </a>
+<a name="62"><span class="lineNum">      62 </span>                :<span class="lineNoCov">          0 :         return c.sh-&gt;payload_hash;</span></a>
+<a name="63"><span class="lineNum">      63 </span>                :            : }</a>
+<a name="64"><span class="lineNum">      64 </span>                :            : </a>
+<a name="65"><span class="lineNum">      65 </span>                :            : </a>
+<a name="66"><span class="lineNum">      66 </span>                :<span class="lineNoCov">          0 : void stb_print_data(const void* data, size_t len)</span></a>
+<a name="67"><span class="lineNum">      67 </span>                :            : {</a>
+<a name="68"><span class="lineNum">      68 </span>                :            :         char hash[1+SHA512_DIGEST_LENGTH*2];</a>
+<a name="69"><span class="lineNum">      69 </span>                :<span class="lineNoCov">          0 :         char *h = hash;</span></a>
+<a name="70"><span class="lineNum">      70 </span>                :<span class="lineNoCov">          0 :         char *d = (char*)data;</span></a>
+<a name="71"><span class="lineNum">      71 </span>                :            : </a>
+<a name="72"><span class="lineNum">      72 </span>                :<span class="lineNoCov">          0 :         assert(len &lt;= SHA512_DIGEST_LENGTH);</span></a>
+<a name="73"><span class="lineNum">      73 </span>                :            : </a>
+<a name="74"><span class="lineNum">      74 </span>                :<span class="lineNoCov">          0 :         while(len) {</span></a>
+<a name="75"><span class="lineNum">      75 </span>                :<span class="lineNoCov">          0 :                 snprintf(h, 3, &quot;%02x&quot;, *d);</span></a>
+<a name="76"><span class="lineNum">      76 </span>                :<span class="lineNoCov">          0 :                 h+=2;</span></a>
+<a name="77"><span class="lineNum">      77 </span>                :<span class="lineNoCov">          0 :                 d++;</span></a>
+<a name="78"><span class="lineNum">      78 </span>                :<span class="lineNoCov">          0 :                 len--;</span></a>
+<a name="79"><span class="lineNum">      79 </span>                :            :         }</a>
+<a name="80"><span class="lineNum">      80 </span>                :<span class="lineNoCov">          0 :         *h='\0';</span></a>
+<a name="81"><span class="lineNum">      81 </span>                :<span class="lineNoCov">          0 :         prlog(PR_NOTICE, &quot;%s\n&quot;, hash);</span></a>
+<a name="82"><span class="lineNum">      82 </span>                :<span class="lineNoCov">          0 : }</span></a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memory in skiboot &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="OPAL/Skiboot Nvlink Interface Documentation" href="nvlink.html" />
+    <link rel="prev" title="GCOV for skiboot" href="gcov.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="nvlink.html" title="OPAL/Skiboot Nvlink Interface Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gcov.html" title="GCOV for skiboot"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Memory in skiboot</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="memory-in-skiboot">
+<h1>Memory in skiboot<a class="headerlink" href="#memory-in-skiboot" title="Permalink to this headline">¶</a></h1>
+<p>There are regions of memory we statically allocate for firmware as well as
+a HEAP region for boot and runtime allocations.</p>
+<p>A design principle of skiboot is to attempt not to allocate memory at runtime,
+or at least keep it to a minimum, and not do so in any critical code path
+for the system to remain running.</p>
+<p>At no point during runtime should a skiboot memory allocation failure cause
+the system to stop functioning.</p>
+<div class="section" id="heap">
+<h2>HEAP<a class="headerlink" href="#heap" title="Permalink to this headline">¶</a></h2>
+<p>Dynamic memory allocations go in a single heap. This is identified as
+Region ibm,firmware-heap and appears as a reserved section in the device tree.</p>
+<p>Originally, it was 12582912 bytes in size (declared in mem_map.h).
+Now, it is 13631488 bytes after being bumped as part of the GCOV work.</p>
+<p>We increased heap size as on larger systems, we were getting close to using
+all the heap once skiboot became 2MB with GCOV.</p>
+<p>Heap usage is printed before running the payload.</p>
+<p>For example, as of writing, on a dual socket Tuleta:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">45215870591</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">SkiBoot</span> <span class="n">skiboot</span><span class="o">-</span><span class="mf">5.0.1</span><span class="o">-</span><span class="mi">94</span><span class="o">-</span><span class="n">gb759ce2</span> <span class="n">starting</span><span class="o">...</span>
+<span class="p">[</span><span class="mi">3680939340</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">CUPD</span><span class="p">:</span> <span class="n">T</span> <span class="n">side</span> <span class="n">MI</span> <span class="n">Keyword</span> <span class="o">=</span> <span class="n">SV830_027</span>
+<span class="p">[</span><span class="mi">3680942658</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">CUPD</span><span class="p">:</span> <span class="n">T</span> <span class="n">side</span> <span class="n">ML</span> <span class="n">Keyword</span> <span class="o">=</span> <span class="n">FW830</span><span class="mf">.00</span>
+<span class="p">[</span><span class="mi">15404383291</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">Region</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">heap</span> <span class="n">free</span><span class="p">:</span> <span class="mi">5378072</span>
+</pre></div>
+</div>
+<p>and on a palmetto:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">24748502575</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">SkiBoot</span> <span class="n">skiboot</span><span class="o">-</span><span class="mf">5.0.1</span><span class="o">-</span><span class="mi">94</span><span class="o">-</span><span class="n">gb759ce2</span> <span class="n">starting</span><span class="o">...</span>
+<span class="p">[</span><span class="mi">9870429550</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="n">Region</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">heap</span> <span class="n">free</span><span class="p">:</span> <span class="mi">10814856</span>
+</pre></div>
+</div>
+<p>Our memory allocator is simple, a use pattern of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">A</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">();</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">();</span>
+<span class="n">free</span><span class="p">(</span><span class="n">A</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>is likely to generate fragmentation, so it should generally be avoided
+where possible.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Memory in skiboot</a><ul>
+<li><a class="reference internal" href="#heap">HEAP</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gcov.html"
+                        title="previous chapter">GCOV for skiboot</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="nvlink.html"
+                        title="next chapter">OPAL/Skiboot Nvlink Interface Documentation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/memory.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="nvlink.html" title="OPAL/Skiboot Nvlink Interface Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gcov.html" title="GCOV for skiboot"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Memory in skiboot</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

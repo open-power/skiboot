@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot 4.1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot 4.1.1" href="skiboot-4.1.1.html" />
+    <link rel="prev" title="skiboot 4.0" href="skiboot-4.0.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-4.1.1.html" title="skiboot 4.1.1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-4.0.html" title="skiboot 4.0"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot 4.1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-4-1">
+<span id="id1"></span><h1>skiboot 4.1<a class="headerlink" href="#skiboot-4-1" title="Permalink to this headline">¶</a></h1>
+<p>Skiboot 4.1 was released 10th December 2014. It was a release where more
+development transitioned to the open source mailing list rather than internal
+mailing lists.</p>
+<p>Changes include:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>We now build with -fstack-protector and -Werror</p></li>
+<li><p>Stack checking extensions when built with STACK_CHECK=1</p></li>
+<li><p>Reduced stack usage in some areas, -Wstack-usage=1024 now.</p>
+<ul>
+<li><p>Some functions could use 2kb stack, now all are &lt;1kb</p></li>
+</ul>
+</li>
+<li><p>Unsafe libc functions such as sprintf() have been removed</p></li>
+<li><p>Symbolic backtraces</p></li>
+<li><p>expose skiboot symbol map to OS (via device-tree)</p></li>
+<li><p>removed machine check interrupt patching in OPAL</p></li>
+<li><p>occ/hbrt: Call stopOCC() for implementing reset OCC command from FSP</p></li>
+<li><p>occ: Fix the low level ACK message sent to FSP on receiving {RESET/LOAD}_OCC</p></li>
+<li><p>hardening to errors of various FSP code</p>
+<ul>
+<li><p>fsp: Avoid NULL dereference in case of invalid class_resp bits-
+abort if device tree parsing fails</p></li>
+<li><p>FSP: Validate fsp_msg in fsp_queue_msg</p></li>
+<li><p>fsp-elog: Add various NULL checks</p></li>
+</ul>
+</li>
+<li><p>Finessing of when to use error log vs prerror()</p></li>
+<li><p>More i2c work</p></li>
+<li><p>Can now run under Mambo simulator (see external/mambo/skiboot.tcl)
+(commonly known as “POWER8 Functional Simulator”)</p></li>
+<li><p>Document skiboot versioning scheme</p></li>
+<li><p>opal: Handle more TFAC errors.</p>
+<ul>
+<li><p>TB_RESIDUE_ERR, FW_CONTROL_ERR and CHIP_TOD_PARITY_ERR</p></li>
+</ul>
+</li>
+<li><p>ipmi: populate FRU data</p></li>
+<li><p>rtc: Add a generic rtc cache</p></li>
+<li><p>ipmi/rtc: use generic cache</p></li>
+<li><p>Error Logging backend for bmc based machines</p></li>
+<li><p>PSI: Drive link down on HIR</p></li>
+<li><p>occ: Fix clearing of OCC interrupt on remote fix</p></li>
+</ul>
+</div></blockquote>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-4.0.html"
+                        title="previous chapter">skiboot 4.0</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-4.1.1.html"
+                        title="next chapter">skiboot 4.1.1</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-4.1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-4.1.1.html" title="skiboot 4.1.1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-4.0.html" title="skiboot 4.0"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot 4.1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

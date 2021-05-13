@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>reserved-memory device tree nodes &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Trusted Platform Module (TPM)" href="tpm.html" />
+    <link rel="prev" title="PCI Device Tree Bindings" href="pci.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="tpm.html" title="Trusted Platform Module (TPM)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pci.html" title="PCI Device Tree Bindings"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">reserved-memory device tree nodes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="reserved-memory-device-tree-nodes">
+<h1>reserved-memory device tree nodes<a class="headerlink" href="#reserved-memory-device-tree-nodes" title="Permalink to this headline">¶</a></h1>
+<p>OPAL exposes reserved memory through a top-level reserved-memory node,
+containing subnodes that represent each reserved memory region.</p>
+<p>This follows the Linux specification for the /reserved-memory node,
+described in the kernel source tree, in:</p>
+<blockquote>
+<div><p>Documentation/devicetree/bindings/reserved-memory/reserved-memory.txt</p>
+</div></blockquote>
+<p>The top-level /reserved-memory node contains:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#size-cells = &lt;2&gt;</span>
+<span class="c1">#address-cells = &lt;2&gt;</span>
+</pre></div>
+</div>
+<p>Addresses and sizes are all 64-bits.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">ranges</span></code></dt><dd><p>the empty ranges node indicates no translation of physical
+addresses in the subnodes.</p>
+</dd>
+</dl>
+<p>The sub-nodes under the /reserved-memory node contain:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">reg</span> <span class="pre">=</span> <span class="pre">&lt;address</span> <span class="pre">size&gt;</span></code></dt><dd><p>the address and size of the reserved memory region. The address
+and size values are two cells each, as signified by the top-level
+<code class="docutils literal notranslate"><span class="pre">#{address,size}-cells</span></code></p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ibm,prd-label</span> <span class="pre">=</span> <span class="pre">&quot;string&quot;</span></code></dt><dd><p>a string token for use by the prd system. Specific ranges may be
+used by prd - those will be referenced by this label.</p>
+</dd>
+</dl>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pci.html"
+                        title="previous chapter">PCI Device Tree Bindings</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tpm.html"
+                        title="next chapter">Trusted Platform Module (TPM)</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/device-tree/reserved-memory.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="tpm.html" title="Trusted Platform Module (TPM)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pci.html" title="PCI Device Tree Bindings"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">reserved-memory device tree nodes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

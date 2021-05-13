@@ -1,0 +1,936 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0-rc2" href="skiboot-6.0-rc2.html" />
+    <link rel="prev" title="skiboot-6.0" href="skiboot-6.0.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0-rc2.html" title="skiboot-6.0-rc2"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.html" title="skiboot-6.0"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-rc1">
+<span id="id1"></span><h1>skiboot-6.0-rc1<a class="headerlink" href="#skiboot-6-0-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v6.0-rc1 was released on Tuesday May 1st 2018. It is the first
+release candidate of skiboot 6.0, which will become the new stable release
+of skiboot following the 5.11 release, first released April 6th 2018.</p>
+<p>Skiboot 6.0 will mark the basis for op-build v2.0 and will be required for
+POWER9 systems.</p>
+<p>skiboot v6.0-rc1 contains all bug fixes as of <a class="reference internal" href="skiboot-5.11.html#skiboot-5-11"><span class="std std-ref">skiboot-5.11</span></a>,
+<a class="reference internal" href="skiboot-5.10.5.html#skiboot-5-10-5"><span class="std std-ref">skiboot-5.10.5</span></a>, and <a class="reference internal" href="skiboot-5.4.9.html#skiboot-5-4-9"><span class="std std-ref">skiboot-5.4.9</span></a> (the currently maintained
+stable releases). Once 6.0 is released, we do <em>not</em> expect any further
+stable releases in the 5.10.x series, nor in the 5.11.x series.</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>The current plan is to cut the final 6.0 in early May, with skiboot 6.0
+being for all POWER8 and POWER9 platforms in op-build v2.0.</p>
+<p>Over skiboot-5.11, we have the following changes:</p>
+<div class="section" id="new-features">
+<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Disable stop states from OPAL</p>
+<p>On ZZ, stop4,5,11 are enabled for PowerVM, even though doing
+so may cause problems with OPAL due to bugs in hcode.</p>
+<p>For other platforms, this isn’t so much of an issue as
+we can just control stop states by the MRW. However the
+rebuild-the-world approach to changing values there is a bit
+annoying if you just want to rule out a specific stop state
+from being problematic.</p>
+<p>Provide an nvram option to override what’s disabled in OPAL.</p>
+<p>The OPAL mask is currently ~0xE0000000 (i.e. all but stop 0,1,2)</p>
+<p>You can set an NVRAM override with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">opal</span><span class="o">-</span><span class="n">stop</span><span class="o">-</span><span class="n">state</span><span class="o">-</span><span class="n">disable</span><span class="o">-</span><span class="n">mask</span><span class="o">=</span><span class="mh">0xFFFFFFF</span>
+</pre></div>
+</div>
+<p>This nvram override will disable <em>all</em> stop states.</p>
+</li>
+<li><p>interrupts: Create an “interrupts” property in the OPAL node</p>
+<p>Deprecate the old “opal-interrupts”, it’s still there, but the new
+property follows the standard and allow us to specify whether an
+interrupt is level or edge sensitive.</p>
+<p>Similarly create “interrupt-names” whose content is identical to
+“opal-interrupts-names”.</p>
+</li>
+<li><p>SBE: Add timer support on POWER9</p>
+<p>SBE on P9 provides one shot programmable timer facility. We can use this
+to implement OPAL timers and hence limit the reliance on the Linux
+heartbeat (similar to HW timer facility provided by SLW on P8).</p>
+</li>
+<li><p>Add SBE driver support</p>
+<p>SBE (Self Boot Engine) on P9 has two different jobs:
+- Boot the chip up to the point the core is functional
+- Provide various services like timer, scom, stash MPIPL, etc., at runtime</p>
+<p>We will use SBE for various purposes like timer, MPIPL, etc.</p>
+</li>
+<li><p>opal:hmi: Add missing processor recovery reason string.</p>
+<p>With this patch now we see reason string printed for CORE_WOF[43] bit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">477.352234986</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">U78D3</span><span class="mf">.001</span><span class="o">.</span><span class="n">WZS004A</span><span class="o">-</span><span class="n">P1</span><span class="o">-</span><span class="n">C48</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">8</span> <span class="n">C</span><span class="p">:</span><span class="mi">22</span> <span class="n">T</span><span class="p">:</span><span class="mi">3</span><span class="p">:</span> <span class="n">Processor</span> <span class="n">recovery</span> <span class="n">occurred</span><span class="o">.</span>
+<span class="p">[</span>  <span class="mf">477.352240742</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Core</span> <span class="n">WOF</span> <span class="o">=</span> <span class="mh">0x0000000000100000</span> <span class="n">recovered</span> <span class="n">error</span><span class="p">:</span>
+<span class="p">[</span>  <span class="mf">477.352242181</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">PC</span> <span class="o">-</span> <span class="n">Thread</span> <span class="n">hang</span> <span class="n">recovery</span>
+</pre></div>
+</div>
+</li>
+<li><p>Add DIMM actual speed to device tree</p>
+<p>Recent HDAT provides DIMM actuall speed. Lets add this to device tree.</p>
+</li>
+<li><p>Fix DIMM size property</p>
+<p>Today we parse vpd blob to get DIMM size information. This is limited
+to FSP based system. HDAT provides DIMM size value. Lets use that to
+populate device tree. So that we can get size information on BMC based
+system as well.</p>
+</li>
+<li><p>PCI: Set slot power limit when supported</p>
+<p>The PCIe slot capability can be implemented in a root or switch
+downstream port to set the maximum power a card is allowed to draw
+from the system. This patch adds support for setting the power limit
+when the platform has defined one.</p>
+</li>
+<li><p>hdata/spira: parse vpd to add part-number and serial-number to xscom&#64; node</p>
+<p>Expected by FWTS and associates our processor with the part/serial
+number, which is obviously a good thing for one’s own sanity.</p>
+</li>
+</ul>
+<div class="section" id="improved-hmi-handling">
+<h3>Improved HMI Handling<a class="headerlink" href="#improved-hmi-handling" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>opal/hmi: Add documentation for opal_handle_hmi2 call</p></li>
+<li><p>opal/hmi: Generate hmi event for recovered HDEC parity error.</p></li>
+<li><p>opal/hmi: check thread 0 tfmr to validate latched tfmr errors.</p>
+<p>Due to P9 errata, HDEC parity and TB residue errors are latched for
+non-zero threads 1-3 even if they are cleared. But these are not
+latched on thread 0. Hence, use xscom SCOMC/SCOMD to read thread 0 tfmr
+value and ignore them on non-zero threads if they are not present on
+thread 0.</p>
+</li>
+<li><p>opal/hmi: Print additional debug information in rendezvous.</p></li>
+<li><p>opal/hmi: Fix handling of TFMR parity/corrupt error.</p>
+<p>While testing TFMR parity/corrupt error it has been observed that HMIs are
+delivered twice for this error</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>First time HMI is delivered with HMER[4,5]=1 and TFMR[60]=1.</p></li>
+<li><p>Second time HMI is delivered with HMER[4,5]=1 and TFMR[60]=0 with valid TB.</p></li>
+</ul>
+</div></blockquote>
+<p>On second HMI we end up throwing “HMI: TB invalid without core error
+reported” even though TB is in a valid state.</p>
+</li>
+<li><p>opal/hmi: Stop flooding HMI event for TOD errors.</p>
+<p>Fix the issue where every thread on the chip sends HMI event to host for
+TOD errors. TOD errors are reported to all the core/threads on the chip.
+Any one thread can fix the error and send event. Rest of the threads don’t
+need to send HMI event unnecessarily.</p>
+</li>
+<li><p>opal/hmi: Fix soft lockups during TOD errors</p>
+<p>There are some TOD errors which do not affect working of TOD and TB. They
+stay in valid state. Hence we don’t need rendez vous for TOD errors that
+does not affect TB working.</p>
+<p>TOD errors that affects TOD/TB will report a global error on TFMR[44]
+alongwith bit 51, and they will go in rendez vous path as expected.</p>
+<p>But the TOD errors that does not affect TB register sets only TFMR bit 51.
+The TFMR bit 51 is cleared when any single thread clears the TOD error.
+Once cleared, the bit 51 is reflected to all the cores on that chip. Any
+thread that reads the TFMR register after the error is cleared will see
+TFMR bit 51 reset. Hence the threads that see TFMR[51]=1, falls through
+rendez-vous path and threads that see TFMR[51]=0, returns doing
+nothing. This ends up in a soft lockups in host kernel.</p>
+<p>This patch fixes this issue by not considering TOD interrupt (TFMR[51])
+as a core-global error and hence avoiding rendez-vous path completely.
+Instead threads that see TFMR[51]=1 will now take different path that
+just do the TOD error recovery.</p>
+</li>
+<li><p>opal/hmi: Do not send HMI event if no errors are found.</p>
+<p>For TOD errors, all the cores in the chip get HMIs. Any one thread from any
+core can fix the issue and TFMR will have error conditions cleared. Rest of
+the threads need take any action if TOD errors are already cleared. Hence
+thread 0 of every core should get a fresh copy of TFMR before going ahead
+recovery path. Initialize recover = -1, so that if no errors found that
+thread need not send a HMI event to linux. This helps in stop flooding host
+with hmi event by every thread even there are no errors found.</p>
+</li>
+<li><p>opal/hmi: Initialize the hmi event with old value of HMER.</p>
+<p>Do this before we check for TFAC errors. Otherwise the event at host console
+shows no error reported in HMER register.</p>
+<p>Without this patch the console event show HMER with all zeros</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">216.753417</span><span class="p">]</span> <span class="n">Severe</span> <span class="n">Hypervisor</span> <span class="n">Maintenance</span> <span class="n">interrupt</span> <span class="p">[</span><span class="n">Recovered</span><span class="p">]</span>
+<span class="p">[</span>  <span class="mf">216.753498</span><span class="p">]</span>  <span class="n">Error</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Timer</span> <span class="n">facility</span> <span class="n">experienced</span> <span class="n">an</span> <span class="n">error</span>
+<span class="p">[</span>  <span class="mf">216.753509</span><span class="p">]</span>  <span class="n">HMER</span><span class="p">:</span> <span class="mi">0000000000000000</span>
+<span class="p">[</span>  <span class="mf">216.753518</span><span class="p">]</span>  <span class="n">TFMR</span><span class="p">:</span> <span class="mi">3</span><span class="n">c12000870e04000</span>
+</pre></div>
+</div>
+<p>After this patch it shows old HMER values on host console:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mf">2237.652533</span><span class="p">]</span> <span class="n">Severe</span> <span class="n">Hypervisor</span> <span class="n">Maintenance</span> <span class="n">interrupt</span> <span class="p">[</span><span class="n">Recovered</span><span class="p">]</span>
+<span class="p">[</span> <span class="mf">2237.652651</span><span class="p">]</span>  <span class="n">Error</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Timer</span> <span class="n">facility</span> <span class="n">experienced</span> <span class="n">an</span> <span class="n">error</span>
+<span class="p">[</span> <span class="mf">2237.652766</span><span class="p">]</span>  <span class="n">HMER</span><span class="p">:</span> <span class="mi">0840000000000000</span>
+<span class="p">[</span> <span class="mf">2237.652837</span><span class="p">]</span>  <span class="n">TFMR</span><span class="p">:</span> <span class="mi">3</span><span class="n">c12000870e04000</span>
+</pre></div>
+</div>
+</li>
+<li><p>opal/hmi: Rework HMI handling of TFAC errors</p>
+<p>This patch reworks the HMI handling for TFAC errors by introducing
+4 rendez-vous points improve the thread synchronization while handling
+timebase errors that requires all thread to clear dirty data from TB/HDEC
+register before clearing the errors.</p>
+</li>
+<li><p>opal/hmi: Don’t bother passing HMER to pre-recovery cleanup</p>
+<p>The test for TFAC error is now redundant so we remove it and
+remove the HMER argument.</p>
+</li>
+<li><p>opal/hmi: Move timer related error handling to a separate function</p>
+<p>Currently no functional change. This is a first step to completely
+rewriting how these things are handled.</p>
+</li>
+<li><p>opal/hmi: Add a new opal_handle_hmi2 that returns direct info to Linux</p>
+<p>It returns a 64-bit flags mask currently set to provide info
+about which timer facilities were lost, and whether an event
+was generated.</p>
+</li>
+<li><p>opal/hmi: Remove races in clearing HMER</p>
+<p>Writing to HMER acts as an “AND”. The current code writes back the
+value we originally read with the bits we handled cleared. This is
+racy, if a new bit gets set in HW after the original read, we’ll end
+up clearing it without handling it.</p>
+<p>Instead, use an all 1’s mask with only the bit handled cleared.</p>
+</li>
+<li><p>opal/hmi: Don’t re-read HMER multiple times</p>
+<p>We want to make sure all reporting and actions are based
+upon the same snapshot of HMER in case bits get added
+by HW while we are in OPAL.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="libflash-and-ffspart">
+<h3>libflash and ffspart<a class="headerlink" href="#libflash-and-ffspart" title="Permalink to this headline">¶</a></h3>
+<p>Many improvements to the <cite>ffspart</cite> utility and <cite>libflash</cite> have come
+in this release, making <cite>ffspart</cite> suitable for building bit-identical
+PNOR images as the existing tooling used by <cite>op-build</cite>. The plan is to
+switch <cite>op-build</cite> to use this infrastructure in the not too distant
+future.</p>
+<ul>
+<li><p>libflash/blocklevel: Make read/write be ECC agnostic for callers</p>
+<p>The blocklevel abstraction allows for regions of the backing store to be
+marked as ECC protected so that blocklevel can decode/encode the ECC
+bytes into the buffer automatically without the caller having to be ECC
+aware.</p>
+<p>Unfortunately this abstraction is far from perfect, this is only useful
+if reads and writes are performed at the start of the ECC region or in
+some circumstances at an ECC aligned position - which requires the
+caller be aware of the ECC regions.</p>
+<p>The problem that has arisen is that the blocklevel abstraction is
+initialised somewhere but when it is later called the caller is unaware
+if ECC exists in the region it wants to arbitrarily read and write to.
+This should not have been a problem since blocklevel knows. Currently
+misaligned reads will fail ECC checks and misaligned writes will
+overwrite ECC bytes and the backing store will become corrupted.</p>
+<p>This patch add the smarts to blocklevel_read() and blocklevel_write() to
+cope with the problem. Note that ECC can always be bypassed by calling
+blocklevel_raw_() functions.</p>
+<p>All this work means that the gard tool can can safely call
+blocklevel_read() and blocklevel_write() and as long as the blocklevel
+knows of the presence of ECC then it will deal with all cases.</p>
+<p>This also commit removes code in the gard tool which compensated for
+inadequacies no longer present in blocklevel.</p>
+</li>
+<li><p>libflash/blocklevel: Return region start from ecc_protected()</p>
+<p>Currently all ecc_protected() does is say if a region is ECC protected
+or not. Knowing a region is ECC protected is one thing but there isn’t
+much that can be done afterwards if this is the only known fact. A lot
+more can be done if the caller is told where the ECC region begins.</p>
+<p>Knowing where the ECC region start it allows to caller to align its
+read/and writes. This allows for more flexibility calling read and write
+without knowing exactly how the backing store is organised.</p>
+</li>
+<li><p>libflash/ecc: Add helpers to align a position within an ecc buffer</p>
+<p>As part of ongoing work to make ECC invisible to higher levels up the
+stack this function converts a ‘position’ which should be ECC agnostic
+to the equivalent position within an ECC region starting at a specified
+location.</p>
+</li>
+<li><p>libflash/ecc: Add functions to deal with unaligned ECC memcpy</p></li>
+<li><p>external/ffspart: Improve error output</p></li>
+<li><p>libffs: Fix bad checks for partition overlap</p>
+<p>Not all TOCs are written at zero</p>
+</li>
+<li><p>libflash/libffs: Allow caller to specifiy header partition</p>
+<p>An FFS TOC is comprised of two parts. A small header which has a magic
+and very minimmal information about the TOC which will be common to all
+partitions, things like number of patritions, block sizes and the like.
+Following this small header are a series of entries. Importantly there
+is always an entry which encompases the TOC its self, this is usually
+called the ‘part’ partition.</p>
+<p>Currently libffs always assumes that the ‘part’ partition is at zero.
+While there is always a TOC and zero there doesn’t actually have to be.
+PNORs may have multiple TOCs within them, therefore libffs needs to be
+flexible enough to allow callers to specify TOCs not at zero.</p>
+<p>The ‘part’ partition is otherwise a regular partition which may have
+flags associated with it. libffs should allow the user to set the flags
+for the ‘part’ partition.</p>
+<p>This patch achieves both by allowing the caller to specify the ‘part’
+partition. The caller can not and libffs will provide a sensible
+default.</p>
+</li>
+<li><p>libflash/libffs: Refcount ffs entries</p>
+<p>Currently consumers can add an new ffs entry to multiple headers, this
+is fine but freeing any of the headers will cause the entry to be freed,
+this causes double free problems.</p>
+<p>Even if only one header is uses, the consumer of the library still has a
+reference to the entry, which they may well reuse at some other point.</p>
+<p>libffs will now refcount entries and only free when there are no more
+references.</p>
+<p>This patch also removes the pointless return value of ffs_hdr_free()</p>
+</li>
+<li><p>libflash/libffs: Switch to storing header entries in an array</p>
+<p>Since the libffs no longer needs to sort the entries as they get added
+it makes little sense to have the complexity of a linked list when an
+array will suffice.</p>
+</li>
+<li><p>libflash/libffs: Remove backup partition from TOC generation code</p>
+<p>It turns out this code was messy and not all that reliable. Doing it at
+the library level adds complexity to the library and restrictions to the
+caller.</p>
+<p>A simpler approach can be achived with the just instantiating multiple
+ffs_header structures pointing to different parts of the same file.</p>
+</li>
+<li><p>libflash/libffs: Remove the ‘sides’ from the FFS TOC generation code</p>
+<p>It turns out this code was messy and not all that reliable. Doing it at
+the library level adds complexity to the library and restrictions to the
+caller.</p>
+<p>A simpler approach can be achived with the just instantiating multiple
+ffs_header structures pointing to different parts of the same file.</p>
+</li>
+<li><p>libflash/libffs: Always add entries to the end of the TOC</p>
+<p>It turns out that sorted order isn’t the best idea. This removes
+flexibility from the caller. If the user wants their partitions in
+sorted order, they should insert them in sorted order.</p>
+</li>
+<li><p>external/ffspart: Remove side, order and backup options</p>
+<p>These options are currently flakey in libflash/libffs so there isn’t
+much point to being able to use them in ffspart.</p>
+<p>Future reworks planned for libflash/libffs will render these options
+redundant anyway.</p>
+</li>
+<li><p>libflash/libffs: ffs_close() should use ffs_hdr_free()</p></li>
+<li><p>libflash/libffs: Add setter for a partitions actual size</p></li>
+<li><p>pflash: Use ffs_entry_user_to_string() to standardise flag strings</p></li>
+<li><p>libffs: Standardise ffs partition flags</p>
+<p>It seems we’ve developed a character respresentation for ffs partition
+flags. Currently only pflash really prints them so it hasn’t been a
+problem but now ffspart wants to read them in from user input.</p>
+<p>It is important that what libffs reads and what pflash prints remain
+consistent, we should move the code into libffs to avoid problems.</p>
+</li>
+<li><p>external/ffspart: Allow # comments in input file</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="p9dsu-platform-changes">
+<h2>p9dsu Platform changes<a class="headerlink" href="#p9dsu-platform-changes" title="Permalink to this headline">¶</a></h2>
+<p>The p9dsu platform from SuperMicro (also known as ‘Boston’) has received
+a number of updates, and the patches once carried by SuperMicro are now
+upstream.</p>
+<ul>
+<li><p>p9dsu: detect p9dsu variant even when hostboot doesn’t tell us</p>
+<p>The SuperMicro BMC can tell us what riser type we have, which dictates
+the PCI slot tables. Usually, in an environment that a customer would
+experience, Hostboot will do the query with an SMC specific patch
+(not upstream as there’s no platform specific code in hostboot)
+and skiboot knows what variant it is based on the compatible string.</p>
+<p>However, if you’re using upstream hostboot, you only get the bare
+‘p9dsu’ compatible type. We can work around this by asking the BMC
+ourselves and setting the slot table appropriately. We do this
+syncronously in platform init so that we don’t start probing
+PCI before we setup the slot table.</p>
+</li>
+<li><p>p9dsu: add slot power limit.</p></li>
+<li><p>p9dsu: add pci slot table for Boston LC 1U/2U and Boston LA/ESS.</p></li>
+<li><p>p9dsu HACK: fix system-vpd eeprom</p></li>
+<li><p>p9dsu: change esel command from AMI to IBM 0x3a.</p></li>
+</ul>
+</div>
+<div class="section" id="zz-platform-changes">
+<h2>ZZ Platform Changes<a class="headerlink" href="#zz-platform-changes" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>hdata/i2c: Fix up pci hotplug labels</p>
+<p>These labels are used on the devices used to do PCIe slot power control
+for implementing PCIe hotplug. I’m not sure how they ended up as
+“eeprom-pgood” and “eeprom-controller” since that doesn’t make any sense.</p>
+</li>
+<li><p>hdata/i2c: Ignore multi-port I2C devices</p>
+<p>Recent FSP firmware builds add support for multi-port I2C devices such
+as the GPIO expanders used for the presence detect of OpenCAPI devices
+and the PCIe hotplug controllers used to power cycle PCIe slots on ZZ.</p>
+<p>The OpenCAPI driver inside of skiboot currently uses a platform-specific
+method to talk to the relevant I2C device rather than relying on HDAT
+since not all platforms correctly report the I2C devices (hello Zaius).
+Additionally the nature of multi-port devices require that we a device
+specific handler so that we generate the correct DT bindings. Currently
+we don’t and there is no immediate need for this support so just ignore
+the multi-port devices for now.</p>
+</li>
+<li><p>hdata/i2c: Replace <cite>i2c_</cite> prefix with <cite>dev_</cite></p>
+<p>The current naming scheme makes it easy to conflate “i2cm_port” and
+“i2c_port.” The latter is used to describe multi-port I2C devices such
+as GPIO expanders and multi-channel PCIe hotplug controllers. Rename
+i2c_port to dev_port to make the two a bit more distinct.</p>
+<p>Also rename i2c_addr to dev_addr for consistency.</p>
+</li>
+<li><p>hdata/i2c: Ignore CFAM I2C master</p>
+<p>Recent FSP firmware builds put in information about the CFAM I2C master
+in addition the to host I2C masters accessible via XSCOM. Odds are this
+information should not be there since there’s no handshaking between the
+FSP/BMC and the host over who controls that I2C master, but it is so
+we need to deal with it.</p>
+<p>This patch adds filtering to the HDAT parser so it ignores the CFAM I2C
+master. Without this it will create a bogus i2cm&#64;&lt;addr&gt; which migh cause
+issues.</p>
+</li>
+<li><p>ZZ: hw/imc: Add support to load imc catalog lid file</p>
+<p>Add support to load the imc catalog from a lid file packaged
+as part of the system firmware. Lid number allocated
+is 0x80f00103.lid.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="bugs-fixed">
+<h2>Bugs Fixed<a class="headerlink" href="#bugs-fixed" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>core: Fix iteration condition to skip garded cpu</p></li>
+<li><p>uart: fix uart_opal_flush to take console lock over uart_con_flush
+This bug meant that OPAL_CONSOLE_FLUSH didn’t take the appropriate locks.
+Luckily, since this call is only currently used in the crash path.</p></li>
+<li><p>xive: fix missing unlock in error path</p></li>
+<li><p>OPAL_PCI_SET_POWER_STATE: fix locking in error paths</p>
+<p>Otherwise we could exit OPAL holding locks, potentially leading
+to all sorts of problems later on.</p>
+</li>
+<li><p>hw/slw: Don’t assert on a unknown chip</p>
+<p>For some reason skiboot populates nodes in /cpus/ for the cores on
+chips that are deconfigured. As a result Linux includes the threads
+of those cores in it’s set of possible CPUs in the system and attempts
+to set the SPR values that should be used when waking a thread from
+a deep sleep state.</p>
+<p>However, in the case where we have deconfigured chip we don’t create
+a xscom node for that chip and as a result we don’t have a proc_chip
+structure for that chip either. In turn, this results in an assertion
+failure when calling opal_slw_set_reg() since it expects the chip
+structure to exist. Fix this up and print an error instead.</p>
+</li>
+<li><p>opal/hmi: Generate one event per core for processor recovery.</p>
+<p>Processor recovery is per core error. All threads on that core receive
+HMI. All threads don’t need to generate HMI event for same error.</p>
+<p>Let thread 0 only generate the event.</p>
+</li>
+<li><p>sensors: Dont add DTS sensors when OCC inband sensors are available</p>
+<p>There are two sets of core temperature sensors today. One is DTS scom
+based core temperature sensors and the second group is the sensors
+provided by OCC. DTS is the highest temperature among the different
+temperature zones in the core while OCC core temperature sensors are
+the average temperature of the core. DTS sensors are read directly by
+the host by SCOMing the DTS sensors while OCC sensors are read and
+updated by OCC to main memory.</p>
+<p>Reading DTS sensors by SCOMing is a heavy and slower operation as
+compared to reading OCC sensors which is as good as reading memory.
+So dont add DTS sensors when OCC sensors are available.</p>
+</li>
+<li><p>core/fast-reboot: Increase timeout for dctl sreset to 1sec</p>
+<p>Direct control xscom can take more time to complete. We seem to
+wait too little on Boston failing fast-reboot for no good reason.</p>
+<p>Increase timeout to 1 sec as a reasonable value for sreset to be delivered
+and core to start executing instructions.</p>
+</li>
+<li><p>occ: sensors-groups: Add DT properties to mark HWMON sensor groups</p>
+<p>Fix the sensor type to match HWMON sensor types. Add compatible flag
+to indicate the environmental sensor groups so that operations on
+these groups can be handled by HWMON linux interface.</p>
+</li>
+<li><p>core: Correctly load initramfs in stb container</p>
+<p>Skiboot does not calculate the actual size and start location of the
+initramfs if it is wrapped by an STB container (for example if loading
+an initramfs from the ROOTFS partition).</p>
+<p>Check if the initramfs is in an STB container and determine the size and
+location correctly in the same manner as the kernel. Since
+load_initramfs() is called after load_kernel() move the call to
+trustedboot_exit_boot_services() into load_and_boot_kernel() so it is
+called after both of these.</p>
+</li>
+<li><p>hdat/i2c.c: quieten “v2 found, parsing as v1”</p></li>
+<li><p>hw/imc: Check for pause_microcode_at_boot() return status</p>
+<p>pause_microcode_at_boot() loops through all the chip’s ucode
+control block and pause the ucode if it is in the running state.
+But it does not fail if any of the chip’s ucode is not initialised.</p>
+<p>Add code to return a failure if ucode is not initialized in any
+of the chip. Since pause_microcode_at_boot() is called just before
+attaching the IMC device nodes in imc_init(), add code to check for
+the function return.</p>
+</li>
+</ul>
+<p>Slot location code fixes:</p>
+<ul>
+<li><p>npu2: Use ibm, loc-code rather than ibm, slot-label</p>
+<p>The ibm,slot-label property is to name the slot that appears under a
+PCIe bridge. In the past we (ab)used the slot tables to attach names
+to GPU devices and their corresponding NVLinks which resulted in npu2.c
+using slot-label as a location code rather than as a way to name slots.</p>
+<p>Fix this up since it’s confusing.</p>
+</li>
+<li><p>hdata/slots: Apply slot label to the parent slot</p>
+<p>Slot names only really make sense when applied to an actual slot rather
+than a device. On witherspoon the GPU devices have a name associated with
+the device rather than the slot for the GPUs. Add a hack that moves the
+slot label to the parent slot rather than on the device itself.</p>
+</li>
+<li><p>pci-dt-slot: Big ol’ cleanup</p>
+<p>The underlying data that we get from HDAT can only really describe a
+PCIe system. As such we can simplify the devicetree slot lookup code
+by only caring about the important cases, namly, root ports and switch
+downstream ports.</p>
+<p>This also fixes a bug where root port didn’t get a Slot label applied
+which results in devices under that port not having ibm,loc-code set.
+This results in the EEH core being unable to report the location of
+EEHed devices under that port.</p>
+</li>
+</ul>
+<div class="section" id="opal-prd">
+<h3>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>opal-prd: Insert powernv_flash module</p>
+<p>Explictly load powernv_flash module on BMC based system so that we are sure
+that flash device is created before starting opal-prd daemon.</p>
+<p>Note that I have replaced pnor_available() check with is_fsp_system(). As we
+want to load module on BMC system only. Also pnor_init has enough logic to
+detect flash device. Hence pnor_available() becomes redundant check.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="npu2-nvlink2">
+<h3>NPU2/NVLINK2<a class="headerlink" href="#npu2-nvlink2" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>npu2/hw-procedures: fence bricks on GPU reset</p>
+<p>The NPU workbook defines a way of fencing a brick and
+getting the brick out of fence state. We do have an implementation
+of bringing the brick out of fenced/quiesced state. We do
+the latter in our procedures, but to support run time reset
+we need to do the former.</p>
+<p>The fencing ensures that access to memory behind the links
+will not lead to HMI’s, but instead SUE’s will be populated
+in cache (in the case of speculation). The expectation is then
+that prior to and after reset, the operating system components
+will flush the cache for the region of memory behind the GPU.</p>
+<p>This patch does the following:</p>
+<ol class="arabic simple">
+<li><p>Implements a npu2_dev_fence_brick() function to set/clear
+fence state</p></li>
+<li><p>Clear FIR bits prior to clearing the fence status</p></li>
+<li><p>Clear’s the fence status</p></li>
+<li><p>We take the powerbus out of CQ fence much later now,
+in credits_check() which is the last hardware procedure
+called after link training.</p></li>
+</ol>
+</li>
+<li><p>hw/npu2.c: Remove static configuration of NPU2 register</p>
+<p>The NPU_SM_CONFIG0 register currently needs to be configured in Skiboot to
+select NVLink mode, however Hostboot should configure other bits in this
+register.</p>
+<p>For some reason Skiboot was explicitly clearing bit-6
+(CONFIG_DISABLE_VG_NOT_SYS). It is unclear why this bit was getting cleared
+as recent Hostboot versions explicitly set it to the correct value based on
+the specific system configuration. Therefore Skiboot should not alter it.</p>
+<p>Bit-58 (CONFIG_NVLINK_MODE) selects if NVLink mode should be enabled or
+not. Hostboot does not configure this bit so Skiboot should continue to
+configure it.</p>
+</li>
+<li><p>npu2: Improve log output of GPU-to-link mapping</p>
+<p>Debugging issues related to unconnected NVLinks can be a little less
+irritating if we use the NPU2DEV{DBG,INF}() macros instead of prlog().</p>
+<p>In short, change this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NPU2</span><span class="p">:</span> <span class="n">comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU2&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+<span class="n">NPU2</span><span class="p">:</span> <span class="n">comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU3&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+<span class="n">NPU2</span><span class="p">:</span> <span class="n">comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU4&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+<span class="n">NPU2</span><span class="p">:</span> <span class="n">comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU5&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+      <span class="p">:</span>
+<span class="n">npu2_dev_bind_pci_dev</span><span class="p">:</span> <span class="n">No</span> <span class="n">PCI</span> <span class="n">device</span> <span class="k">for</span> <span class="n">NPU2</span> <span class="n">device</span> <span class="mi">0006</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mf">01.0</span> <span class="n">to</span> <span class="n">bind</span> <span class="n">to</span><span class="o">.</span> <span class="n">If</span> <span class="n">you</span> <span class="n">expect</span> <span class="n">a</span> <span class="n">GPU</span> <span class="n">to</span> <span class="n">be</span> <span class="n">there</span><span class="p">,</span> <span class="n">this</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">problem</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>to this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.0</span> <span class="n">Comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU2&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+<span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.0</span> <span class="n">Comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU3&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+<span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.0</span> <span class="n">Comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU4&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+<span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.0</span> <span class="n">Comparing</span> <span class="n">GPU</span> <span class="s1">&#39;GPU5&#39;</span> <span class="ow">and</span> <span class="n">NPU2</span> <span class="s1">&#39;GPU1&#39;</span>
+      <span class="p">:</span>
+<span class="n">NPU6</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">1.0</span> <span class="n">No</span> <span class="n">PCI</span> <span class="n">device</span> <span class="n">found</span> <span class="k">for</span> <span class="n">slot</span> <span class="s1">&#39;GPU1&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>npu2: Move NPU2_XTS_BDF_MAP_VALID assignment to context init</p>
+<p>A bad GPU or other condition may leave us with a subset of links that
+never get initialized. If an ATSD is sent to one of those bricks, it
+will never complete, leaving us waiting forever for a response:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">watchdog</span><span class="p">:</span> <span class="n">BUG</span><span class="p">:</span> <span class="n">soft</span> <span class="n">lockup</span> <span class="o">-</span> <span class="n">CPU</span><span class="c1">#23 stuck for 23s! [acos:2050]</span>
+<span class="o">...</span>
+<span class="n">Modules</span> <span class="n">linked</span> <span class="ow">in</span><span class="p">:</span> <span class="n">nvidia_uvm</span><span class="p">(</span><span class="n">O</span><span class="p">)</span> <span class="n">nvidia</span><span class="p">(</span><span class="n">O</span><span class="p">)</span>
+<span class="n">CPU</span><span class="p">:</span> <span class="mi">23</span> <span class="n">PID</span><span class="p">:</span> <span class="mi">2050</span> <span class="n">Comm</span><span class="p">:</span> <span class="n">acos</span> <span class="n">Tainted</span><span class="p">:</span> <span class="n">G</span>        <span class="n">W</span>  <span class="n">O</span>    <span class="mf">4.14.0</span> <span class="c1">#2</span>
+<span class="n">task</span><span class="p">:</span> <span class="n">c0000000285cfc00</span> <span class="n">task</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span> <span class="n">c000001fea860000</span>
+<span class="n">NIP</span><span class="p">:</span>  <span class="n">c0000000000abdf0</span> <span class="n">LR</span><span class="p">:</span> <span class="n">c0000000000acc48</span> <span class="n">CTR</span><span class="p">:</span> <span class="n">c0000000000ace60</span>
+<span class="n">REGS</span><span class="p">:</span> <span class="n">c000001fea863550</span> <span class="n">TRAP</span><span class="p">:</span> <span class="mi">0901</span>   <span class="n">Tainted</span><span class="p">:</span> <span class="n">G</span>        <span class="n">W</span>  <span class="n">O</span>     <span class="p">(</span><span class="mf">4.14.0</span><span class="p">)</span>
+<span class="n">MSR</span><span class="p">:</span>  <span class="mi">9000000000009033</span> <span class="o">&lt;</span><span class="n">SF</span><span class="p">,</span><span class="n">HV</span><span class="p">,</span><span class="n">EE</span><span class="p">,</span><span class="n">ME</span><span class="p">,</span><span class="n">IR</span><span class="p">,</span><span class="n">DR</span><span class="p">,</span><span class="n">RI</span><span class="p">,</span><span class="n">LE</span><span class="o">&gt;</span>  <span class="n">CR</span><span class="p">:</span> <span class="mi">28004484</span>  <span class="n">XER</span><span class="p">:</span> <span class="mi">20040000</span>
+<span class="n">CFAR</span><span class="p">:</span> <span class="n">c0000000000abdf4</span> <span class="n">SOFTE</span><span class="p">:</span> <span class="mi">1</span>
+<span class="n">GPR00</span><span class="p">:</span> <span class="n">c0000000000acc48</span> <span class="n">c000001fea8637d0</span> <span class="n">c0000000011f7c00</span> <span class="n">c000001fea863820</span>
+<span class="n">GPR04</span><span class="p">:</span> <span class="mi">0000000002000000</span> <span class="mi">0004100026000000</span> <span class="n">c0000000012778c8</span> <span class="n">c00000000127a560</span>
+<span class="n">GPR08</span><span class="p">:</span> <span class="mi">0000000000000001</span> <span class="mi">0000000000000080</span> <span class="n">c000201cc7cb7750</span> <span class="n">ffffffffffffffff</span>
+<span class="n">GPR12</span><span class="p">:</span> <span class="mi">0000000000008000</span> <span class="n">c000000003167e80</span>
+<span class="n">NIP</span> <span class="p">[</span><span class="n">c0000000000abdf0</span><span class="p">]</span> <span class="n">mmio_invalidate_wait</span><span class="o">+</span><span class="mh">0x90</span><span class="o">/</span><span class="mh">0xc0</span>
+<span class="n">LR</span> <span class="p">[</span><span class="n">c0000000000acc48</span><span class="p">]</span> <span class="n">mmio_invalidate</span><span class="o">.</span><span class="n">isra</span><span class="mf">.11</span><span class="o">+</span><span class="mh">0x158</span><span class="o">/</span><span class="mh">0x370</span>
+</pre></div>
+</div>
+<p>ATSDs are only sent to bricks which have a valid entry in the XTS_BDF
+table. So to prevent the hang, don’t set NPU2_XTS_BDF_MAP_VALID unless
+we make it all the way to creating a context for the BDF.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="secure-and-trusted-boot">
+<h3>Secure and Trusted Boot<a class="headerlink" href="#secure-and-trusted-boot" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>hdata/tpmrel: detect tpm not present by looking up the stinfo-&gt;status</p>
+<p>Skiboot detects if tpm is present by checking if a secureboot_tpm_info
+entry exists. However, if a tpm is not present, hostboot also creates a
+secureboot_tpm_info entry. In this case, hostboot creates an empty
+entry, but setting the field tpm_status to TPM_NOT_PRESENT.</p>
+<p>This detects if tpm is not present by looking up the stinfo-&gt;status.</p>
+<p>This fixes the “TPMREL: TPM node not found for chip_id=0 (HB bug)”
+issue, reproduced when skiboot is running on a system that has no tpm.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pci">
+<h3>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>phb4: Restore bus numbers after CRS</p>
+<p>Currently we restore PCIe bus numbers right after the link is
+up. Unfortunately as this point we haven’t done CRS so config space
+may not be accessible.</p>
+<p>This moves the bus number restore till after CRS has happened.</p>
+</li>
+<li><p>romulus: Add a barebones slot table</p></li>
+<li><p>phb4: Quieten and improve “Timeout waiting for electrical link”</p>
+<p>This happens normally if a slot doesn’t have a working HW presence
+detect and relies instead of inband presence detect.</p>
+<p>The message we display is scary and not very useful unless ou
+are debugging, so quiten it up and change it to something more
+meaningful.</p>
+</li>
+<li><p>pcie-slot: Don’t fail powering on an already on switch</p>
+<p>If the power state is already the required value, return
+OPAL_SUCCESS rather than OPAL_PARAMETER to avoid spurrious
+errors during boot.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="capi-opencapi">
+<h3>CAPI/OpenCAPI<a class="headerlink" href="#capi-opencapi" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>capi: Keep the current mmio windows in the mbt cache table.</p>
+<p>When the phb is used as a CAPI interface, the current mmio windows list
+is cleaned before adding the capi and the prefetchable memory (M64)
+windows, which implies that the non-prefetchable BAR is no more
+configured.
+This patch allows to set only the mbt bar to pass capi mmio window and
+to keep, as defined, the other mmio values (M32 and M64).</p>
+</li>
+<li><p>npu2-opencapi: Fix ‘link internal error’ FIR, take 2</p>
+<p>When setting up an opencapi link, we set the transport muxes first,
+then set the PHY training config register, which includes disabling
+nvlink mode for the bricks. That’s the order of the init sequence, as
+found in the NPU workbook.</p>
+<p>In reality, doing so works, but it raises 2 FIR bits in the PowerBus
+OLL FIR Register for the 2 links when we configure the transport
+muxes. Presumably because nvlink is not disabled yet and we are
+configuring the transport muxes for opencapi.</p>
+<dl class="simple">
+<dt>bit 60:</dt><dd><p>link0 internal error</p>
+</dd>
+<dt>bit 61:</dt><dd><p>link1 internal error</p>
+</dd>
+</dl>
+<p>Overall the current setup ends up being correct and everything works,
+but we raise 2 FIR bits.</p>
+<p>So tweak the order of operations to disable nvlink before configuring
+the transport muxes. Incidentally, this is what the scripts from the
+opencapi enablement team were doing all along.</p>
+</li>
+<li><p>npu2-opencapi: Fix ‘link internal error’ FIR, take 1</p>
+<p>When we setup a link, we always enable ODL0 and ODL1 at the same time
+in the PHY training config register, even though we are setting up
+only one OTL/ODL, so it raises a “link internal error” FIR bit in the
+PowerBus OLL FIR Register for the second link. The error is harmless,
+as we’ll eventually setup the second link, but there’s no reason to
+raise that FIR bit.</p>
+<p>The fix is simply to only enable the ODL we are using for the link.</p>
+</li>
+<li><p>phb4: Do not set the PBCQ Tunnel BAR register when enabling capi mode.</p>
+<p>The cxl driver will set the capi value, like other drivers already do.</p>
+</li>
+<li><p>phb4: set TVT1 for tunneled operations in capi mode</p>
+<p>The ASN indication is used for tunneled operations (as_notify and
+atomics). Tunneled operation messages can be sent in PCI mode as
+well as CAPI mode.</p>
+<p>The address field of as_notify messages is hijacked to encode the
+LPID/PID/TID of the target thread, so those messages should not go
+through address translation. Therefore bit 59 is part of the ASN
+indication.</p>
+<p>This patch sets TVT#1 in bypass mode when capi mode is enabled,
+to prevent as_notify messages from being dropped.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="debugging-testing-improvements">
+<h2>Debugging/Testing improvements<a class="headerlink" href="#debugging-testing-improvements" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>core/stack: backtrace unwind basic OPAL call details</p>
+<p>Put OPAL callers’ r1 into the stack back chain, and then use that to
+unwind back to the OPAL entry frame (as opposed to boot entry, which
+has a 0 back chain).</p>
+<p>From there, dump the OPAL call token and the caller’s r1. A backtrace
+looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CPU</span> <span class="mi">0000</span> <span class="n">Backtrace</span><span class="p">:</span>
+ <span class="n">S</span><span class="p">:</span> <span class="mi">0000000031</span><span class="n">c03ba0</span> <span class="n">R</span><span class="p">:</span> <span class="mi">000000003001</span><span class="n">a548</span>   <span class="o">.</span><span class="n">_abort</span><span class="o">+</span><span class="mh">0x4c</span>
+ <span class="n">S</span><span class="p">:</span> <span class="mi">0000000031</span><span class="n">c03c20</span> <span class="n">R</span><span class="p">:</span> <span class="mi">000000003001</span><span class="n">baac</span>   <span class="o">.</span><span class="n">opal_run_pollers</span><span class="o">+</span><span class="mh">0x3c</span>
+ <span class="n">S</span><span class="p">:</span> <span class="mi">0000000031</span><span class="n">c03ca0</span> <span class="n">R</span><span class="p">:</span> <span class="mi">000000003001</span><span class="n">bcbc</span>   <span class="o">.</span><span class="n">opal_poll_events</span><span class="o">+</span><span class="mh">0xc4</span>
+ <span class="n">S</span><span class="p">:</span> <span class="mi">0000000031</span><span class="n">c03d20</span> <span class="n">R</span><span class="p">:</span> <span class="mi">00000000300051</span><span class="n">dc</span>   <span class="n">opal_entry</span><span class="o">+</span><span class="mh">0x12c</span>
+ <span class="o">---</span> <span class="n">OPAL</span> <span class="n">call</span> <span class="n">entry</span> <span class="n">token</span><span class="p">:</span> <span class="mh">0xa</span> <span class="n">caller</span> <span class="n">R1</span><span class="p">:</span> <span class="mh">0xc0000000006d3b90</span> <span class="o">---</span>
+</pre></div>
+</div>
+<p>This is pretty basic for the moment, but it does give you the bottom
+of the Linux stack. It will allow some interesting improvements in
+future.</p>
+<p>First, with the eframe, all the call’s parameters can be printed out
+as well.  The ___backtrace / ___print_backtrace API needs to be
+reworked in order to support this, but it’s otherwise very simple
+(see opal_trace_entry()).</p>
+<p>Second, it will allow Linux’s stack to be passed back to Linux via
+a debugging opal call. This will allow Linux’s BUG() or xmon to
+also print the Linux back trace in case of a NMI or MCE or watchdog
+lockup that hits in OPAL.</p>
+</li>
+<li><p>asm/head: implement quiescing without stack or clobbering regs</p>
+<p>Quiescing currently is implmeented in C in opal_entry before the
+opal call handler is called. This works well enough for simple
+cases like fast reset when one CPU wants all others out of the way.</p>
+<p>Linux would like to use it to prevent an sreset IPI from
+interrupting firmware, which could lead to deadlocks when crash
+dumping or entering the debugger. Linux interrupts do not recover
+well when returning back to general OPAL code, due to r13 not being
+restored. OPAL also can’t be re-entered, which may happen e.g.,
+from the debugger.</p>
+<p>So move the quiesce hold/reject to entry code, beore the stack or
+r1 or r13 registers are switched. OPAL can be interrupted and
+returned to or re-entered during this period.</p>
+<p>This does not completely solve all such problems. OPAL will be
+interrupted with sreset if the quiesce times out, and it can be
+interrupted by MCEs as well. These still have the issues above.</p>
+</li>
+<li><p>core/opal: Allow poller re-entry if OPAL was re-entered</p>
+<p>If an NMI interrupts the middle of running pollers and the OS
+invokes pollers again (e.g., for console output), the poller
+re-entrancy check will prevent it from running and spam the
+console.</p>
+<p>That check was designed to catch a poller calling opal_run_pollers,
+OPAL re-entrancy is something different and is detected elsewhere.
+Avoid the poller recursion check if OPAL has been re-entered. This
+is a best-effort attempt to cope with errors.</p>
+</li>
+<li><p>core/opal: Emergency stack for re-entry</p>
+<p>This detects OPAL being re-entered by the OS, and switches to an
+emergency stack if it was. This protects the firmware’s main stack
+from re-entrancy and allows the OS to use NMI facilities for crash
+/ debug functionality.</p>
+<p>Further nested re-entry will destroy the previous emergency stack
+and prevent returning, but those should be rare cases.</p>
+<p>This stack is sized at 16kB, which doubles the size of CPU stacks,
+so as not to introduce a regression in primary stack size. The 16kB
+stack originally had a 4kB machine check stack at the top, which was
+removed by 80eee1946 (“opal: Remove machine check interrupt patching
+in OPAL.”). So it is possible the size could be tightened again, but
+that would require further analysis.</p>
+</li>
+<li><p>hdat_to_dt: hash_prop the same on all platforms
+Fixes this unit test on ppc64le hosts.</p></li>
+<li><p>mambo: Add persistent memory disk support</p>
+<p>This adds support to for mapping disks images using persistent
+memory. Disks can be added by setting this ENV variable:</p>
+<blockquote>
+<div><p>PMEM_DISK=”/mydisks/disk1.img,/mydisks/disk2.img”</p>
+</div></blockquote>
+<p>These will show up in Linux as /dev/pmem0 and /dev/pmem1.</p>
+<p>This uses a new feature in mambo “mysim memory mmap ..” which is only
+available since mambo commit 0131f0fc08 (from 24/4/2018).</p>
+<p>This also needs the of_pmem.c driver in Linux which is only available
+since v4.17. It works with powernv_defconfig + CONFIG_OF_PMEM.</p>
+</li>
+<li><p>external/mambo: Add di command to decode instructions</p>
+<p>By default you get 16 instructions but you can specify the number you
+want.  i.e.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">systemsim</span> <span class="o">%</span> <span class="n">di</span> <span class="mh">0x100</span> <span class="mi">4</span>
+<span class="mh">0x0000000000000100</span><span class="p">:</span> <span class="n">Enc</span><span class="p">:</span><span class="mh">0xA64BB17D</span> <span class="p">:</span> <span class="n">mtspr</span>   <span class="n">HSPRG1</span><span class="p">,</span><span class="n">r13</span>
+<span class="mh">0x0000000000000104</span><span class="p">:</span> <span class="n">Enc</span><span class="p">:</span><span class="mh">0xA64AB07D</span> <span class="p">:</span> <span class="n">mfspr</span>   <span class="n">r13</span><span class="p">,</span><span class="n">HSPRG0</span>
+<span class="mh">0x0000000000000108</span><span class="p">:</span> <span class="n">Enc</span><span class="p">:</span><span class="mh">0xF0092DF9</span> <span class="p">:</span> <span class="n">std</span>     <span class="n">r9</span><span class="p">,</span><span class="mh">0x9F0</span><span class="p">(</span><span class="n">r13</span><span class="p">)</span>
+<span class="mh">0x000000000000010C</span><span class="p">:</span> <span class="n">Enc</span><span class="p">:</span><span class="mh">0xA6E2207D</span> <span class="p">:</span> <span class="n">mfspr</span>   <span class="n">r9</span><span class="p">,</span><span class="n">PPR</span>
+</pre></div>
+</div>
+<p>Using di since it’s what xmon uses.</p>
+</li>
+<li><p>mambo/mambo_utils.tcl: Inject an MCE at a specified address</p>
+<p>Currently we don’t support injecting an MCE on a specific address.
+This is useful for testing functionality like memcpy_mcsafe()
+(see <a class="reference external" href="https://patchwork.ozlabs.org/cover/893339/">https://patchwork.ozlabs.org/cover/893339/</a>)</p>
+<p>The core of the functionality is a routine called
+inject_mce_ue_on_addr, which takes an addr argument and injects
+an MCE (load/store with UE) when the specified address is accessed
+by code. This functionality can easily be enhanced to cover
+instruction UE’s as well.</p>
+<p>A sample use case to create an MCE on stack access would be</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>set addr [mysim display gpr 1]
+inject_mce_ue_on_addr $addr
+</pre></div>
+</div>
+<p>This would cause an mce on any r1 or r1 based access</p>
+</li>
+<li><p>external/mambo: improve helper for machine checks</p>
+<p>Improve workarounds for stop injection, because mambo often will
+trigger on 0x104/204 when injecting sreset/mces.</p>
+<p>This also adds a workaround to skip injecting on reservations to
+avoid infinite loops when doing inject_mce_step.</p>
+</li>
+<li><p>travis: Enable ppc64le builds</p>
+<p>At least on the IBM Travis Enterprise instance, we can now do
+ppc64le builds!</p>
+<p>We can only build a subset of our matrix due to availability of
+ppc64le distros. The Dockerfiles need some tweaking to only
+attempt to install (x86_64 only) Mambo binaries, as well as the
+build scripts.</p>
+</li>
+<li><p>external: Add “lpc” tool</p>
+<p>This is a little front-end to the lpc debugfs files to access
+the LPC bus from userspace on the host.</p>
+</li>
+<li><p>core/test/run-trace: fix on ppc64el</p></li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-6.0-rc1</a><ul>
+<li><a class="reference internal" href="#new-features">New Features</a><ul>
+<li><a class="reference internal" href="#improved-hmi-handling">Improved HMI Handling</a></li>
+<li><a class="reference internal" href="#libflash-and-ffspart">libflash and ffspart</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#p9dsu-platform-changes">p9dsu Platform changes</a></li>
+<li><a class="reference internal" href="#zz-platform-changes">ZZ Platform Changes</a></li>
+<li><a class="reference internal" href="#bugs-fixed">Bugs Fixed</a><ul>
+<li><a class="reference internal" href="#opal-prd">opal-prd</a></li>
+<li><a class="reference internal" href="#npu2-nvlink2">NPU2/NVLINK2</a></li>
+<li><a class="reference internal" href="#secure-and-trusted-boot">Secure and Trusted Boot</a></li>
+<li><a class="reference internal" href="#pci">PCI</a></li>
+<li><a class="reference internal" href="#capi-opencapi">CAPI/OpenCAPI</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#debugging-testing-improvements">Debugging/Testing improvements</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.html"
+                        title="previous chapter">skiboot-6.0</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0-rc2.html"
+                        title="next chapter">skiboot-6.0-rc2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0-rc2.html" title="skiboot-6.0-rc2"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.html" title="skiboot-6.0"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

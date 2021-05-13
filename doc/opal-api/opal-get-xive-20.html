@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_GET_XIVE &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Hypervisor Maintenance Interrupt (HMI)" href="opal-handle-hmi-98-166.html" />
+    <link rel="prev" title="OPAL_GET_MSI_32 and OPAL_GET_MSI_64" href="opal-get-msi-39-40.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-handle-hmi-98-166.html" title="Hypervisor Maintenance Interrupt (HMI)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-get-msi-39-40.html" title="OPAL_GET_MSI_32 and OPAL_GET_MSI_64"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_GET_XIVE</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-get-xive">
+<span id="id1"></span><h1>OPAL_GET_XIVE<a class="headerlink" href="#opal-get-xive" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_XIVE                                20</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_get_xive</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">isn</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="o">*</span><span class="n">server</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">priority</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The host calls this function to return the configuration of an
+interrupt source. See <a class="reference internal" href="opal-set-xive-19.html#opal-set-xive"><span class="std std-ref">OPAL_SET_XIVE</span></a> for details.</p>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">isn</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">isn</span></code> is the global interrupt number being queried</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">server_number</span></code></dt><dd><p>the <code class="docutils literal notranslate"><span class="pre">server_number</span></code> returns the mangled server (processor)
+that is set to receive that interrupt.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">priority</span></code></dt><dd><p>the <code class="docutils literal notranslate"><span class="pre">priority</span></code> returns the current interrupt priority setting
+for that interrupt.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_GET_XIVE</a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-get-msi-39-40.html"
+                        title="previous chapter">OPAL_GET_MSI_32 and OPAL_GET_MSI_64</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-handle-hmi-98-166.html"
+                        title="next chapter">Hypervisor Maintenance Interrupt (HMI)</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-get-xive-20.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-handle-hmi-98-166.html" title="Hypervisor Maintenance Interrupt (HMI)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-get-msi-39-40.html" title="OPAL_GET_MSI_32 and OPAL_GET_MSI_64"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_GET_XIVE</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

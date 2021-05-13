@@ -1,0 +1,969 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.5.0 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.5.0-rc1" href="skiboot-5.5.0-rc1.html" />
+    <link rel="prev" title="skiboot-5.4.9" href="skiboot-5.4.9.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.5.0-rc1.html" title="skiboot-5.5.0-rc1"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.9.html" title="skiboot-5.4.9"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-5-0">
+<span id="id1"></span><h1>skiboot-5.5.0<a class="headerlink" href="#skiboot-5-5-0" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.5.0 was released on Friday April 7th 2017. It is the new stable
+release of skiboot, taking over from the 5.4 release, first released on
+November 11th 2016.</p>
+<p>skiboot-5.5.0 contains all bug fixes as of <a class="reference internal" href="skiboot-5.4.3.html#skiboot-5-4-3"><span class="std std-ref">skiboot-5.4.3</span></a>
+and <a class="reference internal" href="skiboot-5.1.19.html#skiboot-5-1-19"><span class="std std-ref">skiboot-5.1.19</span></a> (the currently maintained stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>This release is a good level set of POWER9 support for bringup activities.
+If you are doing bringup, it is strongly suggested you continue to follow
+skiboot master.</p>
+<p>After skiboot 5.5.0, we move to a regular six week release cycle,
+similar to op-build, but slightly offset to allow for a short stabilisation
+period. Expected release dates and contents are tracked using GitHub milestone
+and issues: <a class="reference external" href="https://github.com/open-power/skiboot/milestones">https://github.com/open-power/skiboot/milestones</a></p>
+<div class="section" id="changes-in-skiboot-5-5-0">
+<h2>Changes in skiboot-5.5.0<a class="headerlink" href="#changes-in-skiboot-5-5-0" title="Permalink to this headline">¶</a></h2>
+<p>See changes in the release candidates:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="skiboot-5.5.0-rc1.html#skiboot-5-5-0-rc1"><span class="std std-ref">skiboot-5.5.0-rc1</span></a></p></li>
+<li><p><a class="reference internal" href="skiboot-5.5.0-rc2.html#skiboot-5-5-0-rc2"><span class="std std-ref">skiboot-5.5.0-rc2</span></a></p></li>
+<li><p><a class="reference internal" href="skiboot-5.5.0-rc3.html#skiboot-5-5-0-rc3"><span class="std std-ref">skiboot-5.5.0-rc3</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="changes-since-skiboot-5-5-0-rc3">
+<h2>Changes since skiboot-5.5.0-rc3<a class="headerlink" href="#changes-since-skiboot-5-5-0-rc3" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>hdat: parse processor attached i2c devices</p>
+<p>Adds basic parsing for i2c devices that are attached to the processor
+I2C interfaces. This is mainly VPD SEEPROMs.</p>
+</li>
+<li><p>libflash/blocklevel: Add blocklevel_smart_erase()</p>
+<p>With recent changes to flash drivers in linux not all erase blocks are
+4K anymore. While most level of the pflash/gard tool stacks were written
+to not mind, it turns out there are bugs which means not 4K erase block
+backing stores aren’t handled all that well. Part of the problem is the
+FFS layout that is 4K aligned and with larger block sizes pflash and the
+gard tool don’t check if their erase commands are erase block aligned -
+which they are usually not with 64K erase blocks.</p>
+<p>This patch aims to add common functionality to blocklevel so that (at
+least) pflash and the gard tool don’t need to worry about the problem
+anymore.</p>
+</li>
+<li><p>external/pflash: Use blocklevel_smart_erase()</p></li>
+<li><p>external/gard: Use blocklevel_smart_erase()</p></li>
+<li><p>libstb/create-container: Add full container build and sign with imprint keys</p>
+<p>This adds support for writing all the public key and signature fields to the
+container header, and for dumping the prefix and software headers so they may
+may be signed, and for signing those headers with the imprint keys.</p>
+</li>
+<li><p>asm: do not set SDR1 on POWER9. This register does not exist in ISAv3.</p></li>
+</ul>
+<p>Testing:</p>
+<ul>
+<li><p>mambo: Allow setting the Linux command line from the environment</p>
+<p>For automated testing it’s helpful to be able to set the Linux command
+line via an environment variable.</p>
+</li>
+<li><p>mambo: Add util function for breaking on console output</p></li>
+</ul>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<p>Processed 408 csets from 31 developers</p>
+<p>3 employers found</p>
+<p>A total of 24073 lines added, 16759 removed (delta 7314)</p>
+<p>Extending the analysis done for the last few releases, we can see our trends
+in code review across versions:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 14%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Release</p></th>
+<th class="head"><p>csets</p></th>
+<th class="head"><p>Ack</p></th>
+<th class="head"><p>Reviews</p></th>
+<th class="head"><p>Tested</p></th>
+<th class="head"><p>Reported</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>5.0</p></td>
+<td><p>329</p></td>
+<td><p>15</p></td>
+<td><p>20</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>5.1</p></td>
+<td><p>372</p></td>
+<td><p>13</p></td>
+<td><p>38</p></td>
+<td><p>1</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-even"><td><p>5.2-rc1</p></td>
+<td><p>334</p></td>
+<td><p>20</p></td>
+<td><p>34</p></td>
+<td><p>6</p></td>
+<td><p>11</p></td>
+</tr>
+<tr class="row-odd"><td><p>5.3-rc1</p></td>
+<td><p>302</p></td>
+<td><p>36</p></td>
+<td><p>53</p></td>
+<td><p>4</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-even"><td><p>5.4.0</p></td>
+<td><p>361</p></td>
+<td><p>16</p></td>
+<td><p>28</p></td>
+<td><p>1</p></td>
+<td><p>9</p></td>
+</tr>
+<tr class="row-odd"><td><p>5.5.0</p></td>
+<td><p>408</p></td>
+<td><p>11</p></td>
+<td><p>48</p></td>
+<td><p>14</p></td>
+<td><p>10</p></td>
+</tr>
+</tbody>
+</table>
+<p>I am absolutely <em>thrilled</em> as to the uptick of reviews and tested-by occuring
+over our 5.4.0 release. Although we are not yet back up to 5.3 era levels for
+review, we’re much closer. For tested-by, we’ve set a new record, which is
+excellent!</p>
+<div class="section" id="developers-with-the-most-changesets">
+<h3>Developers with the most changesets<a class="headerlink" href="#developers-with-the-most-changesets" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>139</p></td>
+<td><p>(34.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>60</p></td>
+<td><p>(14.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>54</p></td>
+<td><p>(13.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>23</p></td>
+<td><p>(5.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>20</p></td>
+<td><p>(4.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vasant Hegde</p></td>
+<td><p>15</p></td>
+<td><p>(3.7%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>15</p></td>
+<td><p>(3.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
+<td><p>14</p></td>
+<td><p>(3.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>11</p></td>
+<td><p>(2.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>9</p></td>
+<td><p>(2.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>6</p></td>
+<td><p>(1.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Nicholas Piggin</p></td>
+<td><p>5</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cédric Le Goater</p></td>
+<td><p>5</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>5</p></td>
+<td><p>(1.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Michael Ellerman</p></td>
+<td><p>4</p></td>
+<td><p>(1.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Shilpasri G Bhat</p></td>
+<td><p>4</p></td>
+<td><p>(1.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>3</p></td>
+<td><p>(0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Jack Miller</p></td>
+<td><p>2</p></td>
+<td><p>(0.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Chris Smart</p></td>
+<td><p>2</p></td>
+<td><p>(0.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Dave Heller</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Akshay Adiga</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Reza Arbab</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Matt Brown</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Frederic Barrat</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Hank Chang</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Willie Liauw</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Werner Fischer</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Jeremy Kerr</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Patrick Williams</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Joel Stanley</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alexey Kardashevskiy</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-changed-lines">
+<h3>Developers with the most changed lines<a class="headerlink" href="#developers-with-the-most-changed-lines" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 13%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>18278</p></td>
+<td><p>(48.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>5512</p></td>
+<td><p>(14.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>3184</p></td>
+<td><p>(8.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>3102</p></td>
+<td><p>(8.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>2757</p></td>
+<td><p>(7.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>802</p></td>
+<td><p>(2.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>544</p></td>
+<td><p>(1.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
+<td><p>489</p></td>
+<td><p>(1.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Dave Heller</p></td>
+<td><p>425</p></td>
+<td><p>(1.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Willie Liauw</p></td>
+<td><p>361</p></td>
+<td><p>(1.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>315</p></td>
+<td><p>(0.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>290</p></td>
+<td><p>(0.8%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>253</p></td>
+<td><p>(0.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Shilpasri G Bhat</p></td>
+<td><p>228</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Nicholas Piggin</p></td>
+<td><p>222</p></td>
+<td><p>(0.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Reza Arbab</p></td>
+<td><p>198</p></td>
+<td><p>(0.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>158</p></td>
+<td><p>(0.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Jack Miller</p></td>
+<td><p>127</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cédric Le Goater</p></td>
+<td><p>126</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chris Smart</p></td>
+<td><p>95</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Akshay Adiga</p></td>
+<td><p>57</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hank Chang</p></td>
+<td><p>56</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>47</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Ellerman</p></td>
+<td><p>29</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Matt Brown</p></td>
+<td><p>29</p></td>
+<td><p>(0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alexey Kardashevskiy</p></td>
+<td><p>2</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Frederic Barrat</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Werner Fischer</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Patrick Williams</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Joel Stanley</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-lines-removed">
+<h3>Developers with the most lines removed<a class="headerlink" href="#developers-with-the-most-lines-removed" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 13%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>8516</p></td>
+<td><p>(50.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Werner Fischer</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-signoffs">
+<h3>Developers with the most signoffs<a class="headerlink" href="#developers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
+<p>Total: 364</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>348</p></td>
+<td><p>(95.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>6</p></td>
+<td><p>(1.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>3</p></td>
+<td><p>(0.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>2</p></td>
+<td><p>(0.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hank Chang</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jack Miller</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-reviews">
+<h3>Developers with the most reviews<a class="headerlink" href="#developers-with-the-most-reviews" title="Permalink to this headline">¶</a></h3>
+<p>Total 50</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>14</p></td>
+<td><p>(28.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>9</p></td>
+<td><p>(18.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>6</p></td>
+<td><p>(12.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
+<td><p>5</p></td>
+<td><p>(10.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>4</p></td>
+<td><p>(8.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>3</p></td>
+<td><p>(6.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>3</p></td>
+<td><p>(6.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>2</p></td>
+<td><p>(4.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Frederic Barrat</p></td>
+<td><p>2</p></td>
+<td><p>(4.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>1</p></td>
+<td><p>(2.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>1</p></td>
+<td><p>(2.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-test-credits">
+<h3>Developers with the most test credits<a class="headerlink" href="#developers-with-the-most-test-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 14</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Willie Liauw</p></td>
+<td><p>4</p></td>
+<td><p>(28.6%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mark E Schreiter</p></td>
+<td><p>3</p></td>
+<td><p>(21.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Claudio Carvalho</p></td>
+<td><p>3</p></td>
+<td><p>(21.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>1</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>1</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pridhiviraj Paidipeddi</p></td>
+<td><p>1</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Chris Smart</p></td>
+<td><p>1</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-who-gave-the-most-tested-by-credits">
+<h3>Developers who gave the most tested-by credits<a class="headerlink" href="#developers-who-gave-the-most-tested-by-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 14</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>7</p></td>
+<td><p>(50.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>4</p></td>
+<td><p>(28.6%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Chris Smart</p></td>
+<td><p>1</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
+<td><p>1</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>1</p></td>
+<td><p>(7.1%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-with-the-most-report-credits">
+<h3>Developers with the most report credits<a class="headerlink" href="#developers-with-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 10</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 78%" />
+<col style="width: 3%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Hank Chang</p></td>
+<td><p>4</p></td>
+<td><p>(40.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mark E Schreiter</p></td>
+<td><p>3</p></td>
+<td><p>(30.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Guilherme G. Piccoli</p></td>
+<td><p>1</p></td>
+<td><p>(10.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Colin Ian King</p></td>
+<td><p>1</p></td>
+<td><p>(10.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Pradipta Ghosh</p></td>
+<td><p>1</p></td>
+<td><p>(10.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="developers-who-gave-the-most-report-credits">
+<h3>Developers who gave the most report credits<a class="headerlink" href="#developers-who-gave-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<p>Total 10</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 78%" />
+<col style="width: 3%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Developer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>8</p></td>
+<td><p>(80.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>1</p></td>
+<td><p>(10.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>1</p></td>
+<td><p>(10.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="top-changeset-contributors-by-employer">
+<h3>Top changeset contributors by employer<a class="headerlink" href="#top-changeset-contributors-by-employer" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 8%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>406</p></td>
+<td><p>(99.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>SuperMicro</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Thomas-Krenn AG</p></td>
+<td><p>1</p></td>
+<td><p>(0.2%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="top-lines-changed-by-employer">
+<h3>Top lines changed by employer<a class="headerlink" href="#top-lines-changed-by-employer" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>37329</p></td>
+<td><p>(99.0%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>SuperMicro</p></td>
+<td><p>361</p></td>
+<td><p>(1.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Thomas-Krenn AG</p></td>
+<td><p>1</p></td>
+<td><p>(0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="employers-with-the-most-signoffs">
+<h3>Employers with the most signoffs<a class="headerlink" href="#employers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
+<p>Total 364</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 11%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>363</p></td>
+<td><p>(99.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>(Unknown)</p></td>
+<td><p>1</p></td>
+<td><p>(0.3%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="employers-with-the-most-hackers">
+<h3>Employers with the most hackers<a class="headerlink" href="#employers-with-the-most-hackers" title="Permalink to this headline">¶</a></h3>
+<p>Total 31</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 69%" />
+<col style="width: 11%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Employer</p></th>
+<th class="head"><p>#</p></th>
+<th class="head"><p>%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>29</p></td>
+<td><p>(93.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Thomas-Krenn AG</p></td>
+<td><p>1</p></td>
+<td><p>(3.2%)</p></td>
+</tr>
+<tr class="row-even"><td><p>SuperMicro</p></td>
+<td><p>1</p></td>
+<td><p>(3.2%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.5.0</a><ul>
+<li><a class="reference internal" href="#changes-in-skiboot-5-5-0">Changes in skiboot-5.5.0</a></li>
+<li><a class="reference internal" href="#changes-since-skiboot-5-5-0-rc3">Changes since skiboot-5.5.0-rc3</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a><ul>
+<li><a class="reference internal" href="#developers-with-the-most-changesets">Developers with the most changesets</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-changed-lines">Developers with the most changed lines</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-lines-removed">Developers with the most lines removed</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-signoffs">Developers with the most signoffs</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-reviews">Developers with the most reviews</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-test-credits">Developers with the most test credits</a></li>
+<li><a class="reference internal" href="#developers-who-gave-the-most-tested-by-credits">Developers who gave the most tested-by credits</a></li>
+<li><a class="reference internal" href="#developers-with-the-most-report-credits">Developers with the most report credits</a></li>
+<li><a class="reference internal" href="#developers-who-gave-the-most-report-credits">Developers who gave the most report credits</a></li>
+<li><a class="reference internal" href="#top-changeset-contributors-by-employer">Top changeset contributors by employer</a></li>
+<li><a class="reference internal" href="#top-lines-changed-by-employer">Top lines changed by employer</a></li>
+<li><a class="reference internal" href="#employers-with-the-most-signoffs">Employers with the most signoffs</a></li>
+<li><a class="reference internal" href="#employers-with-the-most-hackers">Employers with the most hackers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.4.9.html"
+                        title="previous chapter">skiboot-5.4.9</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.5.0-rc1.html"
+                        title="next chapter">skiboot-5.5.0-rc1</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.5.0.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.5.0-rc1.html" title="skiboot-5.5.0-rc1"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.4.9.html" title="skiboot-5.4.9"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

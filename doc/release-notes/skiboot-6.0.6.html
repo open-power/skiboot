@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0.6 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0.7" href="skiboot-6.0.7.html" />
+    <link rel="prev" title="skiboot-6.0.5" href="skiboot-6.0.5.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.7.html" title="skiboot-6.0.7"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.5.html" title="skiboot-6.0.5"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.6</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-6">
+<span id="id1"></span><h1>skiboot-6.0.6<a class="headerlink" href="#skiboot-6-0-6" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.0.6 was released on Thursday July 19th, 2018. It replaces
+<a class="reference internal" href="skiboot-6.0.5.html#skiboot-6-0-5"><span class="std std-ref">skiboot-6.0.5</span></a> as the current stable release in the 6.0.x series.</p>
+<p>It is recommended that 6.0.5 be used instead of any previous 6.0.x version,
+especially in the case where NVLINK2 GPUs and/or Mellanox CX5 adapters are
+being used.</p>
+<p>Over <a class="reference internal" href="skiboot-6.0.5.html#skiboot-6-0-5"><span class="std std-ref">skiboot-6.0.5</span></a> we have several important performance related bug
+fixes and one stability bug fix:</p>
+<ul>
+<li><p>phb4/CAPI: Reallocate PEC2 DMA-Read engines to improve GPU-Direct bandwidth</p>
+<p>We reallocate additional 16/8 DMA-Read engines allocated to stack0/1
+on PEC2 respectively. This is needed to improve bandwidth available to
+the Mellanox CX5 adapter when trying to read GPU memory (GPU-Direct).</p>
+<p>If kernel cxl driver indicates a request to allocate maximum possible
+DMA read engines when calling enable_capi_mode() and card is attached
+to PEC2/stack0 slot then we assume its a Mellanox CX5 adapter. We then
+allocate additional 16/8 extra DMA read engines to stack0 and stack1
+respectively on PEC2. This is done by populating the
+XPEC_PCI_PRDSTKOVR and XPEC_NEST_READ_STACK_OVERRIDE as suggested by
+the h/w team.</p>
+</li>
+<li><p>phb4: Disable nodal scoped DMA accesses when PB pump mode is enabled</p>
+<p>By default when a PCIe device issues a read request via the PHB it is first
+issued with nodal scope. When accessing GPU memory the NPU does not know at the
+time of response if the requested memory page is off node or not. Therefore
+every read of GPU memory by a PHB is retried with larger scope which introduces
+bandwidth and latency issues.</p>
+<p>On smaller boxes which have pump mode enabled nodal and group scoped reads are
+treated the same and both types of request are broadcast to one chip. Therefore
+we can avoid the retry by disabling nodal scope on the PHB for these boxes. On
+larger boxes nodal (single chip) and group (multiple chip) scoped reads are
+treated differently. Therefore we avoid disabling nodal scope on large boxes
+which have pump mode disabled to avoid all PHB requests being broadcast to
+multiple chips.</p>
+</li>
+<li><p>npu2/hw-procedures: Enable parity and credit overflow checks</p>
+<p>Enable these error checking features by setting the appropriate bits in
+our one-off initialization of each “NTL Misc Config 2” register.</p>
+<p>The exception is NDL RX parity checking, which should be disabled during
+the link training procedures.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.5.html"
+                        title="previous chapter">skiboot-6.0.5</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0.7.html"
+                        title="next chapter">skiboot-6.0.7</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0.6.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.7.html" title="skiboot-6.0.7"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.5.html" title="skiboot-6.0.5"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.6</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

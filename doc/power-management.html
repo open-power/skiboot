@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Power Management &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MPIPL (aka FADUMP) Overview" href="mpipl.html" />
+    <link rel="prev" title="OPAL/Skiboot In-Memory Collection (IMC) interface Documentation" href="imc.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="mpipl.html" title="MPIPL (aka FADUMP) Overview"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="imc.html" title="OPAL/Skiboot In-Memory Collection (IMC) interface Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Power Management</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="power-management">
+<h1>Power Management<a class="headerlink" href="#power-management" title="Permalink to this headline">¶</a></h1>
+<p>See <a class="reference internal" href="device-tree/ibm%2Copal/power-mgt.html#power-mgt-devtree"><span class="std std-ref">ibm,opal/power-mgt device tree entries</span></a> for device tree structure describing power management facilities.</p>
+<div class="section" id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
+<p>There exist a few debug knobs that can be set via nvram settings. These are
+<strong>not</strong> ABI and may be changed or removed at <em>any</em> time.</p>
+<div class="section" id="disabling-specific-stop-states">
+<h3>Disabling specific stop states<a class="headerlink" href="#disabling-specific-stop-states" title="Permalink to this headline">¶</a></h3>
+<p>On boot, specific stop states can be disabled via setting a mask. For example,
+to disable all but stop 0,1,2, use ~0xE0000000.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">opal</span><span class="o">-</span><span class="n">stop</span><span class="o">-</span><span class="n">state</span><span class="o">-</span><span class="n">disable</span><span class="o">-</span><span class="n">mask</span><span class="o">=</span><span class="mh">0x1FFFFFFF</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Power Management</a><ul>
+<li><a class="reference internal" href="#debugging">Debugging</a><ul>
+<li><a class="reference internal" href="#disabling-specific-stop-states">Disabling specific stop states</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="imc.html"
+                        title="previous chapter">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpipl.html"
+                        title="next chapter">MPIPL (aka FADUMP) Overview</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/power-management.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="mpipl.html" title="MPIPL (aka FADUMP) Overview"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="imc.html" title="OPAL/Skiboot In-Memory Collection (IMC) interface Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Power Management</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

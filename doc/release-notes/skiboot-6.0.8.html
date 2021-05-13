@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.0.8 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.0.9" href="skiboot-6.0.9.html" />
+    <link rel="prev" title="skiboot-6.0.7" href="skiboot-6.0.7.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.9.html" title="skiboot-6.0.9"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.7.html" title="skiboot-6.0.7"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.8</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-0-8">
+<span id="id1"></span><h1>skiboot-6.0.8<a class="headerlink" href="#skiboot-6-0-8" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 6.0.8 was released on Thursday August 16th, 2018. It replaces
+<a class="reference internal" href="skiboot-6.0.7.html#skiboot-6-0-7"><span class="std std-ref">skiboot-6.0.7</span></a> as the current stable release in the 6.0.x series.</p>
+<p>It is recommended that 6.0.8 be used instead of any previous 6.0.x version
+due to the bug fixes it contains.</p>
+<p>The bug fixes are:</p>
+<ul>
+<li><p>i2c: Ensure ordering between i2c_request_send() and completion</p>
+<p>i2c_request_send loops waiting for a flag “uc.done” set by
+the completion routine, and then look for a result code
+also set by that same completion.</p>
+<p>There is no synchronization, the completion can happen on another
+processor, so we need to order the stores to uc and the reads
+from uc so that uc.done is stored last and tested first using
+memory barriers.</p>
+</li>
+<li><p>i2c: Fix multiple-enqueue of the same request on NACK</p>
+<p>i2c_request_send() will retry the request if the error is a NAK,
+however it forgets to clear the “ud.done” flag. It will thus
+loop again and try to re-enqueue the same request causing internal
+request list corruption.</p>
+</li>
+<li><p>phb4: Disable 32-bit MSI in capi mode</p>
+<p>If a capi device does a DMA write targeting an address lower than 4GB,
+it does so through a 32-bit operation, per the PCI spec. In capi mode,
+the first TVE entry is configured in bypass mode, so the address is
+valid. But with any (bad) luck, the address could be 0xFFFFxxxx, thus
+looking like a 32-bit MSI.</p>
+<p>We currently enable both 32-bit and 64-bit MSIs, so the PHB will
+interpret the DMA write as a MSI, which very likely results in an EEH
+(MSI with a bad payload size).</p>
+<p>We can fix it by disabling 32-bit MSI when switching the PHB to capi
+mode. Capi devices are 64-bit.</p>
+</li>
+<li><p>capp: Fix the capp recovery timeout comparison</p>
+<p>The current capp recovery timeout control loop in
+do_capp_recovery_scoms() uses a wrong comparison for return value of
+tb_compare(). This may cause do_capp_recovery_scoms() to report an
+timeout earlier than the 168ms stipulated time.</p>
+<p>The patch fixes this by updating the loop timeout control branch in
+do_capp_recovery_scoms() to use the correct enum tb_cmpval.</p>
+</li>
+<li><p>phb4/capp: Update DMA read engines set in APC_FSM_READ_MASK based on link-width</p>
+<p>Commit 47c09cdfe7a3(“phb4/capp: Calculate STQ/DMA read engines based
+on link-width for PEC”) update the CAPP init sequence by calculating
+the needed STQ/DMA-read engines based on link width and populating it
+in XPEC_NEST_CAPP_CNTL register. This however needs to be synchronized
+with the value set in CAPP APC FSM Read Machine Mask Register.</p>
+<p>Hence this patch update phb4_init_capp_regs() to calculate the link
+width of the stack on PEC2 and populate the same values as previously
+populated in PEC CAPP_CNTL register.</p>
+</li>
+<li><p>core/cpu: Call memset with proper cpu_thread offset</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.0.7.html"
+                        title="previous chapter">skiboot-6.0.7</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.0.9.html"
+                        title="next chapter">skiboot-6.0.9</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.0.8.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.0.9.html" title="skiboot-6.0.9"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.0.7.html" title="skiboot-6.0.7"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.8</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_SET_PELTV &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_SET_PHB_CAPI_MODE" href="opal-pci-set-phb-capi-mode-93.html" />
+    <link rel="prev" title="OPAL_PCI_SET_PE" href="opal-pci-set-pe-31.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-phb-capi-mode-93.html" title="OPAL_PCI_SET_PHB_CAPI_MODE"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-pe-31.html" title="OPAL_PCI_SET_PE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PELTV</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-set-peltv">
+<span id="id1"></span><h1>OPAL_PCI_SET_PELTV<a class="headerlink" href="#opal-pci-set-peltv" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_PELTV                   32</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_set_peltv</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">parent_pe</span><span class="p">,</span>
+                           <span class="kt">uint32_t</span> <span class="n">child_pe</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">state</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><strong>WARNING:</strong> This documentation comes from an old source and is possibly not up
+to date with OPALv3. Rely on this documentation only as a starting point,
+use the source (and update the docs).</p>
+<p>This call sets the PELTV of a parent PE to add or remove a PE number as a PE
+within that parent PE domain. The host must call this function for each child
+of a parent PE.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">parent_pe</span></code></dt><dd><p>is the PE number of a PE that is higher in the PCI hierarchy
+to other PEs, such that an error involving this parent PE should cause a
+collateral PE freeze for PEs below this PE in the PCI hierarchy. For example
+a switch upstream bridge is a PE that is parent to PEs reached through that
+upstream bridge such that an error involving the upstream bridge
+(e.g, ERR_FATAL) should cause the PHB to freeze all other PEs below that
+upstream bridge (e.g., a downstream bridge, or devices below a downstream
+bridge).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">child_pe</span></code></dt><dd><p>is the PE number of a PE that is lower in the PCI hierarchy
+than another PE, such that an error involving that other PE should cause a
+collateral PE freeze for this child PE. For example a device below a
+downstream bridge of a PCIE switch is a child PE that downstream bridge PE
+and the upstream bridge PE of that switch – an ERR_Fatal from either bridge
+should result in a collateral freeze of that device PE.</p>
+</dd>
+</dl>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span> <span class="n">OpalPeltvAction</span> <span class="p">{</span>
+     <span class="n">OPAL_REMOVE_PE_FROM_DOMAIN</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+     <span class="n">OPAL_ADD_PE_TO_DOMAIN</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p><strong>OPAL Implementation Note:</strong>
+<strong>WARNING TODO</strong>: <em>CHECK IF THIS IS CORRECT FOR skiboot:</em>
+For ibm,opal-ioda2, OPAL sets the PELTV bit in all RTT entries for the parent
+PE when the state argument is ‘1’. OPAL clears the PELTV bit in all RTT
+entries for the parent PE when the state argument is ‘0’ and setting the child
+PE bit in the parent PELTV results in an all-zeros value for that PELTV.</p>
+<p>Return value:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OPAL_PARAMETER</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">set_peltv</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OPAL_UNSUPPORTED</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-set-pe-31.html"
+                        title="previous chapter">OPAL_PCI_SET_PE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-set-phb-capi-mode-93.html"
+                        title="next chapter">OPAL_PCI_SET_PHB_CAPI_MODE</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-set-peltv-32.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-phb-capi-mode-93.html" title="OPAL_PCI_SET_PHB_CAPI_MODE"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-pe-31.html" title="OPAL_PCI_SET_PE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PELTV</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

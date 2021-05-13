@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.9.2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.9.3" href="skiboot-5.9.3.html" />
+    <link rel="prev" title="skiboot-5.9.1" href="skiboot-5.9.1.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9.3.html" title="skiboot-5.9.3"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9.1.html" title="skiboot-5.9.1"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-9-2">
+<span id="id1"></span><h1>skiboot-5.9.2<a class="headerlink" href="#skiboot-5-9-2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot 5.9.2 was released on Thursday November 16th, 2017. It replaces
+<a class="reference internal" href="skiboot-5.9.1.html#skiboot-5-9-1"><span class="std std-ref">skiboot-5.9.1</span></a> as the current stable release in the 5.9.x series.</p>
+<p>Over <a class="reference internal" href="skiboot-5.9.1.html#skiboot-5-9-1"><span class="std std-ref">skiboot-5.9.1</span></a>, we have a few PHB4 (PCI) fixes, an i2c fix for
+POWER9 platforms to avoid conflicting with the OCC use and an important
+NPU2 (NVLink2) fix.</p>
+<ul>
+<li><p>phb4: Fix lane equalisation setting</p>
+<p>Fix cut and paste from phb3. The sizes have changes now we have GEN4,
+so the check here needs to change also</p>
+<p>Without this we end up with the default settings (all ‘7’) rather
+than what’s in HDAT.</p>
+</li>
+<li><p>phb4: Fix PE mapping of M32 BAR</p>
+<p>The M32 BAR is the PHB4 region used to map all the non-prefetchable
+or 32-bit device BARs. It’s supposed to have its segments remapped
+via the MDT and Linux relies on that to assign them individual PE#.</p>
+<p>However, we weren’t configuring that properly and instead used the
+mode where PE# == segment#, thus causing EEH to freeze the wrong
+device or PE#.</p>
+</li>
+<li><p>phb4: Fix lost bit in PE number on config accesses</p>
+<p>A PE number can be up to 9 bits, using a uint8_t won’t fly..</p>
+<p>That was causing error on config accesses to freeze the
+wrong PE.</p>
+</li>
+<li><p>phb4: Update inits</p>
+<p>New init value from HW folks for the fence enable register.</p>
+<p>This clears bit 17 (CFG Write Error CA or UR response) and bit 22 (MMIO Write
+DAT_ERR Indication) and sets bit 21 (MMIO CFG Pending Error)</p>
+</li>
+<li><p>npu2: Move to new GPU memory map</p>
+<p>There are three different ways we configure the MCD and memory map.</p>
+<ol class="arabic simple">
+<li><p>Old way (current way)
+Skiboot configures the MCD and puts GPUs at 4TB and below</p></li>
+<li><p>New way with MCD
+Hostboot configures the MCD and skiboot puts GPU at 4TB and above</p></li>
+<li><p>New way without MCD
+No one configures the MCD and skiboot puts GPU at 4TB and below</p></li>
+</ol>
+<p>The change keeps option 1 and adds options 2 and 3.</p>
+<p>The different configurations are detected using certain scoms (see
+patch).</p>
+<p>Option 1 will go away eventually as it’s a configuration that can
+cause xstops or data integrity problems. We are keeping it around to
+support existing hostboot.</p>
+<p>Option 2 supports only 4 GPUs and 512GB of memory per socket.</p>
+<p>Option 3 supports 6 GPUs and 4TB of memory but may have some
+performance impact.</p>
+</li>
+<li><p>p8-i2c: Don’t write the watermark register at init</p>
+<p>On P9 the I2C master is shared with the OCC. Currently the watermark
+values are set once at init time which is bad for two reasons:</p>
+<ol class="loweralpha simple">
+<li><p>We don’t take the OCC master lock before setting it. Which
+may cause issues if the OCC is currently using the master.</p></li>
+<li><p>The OCC might change the watermark levels and we need to reset
+them.</p></li>
+</ol>
+<p>Change this so that we set the watermark value when a new transaction
+is started rather than at init time.</p>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.9.1.html"
+                        title="previous chapter">skiboot-5.9.1</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.9.3.html"
+                        title="next chapter">skiboot-5.9.3</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.9.2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.9.3.html" title="skiboot-5.9.3"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.9.1.html" title="skiboot-5.9.1"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

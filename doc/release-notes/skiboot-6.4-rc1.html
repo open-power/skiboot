@@ -1,0 +1,855 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-6.4-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-6.5" href="skiboot-6.5.html" />
+    <link rel="prev" title="skiboot-6.4" href="skiboot-6.4.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.5.html" title="skiboot-6.5"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.4.html" title="skiboot-6.4"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.4-rc1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-6-4-rc1">
+<span id="id1"></span><h1>skiboot-6.4-rc1<a class="headerlink" href="#skiboot-6-4-rc1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v6.4-rc1 was released on Monday July 8th 2019. It is the first
+release candidate of skiboot 6.4, which will become the new stable release
+of skiboot following the 6.3 release, first released May 3rd 2019.</p>
+<p>Skiboot 6.4 will mark the basis for op-build v2.4. I expect this to be a
+relatively short -rc cycle.</p>
+<p>skiboot v6.4-rc1 contains all bug fixes as of <a class="reference internal" href="skiboot-6.0.20.html#skiboot-6-0-20"><span class="std std-ref">skiboot-6.0.20</span></a>,
+and <a class="reference internal" href="skiboot-6.3.2.html#skiboot-6-3-2"><span class="std std-ref">skiboot-6.3.2</span></a> (the currently maintained
+stable releases).</p>
+<p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
+<p>Over skiboot 6.3, we have the following changes:</p>
+<div class="section" id="new-features">
+<span id="skiboot-6-4-rc1-new-features"></span><h2>New features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>platforms/nicole: Add new platform</p>
+<p>The platform is a new platform from YADRO, it’s a storage controller for
+TATLIN server. It’s Based on IBM Romulus reference design (POWER9).</p>
+</li>
+<li><p>platform/zz: Add new platform type</p>
+<p>We have new platform type under ZZ. Lets add them. With this fix</p>
+</li>
+<li><p>nvram: Flag dangerous NVRAM options</p>
+<p>Most nvram options used by skiboot are just for debug or testing for
+regressions. They should never be used long term.</p>
+<p>We’ve hit a number of issues in testing and the field where nvram
+options have been set “temporarily” but haven’t been properly cleared
+after, resulting in crashes or real bugs being masked.</p>
+<p>This patch marks most nvram options used by skiboot as dangerous and
+prints a chicken to remind users of the problem.</p>
+</li>
+<li><p>hw/phb3: Add verbose EEH output</p>
+<p>Add support for the pci-eeh-verbose NVRAM flag on PHB3. We’ve had this
+on PHB4 since forever and it has proven very useful when debugging EEH
+issues. When testing changes to the Linux kernel’s EEH implementation
+it’s fairly common for the kernel to crash before printing the EEH log
+so it’s helpful to have it in the OPAL log where it can be dumped from
+XMON.</p>
+<p>Note that unlike PHB4 we do not enable verbose mode by default. The
+nvram option must be used to explicitly enable it.</p>
+</li>
+<li><p>Experimental support for building without FSP code</p>
+<p>Now, with CONFIG_FSP=0/1 we have:</p>
+<ul class="simple">
+<li><p>1.6M/1.4M skiboot.lid</p></li>
+<li><p>323K/375K skiboot.lid.xz</p></li>
+</ul>
+</li>
+<li><p>doc: travis-ci deploy docs!</p>
+<p>Documentation is now automatically deployed if you configure Travis CI
+appropriately (we have done this for the open-power branch of skiboot)</p>
+</li>
+<li><p>Big OPAL API Documentation improvement</p>
+<p>A lot more OPAL API calls are now (at least somewhat) documented.</p>
+</li>
+<li><p>opal/hmi: Report NPU2 checkstop reason</p>
+<p>The NPU2 is currently not passing any information to linux to explain
+the cause of an HMI. NPU2 has three Fault Isolation Registers and over
+30 of those FIR bits are configured to raise an HMI by default. We
+won’t be able to fit all possible state in the 32-bit xstop_reason
+field of the HMI event, but we can still try to encode up to 4 HMI
+reasons.</p>
+</li>
+<li><p>opal-msg: Enhance opal-get-msg API</p>
+<p>Linux uses <a class="reference internal" href="../opal-api/opal-get-msg-85.html#opal-get-msg"><span class="std std-ref">OPAL_GET_MSG</span></a> API to get OPAL messages. This interface
+supports upto 8 params (64 bytes). We have a requirement to send bigger data to
+Linux. This patch enhances OPAL to send bigger data to Linux.</p>
+<ul class="simple">
+<li><p>Linux will use “opal-msg-size” device tree property to allocate memory for
+OPAL messages (previous patch increased “opal-msg-size” to 64K).</p></li>
+<li><p>Replaced <cite>reserved</cite> field in “struct opal_msg” with <cite>size</cite>. So that Linux
+side opal_get_msg user can detect actual data size.</p></li>
+<li><p>If buffer size &lt; actual message size, then opal_get_msg will copy partial
+data and return OPAL_PARTIAL to Linux.</p></li>
+<li><p>Add new variable “extended” to “opal_msg_entry” structure to keep track
+of messages that has more than 64byte data. We will allocate separate
+memory for these messages and once kernel consumes message we will
+release that memory.</p></li>
+</ul>
+</li>
+<li><p>core/opal: Increase opal-msg-size size</p>
+<p>Kernel will use <cite>opal-msg-size</cite> property to allocate memory for opal_msg.
+We want to send bigger data from OPAL to kernel. Hence increase
+opal-msg-size to 64K.</p>
+</li>
+<li><p>hw/npu2-opencapi: Add initial support for allocating OpenCAPI LPC memory</p>
+<p>Lowest Point of Coherency (LPC) memory allows the host to access memory on
+an OpenCAPI device.</p>
+<p>Define 2 OPAL calls, <a class="reference internal" href="../opal-api/opal-npu2-opencapi-159-160-161-171-172.html#opal-npu-mem-alloc"><span class="std std-ref">OPAL_NPU_MEM_ALLOC</span></a> and <a class="reference internal" href="../opal-api/opal-npu2-opencapi-159-160-161-171-172.html#opal-npu-mem-release"><span class="std std-ref">OPAL_NPU_MEM_RELEASE</span></a>, for
+assigning and clearing the memory BAR. (We try to avoid using the term
+“LPC” to avoid confusion with Low Pin Count.)</p>
+<p>At present, we use a fixed location in the address space, which means we
+are restricted to a single range of 4TB, on a single OpenCAPI device per
+chip. In future, we’ll use some chip ID extension magic to give us more
+space, and some sort of allocator to assign ranges to more than one device.</p>
+</li>
+<li><p>core/fast-reboot: Add im-feeling-lucky option</p>
+<p>Fast reboot gets disabled for a number of reasons e.g. the availability
+of nvlink. However this doesn’t actually affect the ability to perform fast
+reboot if no nvlink device is actually present.</p>
+<p>Add a nvram option for fast-reset where if it’s set to
+“im-feeling-lucky” then perform the fast-reboot irrespective of if it’s
+previously been disabled.</p>
+</li>
+<li><p>platforms/astbmc: Check for SBE validation step</p>
+<p>On some POWER8 astbmc systems an update to the SBE requires pausing at
+runtime to ensure integrity of the SBE. If this is required the BMC will
+set a chassis boot option IPMI flag using the OEM parameter 0x62. If
+Skiboot sees this flag is set it waits until the SBE update is complete
+and the flag is cleared.</p>
+<p>Unfortunately the mystery operation that validates the SBE also leaves
+it in a bad state and unable to be used for timer operations. To
+workaround this the flag is checked as soon as possible (ie. when IPMI
+and the console are set up), and once complete the system is rebooted.</p>
+</li>
+<li><p>Add P9 DIO interrupt support</p>
+<p>On P9 there are GPIO port 0, 1, 2 for GPIO interrupt, and DIO interrupt
+is used to handle the interrupts.</p>
+<p>Add support to the DIO interrupts:</p>
+<ol class="arabic simple">
+<li><p>Add dio_interrupt_register(chip, port, callback) to register the
+interrupt</p></li>
+<li><p>Add dio_interrupt_deregister(chip, port, callback) to deregister;</p></li>
+<li><p>When interrupt on the port occurs, callback is invoked, and the
+interrupt status is cleared.</p></li>
+</ol>
+</li>
+</ul>
+</div>
+<div class="section" id="removed-features">
+<h2>Removed features<a class="headerlink" href="#removed-features" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>pci/iov: Remove skiboot VF tracking</p>
+<p>This feature was added a few years ago in response to a request to make
+the MaxPayloadSize (MPS) field of a Virtual Function match the MPS of the
+Physical Function that hosts it.</p>
+<p>The SR-IOV specification states the the MPS field of the VF is “ResvP”.
+This indicates the VF will use whatever MPS is configured on the PF and
+that the field should be treated as a reserved field in the config space
+of the VF. In other words, a SR-IOV spec compliant VF should always return
+zero in the MPS field.  Adding hacks in OPAL to make it non-zero is…
+misguided at best.</p>
+<p>Additionally, there is a bug in the way pci_device structures are handled
+by VFs that results in a crash on fast-reboot that occurs if VFs are
+enabled and then disabled prior to rebooting. This patch fixes the bug by
+removing the code entirely. This patch has no impact on SR-IOV support on
+the host operating system.</p>
+</li>
+<li><p>Remove POWER7 and POWER7+ support</p>
+<p>It’s been a good long while since either OPAL POWER7 user touched a
+machine, and even longer since they’d have been okay using an old
+version rather than tracking master.</p>
+<p>There’s also been no testing of OPAL on POWER7 systems for an awfully
+long time, so it’s pretty safe to assume that it’s very much bitrotted.</p>
+<p>It also saves a whole 14kb of xz compressed payload space.</p>
+</li>
+<li><p>Remove remnants of <a class="reference internal" href="../opal-api/index.html#opal-pci-get-phb-diag-data"><span class="std std-ref">OPAL_PCI_GET_PHB_DIAG_DATA</span></a></p>
+<p>Never present in a public OPAL release, and only kernels prior to 3.11
+would ever attempt to call it.</p>
+</li>
+<li><p>Remove unused <a class="reference internal" href="../opal-api/index.html#opal-get-xive-source"><span class="std std-ref">OPAL_GET_XIVE_SOURCE</span></a></p>
+<p>While this call was technically implemented by skiboot, no code has ever called
+it, and it was only ever implemented for the p7ioc-phb back-end (i.e. POWER7).
+Since this call was unused in Linux, and that  POWER7 with OPAL was only ever
+available internally, so it should be safe to remove the call.</p>
+</li>
+<li><p>Remove unused <a class="reference internal" href="../opal-api/index.html#opal-pci-get-xive-reissue"><span class="std std-ref">OPAL_PCI_GET_XIVE_REISSUE</span></a> and <a class="reference internal" href="../opal-api/index.html#opal-pci-set-xive-reissue"><span class="std std-ref">OPAL_PCI_SET_XIVE_REISSUE</span></a></p>
+<p>These seem to be remnants of one of the OPAL incarnations prior to
+OPALv3. These calls have never been implemented in skiboot, and never
+used by an upstream kernel (nor a PowerKVM kernel).</p>
+<p>It’s rather safe to just document them as never existing.</p>
+</li>
+<li><p>Remove never implemented <a class="reference internal" href="../opal-api/index.html#opal-pci-set-phb-table-memory"><span class="std std-ref">OPAL_PCI_SET_PHB_TABLE_MEMORY</span></a> and document why</p>
+<p>Not ever used by upstream linux or PowerKVM tree. Never implemented in
+skiboot (not even in ancient internal only tree).</p>
+<p>So, it’s incredibly safe to remove.</p>
+</li>
+<li><p>Remove unused <a class="reference internal" href="../opal-api/opal-pci-eeh-freeze-status-23.html#opal-pci-eeh-freeze-status2"><span class="std std-ref">OPAL_PCI_EEH_FREEZE_STATUS2</span></a></p>
+<p>This call was introduced all the way back at the end of 2012, before
+OPAL was public. The #define for the OPAL call was introduced to the
+Linux kernel in June 2013, and the call was never used in any kernel
+tree ever (as far as we can find).</p>
+<p>Thus, it’s quite safe to remove this completely unused and completely
+untested OPAL call.</p>
+</li>
+<li><p>Document the long removed <a class="reference internal" href="../opal-api/index.html#opal-register-opal-exception-handler"><span class="std std-ref">OPAL_REGISTER_OPAL_EXCEPTION_HANDLER</span></a> call</p>
+<p>I’m pretty sure this was removed in one of our first ever service packs.</p>
+<p>Fixes: <a class="reference external" href="https://github.com/open-power/skiboot/issues/98">https://github.com/open-power/skiboot/issues/98</a></p>
+</li>
+<li><p>Remove last remnants of <a class="reference internal" href="../opal-api/index.html#opal-pci-set-phb-tce-memory"><span class="std std-ref">OPAL_PCI_SET_PHB_TCE_MEMORY</span></a> and <a class="reference internal" href="../opal-api/index.html#opal-pci-set-hub-tce-memory"><span class="std std-ref">OPAL_PCI_SET_HUB_TCE_MEMORY</span></a></p>
+<p>Since we have not supported p5ioc systems since skiboot 5.2, it’s pretty
+safe to just wholesale remove these OPAL calls now.</p>
+</li>
+<li><p>Remove remnants of <a class="reference internal" href="../opal-api/index.html#opal-pci-set-phb-tce-memory"><span class="std std-ref">OPAL_PCI_SET_PHB_TCE_MEMORY</span></a></p>
+<p>There’s no reason we need remnants hanging around that aren’t used, so
+remove them and save a handful of bytes at runtime.</p>
+<p>Simultaneously, document the OPAL call removal.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="secure-and-trusted-boot">
+<h2>Secure and Trusted Boot<a class="headerlink" href="#secure-and-trusted-boot" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>trustedboot: Change PCR and event_type for the skiboot events</p>
+<p>The existing skiboot events are being logged as EV_ACTION, however, the
+TCG PC Client spec says that EV_ACTION events should have one of the
+pre-defined strings in the event field recorded in the event log. For
+instance:</p>
+<ul class="simple">
+<li><p>“Calling Ready to Boot”,</p></li>
+<li><p>“Entering ROM Based Setup”,</p></li>
+<li><p>“User Password Entered”, and</p></li>
+<li><p>“Start Option ROM Scan.</p></li>
+</ul>
+<p>None of the EV_ACTION pre-defined strings are applicable to the existing
+skiboot events. Based on recent discussions with other POWER teams, this
+patch proposes a convention on what PCR and event types should be used
+for skiboot events. This also changes the skiboot source code to follow
+the convention.</p>
+<p>The TCG PC Client spec defines several event types, other than
+EV_ACTION. However, many of them are specific to UEFI events and some
+others are related to platform or CRTM events, which is more applicable
+to hostboot events.</p>
+<p>Currently, most of the hostboot events are extended to PCR[0,1] and
+logged as either EV_PLATFORM_CONFIG_FLAGS, EV_S_CRTM_CONTENTS or
+EV_POST_CODE. The “Node Id” and “PAYLOAD” events, though, are extended
+to PCR[4,5,6] and logged as EV_COMPACT_HASH.</p>
+<p>For the lack of an event type that fits the specific purpose,
+EV_COMPACT_HASH seems to be the most adequate one due to its
+flexibility. According to the TCG PC Client spec:</p>
+<ul class="simple">
+<li><p>May be used for any PCR except 0, 1, 2 and 3.</p></li>
+<li><p>The event field may be informative or may be hashed to generate the
+digest field, depending on the component recording the event.</p></li>
+</ul>
+<p>Additionally, the PCR[4,5] seem to be the most adequate PCRs. They would
+be used for skiboot and some skiroot events. According to the TCG PC
+Client, PCR[4] is intended to represent the entity that manages the
+transition between the pre-OS and OS-present state of the platform.
+PCR[4], along with PCR[5], identifies the initial OS loader.</p>
+<p>In summary, for skiboot events:</p>
+<ul class="simple">
+<li><p>Events that represents data should be extended to PCR 4.</p></li>
+<li><p>Events that represents config should be extended to PCR 5.</p></li>
+<li><p>For the lack of an event type that fits the specific purpose,
+both data and config events should be logged as EV_COMPACT_HASH.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="sensors">
+<h2>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>occ-sensors: Check if OCC is reset while reading inband sensors</p>
+<p>OCC may not be able to mark the sensor buffer as invalid while going
+down RESET. If OCC never comes back we will continue to read the stale
+sensor data. So verify if OCC is reset while reading the sensor values
+and propagate the appropriate error.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="ipmi">
+<h2>IPMI<a class="headerlink" href="#ipmi" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>ipmi: ensure forward progress on ipmi_queue_msg_sync()</p>
+<p>BT responses are handled using a timer doing the polling. To hope to
+get an answer to an IPMI synchronous message, the timer needs to run.</p>
+<p>We can’t just check all timers though as there may be a timer that
+wants a lock that’s held by a code path calling ipmi_queue_msg_sync(),
+and if we did enforce that as a requirement, it’s a pretty subtle
+API that is asking to be broken.</p>
+<p>So, if we just run a poll function to crank anything that the IPMI
+backend needs, then we should be fine.</p>
+<p>This issue shows up very quickly under QEMU when loading the first
+flash resource with the IPMI HIOMAP backend.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="npu2">
+<h2>NPU2<a class="headerlink" href="#npu2" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>npu2: Increase timeout for L2/L3 cache purging</p>
+<p>On NVLink2 bridge reset, we purge all L2/L3 caches in the system.
+This is an asynchronous operation, we have a 2ms timeout here. There are
+reports that this is not enough and “PURGE L3 on core xxx timed out”
+messages appear (for the reference: on the test setup this takes
+280us..780us).</p>
+<p>This defines the timeout as a macro and changes this from 2ms to 20ms.</p>
+<p>This adds a tracepoint to tell how long it took to purge all the caches.</p>
+</li>
+<li><p>npu2: Purge cache when resetting a GPU</p>
+<p>After putting all a GPU’s links in reset, do a cache purge in case we
+have CPU cache lines belonging to the now-unaccessible GPU memory.</p>
+</li>
+<li><p>npu2-opencapi: Mask 2 XSL errors</p>
+<p>Commit f8dfd699f584 (“hw/npu2: Setup an error interrupt on some
+opencapi FIRs”) converted some FIR bits default action from system
+checkstop to raising an error interrupt. For 2 XSL error events that
+can be triggered by a misbehaving AFU, the error interrupt is raised
+twice, once for each link (the XSL logic in the NPU is shared between
+2 links). So a badly behaving AFU could impact another, unsuspecting
+opencapi adapter.</p>
+<p>It doesn’t look good and it turns out we can do better. We can mask
+those 2 XSL errors. The error will also be picked up by the OTL logic,
+which is per link. So we’ll still get an error interrupt, but only on
+the relevant link, and the other opencapi adapter can stay functional.</p>
+</li>
+<li><p>npu2: Clear fence state for a brick being reset</p>
+<p>Resetting a GPU before resetting an NVLink leads to occasional HMIs
+which fence some bricks and prevent the “reset_ntl” procedure from
+succeeding at the “reset_ntl_release” step - the host system requires
+reboot; there may be other cases like this as well.</p>
+<p>This adds clearing of the fence bit in NPU.MISC.FENCE_STATE for
+the NVLink which we are about to reset.</p>
+</li>
+<li><p>npu2: Fix clearing the FIR bits</p>
+<p>FIR registers are SCOM-only so they cannot be accesses with the indirect
+write, and yet we use SCOM-based addresses for these; fix this.</p>
+</li>
+<li><p>npu2: Reset NVLinks when resetting a GPU</p>
+<p>Resetting a V100 GPU brings its NVLinks down and if an NPU tries using
+those, an HMI occurs. We were lucky not to observe this as the bare metal
+does not normally reset a GPU and when passed through, GPUs are usually
+before NPUs in QEMU command line or Libvirt XML and because of that NPUs
+are naturally reset first. However simple change of the device order
+brings HMIs.</p>
+<p>This defines a bus control filter for a PCI slot with a GPU with NVLinks
+so when the host system issues secondary bus reset to the slot, it resets
+associated NVLinks.</p>
+</li>
+<li><p>npu2: Reset PID wildcard and refcounter when mapped to LPID</p>
+<p>Since 105d80f85b “npu2: Use unfiltered mode in XTS tables” we do not
+register every PID in the XTS table so the table has one entry per LPID.
+Then we added a reference counter to keep track of the entry use when
+switching GPU between the host and guest systems (the “Fixes:” tag below).</p>
+<p>The POWERNV platform setup creates such entries and references them
+at the boot time when initializing IOMMUs and only removes it when
+a GPU is passed through to a guest. This creates a problem as POWERNV
+boots via kexec and no defererencing happens; the XTS table state remains
+undefined. So when the host kernel boots, skiboot thinks there are valid
+XTS entries and does not update the XTS table which breaks ATS.</p>
+<p>This adds the reference counter and the XTS entry reset when a GPU is
+assigned to LPID and we cannot rely on the kernel to clean that up.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="phb4">
+<h2>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>hw/phb4: Make phb4_training_trace() more general</p>
+<p>phb4_training_trace() is used to monitor the Link Training Status
+State Machine (LTSSM) of the PHB’s data link layer. Currently it is only
+used to observe the LTSSM while bringing up the link, but sometimes it’s
+useful to see what’s occurring in other situations (e.g. link disable, or
+secondary bus reset). This patch renames it to phb4_link_trace() and
+allows the target LTSSM state and a flexible timeout to help in these
+situations.</p>
+</li>
+<li><p>hw/phb4: Make pci-tracing print at PR_NOTICE</p>
+<p>When pci-tracing is enabled we print each trace status message and the
+final trace status at PR_ERROR. The final status messages are similar to
+those printed when we fail to train in the non-pci-tracing path and this
+has resulted in spurious op-test failures.</p>
+<p>This patch reduces the log-level of the tracing message to PR_NOTICE so
+they’re not accidently interpreted as actual error messages. PR_NOTICE
+messages are still printed to the console during boot.</p>
+</li>
+<li><p>hw/phb4: Use read/write_reg in assert_perst</p>
+<p>While the PHB is fenced we can’t use the MMIO interface to access PHB
+registers. While processing a complete reset we inject a PHB fence to
+isolate the PHB from the rest of the system because the PHB won’t
+respond to MMIOs from the rest of the system while being reset.</p>
+<p>We assert PERST after the fence has been erected which requires us to
+use the XSCOM indirect interface to access the PHB registers rather than
+the MMIO interface. Previously we did that when asserting PERST in the
+CRESET path. However in b8b4c79d4419 (“hw/phb4: Factor out PERST
+control”). This was re-written to use the raw in_be64() accessor. This
+means that CRESET would not be asserted in the reset path. On some
+Mellanox cards this would prevent them from re-loading their firmware
+when the system was fast-reset.</p>
+<p>This patch fixes the problem by replacing the raw {in|out}_be64()
+accessors with the phb4_{read|write}_reg() functions.</p>
+</li>
+<li><p>hw/phb4: Assert Link Disable bit after ETU init</p>
+<p>The cursed RAID card in ozrom1 has a bug where it ignores PERST being
+asserted. The PCIe Base spec is a little vague about what happens
+while PERST is asserted, but it does clearly specify that when
+PERST is de-asserted the Link Training and Status State Machine
+(LTSSM) of a device should return to the initial state (Detect)
+defined in the spec and the link training process should restart.</p>
+<p>This bug was worked around in 9078f8268922 (“phb4: Delay training till
+after PERST is deasserted”) by setting the link disable bit at the
+start of the FRESET process and clearing it after PERST was
+de-asserted. Although this fixed the bug, the patch offered no
+explaination of why the fix worked.</p>
+<p>In b8b4c79d4419 (“hw/phb4: Factor out PERST control”) the link disable
+workaround was moved into phb4_assert_perst(). This is called
+always in the CRESET case, but a following patch resulted in
+assert_perst() not being called if phb4_freset() was entered following a
+CRESET since p-&gt;skip_perst was set in the CRESET handler. This is bad
+since a side-effect of the CRESET is that the Link Disable bit is
+cleared.</p>
+<p>This, combined with the RAID card ignoring PERST results in the PCIe
+link being trained by the PHB while we’re waiting out the 100ms
+ETU reset time. If we hack skiboot to print a DLP trace after returning
+from phb4_hw_init() we get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PHB</span><span class="c1">#0001[0:1]: Initialization complete</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000  0ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000 23ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000 23ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000183101000000 29ms training GEN1:x16:config</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5881000000 30ms training GEN1:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5883000000 30ms training GEN3:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000144883000000 33ms presence GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000154883000000 33ms trained  GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: CRESET: wait_time = 100</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Starts</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Prepare for link down</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Assert skipped</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Deassert</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000154883000000  0ms trained  GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE: Reached target state</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Start polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Electrical link detected</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Link is up</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Went down waiting for stabilty</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: DLP train control: 0x0000105101000000</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: CRESET: Starts</span>
+</pre></div>
+</div>
+<p>What has happened here is that the link is trained to 8x Gen3 33ms after
+we return from phb4_init_hw(), and before we’ve waitined to 100ms
+that we normally wait after re-initialising the ETU. When we “deassert”
+PERST later on in the FRESET handler the link in L0 (normal) state. At
+this point we try to read from the Vendor/Device ID register to verify
+that the link is stable and immediately get a PHB fence due to a PCIe
+Completion Timeout. Skiboot attempts to recover by doing another CRESET,
+but this will encounter the same issue.</p>
+<p>This patch fixes the problem by setting the Link Disable bit (by calling
+phb4_assert_perst()) immediately after we return from phb4_init_hw().
+This prevents the link from being trained while PERST is asserted which
+seems to avoid the Completion Timeout. With the patch applied we get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PHB</span><span class="c1">#0001[0:1]: Initialization complete</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000  0ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000 23ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000 23ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000909101000000 29ms presence GEN1:x16:disabled</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: CRESET: wait_time = 100</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Starts</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Prepare for link down</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Assert skipped</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: FRESET: Deassert</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000  0ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000  0ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000001101000000 24ms          GEN1:x16:detect</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000102101000000 36ms presence GEN1:x16:polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000183101000000 97ms training GEN1:x16:config</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5881000000 97ms training GEN1:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x00001c5883000000 97ms training GEN3:x08:recovery</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE:0x0000144883000000 99ms presence GEN3:x08:L0</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: TRACE: Reached target state</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Start polling</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Electrical link detected</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Link is up</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Link is stable</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Card [9005:028c] Optimal Retry:disabled</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Speed Train:GEN3 PHB:GEN4 DEV:GEN3</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: Width Train:x08 PHB:x08 DEV:x08</span>
+<span class="n">PHB</span><span class="c1">#0001[0:1]: LINK: RX Errors Now:0 Max:8 Lane:0x0000</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="simulators">
+<h2>Simulators<a class="headerlink" href="#simulators" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>external/mambo: Bump default POWER9 to Nimbus DD2.3</p></li>
+<li><p>external/mambo: fix tcl startup code for mambo bogus net (repost)</p>
+<p>This fixes a couple issues with external/mambo/skiboot.tcl so I can use the
+mambo bogus net.</p>
+<ul class="simple">
+<li><p>newer distros (ubuntu 18.04) allow tap device to have a user specified
+name instead of just tapN so we need to pass in a name not a number.</p></li>
+<li><p>need some kind of default for net_mac, and need the mconfig for it
+to be set from an env var.</p></li>
+</ul>
+</li>
+<li><p>skiboot.tcl: Add option to wait for GDB server connection</p>
+<p>Add an environment variable which makes Mambo wait for a connection
+from gdb prior to starting simulation.</p>
+</li>
+<li><p>mambo: Integrate addr2line into backtrace command</p>
+<p>Gives nice output like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">systemsim</span> <span class="o">%</span> <span class="n">bt</span>
+<span class="n">pc</span><span class="p">:</span>                             <span class="mh">0xC0000000002BF3D4</span>      <span class="n">_savegpr0_28</span><span class="o">+</span><span class="mh">0x0</span>
+<span class="n">lr</span><span class="p">:</span>                             <span class="mh">0xC00000000004E0F4</span>      <span class="n">opal_call</span><span class="o">+</span><span class="mh">0x10</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FAE0</span>        <span class="mh">0xC00000000004F054</span>      <span class="n">opal_check_token</span><span class="o">+</span><span class="mh">0x20</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FB50</span>        <span class="mh">0xC0000000000500CC</span>      <span class="n">__opal_flush_console</span><span class="o">+</span><span class="mh">0x88</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FBD0</span>        <span class="mh">0xC000000000050BF8</span>      <span class="n">opal_flush_console</span><span class="o">+</span><span class="mh">0x24</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FC00</span>        <span class="mh">0xC0000000001F9510</span>      <span class="n">udbg_opal_putc</span><span class="o">+</span><span class="mh">0x88</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FC40</span>        <span class="mh">0xC000000000020E78</span>      <span class="n">udbg_write</span><span class="o">+</span><span class="mh">0x7c</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FC80</span>        <span class="mh">0xC0000000000B1C44</span>      <span class="n">console_unlock</span><span class="o">+</span><span class="mh">0x47c</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FD80</span>        <span class="mh">0xC0000000000B2424</span>      <span class="n">register_console</span><span class="o">+</span><span class="mh">0x320</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FE10</span>        <span class="mh">0xC0000000003A5328</span>      <span class="n">register_early_udbg_console</span><span class="o">+</span><span class="mh">0x98</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FE80</span>        <span class="mh">0xC0000000003A4F14</span>      <span class="n">setup_arch</span><span class="o">+</span><span class="mh">0x68</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FEF0</span>        <span class="mh">0xC0000000003A0880</span>      <span class="n">start_kernel</span><span class="o">+</span><span class="mh">0x74</span>
+<span class="n">stack</span><span class="p">:</span><span class="mh">0x000000000041FF90</span>        <span class="mh">0xC00000000000AC60</span>      <span class="n">start_here_common</span><span class="o">+</span><span class="mh">0x1c</span>
+</pre></div>
+</div>
+</li>
+<li><p>mambo: Add addr2func for symbol resolution</p>
+<p>If you supply a VMLINUX_MAP/SKIBOOT_MAP/USER_MAP addr2func can guess
+at your symbol name. i.e.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">systemsim</span> <span class="o">%</span> <span class="n">p</span> <span class="n">pc</span>
+<span class="mh">0xC0000000002A68F8</span>
+<span class="n">systemsim</span> <span class="o">%</span> <span class="n">addr2func</span> <span class="p">[</span><span class="n">p</span> <span class="n">pc</span><span class="p">]</span>
+<span class="n">fdt_offset_ptr</span><span class="o">+</span><span class="mh">0x78</span>
+</pre></div>
+</div>
+</li>
+<li><p>lpc-port80h: Don’t write port 80h when running under Simics</p>
+<p>Simics doesn’t model LPC port 80h. Writing to it terminates the
+simulation due to an invalid LPC memory access. This patch adds a
+check to ensure port 80h isn’t accessed if we are running under
+Simics.</p>
+</li>
+<li><p>device-tree: speed up fdt building on slow simulators</p>
+<p>Trade size for speed and avoid de-duplicating strings in the fdt.
+This costs about 2kB in fdt size, and saves about 8 million instructions
+(almost half of all instructions) booting skiboot in mambo.</p>
+</li>
+<li><p>fast-reboot:: skip read-only memory checksum for slow simulators</p>
+<p>Skip the fast reboot checksum, which costs about 4 million cycles
+booting skiboot in mambo.</p>
+</li>
+<li><p>nx: remove check on the “qemu, powernv” property</p>
+<p>commit 95f7b3b9698b (“nx: Don’t abort on missing NX when using a QEMU
+machine”) introduced a check on the property “qemu,powernv” to skip NX
+initialization when running under a QEMU machine.</p>
+<p>The QEMU platforms now expose a QUIRK_NO_RNG in the chip. Testing the
+“qemu,powernv” property is not necessary anymore.</p>
+</li>
+<li><p>plat/qemu: add a POWER8 and POWER9 platform</p>
+<p>These new QEMU platforms have characteristics closer to real OpenPOWER
+systems that we use today and define a different BMC depending on the
+CPU type. New platform properties are introduced for each,
+“qemu,powernv8”, “qemu,powernv9” and these should be compatible with
+existing QEMUs which only expose the “qemu,powernv” property</p>
+</li>
+<li><p>libc/string: speed up common string functions</p>
+<p>Use compiler builtins for the string functions, and compile the
+libc/string/ directory with -O2.</p>
+<p>This reduces instructions booting skiboot in mambo by 2.9 million in
+slow-sim mode, or 3.8 in normal mode, for less than 1kB image size
+increase.</p>
+<p>This can result in the compiler warning more cases of string function
+problems.</p>
+</li>
+<li><p>external/mambo: Add an option to exit Mambo when the system is shutdown</p>
+<p>Automatically exiting can be convenient for scripting. Will also exit
+due to a HW crash (eg. unhandled exception).</p>
+</li>
+</ul>
+</div>
+<div class="section" id="vesnin-platform">
+<h2>VESNIN platform<a class="headerlink" href="#vesnin-platform" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>platforms/vesnin: PCI inventory via IPMI OEM</p>
+<p>Replace raw protocol with OEM message supported by OpenBMC’s IPMI
+plugins.</p>
+<p>BMC-side implementation (IPMI plug-in):
+<a class="reference external" href="https://github.com/YADRO-KNS/phosphor-pci-inventory">https://github.com/YADRO-KNS/phosphor-pci-inventory</a></p>
+</li>
+</ul>
+</div>
+<div class="section" id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>opal-gard: Account for ECC size when clearing partition</p>
+<p>When ‘opal-gard clear all’ is run, it works by erasing the GUARD then
+using blockevel_smart_write() to write nothing to the partition. This
+second write call is needed because we rely on libflash to set the ECC
+bits appropriately when the partition contained ECCed data.</p>
+<p>The API for this is a little odd with the caller specifying how much
+actual data to write, and libflash writing size + size/8 bytes
+since there is one additional ECC byte for every eight bytes of data.</p>
+<p>We currently do not account for the extra space consumed by the ECC data
+in reset_partition() which is used to handle the ‘clear all’ command.
+Which results in the paritition following the GUARD partition being
+partially overwritten when the command is used. This patch fixes the
+problem by reducing the length we would normally write by the number
+of ECC bytes required.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="build-and-debugging">
+<h2>Build and debugging<a class="headerlink" href="#build-and-debugging" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Disable -Waddress-of-packed-member for GCC9</p>
+<p>We throw a bunch of errors in errorlog code otherwise, which we should
+fix, but we don’t <em>have</em> to yet.</p>
+</li>
+<li><p>Fix a lot of sparse warnings</p></li>
+<li><p>With new GCC comes larger GCOV binaries</p>
+<p>So we need to change our heap size to make more room for data/bss
+without having to change where the console is or have more fun moving
+things about.</p>
+</li>
+<li><p>Intentionally discard fini_array sections</p>
+<p>Produced in a SKIBOOT_GCOV=1 build, and never called by skiboot.</p>
+</li>
+<li><p>external/trace: Add follow option to dump_trace</p>
+<p>When monitoring traces, an option like the tail command’s ‘-f’ (follow)
+is very useful. This option continues to append to the output as more
+data arrives. Add an ‘-f’ option to allow dump_trace to operate
+similarly.</p>
+<p>Tail also provides a ‘-s’ (sleep time) option that
+accompanies ‘-f’.  This controls how often new input will be polled. Add
+a ‘-s’ option that will make dump_trace sleep for N milliseconds before
+checking for new input.</p>
+</li>
+<li><p>external/trace: Add support for dumping multiple buffers</p>
+<p>dump_trace only can dump one trace buffer at a time. It would be handy
+to be able to dump multiple buffers and to see the entries from these
+buffers displayed in correct timestamp order. Each trace buffer is
+already sorted by timestamp so use a heap to implement an efficient
+k-way merge. Use the CCAN heap to implement this sort. However the CCAN
+heap does not have a ‘heap_replace’ operation. We need to ‘heap_pop’
+then ‘heap_push’ to replace the root which means rebalancing twice
+instead of once.</p>
+</li>
+<li><p>external/trace: mmap trace buffers in dump_trace</p>
+<p>The current lseek/read approach used in dump_trace does not correctly
+handle certain aspects of the buffers. It does not use the start and end
+position that is part of the buffer so it will not begin from the
+correct location. It does not move back to the beginning of the trace
+buffer file as the buffer wraps around. It also does not handle the
+overflow case of the writer overwriting when the reader is up to.</p>
+<p>Mmap the trace buffer file so that the existing reading functions in
+extra/trace.c can be used. These functions already handle the cases of
+wrapping and overflow.  This reduces code duplication and uses functions
+that are already unit tested. However this requires a kernel where the
+trace buffer sysfs nodes are able to be mmaped (see
+<a class="reference external" href="https://patchwork.ozlabs.org/patch/1056786/">https://patchwork.ozlabs.org/patch/1056786/</a>)</p>
+</li>
+<li><p>core/trace: Export trace buffers to sysfs</p>
+<p>Every property in the device-tree under /ibm,opal/firmware/exports has a
+sysfs node created in /firmware/opal/exports. Add properties with the
+physical address and size for each trace buffer so they are exported.</p>
+</li>
+<li><p>core/trace: Add pir number to debug_descriptor</p>
+<p>The names given to the trace buffers when exported to sysfs should show
+what cpu they are associated with to make it easier to understand there
+output.  The debug_descriptor currently stores the address and length of
+each trace buffer and this is used for adding properties to the device
+tree. Extend debug_descriptor to include a cpu associated with each
+trace. This will be used for creating properties in the device-tree
+under /ibm,opal/firmware/exports/.</p>
+</li>
+<li><p>core/trace: Change trace buffer size</p>
+<p>We want to be able to mmap the trace buffers to be used by the
+dump_trace tool. As mmaping is done in terms of pages it makes sense
+that the size of the trace buffers should be page aligned.  This is
+slightly complicated by the space taken up by the header at the
+beginning of the trace and the room left for an extra trace entry at the
+end of the buffer. Change the size of the buffer itself so that the
+entire trace buffer size will be page aligned.</p>
+</li>
+<li><p>core/trace: Change buffer alignment from 4K to 64K</p>
+<p>We want to be able to mmap the trace buffers to be used by the
+dump_trace tool. This means that the trace bufferes must be page
+aligned.  Currently they are aligned to 4K. Most power systems have a
+64K page size. On systems with a 4K page size, 64K aligned will still be
+page aligned.  Change the allocation of the trace buffers to be 64K
+aligned.</p>
+<p>The trace_info struct that contains the trace buffer is actually what is
+allocated aligned memory. This means the trace buffer itself is not
+actually aligned and this is the address that is currently exposed
+through sysfs.  To get around this change the address that is exposed to
+sysfs to be the trace_info struct. This means the lock in trace_info is
+now visible too.</p>
+</li>
+<li><p>external/trace: Use correct width integer byte swapping</p>
+<p>The trace_repeat struct uses be16 for storing the number of repeats.
+Currently be32_to_cpu conversion is used to display this member. This
+produces an incorrect value. Use be16_to_cpu instead.</p>
+</li>
+<li><p>core/trace: Put boot_tracebuf in correct location.</p>
+<p>A position for the boot_tracebuf is allocated in skiboot.lds.S.
+However, without a __section attribute the boot trace buffer is not
+placed in the correct location, meaning that it also will not be
+correctly aligned.  Add the __section attribute to ensure it will be
+placed in its allocated position.</p>
+</li>
+<li><p>core/lock: Add debug options to store backtrace of where lock was taken</p>
+<p>Contrary to popular belief, skiboot developers are imperfect and
+occasionally write locking bugs. When we exit skiboot, we check if we’re
+still holding any locks, and if so, we print an error with a list of the
+locks currently held and the locations where they were taken.</p>
+<p>However, this only tells us the location where lock() was called, which may
+not be enough to work out what’s going on. To give us more to go on with,
+we can store backtrace data in the lock and print that out when we
+unexpectedly still hold locks.</p>
+<p>Because the backtrace data is rather big, we only enable this if
+DEBUG_LOCKS_BACKTRACE is defined, which in turn is switched on when
+DEBUG=1.</p>
+<p>(We disable DEBUG_LOCKS_BACKTRACE in some of the memory allocation tests
+because the locks used by the memory allocator take up too much room in the
+fake skiboot heap.)</p>
+</li>
+<li><p>libfdt: upgrade to upstream dtc.git 243176c</p>
+<p>Upgrade libfdt/ to github.com/dgibson/dtc.git 243176c (“Fix bogus
+error on rebuild”)</p>
+<p>This copies dtc/libfdt/ to skiboot/libfdt/, with the only change in
+that directory being the addition of README.skiboot and Makefile.inc.</p>
+<p>This adds about 14kB text, 2.5kB compressed xz. This could be reduced
+or mostly eliminated by cutting out fdt version checks and unused
+code, but tracking upstream is a bigger benefit at the moment.</p>
+<p>This loses commits:</p>
+<ul class="simple">
+<li><p>14ed2b842f61 (“libfdt: add basic sanity check to fdt_open_into”)</p></li>
+<li><p>bc7bb3d12bc1 (“sparse: fix declaration of fdt_strerror”)</p></li>
+</ul>
+<p>As well as some prehistoric similar kinds of things, which is the
+punishment for us not being good downstream citizens and sending
+things upstream! Syncing to upstream will make that effort simpler
+in future.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-6.4-rc1</a><ul>
+<li><a class="reference internal" href="#new-features">New features</a></li>
+<li><a class="reference internal" href="#removed-features">Removed features</a></li>
+<li><a class="reference internal" href="#secure-and-trusted-boot">Secure and Trusted Boot</a></li>
+<li><a class="reference internal" href="#sensors">Sensors</a></li>
+<li><a class="reference internal" href="#ipmi">IPMI</a></li>
+<li><a class="reference internal" href="#npu2">NPU2</a></li>
+<li><a class="reference internal" href="#phb4">PHB4</a></li>
+<li><a class="reference internal" href="#simulators">Simulators</a></li>
+<li><a class="reference internal" href="#vesnin-platform">VESNIN platform</a></li>
+<li><a class="reference internal" href="#utilities">Utilities</a></li>
+<li><a class="reference internal" href="#build-and-debugging">Build and debugging</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-6.4.html"
+                        title="previous chapter">skiboot-6.4</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-6.5.html"
+                        title="next chapter">skiboot-6.5</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-6.4-rc1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-6.5.html" title="skiboot-6.5"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-6.4.html" title="skiboot-6.4"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.4-rc1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

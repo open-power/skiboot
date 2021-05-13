@@ -1,0 +1,456 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.1.2 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.1.20" href="skiboot-5.1.20.html" />
+    <link rel="prev" title="skiboot-5.1.19" href="skiboot-5.1.19.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.20.html" title="skiboot-5.1.20"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.19.html" title="skiboot-5.1.19"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.2</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-1-2">
+<h1>skiboot-5.1.2<a class="headerlink" href="#skiboot-5-1-2" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.1.2 was released on September 9th, 2015.</p>
+<p>skiboot-5.1.2 is the third stable release of 5.1, it follows skiboot-5.1.1
+(which was released August 18th, 2015).</p>
+<p>Skiboot 5.1.2 contains all fixes from skiboot-5.1.1 and is a minor bugfix
+release.</p>
+<div class="section" id="changes">
+<h2>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h2>
+<p>Over skiboot-5.1.1, we have the following changes:</p>
+<ul>
+<li><p>phb3: Handle fence in phb3_pci_msi_check_q to fix hang</p>
+<p>If the PHB is fenced during phb3_pci_msi_check_q, it can get stuck in an
+infinite loop waiting to lock the FFI. Further, as the phb lock is held
+during this function it will prevent any other CPUs from dealing with
+the fence, leading to the entire system hanging.</p>
+<p>If the PHB_FFI_LOCK returns all Fs, return immediately to allow the
+fence to be dealt with.</p>
+</li>
+<li><p>phb3: Continue CAPP setup even if PHB is already in CAPP mode
+This fixes a critical bug in CAPI support.</p></li>
+<li><p>Platform hook for terminate call</p>
+<ul class="simple">
+<li><p>on assert() or other firmware failure, we will make a SEL callout
+on ASTBMC platforms</p></li>
+<li><p>(slight) refactor of code for IBM-FSP platforms</p></li>
+</ul>
+</li>
+<li><p>refactor slot naming code</p></li>
+<li><p>Slot names for Habanero platform</p></li>
+<li><p>misc improvements in userspace utilities (incl pflash, gard)</p></li>
+<li><p>build improvements</p>
+<ul class="simple">
+<li><p>fixes for two compiler warnings were squashed in 5.1.1 commit,
+re-introduce the fixes.</p></li>
+<li><p>misc compiler/static analysis warning fixes</p></li>
+</ul>
+</li>
+<li><p>gard utility:</p>
+<ul class="simple">
+<li><p>If gard tool detects the GUARD PNOR partition is corrupted, it will
+pro-actively re-initialize it.
+Modern Hostboot is more sensitive to the content of the GUARD partition
+in order to boot.</p></li>
+<li><p>Update record clearing to match Hostboots expectations
+We now write ECC bytes throughout the whole partition.
+Without this fix, hostboot may not bring up the machine.</p></li>
+<li><p>In the event of a corrupted GUARD partition so that even the first entry
+cannot be read, the gard utility now provides the user with the option
+to wipe the entirety of the GUARD partition to attempt recovery.</p></li>
+</ul>
+</li>
+<li><p>opal_prd utility:</p>
+<ul class="simple">
+<li><p>Add run command to pass through commands to HostBoot RunTime (HBRT)</p>
+<ul>
+<li><p>this is for OpenPower firmware developers only.</p></li>
+</ul>
+</li>
+<li><p>Add htmght-passthru command.</p>
+<ul>
+<li><p>this is for OpenPower firmware developers only.</p></li>
+</ul>
+</li>
+<li><p>Add override interface to pass attribute-override information to HBRT.</p></li>
+<li><p>Server sends response in error path, so that client doesn’t block forever</p></li>
+</ul>
+</li>
+<li><p>external/mambo tcl scripts</p>
+<ul class="simple">
+<li><p>Running little-endian kernels in mambo requires HILE to be set properly,
+which requires a bump in the machine’s pvr value to a DD2.x chip.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="stats">
+<h2>Stats<a class="headerlink" href="#stats" title="Permalink to this headline">¶</a></h2>
+<p>For skiboot-5.1.0 to 5.1.2:
+Processed 67 csets from 11 developers
+1 employers found
+A total of 2258 lines added, 784 removed (delta 1474)</p>
+<p>Developers with the most changesets</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 73%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>24 (35.8%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>18 (26.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>8 (11.9%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Neelesh Gupta</p></td>
+<td><p>5 (7.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>5 (7.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Daniel Axtens</p></td>
+<td><p>2 (3.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>1 (1.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>1 (1.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vipin K Parashar</p></td>
+<td><p>1 (1.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ian Munsie</p></td>
+<td><p>1 (1.5%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Michael Neuling</p></td>
+<td><p>1 (1.5%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most changed lines</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 70%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>969 (42.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Neelesh Gupta</p></td>
+<td><p>433 (19.0%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>304 (13.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vasant Hegde</p></td>
+<td><p>236 (10.3%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>163 (7.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>135 (5.9%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Vipin K Parashar</p></td>
+<td><p>8 (0.4%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ian Munsie</p></td>
+<td><p>8 (0.4%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Daniel Axtens</p></td>
+<td><p>2 (0.1%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>2 (0.1%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>1 (0.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most lines removed</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 72%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Daniel Axtens</p></td>
+<td><p>2 (0.3%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>1 (0.1%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most signoffs (total 44)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 70%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>43 (97.7%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Neelesh Gupta</p></td>
+<td><p>1 (2.3%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most reviews (total 8)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 70%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Patrick Williams</p></td>
+<td><p>5 (62.5%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>3 (37.5%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers with the most test credits (total 0)</p>
+<p>Developers who gave the most tested-by credits (total 0)</p>
+<p>Developers with the most report credits (total 1)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>1 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Developers who gave the most report credits (total 1)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>1 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Top changeset contributors by employer</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>67 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Top lines changed by employer</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 66%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>2281 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Employers with the most signoffs (total 44)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>44 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Employers with the most hackers (total 11)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 68%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IBM</p></td>
+<td><p>11 (100.0%)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.1.2</a><ul>
+<li><a class="reference internal" href="#changes">Changes</a></li>
+<li><a class="reference internal" href="#stats">Stats</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.1.19.html"
+                        title="previous chapter">skiboot-5.1.19</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.1.20.html"
+                        title="next chapter">skiboot-5.1.20</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.1.2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.20.html" title="skiboot-5.1.20"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.19.html" title="skiboot-5.1.19"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.2</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

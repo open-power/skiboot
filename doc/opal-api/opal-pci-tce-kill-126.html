@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_TCE_KILL &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PHB_SET_OPTION" href="opal-phb-flag-set-get-179-180.html" />
+    <link rel="prev" title="OPAL_PCI_SET_XIVE_PE" href="opal-pci-set-xive-pe-37.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-phb-flag-set-get-179-180.html" title="OPAL_PHB_SET_OPTION"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-xive-pe-37.html" title="OPAL_PCI_SET_XIVE_PE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_TCE_KILL</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-tce-kill">
+<span id="id1"></span><h1>OPAL_PCI_TCE_KILL<a class="headerlink" href="#opal-pci-tce-kill" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int64_t</span> <span class="nf">opal_pci_tce_kill</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
+                       <span class="kt">uint32_t</span> <span class="n">kill_type</span><span class="p">,</span>
+                       <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span>
+                       <span class="kt">uint32_t</span> <span class="n">tce_size</span><span class="p">,</span>
+                       <span class="kt">uint64_t</span> <span class="n">dma_addr</span><span class="p">,</span>
+                       <span class="kt">uint32_t</span> <span class="n">npages</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>An abstraction around TCE kill. This allows host OS kernels to use an OPAL
+call if they don’t know the model specific invalidation method.</p>
+<p>Where kill_type is one of:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span> <span class="p">{</span>
+   <span class="n">OPAL_PCI_TCE_KILL_PAGES</span><span class="p">,</span>
+   <span class="n">OPAL_PCI_TCE_KILL_PE</span><span class="p">,</span>
+   <span class="n">OPAL_PCI_TCE_KILL_ALL</span><span class="p">,</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Not all PHB types currently support this abstraction. It is supported in
+PHB4, which means from POWER9 onwards it will be present.</p>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>if <code class="docutils literal notranslate"><span class="pre">phb_id</span></code> is invalid (or similar)</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>if PHB model doesn’t support this call. This is likely
+true for systems before POWER9/PHB4.
+Do <em>NOT</em> rely on this call existing for systems prior to
+POWER9 (i.e. PHB4).</p>
+</dd>
+</dl>
+<p>Example code (from linux/arch/powerpc/platforms/powernv/pci-ioda.c)</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="nf">pnv_pci_ioda2_tce_invalidate_pe</span><span class="p">(</span><span class="k">struct</span> <span class="nc">pnv_ioda_pe</span> <span class="o">*</span><span class="n">pe</span><span class="p">)</span>
+<span class="p">{</span>
+      <span class="k">struct</span> <span class="nc">pnv_phb</span> <span class="o">*</span><span class="n">phb</span> <span class="o">=</span> <span class="n">pe</span><span class="o">-&gt;</span><span class="n">phb</span><span class="p">;</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">model</span> <span class="o">==</span> <span class="n">PNV_PHB_MODEL_PHB3</span> <span class="o">&amp;&amp;</span> <span class="n">phb</span><span class="o">-&gt;</span><span class="n">regs</span><span class="p">)</span>
+         <span class="n">pnv_pci_phb3_tce_invalidate_pe</span><span class="p">(</span><span class="n">pe</span><span class="p">);</span>
+      <span class="k">else</span>
+         <span class="n">opal_pci_tce_kill</span><span class="p">(</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">opal_id</span><span class="p">,</span> <span class="n">OPAL_PCI_TCE_KILL_PE</span><span class="p">,</span>
+                           <span class="n">pe</span><span class="o">-&gt;</span><span class="n">pe_number</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>and</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="nc">pnv_phb</span> <span class="o">*</span><span class="n">phb</span> <span class="o">=</span> <span class="n">pe</span><span class="o">-&gt;</span><span class="n">phb</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">tbl</span><span class="o">-&gt;</span><span class="n">it_page_shift</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">model</span> <span class="o">==</span> <span class="n">PNV_PHB_MODEL_PHB3</span> <span class="o">&amp;&amp;</span> <span class="n">phb</span><span class="o">-&gt;</span><span class="n">regs</span><span class="p">)</span>
+      <span class="n">pnv_pci_phb3_tce_invalidate</span><span class="p">(</span><span class="n">pe</span><span class="p">,</span> <span class="n">rm</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span>
+                                  <span class="n">index</span><span class="p">,</span> <span class="n">npages</span><span class="p">);</span>
+<span class="k">else</span>
+      <span class="n">opal_pci_tce_kill</span><span class="p">(</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">opal_id</span><span class="p">,</span>
+                        <span class="n">OPAL_PCI_TCE_KILL_PAGES</span><span class="p">,</span>
+                        <span class="n">pe</span><span class="o">-&gt;</span><span class="n">pe_number</span><span class="p">,</span> <span class="mi">1u</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span><span class="p">,</span>
+                        <span class="n">index</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span><span class="p">,</span> <span class="n">npages</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_PCI_TCE_KILL</a><ul>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-set-xive-pe-37.html"
+                        title="previous chapter">OPAL_PCI_SET_XIVE_PE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-phb-flag-set-get-179-180.html"
+                        title="next chapter">OPAL_PHB_SET_OPTION</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-tce-kill-126.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-phb-flag-set-get-179-180.html" title="OPAL_PHB_SET_OPTION"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-xive-pe-37.html" title="OPAL_PCI_SET_XIVE_PE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_TCE_KILL</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

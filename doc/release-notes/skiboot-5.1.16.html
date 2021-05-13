@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>skiboot-5.1.16 &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="skiboot-5.1.17" href="skiboot-5.1.17.html" />
+    <link rel="prev" title="skiboot-5.1.15" href="skiboot-5.1.15.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.17.html" title="skiboot-5.1.17"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.15.html" title="skiboot-5.1.15"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.16</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="skiboot-5-1-16">
+<h1>skiboot-5.1.16<a class="headerlink" href="#skiboot-5-1-16" title="Permalink to this headline">¶</a></h1>
+<p>skiboot-5.1.16 was released on Friday April 29th, 2016.</p>
+<p>skiboot-5.1.16 is the 17th stable release of 5.1, it follows skiboot-5.1.15
+(which was released March 16th, 2016).</p>
+<p>This release contains a few bug fixes and is a recommended upgrade.</p>
+<div class="section" id="changes">
+<h2>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="phb3-all-power8-platforms">
+<h3>PHB3 (all POWER8 platforms)<a class="headerlink" href="#phb3-all-power8-platforms" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>hw/phb3: Ensure PQ bits are cleared in the IVC when masking IRQ
+When we mask an interrupt, we may race with another interrupt coming
+in from the hardware.  If this occurs, the P and/or Q bit may end up
+being set but we never EOI/clear them.  This could result in a lost
+interrupt or the next interrupt that comes in after re-enabling never
+being presented.</p>
+<p>This fixes a bug seen with some CAPI workloads which have lots of
+interrupt masking at the same time as high interrupt load.  The fix is
+not specific to CAPI though.</p>
+</li>
+<li><dl class="simple">
+<dt>hw/phb3: Fix potential race in EOI</dt><dd><p>When we EOI we need to clear the present (P) bit in the Interrupt
+Vector Cache (IVC).  We must clear P ensuring that any additional
+interrupts that come in aren’t lost while also maintaining coherency
+with the Interrupt Vector Table (IVT).</p>
+</dd>
+</dl>
+<p>To do this, the hardware provides a conditional update bit in the
+IVC. This bit ensures that generation counts between the IVT and the
+IVC updates are synchronised.</p>
+<p>Unfortunately we never set this the bit to conditionally update the P
+bit in the IVC based on the generation count.  Also, we didn’t set
+what we wanted the new generation count to be if the update was
+successful.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="fsp-platforms">
+<h3>FSP platforms<a class="headerlink" href="#fsp-platforms" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>OPAL:Handle mbox response with bad status:0x24 during FSP termination
+OPAL committed a predictive log with SRC BB822411 in some situations.</p></li>
+</ul>
+</div>
+<div class="section" id="generic">
+<h3>Generic<a class="headerlink" href="#generic" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>hmi: Fix a bug where partial hmi event was reported to host.
+This bug fix ensures the CPU PIR is reported correctly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="p">[</span>  <span class="mf">305.628283</span><span class="p">]</span> <span class="n">Fatal</span> <span class="n">Hypervisor</span> <span class="n">Maintenance</span> <span class="n">interrupt</span> <span class="p">[</span><span class="n">Not</span> <span class="n">recovered</span><span class="p">]</span>
+  <span class="p">[</span>  <span class="mf">305.628341</span><span class="p">]</span>  <span class="n">Error</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Malfunction</span> <span class="n">Alert</span>
+  <span class="p">[</span>  <span class="mf">305.628388</span><span class="p">]</span>     <span class="n">HMER</span><span class="p">:</span> <span class="mi">8040000000000000</span>
+<span class="o">-</span> <span class="p">[</span>  <span class="mf">305.628423</span><span class="p">]</span>      <span class="n">CPU</span> <span class="n">PIR</span><span class="p">:</span> <span class="mi">00000000</span>
+<span class="o">+</span> <span class="p">[</span>  <span class="mf">200.123021</span><span class="p">]</span>    <span class="n">CPU</span> <span class="n">PIR</span><span class="p">:</span> <span class="mf">000008e8</span>
+  <span class="p">[</span>  <span class="mf">305.628458</span><span class="p">]</span>  <span class="p">[</span><span class="n">Unit</span><span class="p">:</span> <span class="n">VSU</span><span class="p">]</span> <span class="n">Logic</span> <span class="n">core</span> <span class="n">check</span> <span class="n">stop</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">skiboot-5.1.16</a><ul>
+<li><a class="reference internal" href="#changes">Changes</a><ul>
+<li><a class="reference internal" href="#phb3-all-power8-platforms">PHB3 (all POWER8 platforms)</a></li>
+<li><a class="reference internal" href="#fsp-platforms">FSP platforms</a></li>
+<li><a class="reference internal" href="#generic">Generic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="skiboot-5.1.15.html"
+                        title="previous chapter">skiboot-5.1.15</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="skiboot-5.1.17.html"
+                        title="next chapter">skiboot-5.1.17</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/release-notes/skiboot-5.1.16.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="skiboot-5.1.17.html" title="skiboot-5.1.17"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="skiboot-5.1.15.html" title="skiboot-5.1.15"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.16</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

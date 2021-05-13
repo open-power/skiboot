@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secvar Binding &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ibm,opal/sensor-groups" href="sensor-groups.html" />
+    <link rel="prev" title="power-mgt/psr" href="power-mgt/psr.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="sensor-groups.html" title="ibm,opal/sensor-groups"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="power-mgt/psr.html" title="power-mgt/psr"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" accesskey="U">ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Secvar Binding</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="secvar-binding">
+<span id="device-tree-ibm-opal-secvar"></span><h1>Secvar Binding<a class="headerlink" href="#secvar-binding" title="Permalink to this headline">¶</a></h1>
+<p>This device tree binding describes the status of secure variable support,
+including any size values, or values relating to the secure state of the
+system.</p>
+<div class="section" id="ibm-opal-secvar-node-bindings">
+<h2>/ibm,opal/secvar node bindings<a class="headerlink" href="#ibm-opal-secvar-node-bindings" title="Permalink to this headline">¶</a></h2>
+<p>Node: secvar</p>
+<p>Description: Container of secvar related properties.</p>
+<p>The node name must be “secvar”.</p>
+<p>It is implemented as a child of the node “/ibm,opal”.</p>
+<p>The node is optional, will be defined if the platform supports secure
+variables. It will not be created if the system does not.</p>
+<p>Properties:</p>
+<ul>
+<li><p>compatible</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>string</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>This property defines the compatibility of the current running
+backend. This defines the binary format of the data buffers passed
+via the related secvar OPAL API functions. This also defines the
+expected behavior of how updates should be processed, such as how
+key updates should be signed, what the key hierarchy is, what
+algorithms are in use, etc.</p>
+<p>This value also determines how a user can signal a desire to require
+all further images to require signature validations. See the
+“On Enforcing Secure Mode” section below.</p>
+<p>This property also contains a generic “ibm,secvar-backend” compatible,
+which defines the basic-level compatibility of the secvar implementation.
+This includes the basic behavior of the API (excluding the data format),
+and the expected device tree properties contained in this node.</p>
+</li>
+<li><p>format</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>string</p>
+</dd>
+</dl>
+<p>This property defines the format of data passed in and out of the secvar
+API. In most cases, this should be the same string as the backend-specific
+string in compatible.</p>
+<p>The format defined by this string should be documented by the corresponding
+backend.</p>
+</li>
+<li><p>status</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>string</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>This property states the general status of secure variable support. This
+will be set to “okay” if the secvar OPAL API should be working as expected,
+and there were no unrecoverable faults in the basic secure variable
+initialization logic.</p>
+<p>This property may be set to “fail” if the platform does not properly
+select the drivers to use. Failures may also occur if the storage devices
+are inaccessible for some reason.</p>
+<p>Failures are NOT caused by malformed data loaded or processed in either
+storage or backend drivers, as these are faults correctable by a user.</p>
+</li>
+<li><p>update-status</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u64&gt;</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>This property should contain the status code of the update processing
+logic, as returned by the backend. This value is intended to be
+consumed by userspace tools to confirm updates were processed as
+intended.</p>
+<p>The value contained in this property should adhere to the table below.
+Any additional error states that may be specific to a backend should
+be stored in the backend node.</p>
+</li>
+<li><p>max-var-size</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u64&gt;</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>This is the maximum buffer size accepted for secure variables. The API
+will reject updates larger than this value, and storage drivers must
+reject loading variables larger than this value.</p>
+<p>As this may depend on the persistant storage devices in use, this
+value is determined by the storage driver, and may differ across
+platforms.</p>
+</li>
+<li><p>max-var-key-len</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>required</p>
+</dd>
+<dt>Value type:</dt><dd><p>&lt;u64&gt;</p>
+</dd>
+</dl>
+<p>Definition:</p>
+<p>This is the maximum size permitted for the key of a variable. As the
+value is a constant, it should be the same across platforms unless
+changed in code.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="err">/ibm,opal/</span><span class="nc">secvar</span> <span class="p">{</span>
+        <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,secvar-backend&quot; &quot;ibm,edk2-compat-v1&quot;</span><span class="p">;</span>
+
+        <span class="nf">status</span> <span class="o">=</span> <span class="s">&quot;okay&quot;</span><span class="p">;</span>
+        <span class="nf">max-var-size</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1000</span><span class="p">&gt;;</span>
+        <span class="nf">max-var-key-len</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x400</span><span class="p">&gt;</span>
+<span class="err">}</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="update-status-code-table">
+<h2>Update Status Code Table<a class="headerlink" href="#update-status-code-table" title="Permalink to this headline">¶</a></h2>
+<p>The update status property should be set by the backend driver to a value
+that best fits its error condition. The following table defines the
+general intent of each error code, check backend specific documentation
+for more detail.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 73%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>update-status</p></td>
+<td><p>Generic Reason</p></td>
+</tr>
+<tr class="row-even"><td><p>OPAL_SUCCESS</p></td>
+<td><p>Updates were found and processed successfully</p></td>
+</tr>
+<tr class="row-odd"><td><p>OPAL_EMPTY</p></td>
+<td><p>No updates were found, none processed</p></td>
+</tr>
+<tr class="row-even"><td><p>OPAL_PARAMETER</p></td>
+<td><p>Malformed, or unexpected update data blob</p></td>
+</tr>
+<tr class="row-odd"><td><p>OPAL_PERMISSION</p></td>
+<td><p>Update failed to apply, possible auth failure</p></td>
+</tr>
+<tr class="row-even"><td><p>OPAL_HARDWARE</p></td>
+<td><p>Misc. storage-related error</p></td>
+</tr>
+<tr class="row-odd"><td><p>OPAL_RESOURCE</p></td>
+<td><p>Out of space (reported by storage</p></td>
+</tr>
+<tr class="row-even"><td><p>OPAL_NO_MEM</p></td>
+<td><p>Out of memory</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="on-enforcing-secure-mode">
+<h2>On Enforcing Secure Mode<a class="headerlink" href="#on-enforcing-secure-mode" title="Permalink to this headline">¶</a></h2>
+<p>The os-secureboot-enforcing property in /ibm,secureboot/ is created by the
+backend if the owner has expressed a desire for boot loaders, kernels, etc
+to require any images to be signed by an appropriate key stored in secure
+variables. As this property is created by the backend, it is up to the
+backend to define what the required state of the secure variables should
+be to enter this mode.</p>
+<p>For example, we may want to only enable secure boot if we have a top-
+level “Platform Key”, so this property is created by the backend if
+by the end of update processing, a “PK” variable exists. By enrolling a
+PK, the system will be in “secure mode” until the PK is deleted.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Secvar Binding</a><ul>
+<li><a class="reference internal" href="#ibm-opal-secvar-node-bindings">/ibm,opal/secvar node bindings</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#update-status-code-table">Update Status Code Table</a></li>
+<li><a class="reference internal" href="#on-enforcing-secure-mode">On Enforcing Secure Mode</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="power-mgt/psr.html"
+                        title="previous chapter">power-mgt/psr</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sensor-groups.html"
+                        title="next chapter">ibm,opal/sensor-groups</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/device-tree/ibm,opal/secvar.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="sensor-groups.html" title="ibm,opal/sensor-groups"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="power-mgt/psr.html" title="power-mgt/psr"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Secvar Binding</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

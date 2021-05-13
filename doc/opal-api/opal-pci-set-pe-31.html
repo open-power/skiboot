@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OPAL_PCI_SET_PE &#8212; skiboot v6.7-45-g4b9ca02
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPAL_PCI_SET_PELTV" href="opal-pci-set-peltv-32.html" />
+    <link rel="prev" title="OPAL_PCI_SET_P2P" href="opal-pci-set-p2p-157.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-peltv-32.html" title="OPAL_PCI_SET_PELTV"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-p2p-157.html" title="OPAL_PCI_SET_P2P"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PE</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="opal-pci-set-pe">
+<span id="id1"></span><h1>OPAL_PCI_SET_PE<a class="headerlink" href="#opal-pci-set-pe" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_PE                              31</span>
+
+<span class="kt">int64_t</span> <span class="nf">opal_pci_set_pe</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span>
+                        <span class="kt">uint64_t</span> <span class="n">bus_dev_func</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">bus_compare</span><span class="p">,</span>
+                        <span class="kt">uint8_t</span> <span class="n">dev_compare</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">func_compare</span><span class="p">,</span>
+                        <span class="kt">uint8_t</span> <span class="n">pe_action</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><strong>NOTE:</strong> The following two paragraphs come from some old documentation and
+have not been checked for accuracy. Same goes for bus_compare, dev_compare
+and func_compare documentation. Do <em>NOT</em> assume this documentation is correct
+without checking the source.</p>
+<p>A host OS calls this function to map a PCIE function (RID), or range of
+function bus/dev/funcs (RIDs), to a PHB PE. The bus, device, func, and
+compare parameters define a range of bus, device, or function numbers to
+define a range of RIDs within this domain. A value of “7” for the bus_compare,
+and non-zero for the dev_compare and func_compare, define exactly one function
+RID to be a PE (within a PE number domain).</p>
+<p>This must be called prior to ALL other OPAL calls that take a PE number
+argument, for OPAL to correlate the RID (bus/dev/func) domain of the PE. If a
+PE domain is changed, the host must call this to reset the PE bus/dev/func
+domain and then call all other OPAL calls that map PHB IODA resources to
+update those domains within PHB facilities.</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pe_number</span></code></dt><dd><p>is the index of a PE, from 0 to ibm,opal-num-pes minus 1.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bus_compare</span></code></dt><dd><p>is a value from 0 to 7 indicating which bus number
+bits define the range of buses in a PE domain:</p>
+<p>0 = do not validate against RID bus number (PE = all bus numbers)</p>
+<dl class="simple">
+<dt>2 = compare high order 3 bits of RID bus number to high order 3 bits of</dt><dd><p>PE bus number</p>
+</dd>
+<dt>3 = compare high order 4 bits of RID bus number to high order 4 bits of</dt><dd><p>PE bus number</p>
+</dd>
+<dt>6 = compare high order 7 bits of RID bus number to high order 7 bits of</dt><dd><p>PE bus number</p>
+</dd>
+</dl>
+<p>7 = compare all bits of RID bus number to all bits of PE bus number</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dev_compare</span></code></dt><dd><p>indicates to compare the RID device number to the PE
+device number or not. ‘0’ signifies that the RID device number is not compared
+– essentially all device numbers within the bus and function number range of
+this PE are also within this PE. Non-zero signifies to compare the RID device
+number to the PE device number, such that only that device number is in the PE
+domain, for all buses and function numbers in the PE domain.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">func_compare</span></code></dt><dd><p>indicates to compare the RID function number to the
+PE function number or not. ‘0’ signifies that the RID function number is not
+compared – essentially all function numbers within the bus and device number
+range of this PE are also within this PE. Non-zero signifies to compare the
+RID function number to the PE function number, such that only that function
+number is in the PE domain, for all buses and device numbers in the PE domain.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pe_action</span></code></dt><dd><p>is one of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">enum</span> <span class="n">OpalPeAction</span> <span class="p">{</span>
+    <span class="n">OPAL_UNMAP_PE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">OPAL_MAP_PE</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="section" id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>If one of the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>invalid phb</p></li>
+<li><p>invalid pe_action</p></li>
+<li><p>invalid bus_dev_func</p></li>
+<li><p>invalid bus_compare</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>PHB does not support set_pe operation</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>if operation was successful</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OPAL_PCI_SET_PE</a><ul>
+<li><a class="reference internal" href="#returns">Returns</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="opal-pci-set-p2p-157.html"
+                        title="previous chapter">OPAL_PCI_SET_P2P</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="opal-pci-set-peltv-32.html"
+                        title="next chapter">OPAL_PCI_SET_PELTV</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/opal-api/opal-pci-set-pe-31.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="opal-pci-set-peltv-32.html" title="OPAL_PCI_SET_PELTV"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="opal-pci-set-p2p-157.html" title="OPAL_PCI_SET_P2P"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+ documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PE</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>
