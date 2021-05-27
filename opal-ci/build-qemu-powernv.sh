@@ -2,7 +2,7 @@
 set -e
 set -vx
 
-git clone --depth=1 -b qemu-powernv-for-skiboot-7 git://github.com/open-power/qemu.git
+git clone --depth=1 -b powernv-6.0 git://github.com/open-power/qemu.git
 cd qemu
 git submodule update --init dtc
 export CC="ccache gcc"
