@@ -128,6 +128,9 @@ static bool uart_timed_out(unsigned long msecs)
 	if (uart_check_tx_room())
 		return false;
 
+	if (chip_quirk(QUIRK_SLOW_SIM))
+		msecs *= 5;
+
 	if (tb_compare(mftb(), uart_tx_full_time + msecs_to_tb(msecs)) == TB_AAFTERB)
 		return true;
 
