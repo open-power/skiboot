@@ -370,7 +370,7 @@ int update_timestamp(const char *key, const struct efi_time *timestamp, char *la
 static uint64_t unpack_timestamp(const struct efi_time *timestamp)
 {
 	uint64_t val = 0;
-	uint16_t year = le32_to_cpu(timestamp->year);
+	uint16_t year = le16_to_cpu(timestamp->year);
 
 	/* pad1, nanosecond, timezone, daylight and pad2 are meant to be zero */
 	val |= ((uint64_t) timestamp->pad1 & 0xFF) << 0;
