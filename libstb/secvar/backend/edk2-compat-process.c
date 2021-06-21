@@ -469,7 +469,7 @@ out:
 
 /* Verify the PKCS7 signature on the signed data. */
 static int verify_signature(const struct efi_variable_authentication_2 *auth,
-			    const char *newcert, const size_t new_data_size,
+			    const char *hash, const size_t hash_len,
 			    const struct secvar *avar)
 {
 	mbedtls_pkcs7 *pkcs7 = NULL;
@@ -571,7 +571,7 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 		free(x509_buf);
 		x509_buf = NULL;
 
-		rc = mbedtls_pkcs7_signed_hash_verify(pkcs7, &x509, newcert, new_data_size);
+		rc = mbedtls_pkcs7_signed_hash_verify(pkcs7, &x509, hash, hash_len);
 
 		/* If you find a signing certificate, you are done */
 		if (rc == 0) {
