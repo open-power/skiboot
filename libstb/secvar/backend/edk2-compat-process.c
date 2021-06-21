@@ -610,7 +610,7 @@ err_pkcs7:
  * Create the hash of the buffer
  * name || vendor guid || attributes || timestamp || newcontent
  * which is submitted as signed by the user.
- * Returns the sha256 hash, else negative error code.
+ * Returns the sha256 hash, else NULL.
  */
 static char *get_hash_to_verify(const char *key, const char *new_data,
 				const size_t new_data_size,
