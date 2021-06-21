@@ -700,8 +700,7 @@ int process_update(const struct secvar *update, char **newesl,
 	void *auth_buffer = NULL;
 	int auth_buffer_size = 0;
 	const char *key_authority[3];
-	char *tbhbuffer = NULL;
-	size_t tbhbuffersize = 0;
+	char *hash = NULL;
 	struct secvar *avar = NULL;
 	int rc = 0;
 	int i;
@@ -761,9 +760,9 @@ int process_update(const struct secvar *update, char **newesl,
 	}
 
 	/* Prepare the data to be verified */
-	tbhbuffer = get_hash_to_verify(update->key, *newesl, *new_data_size,
+	hash = get_hash_to_verify(update->key, *newesl, *new_data_size,
 				timestamp);
-	if (!tbhbuffer) {
+	if (!hash) {
 		rc = OPAL_INTERNAL_ERROR;
 		goto out;
 	}
@@ -784,9 +783,8 @@ int process_update(const struct secvar *update, char **newesl,
 		if (!avar || !avar->data_size)
 			continue;
 
-		/* Verify the signature */
-		rc = verify_signature(auth, tbhbuffer, tbhbuffersize,
-				      avar);
+		/* Verify the signature. sha256 is 32 bytes long. */
+		rc = verify_signature(auth, hash, 32, avar);
 
 		/* Break if signature verification is successful */
 		if (rc == OPAL_SUCCESS) {
@@ -797,7 +795,7 @@ int process_update(const struct secvar *update, char **newesl,
 
 out:
 	free(auth_buffer);
-	free(tbhbuffer);
+	free(hash);
 
 	return rc;
 }
