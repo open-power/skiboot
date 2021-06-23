@@ -125,15 +125,15 @@ static const uuid_t EFI_CERT_RSA2048_GUID = {{ 0xe8, 0x66, 0x57, 0x3c, 0x9c, 0x2
  *   TimeZone:   -1440 to 1440 or 2047
  */
 struct efi_time {
-	u16 year;
+	le16 year;
 	u8 month;
 	u8 day;
 	u8 hour;
 	u8 minute;
 	u8 second;
 	u8 pad1;
-	u32 nanosecond;
-	s16 timezone;
+	le32 nanosecond;
+	le16 timezone;
 	u8 daylight;
 	u8 pad2;
 };
@@ -163,15 +163,15 @@ typedef struct __packed {
   ///
   /// Total size of the signature list, including this header.
   ///
-  uint32_t	SignatureListSize;
+  leint32_t	SignatureListSize;
   ///
   /// Size of the signature header which precedes the array of signatures.
   ///
-  uint32_t	SignatureHeaderSize;
+  leint32_t	SignatureHeaderSize;
   ///
   /// Size of each signature.
   ///
-  uint32_t	SignatureSize;
+  leint32_t	SignatureSize;
   ///
   /// Header before the array of signatures. The format of this header is specified
   /// by the SignatureType.
@@ -191,18 +191,18 @@ struct win_certificate {
 	 * The length of the entire certificate, including the length of the
 	 * header, in bytes.
 	 */
-	u32  dw_length;
+	le32  dw_length;
 	/*
 	 * The revision level of the WIN_CERTIFICATE structure. The current
 	 * revision level is 0x0200.
 	 */
-	u16  w_revision;
+	le16  w_revision;
 	/*
 	 * The certificate type. See WIN_CERT_TYPE_xxx for the UEFI certificate
 	 * types. The UEFI specification reserves the range of certificate type
 	 * values from 0x0EF0 to 0x0EFF.
 	 */
-	u16  w_certificate_type;
+	le16  w_certificate_type;
 	/*
 	 * The following is the actual certificate. The format of
 	 * the certificate depends on wCertificateType.
