@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <ccan/endian/endian.h>
 #include <mbedtls/error.h>
+#include <mbedtls/oid.h>
 #include <device.h>
 #include <assert.h>
 #include "libstb/crypto/pkcs7/pkcs7.h"
@@ -460,6 +461,7 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 {
 	mbedtls_pkcs7 *pkcs7 = NULL;
 	mbedtls_x509_crt x509;
+	mbedtls_md_type_t md_alg;
 	char *signing_cert = NULL;
 	char *x509_buf = NULL;
 	int signing_cert_size;
@@ -477,6 +479,25 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 	/* Failure to parse pkcs7 implies bad input. */
 	if (!pkcs7)
 		return OPAL_PARAMETER;
+
+	/*
+	 * We only support sha256, which has a hash length of 32.
+	 * If the alg is not sha256, then we should bail now.
+	 */
+	rc = mbedtls_oid_get_md_alg(&pkcs7->signed_data.digest_alg_identifiers,
+				    &md_alg);
+	if (rc != 0) {
+		prlog(PR_ERR, "Failed to get the Digest Algorithm Identifier: %d\n", rc);
+		rc = OPAL_PARAMETER;
+		goto err_pkcs7;
+	}
+
+	if (md_alg != MBEDTLS_MD_SHA256) {
+		prlog(PR_ERR, "Unexpected digest algorithm: expected %d (SHA-256), got %d\n",
+		      MBEDTLS_MD_SHA256, md_alg);
+		rc = OPAL_PARAMETER;
+		goto err_pkcs7;
+	}
 
 	prlog(PR_INFO, "Load the signing certificate from the keystore");
 
@@ -562,6 +583,7 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 	}
 
 	free(signing_cert);
+err_pkcs7:
 	mbedtls_pkcs7_free(pkcs7);
 	free(pkcs7);
 

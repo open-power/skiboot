@@ -22,6 +22,7 @@
 #include "./data/dbxcert.h"
 #include "./data/dbxsha512.h"
 #include "./data/dbxmalformed.h"
+#include "./data/pkcs7_sha512.h"
 
 bool test_hw_key_hash = false;
 
@@ -382,6 +383,18 @@ int run_test()
 	ASSERT(NULL != tmp);
 	ASSERT(0 != tmp->data_size);
 	ASSERT(!setup_mode);
+
+	/* updates with pkcs#7 messages with sha512 hashes should be rejected */
+	printf("Add db where auth has sha512 in PKCS#7\n");
+	tmp = new_secvar("db", 3, pkcs7_sha512, pkcs7_sha512_len, 0);
+	ASSERT(0 == edk2_compat_validate(tmp));
+	list_add_tail(&update_bank, &tmp->link);
+	ASSERT(1 == list_length(&update_bank));
+
+	rc = edk2_compat_process(&variable_bank, &update_bank);
+	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(5 == list_length(&variable_bank));
+	ASSERT(0 == list_length(&update_bank));
 
 	/* Delete PK. */
 	printf("Delete PK\n");
