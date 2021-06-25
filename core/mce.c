@@ -175,6 +175,19 @@ void decode_mce(uint64_t srr0, uint64_t srr1,
 		return;
 	}
 
+	/*
+	 * Async machine check due to bad real address from store or foreign
+	 * link time out comes with the load/store bit (PPC bit 42) set in
+	 * SRR1, but the cause comes in SRR1 not DSISR. Clear bit 42 so we're
+	 * directed to the ierror table so it will find the cause (which
+	 * describes it correctly as a store error).
+	 */
+	if (SRR1_MC_LOADSTORE(srr1) &&
+			((srr1 & 0x081c0000) == 0x08140000 ||
+			 (srr1 & 0x081c0000) == 0x08180000)) {
+		srr1 &= ~PPC_BIT(42);
+	}
+
 	if (SRR1_MC_LOADSTORE(srr1)) {
 		decode_derror(mce_p9_derror_table, dsisr, type, error_str);
 		if (*type & MCE_INVOLVED_EA)
