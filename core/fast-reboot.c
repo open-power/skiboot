@@ -264,8 +264,11 @@ static void cleanup_cpu_state(void)
 		xive_cpu_reset();
 
 	/* Per core cleanup */
-	if (cpu_is_thread0(cpu)) {
-		/* XXX should reset the SLW SPR restore values*/
+	if (cpu_is_thread0(cpu) || cpu_is_core_chiplet_primary(cpu)) {
+		/* Shared SPRs whacked back to normal */
+
+		/* XXX Update the SLW copies ! Also dbl check HIDs etc... */
+		init_shared_sprs();
 
 		if (proc_gen == proc_gen_p8) {
 			/* If somebody was in fast_sleep, we may have a
@@ -286,6 +289,11 @@ static void cleanup_cpu_state(void)
 		/* And we might have lost TB sync */
 		chiptod_wakeup_resync();
 	}
+
+	/* Per-thread additional cleanup */
+	init_replicated_sprs();
+
+	// XXX Cleanup SLW, check HIDs ...
 }
 
 /* Entry from asm after a fast reset */
