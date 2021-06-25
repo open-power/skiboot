@@ -69,6 +69,9 @@ struct dt_node *__p8_i2c_add_port_node(struct dt_node *master, int port_id,
 struct dt_node *p8_i2c_add_port_node(struct dt_node *xscom, int eng_id,
 					int port_id, uint32_t bus_freq);
 
+struct i2c_bus *p8_i2c_add_bus(uint32_t chip_id, int eng_id, int port_id,
+					uint32_t bus_speed);
+
 int64_t i2c_queue_req(struct i2c_request *req);
 
 static inline uint64_t i2c_run_req(struct i2c_request *req)

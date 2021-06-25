@@ -196,6 +196,7 @@ enum p8_i2c_master_type {
 };
 
 struct p8_i2c_master {
+	struct dt_node		*dt_node;
 	struct lock		lock;		/* Lock to guard the members */
 	enum p8_i2c_master_type	type;		/* P8 vs. Centaur */
 	uint64_t		start_time;	/* Request start time */
@@ -1440,10 +1441,10 @@ static void p8_i2c_add_bus_prop(struct p8_i2c_master_port *port)
 }
 
 static struct p8_i2c_master_port *p8_i2c_init_one_port(struct p8_i2c_master *m,
-				struct dt_node *n, uint64_t lb_freq)
+				struct dt_node *n)
 {
 	struct p8_i2c_master_port *port;
-	uint64_t def_timeout;
+	uint64_t def_timeout, lb_freq;
 	uint32_t speed, div;
 
 	port = zalloc(sizeof(*port));
@@ -1452,6 +1453,7 @@ static struct p8_i2c_master_port *p8_i2c_init_one_port(struct p8_i2c_master *m,
 
 	def_timeout = m->irq_ok ? I2C_TIMEOUT_IRQ_MS : I2C_TIMEOUT_POLL_MS;
 
+	lb_freq = dt_prop_get_u32_def(m->dt_node, "clock-frequency", 150000000);
 	speed = dt_prop_get_u32_def(n, "bus-frequency", 100000);
 	div = p8_i2c_get_bit_rate_divisor(lb_freq, speed);
 
@@ -1478,7 +1480,8 @@ static struct p8_i2c_master_port *p8_i2c_init_one_port(struct p8_i2c_master *m,
 	return port;
 }
 
-static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
+static struct p8_i2c_master *p8_i2c_init_one(struct dt_node *i2cm,
+						enum p8_i2c_master_type type)
 {
 	struct p8_i2c_master *master;
 	struct list_head *chip_list;
@@ -1492,7 +1495,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
 				 "I2C: Failed to allocate master "
 				 "structure\n");
-		return;
+		return NULL;
 	}
 	master->type = type;
 
@@ -1504,6 +1507,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	master->chip_id = dt_get_chip_id(i2cm);
 	master->engine_id = dt_prop_get_u32(i2cm, "chip-engine#");
 	master->xscom_base = dt_get_address(i2cm, 0, NULL);
+	master->dt_node = i2cm;
 	if (master->type == I2C_CENTAUR) {
 		struct centaur_chip *centaur = get_centaur(master->chip_id);
 		if (centaur == NULL) {
@@ -1511,7 +1515,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 					 "I2C: Failed to get centaur 0x%x ",
 					 master->chip_id);
 			free(master);
-			return;
+			return NULL;
 		}
 		chip_list = &centaur->i2cms;
 
@@ -1521,7 +1525,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		if (master->engine_id > 0) {
 			prlog(PR_ERR, "I2C: Skipping Centaur Master #1\n");
 			free(master);
-			return;
+			return NULL;
 		}
 	} else {
 		struct proc_chip *chip = get_chip(master->chip_id);
@@ -1559,7 +1563,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 			centaur_enable_sensor_cache(master->chip_id);
 
 		free(master);
-		return;
+		return NULL;
 	}
 
 	master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
@@ -1575,7 +1579,9 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 
 	/* initialise ports */
 	dt_for_each_child(i2cm, i2cm_port)
-		p8_i2c_init_one_port(master, i2cm_port, lb_freq);
+		p8_i2c_init_one_port(master, i2cm_port);
+
+	return master;
 }
 
 void p8_i2c_init(void)
@@ -1613,4 +1619,65 @@ struct i2c_bus *p8_i2c_find_bus_by_port(uint32_t chip_id, int eng, int port_num)
 			return &port->bus;
 
 	return NULL;
+}
+
+/* Adds a new i2c port to the DT and initialises it */
+struct i2c_bus *p8_i2c_add_bus(uint32_t chip_id, int eng_id, int port_id,
+				uint32_t bus_speed)
+{
+	struct proc_chip *c = get_chip(chip_id);
+	struct p8_i2c_master *m, *master = NULL;
+	struct p8_i2c_master_port *port;
+	struct dt_node *pn;
+
+	if (!c) {
+		prerror("I2C: Unable to add i2c bus: c%de%dp%d: chip doesn't exist\n",
+			chip_id, eng_id, port_id);
+		return NULL;
+	}
+
+	list_for_each(&c->i2cms, m, link) {
+		if (m->engine_id == eng_id) {
+			master = m;
+			break;
+		}
+	}
+
+	if (!master) {
+		struct dt_node *mn;
+
+		mn = p8_i2c_add_master_node(c->devnode, eng_id);
+		if (!mn) {
+			prerror("I2C: Unable to add DT node for I2CM c%xe%d\n",
+					chip_id, eng_id);
+			return NULL;
+		}
+
+		master = p8_i2c_init_one(mn, I2C_POWER8);
+		if (!master) {
+			prerror("I2C: Unable to initialise I2CM c%xe%d\n",
+					chip_id, eng_id);
+			return NULL;
+		}
+	}
+
+	list_for_each(&master->ports, port, link)
+		if (port->port_num == port_id)
+			return &port->bus;
+
+	pn = __p8_i2c_add_port_node(master->dt_node, port_id, bus_speed);
+	if (!pn) {
+		prerror("I2C: Unable to add dt node for bus c%xe%dp%d\n",
+					chip_id, eng_id, port_id);
+		return NULL;
+	}
+
+	port = p8_i2c_init_one_port(master, pn);
+	if (!port) {
+		prerror("I2C: Unable to init bus c%xe%dp%d\n",
+					chip_id, eng_id, port_id);
+		return NULL;
+	}
+
+	return &port->bus;
 }
