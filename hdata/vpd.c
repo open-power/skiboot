@@ -105,6 +105,7 @@ static const struct vpd_key_map vpd_key_table[] = {
 	{"EV", "enclosure"},
 
 	{"FM", "frame"},
+	{"FN", "fru-stocking-part-number"},
 
 	{"HB", "host-rio-pci-card"},
 	{"HD", "high-speed-card"},
