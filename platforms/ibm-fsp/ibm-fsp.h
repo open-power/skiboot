@@ -37,7 +37,7 @@ void vpd_iohub_load(struct dt_node *hub_node);
 void vpd_preload(struct dt_node *hub_node);
 
 /* Platform heartbeat time */
-int fsp_heartbeat_time(void);
+int __attrconst fsp_heartbeat_time(void);
 
 extern struct platform_psi fsp_platform_psi;
 extern struct platform_prd fsp_platform_prd;
