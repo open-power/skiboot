@@ -45,13 +45,18 @@ static void *ezalloc(size_t size)
 	return p;
 }
 
+#define TB_HZ 512000000ul
+
 static void display_header(const struct trace_hdr *h)
 {
 	static u64 prev_ts;
 	u64 ts = be64_to_cpu(h->timestamp);
 
-	printf("%16lx (+%8lx) [%03x] : ",
-	       ts, prev_ts ? (ts - prev_ts) : 0, be16_to_cpu(h->cpu));
+	printf("[%5lu.%09lu,%d] (+%8lx) [%03x] : ",
+		ts / TB_HZ, /* match the usual skiboot log header */
+		ts % TB_HZ,
+		h->type, /* hey why not */
+		prev_ts ? (ts - prev_ts) % TB_HZ : 0, be16_to_cpu(h->cpu));
 	prev_ts = ts;
 }
 
