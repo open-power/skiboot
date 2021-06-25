@@ -935,22 +935,23 @@ static bool occ_uses_master(struct p8_i2c_master *master)
 	return false;
 }
 
-#define OCCFLG_BASE  0x00000000006C08A
-#define OCCFLG_CLEAR 0x00000000006C08B
-#define OCCFLG_SET   0x00000000006C08C
+static uint32_t occflg;
+#define OCCFLG_BASE  0
+#define OCCFLG_CLEAR 1
+#define OCCFLG_SET   2
 
 static int occ_i2c_lock(struct p8_i2c_master *master)
 {
 	u64 occflags, busflag;
 	int rc;
 
-	if (!occ_uses_master(master))
+	if (!occ_uses_master(master) || !occflg)
 		return 0;
 
 	if (master->occ_lock_acquired)
 		return 0;
 
-	rc = xscom_read(master->chip_id, OCCFLG_BASE, &occflags);
+	rc = xscom_read(master->chip_id, occflg, &occflags);
 	if (rc) {
 		prerror("I2C: Failed to read OCC FLAG register\n");
 		return rc;
@@ -966,7 +967,7 @@ static int occ_i2c_lock(struct p8_i2c_master *master)
 		(u32) GETFIELD(PPC_BITMASK(18, 19), occflags),
 		(u32) GETFIELD(PPC_BITMASK(20, 21), occflags));
 
-	rc = xscom_write(master->chip_id, OCCFLG_SET, busflag);
+	rc = xscom_write(master->chip_id, occflg + OCCFLG_SET, busflag);
 	if (rc) {
 		prerror("I2C: Failed to write OCC FLAG register\n");
 		return rc;
@@ -989,10 +990,10 @@ static int occ_i2c_unlock(struct p8_i2c_master *master)
 	u64 busflag, occflags;
 	int rc;
 
-	if (!occ_uses_master(master))
+	if (!occ_uses_master(master) || !occflg)
 		return 0;
 
-	rc = xscom_read(master->chip_id, OCCFLG_BASE, &occflags);
+	rc = xscom_read(master->chip_id, occflg, &occflags);
 	if (rc) {
 		prerror("I2C: Failed to read OCC Flag register\n");
 		return rc;
@@ -1005,7 +1006,7 @@ static int occ_i2c_unlock(struct p8_i2c_master *master)
 			master->chip_id, master->engine_id, occflags);
 	}
 
-	rc = xscom_write(master->chip_id, OCCFLG_CLEAR, busflag);
+	rc = xscom_write(master->chip_id, occflg + OCCFLG_CLEAR, busflag);
 	if (rc)
 		prerror("I2C: Failed to write OCC Flag register\n");
 
@@ -1588,6 +1589,11 @@ void p8_i2c_init(void)
 {
 	struct dt_node *i2cm;
 	int i;
+
+	/* setup the handshake reg */
+	occflg = 0x6C08A;
+
+	prlog(PR_INFO, "I2C: OCC flag reg: %x\n", occflg);
 
 	for (i = 0; i < MAX_I2C_TYPE; i++) {
 		dt_for_each_compatible(dt_root, i2cm, compat[i])
