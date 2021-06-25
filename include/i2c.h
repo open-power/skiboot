@@ -63,6 +63,11 @@ extern struct i2c_bus *i2c_find_bus_by_id(uint32_t opal_id);
 
 /* not generic, but useful */
 struct i2c_bus *p8_i2c_find_bus_by_port(uint32_t chip_id, int eng, int port_id);
+struct dt_node *p8_i2c_add_master_node(struct dt_node *xscom, int eng_id);
+struct dt_node *__p8_i2c_add_port_node(struct dt_node *master, int port_id,
+					uint32_t bus_speed);
+struct dt_node *p8_i2c_add_port_node(struct dt_node *xscom, int eng_id,
+					int port_id, uint32_t bus_freq);
 
 int64_t i2c_queue_req(struct i2c_request *req);
 

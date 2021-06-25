@@ -7,9 +7,111 @@
 #include <interrupts.h>
 #include <ccan/str/str.h>
 #include <chip.h>
+#include <i2c.h>
 
 #include "spira.h"
 #include "hdata.h"
+
+/*
+ * These should probably be in hw/p8-i2c.c. However, that would require the HDAT
+ * test to #include hw/p8-i2c.c which is probably going to be more trouble than
+ * it's worth. So these helpers are here instead.
+ */
+struct dt_node *p8_i2c_add_master_node(struct dt_node *xscom, int eng_id)
+{
+	uint64_t clk, size, xscom_base;
+	struct dt_node *i2cm;
+
+	dt_for_each_compatible(xscom, i2cm, "ibm,power8-i2cm")
+		if (dt_prop_get_u32(i2cm, "chip-engine#") == eng_id)
+			return i2cm;
+
+	/* XXX: Might need to be updated for new chips */
+	if (proc_gen >= proc_gen_p9)
+		size = 0x1000;
+	else
+		size = 0x20;
+
+	xscom_base = 0xa0000 + size * eng_id;
+
+	i2cm = dt_new_addr(xscom, "i2cm", xscom_base);
+	if (!i2cm)
+		return NULL;
+
+	if (proc_gen >= proc_gen_p9) {
+		dt_add_property_strings(i2cm, "compatible", "ibm,power8-i2cm",
+					"ibm,power9-i2cm");
+	} else {
+		dt_add_property_strings(i2cm, "compatible", "ibm,power8-i2cm");
+	}
+
+	dt_add_property_cells(i2cm, "reg", xscom_base, size);
+	dt_add_property_cells(i2cm, "#size-cells", 0);
+	dt_add_property_cells(i2cm, "#address-cells", 1);
+	dt_add_property_cells(i2cm, "chip-engine#", eng_id);
+
+	/*
+	 * The i2cm runs at 1/4th the PIB frequency. If we don't know the PIB
+	 * frequency then pick 150MHz which should be in the right ballpark.
+	 */
+	clk = dt_prop_get_u64_def(xscom, "bus-frequency", 0);
+	if (clk)
+		dt_add_property_cells(i2cm, "clock-frequency", clk / 4);
+	else
+		dt_add_property_cells(i2cm, "clock-frequency", 150000000);
+
+	return i2cm;
+}
+
+struct dt_node *__p8_i2c_add_port_node(struct dt_node *master, int port_id,
+					uint32_t bus_speed)
+{
+	struct dt_node *port;
+	uint32_t speed;
+
+	dt_for_each_child(master, port)
+		if (dt_prop_get_u32(port, "reg") == port_id)
+			goto check_speed;
+
+	port = dt_new_addr(master, "i2c-bus", port_id);
+	if (!port)
+		return NULL;
+
+	dt_add_property_cells(port, "reg", port_id);
+	dt_add_property_cells(port, "#size-cells", 0);
+	dt_add_property_cells(port, "#address-cells", 1);
+
+	/* The P9 I2C master is fully compatible with the P8 one */
+	if (proc_gen >= proc_gen_p9) {
+		dt_add_property_strings(port, "compatible", "ibm,opal-i2c",
+			"ibm,power8-i2c-port", "ibm,power9-i2c-port");
+	} else {
+		dt_add_property_strings(port, "compatible", "ibm,opal-i2c",
+			"ibm,power8-i2c-port");
+	}
+
+check_speed:
+	speed = dt_prop_get_u32_def(port, "bus-frequency", 0xffffffff);
+	if (bus_speed < speed) {
+		dt_check_del_prop(port, "bus-frequency");
+		dt_add_property_cells(port, "bus-frequency", bus_speed);
+	}
+
+	return port;
+}
+
+
+struct dt_node *p8_i2c_add_port_node(struct dt_node *xscom, int eng_id,
+					int port_id, uint32_t bus_freq)
+{
+	struct dt_node *i2cm;
+
+	i2cm = p8_i2c_add_master_node(xscom, eng_id);
+	if (!i2cm)
+		return NULL;
+
+	return __p8_i2c_add_port_node(i2cm, port_id, bus_freq);
+}
 
 struct i2c_dev {
 	uint8_t i2cm_engine;
@@ -26,66 +128,6 @@ struct i2c_dev {
 	__be32 i2c_link;
 	__be16 slca_index;
 };
-
-#define P9_I2CM_XSCOM_SIZE 0x1000
-#define P9_I2CM_XSCOM_BASE 0xa0000
-
-static struct dt_node *get_i2cm_node(struct dt_node *xscom, int engine)
-{
-	uint64_t xscom_base = P9_I2CM_XSCOM_BASE + P9_I2CM_XSCOM_SIZE * (uint64_t)engine;
-	struct dt_node *i2cm;
-	uint64_t freq, clock;
-
-	i2cm = dt_find_by_name_addr(xscom, "i2cm", xscom_base);
-	if (!i2cm) {
-		i2cm = dt_new_addr(xscom, "i2cm", xscom_base);
-		dt_add_property_cells(i2cm, "reg", xscom_base,
-			P9_I2CM_XSCOM_SIZE);
-
-		dt_add_property_strings(i2cm, "compatible",
-			"ibm,power8-i2cm", "ibm,power9-i2cm");
-
-		dt_add_property_cells(i2cm, "#size-cells", 0);
-		dt_add_property_cells(i2cm, "#address-cells", 1);
-		dt_add_property_cells(i2cm, "chip-engine#", engine);
-
-		freq = dt_prop_get_u64_def(xscom, "bus-frequency", 0);
-		clock = (u32)(freq / 4);
-		if (clock)
-			dt_add_property_cells(i2cm, "clock-frequency", clock);
-		else
-			dt_add_property_cells(i2cm, "clock-frequency", 150000000);
-	}
-
-	return i2cm;
-}
-
-static struct dt_node *get_bus_node(struct dt_node *i2cm, int port, int freq)
-{
-	struct dt_node *bus;
-
-	bus = dt_find_by_name_addr(i2cm, "i2c-bus", port);
-	if (!bus) {
-		bus = dt_new_addr(i2cm, "i2c-bus", port);
-		dt_add_property_cells(bus, "reg", port);
-		dt_add_property_cells(bus, "#size-cells", 0);
-		dt_add_property_cells(bus, "#address-cells", 1);
-
-		/* The P9 I2C master is fully compatible with the P8 one */
-		dt_add_property_strings(bus, "compatible", "ibm,opal-i2c",
-			"ibm,power8-i2c-port", "ibm,power9-i2c-port");
-
-		/*
-		 * use the clock frequency as the bus frequency until we
-		 * have actual devices on the bus. Adding a device will
-		 * reduce the frequency to something that all devices
-		 * can tolerate.
-		 */
-		dt_add_property_cells(bus, "bus-frequency", freq * 1000);
-	}
-
-	return bus;
-}
 
 struct hdat_i2c_type {
 	uint32_t id;
@@ -192,7 +234,7 @@ struct host_i2c_hdr {
 int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	struct dt_node *xscom)
 {
-	struct dt_node *i2cm, *bus, *node;
+	struct dt_node *bus, *node;
 	const struct hdat_i2c_type *type;
 	const struct hdat_i2c_info *info;
 	const struct i2c_dev *dev;
@@ -262,9 +304,14 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		if (dev->i2cm_engine >= 4 && proc_gen == proc_gen_p9)
 			continue;
 
-		i2cm = get_i2cm_node(xscom, dev->i2cm_engine);
-		bus = get_bus_node(i2cm, dev->i2cm_port,
-			be16_to_cpu(dev->i2c_bus_freq));
+		bus = p8_i2c_add_port_node(xscom, dev->i2cm_engine, dev->i2cm_port,
+					be16_to_cpu(dev->i2c_bus_freq) * 1000);
+
+		if (!bus) {
+			prerror("Unable to add node for e%dp%d under %s\n",
+				dev->i2cm_engine, dev->i2cm_port, xscom->name);
+			continue;
+		}
 
 		/*
 		 * Looks like hostboot gives the address as an 8 bit, left
