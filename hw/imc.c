@@ -700,6 +700,33 @@ static int stop_api_init(struct proc_chip *chip, int phys_core_id,
 	return ret;
 }
 
+/* Function to return the scom address for the specified core */
+static uint32_t get_imc_scom_addr_for_core(int core, uint64_t addr)
+{
+	uint32_t scom_addr;
+
+	switch (proc_gen) {
+	case proc_gen_p9:
+		scom_addr = XSCOM_ADDR_P9_EC(core, addr);
+		return scom_addr;
+	default:
+		return 0;
+	}
+}
+
+/* Function to return the scom address for the specified core in the quad */
+static uint32_t get_imc_scom_addr_for_quad(int core, uint64_t addr)
+{
+	uint32_t scom_addr;
+
+	switch (proc_gen) {
+	case proc_gen_p9:
+		scom_addr = XSCOM_ADDR_P9_EQ(core, addr);
+		return scom_addr;
+	default:
+		return 0;
+	}
+}
 /*
  * opal_imc_counters_init : This call initialize the IMC engine.
  *
@@ -712,7 +739,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
 	int port_id, phys_core_id;
 	int ret;
-	uint32_t scoms;
+	uint32_t pdbar_addr, event_mask_addr, htm_addr, trace_addr;
 	uint64_t trace_scom_val = TRACE_IMC_SCOM(IMC_TRACE_SAMPLESEL_VAL,
 						 IMC_TRACE_CPMCLOAD_VAL, 0,
 						 IMC_TRACE_CPMC2SEL_VAL,
@@ -735,6 +762,12 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
 			return OPAL_SUCCESS;
 
+		/* Get the scom address for this core, based on the platform */
+		pdbar_addr = get_imc_scom_addr_for_quad(phys_core_id,
+					pdbar_scom_index[port_id]);
+		event_mask_addr = get_imc_scom_addr_for_core(phys_core_id,
+					CORE_IMC_EVENT_MASK_ADDR);
+
 		/*
 		 * Core IMC hardware mandate initing of three scoms
 		 * to enbale or disable of the Core IMC engine.
@@ -750,9 +783,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 		 */
 
 
-		 if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EQ(phys_core_id,
-						pdbar_scom_index[port_id]),
+		 if (xscom_write(c->chip_id, pdbar_addr,
 				(u64)(CORE_IMC_PDBAR_MASK & addr))) {
 			prerror("error in xscom_write for pdbar\n");
 			return OPAL_HARDWARE;
@@ -762,18 +793,15 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT) {
 				struct proc_chip *chip = get_chip(c->chip_id);
 
-				scoms = XSCOM_ADDR_P9_EQ(phys_core_id,
-						pdbar_scom_index[port_id]);
-				ret = stop_api_init(chip, phys_core_id, scoms,
+				ret = stop_api_init(chip, phys_core_id, pdbar_addr,
 						(u64)(CORE_IMC_PDBAR_MASK & addr),
 						P9_STOP_SCOM_REPLACE,
 						P9_STOP_SECTION_EQ_SCOM,
 						"pdbar");
 				if (ret)
 					return ret;
-				scoms = XSCOM_ADDR_P9_EC(phys_core_id,
-						CORE_IMC_EVENT_MASK_ADDR);
-				ret = stop_api_init(chip, phys_core_id, scoms,
+				ret = stop_api_init(chip, phys_core_id,
+						event_mask_addr,
 						(u64)CORE_IMC_EVENT_MASK,
 						P9_STOP_SCOM_REPLACE,
 						P9_STOP_SECTION_CORE_SCOM,
@@ -786,17 +814,16 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 			}
 		}
 
-		if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EC(phys_core_id,
-					 CORE_IMC_EVENT_MASK_ADDR),
-				(u64)CORE_IMC_EVENT_MASK)) {
+		if (xscom_write(c->chip_id, event_mask_addr,
+					(u64)CORE_IMC_EVENT_MASK)) {
 			prerror("error in xscom_write for event mask\n");
 			return OPAL_HARDWARE;
 		}
 
-		if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EQ(phys_core_id,
-						htm_scom_index[port_id]),
+		/* Get the scom address for htm_mode scom based on the platform */
+		htm_addr = get_imc_scom_addr_for_quad(phys_core_id,
+				htm_scom_index[port_id]);
+		if (xscom_write(c->chip_id, htm_addr,
 				(u64)CORE_IMC_HTM_MODE_DISABLE)) {
 			prerror("error in xscom_write for htm mode\n");
 			return OPAL_HARDWARE;
@@ -812,13 +839,17 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
 			return OPAL_SUCCESS;
 
+		trace_addr = get_imc_scom_addr_for_core(phys_core_id,
+				TRACE_IMC_ADDR);
+		htm_addr = get_imc_scom_addr_for_quad(phys_core_id,
+				htm_scom_index[port_id]);
+
 		if (has_deep_states) {
 			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT) {
 				struct proc_chip *chip = get_chip(c->chip_id);
 
-				scoms = XSCOM_ADDR_P9_EC(phys_core_id,
-							 TRACE_IMC_ADDR);
-				ret = stop_api_init(chip, phys_core_id, scoms,
+				ret = stop_api_init(chip, phys_core_id,
+						    trace_addr,
 						    trace_scom_val,
 						    P9_STOP_SCOM_REPLACE,
 						    P9_STOP_SECTION_CORE_SCOM,
@@ -830,15 +861,11 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 				return OPAL_HARDWARE;
 			}
 		}
-		if (xscom_write(c->chip_id,
-			XSCOM_ADDR_P9_EQ(phys_core_id, htm_scom_index[port_id]),
-					(u64)CORE_IMC_HTM_MODE_DISABLE)) {
+		if (xscom_write(c->chip_id, htm_addr, (u64)CORE_IMC_HTM_MODE_DISABLE)) {
 				prerror("IMC-trace: error in xscom_write for htm mode\n");
 				return OPAL_HARDWARE;
 		}
-		if (xscom_write(c->chip_id,
-			XSCOM_ADDR_P9_EC(phys_core_id,
-					TRACE_IMC_ADDR), trace_scom_val)) {
+		if (xscom_write(c->chip_id, trace_addr, trace_scom_val)) {
 			prerror("IMC-trace: error in xscom_write for trace mode\n");
 			return OPAL_HARDWARE;
 		}
@@ -857,6 +884,7 @@ static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
 	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
 	struct imc_chip_cb *cb;
 	int port_id, phys_core_id;
+	uint32_t htm_addr;
 
 	if (!c)
 		return OPAL_PARAMETER;
@@ -890,16 +918,15 @@ static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
 		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
 			return OPAL_SUCCESS;
 
+		htm_addr = get_imc_scom_addr_for_quad(phys_core_id,
+					htm_scom_index[port_id]);
 		/*
 		 * Enables the core imc engine by appropriately setting
 		 * bits 4-9 of the HTM_MODE scom port. No initialization
 		 * is done in this call. This just enables the the counters
 		 * to count with the previous initialization.
 		 */
-		if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EQ(phys_core_id,
-						htm_scom_index[port_id]),
-				(u64)CORE_IMC_HTM_MODE_ENABLE)) {
+		if (xscom_write(c->chip_id, htm_addr, (u64)CORE_IMC_HTM_MODE_ENABLE)) {
 			prerror("IMC OPAL_start: error in xscom_write for htm_mode\n");
 			return OPAL_HARDWARE;
 		}
@@ -918,6 +945,7 @@ static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
 	struct imc_chip_cb *cb;
 	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
 	int port_id, phys_core_id;
+	uint32_t htm_addr;
 
 	if (!c)
 		return OPAL_PARAMETER;
@@ -952,14 +980,13 @@ static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
 		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
 			return OPAL_SUCCESS;
 
+		htm_addr = get_imc_scom_addr_for_quad(phys_core_id,
+					htm_scom_index[port_id]);
 		/*
 		 * Disables the core imc engine by clearing
 		 * bits 4-9 of the HTM_MODE scom port.
 		 */
-		if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EQ(phys_core_id,
-						htm_scom_index[port_id]),
-				(u64) CORE_IMC_HTM_MODE_DISABLE)) {
+		if (xscom_write(c->chip_id, htm_addr, (u64) CORE_IMC_HTM_MODE_DISABLE)) {
 			prerror("error in xscom_write for htm_mode\n");
 			return OPAL_HARDWARE;
 		}
