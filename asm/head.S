@@ -380,23 +380,39 @@ boot_entry:
 #endif
 	mtmsrd	%r3,0
 
-	/* If fused, t1 is primary chiplet and must init shared sprs */
+	mfspr	%r31,SPR_PIR
+
 	andi.	%r3,%r25,1
-	beq	not_fused
+	bne	fused
 
-	mfspr	%r31,SPR_PIR
-	andi.	%r3,%r31,1
-	bnel	init_shared_sprs
+	/* Apply core-mask PIR */
+	and	%r0,%r31,%r26
 
-not_fused:
-	/* Check our PIR, avoid threads */
-	mfspr	%r31,SPR_PIR
-	and.	%r0,%r31,%r26
+	/* t0 is primary for small-core */
+	cmpdi	%r0,0
 	bne	secondary_wait
 
 	/* Initialize per-core SPRs */
 	bl	init_shared_sprs
+	b	go_primary
 
+fused:
+	/* Apply core-mask PIR */
+	ori	%r0,%r26,1	/* include both sub-cores in the core mask */
+	and	%r0,%r31,%r0
+
+	/* If fused, t0, t1 are primaries for sub-cores */
+	cmpdi	%r0,0
+	bne	1f
+	bl	init_shared_sprs
+	b	go_primary /* but only t0 can be a boot CPU */
+1:
+	cmpdi	%r0,1
+	bne	secondary_wait
+	bl	init_shared_sprs
+	b	secondary_wait
+
+go_primary:
 	/* Pick a boot CPU, cpu index in r31 */
 	LOAD_IMM32(%r3, boot_sem - __head)
 	add	%r3,%r3,%r30
