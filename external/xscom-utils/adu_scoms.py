@@ -174,6 +174,8 @@ class GetSCom(object):
 			name = "P9 (Nimbus) processor"
 		elif id == 0xd4:
 			name = "P9 (Cumulus) processor"
+		elif id == 0xd9:
+			name = "P9P (Axone) processor"
 		elif id == 0xe9:
 			name = "Centaur memory buffer"
 		else:
