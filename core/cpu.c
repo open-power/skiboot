@@ -437,7 +437,7 @@ static unsigned int cpu_idle_p9(enum cpu_wake_cause wake_on)
 	unsigned int vec = 0;
 
 	if (!pm_enabled) {
-		prlog_once(PR_DEBUG, "cpu_idle_p9 called pm disabled\n");
+		prlog(PR_DEBUG, "cpu_idle_p9 called on cpu 0x%04x with pm disabled\n", cpu->pir);
 		return vec;
 	}
 
@@ -593,6 +593,7 @@ no_pm:
 static void cpu_pm_disable(void)
 {
 	struct cpu_thread *cpu;
+	unsigned int timeout;
 
 	pm_enabled = false;
 	sync();
@@ -610,10 +611,18 @@ static void cpu_pm_disable(void)
 				p9_dbell_send(cpu->pir);
 		}
 
+		/*  This code is racy with cpus entering idle, late ones miss the dbell */
+
 		smt_lowest();
 		for_each_available_cpu(cpu) {
-			while (cpu->in_sleep || cpu->in_idle)
+			timeout = 0x08000000;
+			while ((cpu->in_sleep || cpu->in_idle) && --timeout)
 				barrier();
+			if (!timeout) {
+				prlog(PR_DEBUG, "cpu_pm_disable TIMEOUT on cpu 0x%04x to exit idle\n",
+				      cpu->pir);
+                                p9_dbell_send(cpu->pir);
+                        }
 		}
 		smt_medium();
 	}
