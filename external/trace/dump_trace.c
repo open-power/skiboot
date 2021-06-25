@@ -261,6 +261,7 @@ int main(int argc, char *argv[])
 {
 	struct trace_reader *trs;
 	struct trace_info *ti;
+	bool no_mmap = false;
 	struct stat sb;
 	int fd, opt, i;
 
@@ -296,11 +297,24 @@ int main(int argc, char *argv[])
 			err(1, "Stating %s", argv[1]);
 
 		ti = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-		if (ti == MAP_FAILED)
-			err(1, "Mmaping %s", argv[i]);
+		if (ti == MAP_FAILED) {
+			no_mmap = true;
+
+			ti = ezalloc(sb.st_size);
+			if (!ti)
+				err(1, "allocating memory for %s", argv[i]);
+
+			if (read(fd, ti, sb.st_size) == -1)
+				err(1, "reading from %s", argv[i]);
+		}
 
 		trs[i].tb = &ti->tb;
 		list_head_init(&trs[i].traces);
+	}
+
+	if (no_mmap) {
+		fprintf(stderr, "disabling follow mode: can't mmap() OPAL export files\n");
+		follow = 0;
 	}
 
 	do {
