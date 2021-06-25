@@ -1446,7 +1446,6 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	struct p8_i2c_master *master;
 	struct list_head *chip_list;
 	uint64_t ex_stat, default_timeout;
-	static bool irq_printed;
 	int64_t rc;
 
 	master = zalloc(sizeof(*master));
@@ -1495,8 +1494,11 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	init_timer(&master->recovery, p8_i2c_recover, master);
 	init_timer(&master->sensor_cache, p8_i2c_enable_scache, master);
 
-	prlog(PR_INFO, "I2C: Chip %08x Eng. %d Clock %d Mhz\n",
-	      master->chip_id, master->engine_id, lb_freq / 1000000);
+	master->irq_ok = p8_i2c_has_irqs(master);
+
+	prlog(PR_INFO, "I2C: Chip %08x Eng. %d Clock %d Mhz %s\n",
+	      master->chip_id, master->engine_id, lb_freq / 1000000,
+	      master->irq_ok ? "" : "(no interrupt)");
 
 	/* Disable OCC cache during inits */
 	if (master->type == I2C_CENTAUR) {
@@ -1524,14 +1526,6 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
 	list_head_init(&master->req_list);
 	list_head_init(&master->ports);
-
-	/* Check if interrupt is usable */
-	master->irq_ok = p8_i2c_has_irqs(master);
-	if (!irq_printed) {
-		irq_printed = true;
-		prlog(PR_INFO, "I2C: Interrupts %sfunctional\n",
-		      master->irq_ok ? "" : "non-");
-	}
 
 	/* Re-enable the sensor cache, we aren't touching HW anymore */
 	if (master->type == I2C_CENTAUR)
