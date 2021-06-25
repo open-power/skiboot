@@ -28,6 +28,15 @@
 					 * b’000’- 4K entries * 64 per
 					 * entry = 256K buffersize
 					 */
+static uint64_t TRACE_IMC_ADDR;
+static uint64_t CORE_IMC_EVENT_MASK_ADDR;
+/*
+ * Initialise these with the pdbar and htm scom port address array
+ * at run time, based on the processor version.
+ */
+static unsigned int *pdbar_scom_index;
+static unsigned int *htm_scom_index;
+
 /*
  * Nest IMC PMU names along with their bit values as represented in the
  * imc_chip_avl_vector(in struct imc_chip_cb, look at include/imc.h).
@@ -142,13 +151,13 @@ static bool is_nest_mem_initialized(struct imc_chip_cb *ptr)
  * SCOM port addresses in the arrays below, each for Hardware Trace Macro (HTM)
  * mode and PDBAR.
  */
-static unsigned int pdbar_scom_index[] = {
+static unsigned int pdbar_scom_index_p9[] = {
 	0x1001220B,
 	0x1001230B,
 	0x1001260B,
 	0x1001270B
 };
-static unsigned int htm_scom_index[] = {
+static unsigned int htm_scom_index_p9[] = {
 	0x10012200,
 	0x10012300,
 	0x10012600,
@@ -530,6 +539,22 @@ void imc_decompress_catalog(void)
 	xz_start_decompress(imc_xz);
 }
 
+static int setup_imc_scoms(void)
+{
+	switch (proc_gen) {
+	case proc_gen_p9:
+		CORE_IMC_EVENT_MASK_ADDR = CORE_IMC_EVENT_MASK_ADDR_P9;
+		TRACE_IMC_ADDR = TRACE_IMC_ADDR_P9;
+		pdbar_scom_index = pdbar_scom_index_p9;
+		htm_scom_index = htm_scom_index_p9;
+		return 0;
+	default:
+		prerror("%s: Unknown cpu type\n", __func__);
+		break;
+	}
+	return -1;
+}
+
 /*
  * Load the IMC pnor partition and find the appropriate sub-partition
  * based on the platform's PVR.
@@ -622,6 +647,11 @@ imc_mambo:
 	if (pause_microcode_at_boot()) {
 		prerror("IMC: Pausing ucode failed, disabling nest imc\n");
 		disable_imc_type_from_dt(dev, IMC_COUNTER_CHIP);
+	}
+
+	if (setup_imc_scoms()) {
+		prerror("IMC: Failed to setup the scoms\n");
+		goto err;
 	}
 
 	/*

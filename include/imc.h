@@ -109,7 +109,7 @@ struct imc_chip_cb
 /*
  * Core IMC SCOMs
  */
-#define CORE_IMC_EVENT_MASK_ADDR	0x20010AA8ull
+#define CORE_IMC_EVENT_MASK_ADDR_P9	0x20010AA8ull
 #define CORE_IMC_EVENT_MASK		0x0402010000000000ull
 #define CORE_IMC_PDBAR_MASK		0x0003ffffffffe000ull
 #define CORE_IMC_HTM_MODE_ENABLE	0xE800000000000000ull
@@ -132,7 +132,7 @@ struct imc_chip_cb
  *     		|		 |	       |
  *     		*CPMC1SEL	 *CPMC2SEL     *BUFFERSIZE
  */
-#define TRACE_IMC_ADDR            0x20010AA9ull
+#define TRACE_IMC_ADDR_P9            0x20010AA9ull
 #define TRACE_IMC_SAMPLESEL(x)	((uint64_t)x << 62)
 #define TRACE_IMC_CPMC_LOAD(x)	((0xffffffff - (uint64_t)x) << 30)
 #define TRACE_IMC_CPMC1SEL(x)	((uint64_t)x << 23)
