@@ -234,6 +234,7 @@ struct p8_i2c_master_port {
 	uint32_t		port_num;
 	uint32_t		bit_rate_div;	/* Divisor to set bus speed*/
 	uint64_t		byte_timeout;	/* Timeout per byte */
+	uint64_t		poll_interval;	/* Polling interval */
 	struct list_node	link;
 };
 
@@ -1016,7 +1017,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 				struct i2c_request *req)
 {
 	struct p8_i2c_master_port *port;
-	uint64_t cmd, poll_interval;
+	uint64_t cmd;
 	int64_t rc;
 
 	DBG("Starting req %d len=%d addr=%02x (offset=%x)\n",
@@ -1151,10 +1152,10 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	 * cases
 	 */
 	if (!opal_booting() && master->irq_ok)
-		poll_interval = TIMER_POLL;
+		master->poll_interval = TIMER_POLL;
 	else
-		poll_interval = master->poll_interval;
-	schedule_timer(&master->poller, poll_interval);
+		master->poll_interval = port->poll_interval;
+	schedule_timer(&master->poller, master->poll_interval);
 
 	/* If we don't have a user-set timeout then use the master's default */
 	if (!req->timeout)
@@ -1441,7 +1442,7 @@ static void p8_i2c_add_bus_prop(struct p8_i2c_master_port *port)
 static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 {
 	struct p8_i2c_master_port *port;
-	uint32_t lb_freq, count, max_bus_speed;
+	uint32_t lb_freq, count;
 	struct dt_node *i2cm_port;
 	struct p8_i2c_master *master;
 	struct list_head *chip_list;
@@ -1546,7 +1547,6 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 
 	/* Add master to chip's list */
 	list_add_tail(chip_list, &master->link);
-	max_bus_speed = 0;
 
 	default_timeout = master->irq_ok ?
 		I2C_TIMEOUT_IRQ_MS :
@@ -1558,8 +1558,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		port->port_num = dt_prop_get_u32(i2cm_port, "reg");
 		port->master = master;
 		speed = dt_prop_get_u32(i2cm_port, "bus-frequency");
-		if (speed > max_bus_speed)
-			max_bus_speed = speed;
+		port->poll_interval = p8_i2c_get_poll_interval(speed);
 		port->bit_rate_div =
 			p8_i2c_get_bit_rate_divisor(lb_freq, speed);
 		port->bus.dt_node = i2cm_port;
@@ -1580,14 +1579,6 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 					  "ibm,port-name"), speed/1000);
 		port++;
 	}
-
-	/* When at runtime and we have the i2c irq, we just use it
-	 * (see p8_i2c_start_request), but in the situation where
-	 * one of those isn't the case (e.g. during boot), we need
-	 * a better poll interval to efficiently crank the i2c machine.
-	 * poll_interval is that interval.
-	 */
-	master->poll_interval = (max_bus_speed) ? p8_i2c_get_poll_interval(max_bus_speed) : TIMER_POLL;
 }
 
 void p8_i2c_init(void)
