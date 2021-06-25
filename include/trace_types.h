@@ -16,6 +16,7 @@
 #define TRACE_FSP_MSG	4	/* FSP message sent/received */
 #define TRACE_FSP_EVENT	5	/* FSP driver event */
 #define TRACE_UART	6	/* UART driver traces */
+#define TRACE_I2C	7	/* I2C driver traces */
 
 /* One per cpu, plus one for NMIs */
 struct tracebuf {
@@ -107,6 +108,16 @@ struct trace_uart {
 	__be16 in_count;
 };
 
+struct trace_i2c {
+	struct trace_hdr hdr;
+	u16 bus;
+	u16 type;
+	u16 i2c_addr;
+	u16 smbus_reg;
+	u16 size;
+	s16 rc;
+};
+
 union trace {
 	struct trace_hdr hdr;
 	/* Trace types go here... */
@@ -116,6 +127,7 @@ union trace {
 	struct trace_fsp_msg fsp_msg;
 	struct trace_fsp_event fsp_evt;
 	struct trace_uart uart;
+	struct trace_i2c i2c;
 };
 
 #endif /* __TRACE_TYPES_H */

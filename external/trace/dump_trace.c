@@ -149,6 +149,36 @@ static void dump_uart(struct trace_uart *t)
 	}
 }
 
+static void dump_i2c(struct trace_i2c *t)
+{
+	uint16_t type = be16_to_cpu(t->type);
+
+	printf("I2C: bus: %d dev: %02x len: %x ",
+			be16_to_cpu(t->bus),
+			be16_to_cpu(t->i2c_addr),
+			be16_to_cpu(t->size)
+			);
+
+	switch (type & 0x3) {
+	case 0:
+		printf("read");
+		break;
+	case 1:
+		printf("write");
+		break;
+	case 2:
+		printf("smbus read from %x", be16_to_cpu(t->smbus_reg));
+		break;
+	case 3:
+		printf("smbus write to %x", be16_to_cpu(t->smbus_reg));
+		break;
+	default:
+		printf("u wot?");
+	}
+
+	printf(", rc = %hd\n", (int16_t) be16_to_cpu(t->rc));
+}
+
 static void load_traces(struct trace_reader *trs, int count)
 {
 	struct trace_entry *te;
@@ -188,6 +218,9 @@ static void print_trace(union trace *t)
 		break;
 	case TRACE_UART:
 		dump_uart(&t->uart);
+		break;
+	case TRACE_I2C:
+		dump_i2c(&t->i2c);
 		break;
 	default:
 		printf("UNKNOWN(%u) CPU %u length %u\n",

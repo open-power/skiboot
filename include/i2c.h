@@ -61,14 +61,7 @@ struct i2c_request {
 extern void i2c_add_bus(struct i2c_bus *bus);
 extern struct i2c_bus *i2c_find_bus_by_id(uint32_t opal_id);
 
-static inline int64_t i2c_queue_req(struct i2c_request *req)
-{
-	int64_t ret = req->bus->queue_req(req);
-
-	if (!ret)
-		req->req_state = i2c_req_queued;
-	return ret;
-}
+int64_t i2c_queue_req(struct i2c_request *req);
 
 static inline uint64_t i2c_run_req(struct i2c_request *req)
 {
