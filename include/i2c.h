@@ -61,6 +61,9 @@ struct i2c_request {
 extern void i2c_add_bus(struct i2c_bus *bus);
 extern struct i2c_bus *i2c_find_bus_by_id(uint32_t opal_id);
 
+/* not generic, but useful */
+struct i2c_bus *p8_i2c_find_bus_by_port(uint32_t chip_id, int eng, int port_id);
+
 int64_t i2c_queue_req(struct i2c_request *req);
 
 static inline uint64_t i2c_run_req(struct i2c_request *req)
