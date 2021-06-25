@@ -25,6 +25,7 @@ struct trace_info {
 
 /* Allocate trace buffers once we know memory topology */
 void init_trace_buffers(void);
+void trace_add_dt_props(void);
 
 /* This will fill in timestamp and cpu; you must do type and len. */
 void trace_add(union trace *trace, u8 type, u16 len);

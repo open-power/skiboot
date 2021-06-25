@@ -1369,6 +1369,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Disable protected execution facility in BML */
 	cpu_disable_pef();
 
+	/* export the trace buffers */
+	trace_add_dt_props();
+
 	/* Now release parts of memory nodes we haven't used ourselves... */
 	mem_region_release_unused();
 

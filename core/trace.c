@@ -18,6 +18,7 @@
 #include <skiboot.h>
 #include <opal-api.h>
 #include <debug_descriptor.h>
+#include <nvram.h>
 
 #define DEBUG_TRACES
 
@@ -155,7 +156,7 @@ void trace_add(union trace *trace, u8 type, u16 len)
 	unlock(&ti->lock);
 }
 
-static void trace_add_dt_props(void)
+void trace_add_dt_props(void)
 {
 	uint64_t boot_buf_phys = (uint64_t) &boot_tracebuf.trace_info;
 	struct dt_node *exports, *traces;
@@ -168,9 +169,14 @@ static void trace_add_dt_props(void)
 	if (!exports)
 		return;
 
-	traces = dt_new(exports, "traces");
-	if (!exports)
-		return;
+	/*
+	 * nvram hack to put all the trace buffer exports in the exports
+	 * node. This is useful if the kernel doesn't also export subnodes.
+	 */
+	if (nvram_query_safe("flat-trace-buf"))
+		traces = exports;
+	else
+		traces = dt_new(exports, "traces");
 
 	prop = malloc(sizeof(u64) * 2 * be32_to_cpu(debug_descriptor.num_traces));
 
@@ -256,7 +262,4 @@ void init_trace_buffers(void)
 			continue;
 		t->trace = t->primary->trace;
 	}
-
-	/* Trace node in DT. */
-	trace_add_dt_props();
 }

@@ -102,6 +102,11 @@ struct debug_descriptor debug_descriptor = {
 	.trace_mask = -1
 };
 
+const char *nvram_query_safe(const char *key __unused)
+{
+	return NULL;
+}
+
 void lock_caller(struct lock *l, const char *caller)
 {
 	(void)caller;
