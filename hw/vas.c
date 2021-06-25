@@ -155,11 +155,71 @@ static void reset_fir(struct proc_chip *chip)
 	vas_scom_write(chip, VAS_FIR_ACTION1,	0xf8fffefffffc8000ull);
 }
 
-#define	RMA_LSMP_64K_SYS_ID		PPC_BITMASK(8, 12)
-#define	RMA_LSMP_64K_NODE_ID		PPC_BITMASK(15, 18)
-#define	RMA_LSMP_64K_CHIP_ID		PPC_BITMASK(19, 21)
+/* VAS workbook: Section 1.3.3.1: Send Message w/ Paste Commands (cl_rma_w) */
+/* P9 paste base address format */
+#define	P9_RMA_LSMP_64K_SYS_ID		PPC_BITMASK(8, 12)
+#define	P9_RMA_LSMP_64K_NODE_ID		PPC_BITMASK(15, 18)
+#define	P9_RMA_LSMP_64K_CHIP_ID		PPC_BITMASK(19, 21)
 #define	RMA_LSMP_WINID_START_BIT	32
 #define	RMA_LSMP_WINID_NUM_BITS		16
+
+/*
+ * The start/base of the paste BAR is computed using the tables 1.1 through
+ * 1.4 in Section 1.3.3.1 (Send Message w/Paste Commands (cl_rma_w)) of VAS
+ * P9 Workbook.
+ *
+ * With 64K mode and Large SMP Mode the bits are used as follows:
+ *
+ *	Bits	Values		Comments
+ *	--------------------------------------
+ *	0:7	0b 0000_0000	Reserved
+ *	8:12	0b 0000_1	System id/Foreign Index 0:4
+ *	13:14	0b 00		Foreign Index 5:6
+ *
+ *	15:18	0 throuh 15	Node id (0 through 15)
+ *	19:21	0 through 7	Chip id (0 throuh 7)
+ *	22:23	0b 00		Unused, Foreign index 7:8
+ *
+ *	24:31	0b 0000_0000	RPN 0:7, Reserved
+ *	32:47	0 through 64K	Send Window Id
+ *	48:51	0b 0000		Spare
+ *
+ *	52	0b 0		Reserved
+ *	53	0b 1		Report Enable (Set to 1 for NX).
+ *	54	0b 0		Reserved
+ *
+ *	55:56	0b 00		Snoop Bus
+ *	57:63	0b 0000_000	Reserved
+ *
+ * Except for a few bits, the small SMP mode computation is similar.
+ *
+ * TODO: Detect and compute address for small SMP mode.
+ *
+ * Example: For Node 0, Chip 0, Window id 4, Report Enable 1:
+ *
+ *    Byte0    Byte1    Byte2    Byte3    Byte4    Byte5    Byte6    Byte7
+ *    00000000 00001000 00000000 00000000 00000000 00000100 00000100 00000000
+ *                    |   || |            |               |      |
+ *                    +-+-++++            +-------+-------+      v
+ *                      |   |                      |          Report Enable
+ *                      v   v                      v
+ *                   Node   Chip               Window id 4
+ *
+ *    Thus the paste address for window id 4 is 0x00080000_00040400 and
+ *    the _base_ paste address for Node 0 Chip 0 is 0x00080000_00000000.
+ */
+
+static void p9_get_rma_bar(int chipid, uint64_t *val)
+{
+	uint64_t v;
+
+	v = 0ULL;
+	v = SETFIELD(P9_RMA_LSMP_64K_SYS_ID, v, 1);
+	v = SETFIELD(P9_RMA_LSMP_64K_NODE_ID, v, P9_GCID2NODEID(chipid));
+	v = SETFIELD(P9_RMA_LSMP_64K_CHIP_ID, v, P9_GCID2CHIPID(chipid));
+
+	*val = v;
+}
 
 /*
  * Initialize RMA BAR on this chip to correspond to its node/chip id.
@@ -171,10 +231,7 @@ static int init_rma(struct proc_chip *chip)
 	int rc;
 	uint64_t val;
 
-	val = 0ULL;
-	val = SETFIELD(RMA_LSMP_64K_SYS_ID, val, 1);
-	val = SETFIELD(RMA_LSMP_64K_NODE_ID, val, P9_GCID2NODEID(chip->id));
-	val = SETFIELD(RMA_LSMP_64K_CHIP_ID, val, P9_GCID2CHIPID(chip->id));
+	p9_get_rma_bar(chip->id, &val);
 
 	rc = vas_scom_write(chip, VAS_RMA_BAR, val);
 	if (rc)
@@ -209,49 +266,6 @@ static int init_rma(struct proc_chip *chip)
  * separate page. Thus with a page size of 64K, the length of the paste
  * BAR for a chip is VAS_WINDOWS_PER_CHIP times 64K (or 4GB for Power9).
  *
- * The start/base of the paste BAR is computed using the tables 1.1 through
- * 1.4 in Section 1.3.3.1 (Send Message w/Paste Commands (cl_rma_w)) of VAS
- * P9 Workbook.
- *
- * With 64K mode and Large SMP Mode the bits are used as follows:
- *
- *      Bits    Values          Comments
- *      --------------------------------------
- *      0:7     0b 0000_0000    Reserved
- *      8:12    0b 0000_1       System id/Foreign Index 0:4
- *      13:14   0b 00           Foreign Index 5:6
- *
- *      15:18   0 throuh 15     Node id (0 through 15)
- *      19:21   0 through 7     Chip id (0 throuh 7)
- *      22:23   0b 00           Unused, Foreign index 7:8
- *
- *      24:31   0b 0000_0000    RPN 0:7, Reserved
- *      32:47   0 through 64K   Send Window Id
- *      48:51   0b 0000         Spare
- *
- *      52      0b 0            Reserved
- *      53      0b 1            Report Enable (Set to 1 for NX).
- *      54      0b 0            Reserved
- *
- *      55:56   0b 00           Snoop Bus
- *      57:63   0b 0000_000     Reserved
- *
- * Except for a few bits, the small SMP mode computation is similar.
- *
- * TODO: Detect and compute address for small SMP mode.
- *
- * Example: For Node 0, Chip 0, Window id 4, Report Enable 1:
- *
- *    Byte0    Byte1    Byte2    Byte3    Byte4    Byte5    Byte6    Byte7
- *    00000000 00001000 00000000 00000000 00000000 00000100 00000100 00000000
- *                    |   || |            |               |      |
- *                    +-+-++++            +-------+-------+      v
- *                      |   |                      |          Report Enable
- *                      v   v                      v
- *                   Node   Chip               Window id 4
- *
- *    Thus the paste address for window id 4 is 0x00080000_00040400 and
- *    the _base_ paste address for Node 0 Chip 0 is 0x00080000_00000000.
  */
 #define        VAS_PASTE_BAR_LEN       (1ULL << 32)    /* 4GB - see above */
 
@@ -259,10 +273,7 @@ static inline void get_paste_bar(int chipid, uint64_t *start, uint64_t *len)
 {
 	uint64_t val;
 
-	val = 0ULL;
-	val = SETFIELD(RMA_LSMP_64K_SYS_ID, val, 1);
-	val = SETFIELD(RMA_LSMP_64K_NODE_ID, val, P9_GCID2NODEID(chipid));
-	val = SETFIELD(RMA_LSMP_64K_CHIP_ID, val, P9_GCID2CHIPID(chipid));
+	p9_get_rma_bar(chipid, &val);
 
 	*start = val;
 	*len = VAS_PASTE_BAR_LEN;
