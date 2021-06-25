@@ -1150,10 +1150,30 @@ void init_cpu_max_pir(void)
 	prlog(PR_DEBUG, "CPU: New max PIR set to 0x%x\n", cpu_max_pir);
 }
 
+/*
+ * Set cpu->state to cpu_state_no_cpu for all secondaries, before the dt is
+ * parsed and they will be flipped to present as populated CPUs are found.
+ *
+ * Some configurations (e.g., with memory encryption) will not zero system
+ * memory at boot, so can't rely on cpu->state to be zero (== cpu_state_no_cpu).
+ */
+static void mark_all_secondary_cpus_absent(void)
+{
+	unsigned int pir;
+	struct cpu_thread *cpu;
+
+	for (pir = 0; pir <= cpu_max_pir; pir++) {
+		cpu = &cpu_stacks[pir].cpu;
+		if (cpu == boot_cpu)
+			continue;
+		cpu->state = cpu_state_no_cpu;
+	}
+}
+
 void init_all_cpus(void)
 {
 	struct dt_node *cpus, *cpu;
-	unsigned int thread;
+	unsigned int pir, thread;
 	int dec_bits = find_dec_bits();
 
 	cpus = dt_find_by_path(dt_root, "/cpus");
@@ -1161,9 +1181,11 @@ void init_all_cpus(void)
 
 	init_tm_suspend_mode_property();
 
+	mark_all_secondary_cpus_absent();
+
 	/* Iterate all CPUs in the device-tree */
 	dt_for_each_child(cpus, cpu) {
-		unsigned int pir, server_no, chip_id, threads;
+		unsigned int server_no, chip_id, threads;
 		enum cpu_thread_state state;
 		const struct dt_property *p;
 		struct cpu_thread *t, *pt0, *pt1;
