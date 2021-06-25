@@ -1439,14 +1439,52 @@ static void p8_i2c_add_bus_prop(struct p8_i2c_master_port *port)
 	}
 }
 
-static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
+static struct p8_i2c_master_port *p8_i2c_init_one_port(struct p8_i2c_master *m,
+				struct dt_node *n, uint64_t lb_freq)
 {
 	struct p8_i2c_master_port *port;
-	uint32_t lb_freq, count;
-	struct dt_node *i2cm_port;
+	uint64_t def_timeout;
+	uint32_t speed, div;
+
+	port = zalloc(sizeof(*port));
+	if (!port)
+		return NULL;
+
+	def_timeout = m->irq_ok ? I2C_TIMEOUT_IRQ_MS : I2C_TIMEOUT_POLL_MS;
+
+	speed = dt_prop_get_u32_def(n, "bus-frequency", 100000);
+	div = p8_i2c_get_bit_rate_divisor(lb_freq, speed);
+
+	/* p8-i2c stuff */
+	port->master       = m;
+	port->bit_rate_div = div;
+	port->poll_interval = p8_i2c_get_poll_interval(speed);
+	port->port_num     = dt_prop_get_u32(n, "reg");
+	port->byte_timeout = dt_prop_get_u32_def(n, "timeout-ms", def_timeout);
+	list_add_tail(&m->ports, &port->link);
+
+	/* core i2c stuff */
+	port->bus.dt_node   = n;
+	port->bus.queue_req = p8_i2c_queue_request;
+	port->bus.run_req   = p8_i2c_run_request;
+	i2c_add_bus(&port->bus);
+
+	/* add the bus name and compatible (if needed) */
+	p8_i2c_add_bus_prop(port);
+
+	prlog(PR_INFO, " P%d: <%s> %d kHz\n", port->port_num,
+			(char *) dt_prop_get(n, "ibm,port-name"), speed / 1000);
+
+	return port;
+}
+
+static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
+{
 	struct p8_i2c_master *master;
 	struct list_head *chip_list;
-	uint64_t ex_stat, default_timeout;
+	struct dt_node *i2cm_port;
+	uint64_t ex_stat;
+	uint32_t lb_freq;
 	int64_t rc;
 
 	master = zalloc(sizeof(*master));
@@ -1532,53 +1570,12 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	if (master->type == I2C_CENTAUR)
 		centaur_enable_sensor_cache(master->chip_id);
 
-	/* Allocate ports driven by this master */
-	count = 0;
-	dt_for_each_child(i2cm, i2cm_port)
-		count++;
-
-	port = zalloc(sizeof(*port) * count);
-	if (!port) {
-		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
-				 "I2C: Insufficient memory\n");
-		free(master);
-		return;
-	}
-
 	/* Add master to chip's list */
 	list_add_tail(chip_list, &master->link);
 
-	default_timeout = master->irq_ok ?
-		I2C_TIMEOUT_IRQ_MS :
-		I2C_TIMEOUT_POLL_MS;
-
-	dt_for_each_child(i2cm, i2cm_port) {
-		uint32_t speed;
-
-		port->port_num = dt_prop_get_u32(i2cm_port, "reg");
-		port->master = master;
-		speed = dt_prop_get_u32(i2cm_port, "bus-frequency");
-		port->poll_interval = p8_i2c_get_poll_interval(speed);
-		port->bit_rate_div =
-			p8_i2c_get_bit_rate_divisor(lb_freq, speed);
-		port->bus.dt_node = i2cm_port;
-		port->bus.queue_req = p8_i2c_queue_request;
-		port->bus.run_req = p8_i2c_run_request;
-
-		port->byte_timeout = dt_prop_get_u32_def(i2cm_port,
-						"timeout-ms", default_timeout);
-
-		i2c_add_bus(&port->bus);
-		list_add_tail(&master->ports, &port->link);
-
-		/* Add OPAL properties to the bus node */
-		p8_i2c_add_bus_prop(port);
-		prlog(PR_INFO, " P%d: <%s> %d kHz\n",
-		      port->port_num,
-		      (char *)dt_prop_get(i2cm_port,
-					  "ibm,port-name"), speed/1000);
-		port++;
-	}
+	/* initialise ports */
+	dt_for_each_child(i2cm, i2cm_port)
+		p8_i2c_init_one_port(master, i2cm_port, lb_freq);
 }
 
 void p8_i2c_init(void)
