@@ -263,11 +263,10 @@ int validate_esl_list(const char *key, const char *esl, const size_t size)
 	int eslvarsize = size;
 	int eslsize;
 	int rc = OPAL_SUCCESS;
-	int offset = 0;
 	EFI_SIGNATURE_LIST *list = NULL;
 
 	while (eslvarsize > 0) {
-		prlog(PR_DEBUG, "esl var size size is %d offset is %d\n", eslvarsize, offset);
+		prlog(PR_DEBUG, "esl var size is %d offset is %lu\n", eslvarsize, size - eslvarsize);
 		if (eslvarsize < sizeof(EFI_SIGNATURE_LIST))
 			break;
 
@@ -313,7 +312,7 @@ int validate_esl_list(const char *key, const char *esl, const size_t size)
 		count++;
 
 		/* Look for the next ESL */
-		offset = offset + eslsize;
+		esl = esl + eslsize;
 		eslvarsize = eslvarsize - eslsize;
 		free(data);
 		/* Since we are going to allocate again in the next iteration */
@@ -509,7 +508,7 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 
 	/* Variable is not empty */
 	while (eslvarsize > 0) {
-		prlog(PR_DEBUG, "esl var size size is %d offset is %d\n", eslvarsize, offset);
+		prlog(PR_DEBUG, "esl var size is %d offset is %d\n", eslvarsize, offset);
 		if (eslvarsize < sizeof(EFI_SIGNATURE_LIST))
 			break;
 
