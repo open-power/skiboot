@@ -136,8 +136,12 @@ static int get_esl_cert(const char *buf, const size_t buflen, char **cert)
 	sig_data_offset = sizeof(EFI_SIGNATURE_LIST)
 			  + le32_to_cpu(list->SignatureHeaderSize)
 			  + 16 * sizeof(uint8_t);
-	if (sig_data_offset > buflen)
+
+	/* Ensure this ESL does not overflow the bounds of the buffer */
+	if (sig_data_offset + size > buflen) {
+		prlog(PR_ERR, "Number of bytes of ESL data is less than size specified\n");
 		return OPAL_PARAMETER;
+	}
 
 	*cert = zalloc(size);
 	if (!(*cert))

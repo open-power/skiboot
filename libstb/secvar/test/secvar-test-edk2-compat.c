@@ -12,6 +12,7 @@
 #include "./data/KEK.h"
 #include "./data/invalidkek.h"
 #include "./data/malformedkek.h"
+#include "./data/trimmedKEK.h"
 #include "./data/db.h"
 #include "./data/dbsigneddata.h"
 #include "./data/OldTSKEK.h"
@@ -196,6 +197,21 @@ int run_test()
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("db", 3, &variable_bank);
 	ASSERT(NULL != tmp);
+
+	/* Add trimmed KEK, .process(), should fail. */
+	printf("Add trimmed KEK\n");
+	tmp = new_secvar("KEK", 4, trimmedKEK_auth, trimmedKEK_auth_len, 0);
+	ASSERT(0 == edk2_compat_validate(tmp));
+	list_add_tail(&update_bank, &tmp->link);
+	ASSERT(1 == list_length(&update_bank));
+
+	rc = edk2_compat_process(&variable_bank, &update_bank);
+	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(5 == list_length(&variable_bank));
+	ASSERT(0 == list_length(&update_bank));
+	tmp = find_secvar("KEK", 4, &variable_bank);
+	ASSERT(NULL != tmp);
+	ASSERT(0 == tmp->data_size);
 
 	/* Add valid KEK, .process(), succeeds. */
 	printf("Add KEK");
