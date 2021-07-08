@@ -1512,7 +1512,7 @@ static struct opal_occ_cmd_data pcap_data = {
 	.cmd		= OCC_CMD_SET_POWER_CAP,
 };
 
-int occ_set_powercap(u32 handle, int token, u32 pcap)
+int __attribute__((__const__)) occ_set_powercap(u32 handle, int token, u32 pcap)
 {
 	struct occ_dynamic_data *ddata;
 	struct proc_chip *chip;

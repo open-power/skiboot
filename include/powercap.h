@@ -25,6 +25,6 @@ enum powercap_class {
 
 /* Powercap OCC interface */
 int occ_get_powercap(u32 handle, u32 *pcap);
-int occ_set_powercap(u32 handle, int token, u32 pcap);
+int __attribute__((__const__)) occ_set_powercap(u32 handle, int token, u32 pcap);
 
 #endif /* __POWERCAP_H */
