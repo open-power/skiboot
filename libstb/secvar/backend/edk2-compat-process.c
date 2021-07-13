@@ -512,8 +512,11 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 	/* Variable is not empty */
 	while (eslvarsize > 0) {
 		prlog(PR_DEBUG, "esl var size is %d offset is %d\n", eslvarsize, offset);
-		if (eslvarsize < sizeof(EFI_SIGNATURE_LIST))
+		if (eslvarsize < sizeof(EFI_SIGNATURE_LIST)) {
+			rc = OPAL_INTERNAL_ERROR;
+			prlog(PR_ERR, "ESL data is corrupted\n");
 			break;
+		}
 
 		/* Calculate the size of the ESL */
 		eslsize = get_esl_signature_list_size(avar->data + offset,

@@ -90,6 +90,7 @@ int run_test()
 {
 	int rc = -1;
 	struct secvar *tmp;
+	size_t tmp_size;
 	char empty[64] = {0};
 
 	/* The sequence of test cases here is important to ensure that
@@ -213,6 +214,30 @@ int run_test()
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("db", 3, &variable_bank);
 	ASSERT(NULL != tmp);
+
+	/* Add db, should fail with no KEK and invalid PK size */
+	printf("Add db, corrupt PK");
+	/* Somehow PK gets assigned wrong size */
+	tmp = find_secvar("PK", 3, &variable_bank);
+	ASSERT(NULL != tmp);
+	tmp_size = tmp->data_size;
+	tmp->data_size = sizeof(EFI_SIGNATURE_LIST) - 1;
+	tmp = new_secvar("db", 3, DB_auth, DB_auth_len, 0);
+	ASSERT(0 == edk2_compat_validate(tmp));
+	list_add_tail(&update_bank, &tmp->link);
+	ASSERT(1 == list_length(&update_bank));
+
+	rc = edk2_compat_process(&variable_bank, &update_bank);
+	ASSERT(OPAL_INTERNAL_ERROR == rc);
+	ASSERT(5 == list_length(&variable_bank));
+	ASSERT(0 == list_length(&update_bank));
+	tmp = find_secvar("db", 3, &variable_bank);
+	ASSERT(NULL != tmp);
+	ASSERT(0 == tmp->data_size);
+	/* Restore PK data size */
+	tmp = find_secvar("PK", 3, &variable_bank);
+	ASSERT(NULL != tmp);
+	tmp->data_size = tmp_size;
 
 	/* Add trimmed KEK, .process(), should fail. */
 	printf("Add trimmed KEK\n");
