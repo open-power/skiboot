@@ -267,8 +267,11 @@ int validate_esl_list(const char *key, const char *esl, const size_t size)
 
 	while (eslvarsize > 0) {
 		prlog(PR_DEBUG, "esl var size is %d offset is %lu\n", eslvarsize, size - eslvarsize);
-		if (eslvarsize < sizeof(EFI_SIGNATURE_LIST))
+		if (eslvarsize < sizeof(EFI_SIGNATURE_LIST)) {
+			prlog(PR_ERR, "ESL with size %d is too small\n", eslvarsize);
+			rc = OPAL_PARAMETER;
 			break;
+		}
 
 		/* Check Supported ESL Type */
 		list = get_esl_signature_list(esl, eslvarsize);

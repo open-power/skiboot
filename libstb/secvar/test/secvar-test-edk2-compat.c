@@ -166,6 +166,21 @@ int run_test()
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(setup_mode);
 
+	/* Add PK with bad ESL. should fail since data is not big enough to be ESL*/
+	printf("Add PK with invalid appended ESL");
+	/* 1014 is length of appended ESL Header and its data */
+	tmp = new_secvar("PK", 3, PK_auth, PK_auth_len - 1014 + sizeof(EFI_SIGNATURE_LIST) - 1, 0);
+	ASSERT(0 == edk2_compat_validate(tmp));
+	list_add_tail(&update_bank, &tmp->link);
+	ASSERT(1 == list_length(&update_bank));
+	rc = edk2_compat_process(&variable_bank, &update_bank);
+	ASSERT(5 == list_length(&variable_bank));
+	ASSERT(0 == list_length(&update_bank));
+	rc = edk2_compat_post_process(&variable_bank, &update_bank);
+	ASSERT(5 == list_length(&variable_bank));
+	ASSERT(setup_mode);
+
+
 	/* Add PK to update and .process(). */
 	printf("Add PK");
 	tmp = new_secvar("PK", 3, PK_auth, PK_auth_len, 0);
