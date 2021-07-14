@@ -193,6 +193,9 @@ int get_auth_descriptor2(const void *buf, const size_t buflen, void **auth_buffe
 	auth_buffer_size = sizeof(auth->timestamp) + sizeof(auth->auth_info.hdr)
 			   + sizeof(auth->auth_info.cert_type) + len;
 
+	if (auth_buffer_size > buflen)
+		return OPAL_PARAMETER;
+
 	*auth_buffer = zalloc(auth_buffer_size);
 	if (!(*auth_buffer))
 		return OPAL_NO_MEM;

@@ -92,6 +92,7 @@ int run_test()
 	struct secvar *tmp;
 	size_t tmp_size;
 	char empty[64] = {0};
+	void *data;
 
 	/* The sequence of test cases here is important to ensure that
 	 * timestamp checks work as expected. */
@@ -253,6 +254,24 @@ int run_test()
 	tmp = find_secvar("KEK", 4, &variable_bank);
 	ASSERT(NULL != tmp);
 	ASSERT(0 == tmp->data_size);
+
+	printf("Try truncated KEK < size of auth structure:\n");
+	data = malloc(1467);
+	memcpy(data, KEK_auth, 1467);
+	tmp = new_secvar("KEK", 4, data, 1467, 0);
+	rc = edk2_compat_validate(tmp);
+	ASSERT(0 == rc);
+	list_add_tail(&update_bank, &tmp->link);
+	ASSERT(1 == list_length(&update_bank));
+
+	rc = edk2_compat_process(&variable_bank, &update_bank);
+	ASSERT(0 != rc);
+	ASSERT(5 == list_length(&variable_bank));
+	ASSERT(0 == list_length(&update_bank));
+	tmp = find_secvar("KEK", 4, &variable_bank);
+	ASSERT(NULL != tmp);
+	ASSERT(0 == tmp->data_size);
+	free(data);
 
 	/* Add valid KEK, .process(), succeeds. */
 	printf("Add KEK");
