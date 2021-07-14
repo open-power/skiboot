@@ -124,6 +124,9 @@ static int get_esl_cert(const char *buf, const size_t buflen, char **cert)
 
 	assert(cert != NULL);
 
+	if (le32_to_cpu(list->SignatureSize) <= sizeof(uuid_t))
+		return OPAL_PARAMETER;
+
 	size = le32_to_cpu(list->SignatureSize) - sizeof(uuid_t);
 
 	prlog(PR_DEBUG,"size of signature list size is %u\n",
