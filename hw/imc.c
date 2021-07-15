@@ -18,18 +18,24 @@
 /*
  * IMC trace scom values
  */
-#define IMC_TRACE_SAMPLESEL_VAL	1	/* select cpmc2 */
+#define IMC_TRACE_CPMC1                0       /* select cpmc1 */
+#define IMC_TRACE_CPMC2                1       /* select cpmc2 */
 #define IMC_TRACE_CPMCLOAD_VAL	0xfa	/*
 					 * Value to be loaded into cpmc2
 					 * at sampling start
 					 */
-#define IMC_TRACE_CPMC2SEL_VAL	2	/* Event: CPM_32MHZ_CYC */
+
+/* Event: CPM_32MHZ_CYC */
+#define IMC_TRACE_CPMC2SEL_VAL	2
+#define IMC_TRACE_CPMC1SEL_VAL	4
+
 #define IMC_TRACE_BUFF_SIZE	0	/*
 					 * b’000’- 4K entries * 64 per
 					 * entry = 256K buffersize
 					 */
 static uint64_t TRACE_IMC_ADDR;
 static uint64_t CORE_IMC_EVENT_MASK_ADDR;
+static uint64_t trace_scom_val;
 /*
  * Initialise these with the pdbar and htm scom port address array
  * at run time, based on the processor version.
@@ -547,6 +553,11 @@ static int setup_imc_scoms(void)
 		TRACE_IMC_ADDR = TRACE_IMC_ADDR_P9;
 		pdbar_scom_index = pdbar_scom_index_p9;
 		htm_scom_index = htm_scom_index_p9;
+		trace_scom_val = TRACE_IMC_SCOM(IMC_TRACE_CPMC2,
+						IMC_TRACE_CPMCLOAD_VAL,
+						IMC_TRACE_CPMC1SEL_VAL,
+						IMC_TRACE_CPMC2SEL_VAL,
+						IMC_TRACE_BUFF_SIZE);
 		return 0;
 	default:
 		prerror("%s: Unknown cpu type\n", __func__);
@@ -616,6 +627,11 @@ void imc_init(void)
 	}
 
 imc_mambo:
+	if (setup_imc_scoms()) {
+		prerror("IMC: Failed to setup the scoms\n");
+		goto err;
+	}
+
 	/* Check and remove unsupported imc device types */
 	check_imc_device_type(dev);
 
@@ -647,11 +663,6 @@ imc_mambo:
 	if (pause_microcode_at_boot()) {
 		prerror("IMC: Pausing ucode failed, disabling nest imc\n");
 		disable_imc_type_from_dt(dev, IMC_COUNTER_CHIP);
-	}
-
-	if (setup_imc_scoms()) {
-		prerror("IMC: Failed to setup the scoms\n");
-		goto err;
 	}
 
 	/*
@@ -816,10 +827,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 	int port_id, phys_core_id;
 	int ret;
 	uint32_t htm_addr, trace_addr;
-	uint64_t trace_scom_val = TRACE_IMC_SCOM(IMC_TRACE_SAMPLESEL_VAL,
-						 IMC_TRACE_CPMCLOAD_VAL, 0,
-						 IMC_TRACE_CPMC2SEL_VAL,
-						 IMC_TRACE_BUFF_SIZE);
+
 	switch (type) {
 	case OPAL_IMC_COUNTERS_NEST:
 		return OPAL_SUCCESS;
