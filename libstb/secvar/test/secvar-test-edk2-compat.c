@@ -17,6 +17,7 @@
 #include "./data/dbsigneddata.h"
 #include "./data/OldTSKEK.h"
 #include "./data/multipleKEK.h"
+#include "./data/multipletrimmedKEK.h"
 #include "./data/multipleDB.h"
 #include "./data/multiplePK.h"
 #include "./data/dbx.h"
@@ -335,6 +336,21 @@ int run_test()
 	ASSERT(OPAL_PERMISSION == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
+
+	/* Add multiple KEK ESLs with w one missing 5 bytes */
+	printf("Add multiple KEK with one trimmed\n");
+	tmp = new_secvar("KEK", 4, multipletrimmedKEK_auth, multipletrimmedKEK_auth_len, 0);
+	ASSERT(0 == edk2_compat_validate(tmp));
+	list_add_tail(&update_bank, &tmp->link);
+	ASSERT(1 == list_length(&update_bank));
+
+	rc = edk2_compat_process(&variable_bank, &update_bank);
+	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(5 == list_length(&variable_bank));
+	ASSERT(0 == list_length(&update_bank));
+	tmp = find_secvar("KEK", 4, &variable_bank);
+	ASSERT(NULL != tmp);
+	ASSERT(0 != tmp->data_size);
 
 	/* Add multiple KEK ESLs, one of them should sign the db. */
 	printf("Add multiple KEK\n");
