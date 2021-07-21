@@ -10,6 +10,9 @@ HOSTCFLAGS += -I$(SRC)/$(LIBSTB_DIR)/crypto/mbedtls/include
 # Needed because x86 and POWER disagree on the type for uint64_t, causes printf issues
 HOSTCFLAGS+= -Wno-format
 
+# we want to test for leaks too:
+SECVAR_VALGRIND := $(VALGRIND) --leak-check=full
+
 .PHONY : secvar-check
 secvar-check: $(SECVAR_TEST:%=%-check) $(SECVAR_TEST_NOSTUB:%=%-check)
 
@@ -27,7 +30,7 @@ $(SECVAR_TEST:%=%-gcov-run) : %-run: %
 
 $(SECVAR_TEST:%=%-check) : %-check: %
 	@dd if=/dev/zero of=secboot.img bs=128k count=1 2> /dev/null
-	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
+	$(call QTEST, RUN-TEST ,$(SECVAR_VALGRIND) $<, $<)
 	@$(RM) -f secboot.img
 
 HOST_MBEDTLS_OBJS=$(MBEDTLS_OBJS:%.o=$(CRYPTO_DIR)/%.host.o)
