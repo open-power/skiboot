@@ -461,6 +461,7 @@ static mbedtls_pkcs7* get_pkcs7(const struct efi_variable_authentication_2 *auth
 
 out:
 	mbedtls_pkcs7_free(pkcs7);
+	free(pkcs7);
 	pkcs7 = NULL;
 	return pkcs7;
 }
