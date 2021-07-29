@@ -163,6 +163,8 @@ CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
 	  $(call try-cflag,$(CC),-Wno-error=suggest-attribute=const) \
 	  $(call try-cflag,$(CC),-Wno-error=suggest-attribute=noreturn) \
 	  $(call try-cflag,$(CC),-Wstack-usage=1024) \
+	  $(call try-cflag,$(CC),-Wno-error=array-bounds) \
+	  $(call try-cflag,$(CC),-Wno-error=stringop-overread) \
 	  $(call try-cflag,$(CC),-Wno-error=address-of-packed-member)
 
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
