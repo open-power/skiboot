@@ -302,6 +302,8 @@ static int p9_core_set_special_wakeup(struct cpu_thread *cpu)
 			 * raise error.
 			 */
 			if (dctl_core_is_gated(cpu)) {
+				/* Deassert spwu for this strange error */
+				xscom_write(chip_id, swake_addr, 0);
 				prlog(PR_ERR, "Failed special wakeup on %u:%u"
 						" as CORE_GATED is set\n",
 						chip_id, core_id);
