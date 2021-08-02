@@ -226,19 +226,15 @@ static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
 	int rc;
 	uint32_t core = pir_to_core_id(c->pir);
 
-	/* Clear special wakeup bits that could hold power mgt */
-	rc = xscom_write(chip->id,
-			 XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
-			 0);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-			"SLW: Failed to write EC_PPM_SPECIAL_WKUP_HYP\n");
-		return false;
-	}
-	/* Read back for debug */
+	/* Special wakeup bits that could hold power mgt */
 	rc = xscom_read(chip->id,
 			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
 			&tmp);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_SLW_SET),
+				 "SLW: Failed to read EC_PPM_SPECIAL_WKUP_HYP\n");
+		return false;
+	}
 	if (tmp)
 		prlog(PR_WARNING,
 			"SLW: core %d EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n",
