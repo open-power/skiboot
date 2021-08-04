@@ -20,6 +20,7 @@
 /* Device-tree visible constants follow */
 #define ISA_V2_07B	2070
 #define ISA_V3_0B	3000
+#define ISA_V3_1	3100
 
 #define USABLE_PR		(1U << 0)
 #define USABLE_OS		(1U << 1)
@@ -47,12 +48,13 @@
 #define CPU_P9P		(1U << 4)
 #define CPU_P9_DD2_2    (1U << 5)
 #define CPU_P9_DD2_3    (1U << 6)
+#define CPU_P10		(1U << 7)
 
 #define CPU_P9_DD2      (CPU_P9_DD2_0_1|CPU_P9_DD2_2|CPU_P9_DD2_3|CPU_P9P)
 
 #define CPU_P8		(CPU_P8_DD1|CPU_P8_DD2)
 #define CPU_P9		(CPU_P9_DD1|CPU_P9_DD2|CPU_P9P)
-#define CPU_ALL		(CPU_P8|CPU_P9)
+#define CPU_ALL		(CPU_P8|CPU_P9|CPU_P10)
 
 struct cpu_feature {
 	const char *name;
@@ -198,6 +200,16 @@ static const struct cpu_feature cpu_features_table[] = {
 	{ "debug-facilities",
 	CPU_ALL,
 	ISA_BASE, USABLE_HV|USABLE_OS,
+	HV_CUSTOM, OS_CUSTOM,
+	-1, -1, -1,
+	NULL, },
+
+	/*
+	 * DAWR1, DAWRX1 etc.
+	 */
+	{ "debug-facilities-v31",
+	CPU_P10,
+	ISA_V3_1, USABLE_HV|USABLE_OS,
 	HV_CUSTOM, OS_CUSTOM,
 	-1, -1, -1,
 	NULL, },
@@ -473,7 +485,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B radix based MMU
 	 */
 	{ "mmu-radix",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS,
 	HV_CUSTOM, OS_CUSTOM,
 	-1, -1, -1,
@@ -483,7 +495,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B hash based MMU, new hash pte format, PCTR, etc
 	 */
 	{ "mmu-hash-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS,
 	HV_CUSTOM, OS_CUSTOM,
 	-1, -1, -1,
@@ -493,7 +505,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B wait instruction
 	 */
 	{ "wait-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -504,7 +516,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * XXX: Same question as for idle-nap
 	 */
 	{ "idle-stop",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS,
 	HV_CUSTOM, OS_CUSTOM,
 	-1, -1, -1,
@@ -516,7 +528,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * system reset SRR1 reason, etc.
 	 */
 	{ "hypervisor-virtualization-interrupt",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV,
 	HV_CUSTOM, OS_NONE,
 	-1, -1, -1,
@@ -533,6 +545,16 @@ static const struct cpu_feature cpu_features_table[] = {
 	NULL, },
 
 	/*
+	 * POWER10 MCE / machine check exception.
+	 */
+	{ "machine-check-power10",
+	CPU_P10,
+	ISA_V3_0B, USABLE_HV|USABLE_OS,
+	HV_CUSTOM, OS_CUSTOM,
+	-1, -1, -1,
+	NULL, },
+
+	/*
 	 * POWER9 PMU / performance monitor unit.
 	 */
 	{ "performance-monitor-power9",
@@ -543,11 +565,21 @@ static const struct cpu_feature cpu_features_table[] = {
 	NULL, },
 
 	/*
+	 * POWER10 PMU / performance monitor unit.
+	 */
+	{ "performance-monitor-power10",
+	CPU_P10,
+	ISA_V3_1, USABLE_HV|USABLE_OS,
+	HV_CUSTOM, OS_CUSTOM,
+	-1, -1, -1,
+	NULL, },
+
+	/*
 	 * ISAv3.0B scv/rfscv system call instructions and exceptions, fscr bit
 	 * etc.
 	 */
 	{ "system-call-vectored",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_OS|USABLE_PR,
 	HV_NONE, OS_CUSTOM,
 	-1, PPC_BITLSHIFT(51), 52,
@@ -558,7 +590,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * global msgsnd, msgsndp, msgsync, doorbell, etc.
 	 */
 	{ "processor-control-facility-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS,
 	HV_CUSTOM, OS_NONE,
 	PPC_BITLSHIFT(53), -1, -1,
@@ -568,7 +600,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B addpcis instruction
 	 */
 	{ "pc-relative-addressing",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -591,7 +623,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * Large decrementer and hypervisor decrementer
 	 */
 	{ "timer-facilities-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -601,7 +633,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B deliver a random number instruction (darn)
 	 */
 	{ "random-number-generator",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, 53,
@@ -614,14 +646,14 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * mcrxrx, setb
 	 */
 	{ "fixed-point-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
 	NULL, },
 
 	{ "decimal-integer-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -631,42 +663,42 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B lightweight mffs
 	 */
 	{ "floating-point-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
 	"floating-point", },
 
 	{ "decimal-floating-point-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
 	"floating-point-v3 decimal-floating-point", },
 
 	{ "vector-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
 	"vector", },
 
 	{ "vector-scalar-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
 	"vector-v3 vector-scalar" },
 
 	{ "vector-binary128",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, 54,
 	"vector-scalar-v3", },
 
 	{ "vector-binary16",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -676,7 +708,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B external exception for EBB
 	 */
 	{ "event-based-branch-v3",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -686,7 +718,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B Atomic Memory Operations (AMO)
 	 */
 	{ "atomic-memory-operations",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -696,7 +728,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	 * ISAv3.0B Copy-Paste Facility
 	 */
 	{ "copy-paste",
-	CPU_P9,
+	CPU_P9|CPU_P10,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
@@ -711,6 +743,27 @@ static const struct cpu_feature cpu_features_table[] = {
 	ISA_V3_0B, USABLE_HV|USABLE_OS,
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
+	NULL, },
+
+	/*
+	 * Enable matrix multiply accumulate.
+	 */
+	{ "matrix-multiply-accumulate",
+	CPU_P10,
+	ISA_V3_1, USABLE_PR,
+	HV_CUSTOM, OS_CUSTOM,
+	-1, -1, 49,
+	NULL, },
+
+	/*
+	 * Enable prefix instructions. Toolchains assume this is
+	 * enabled for when compiling for ISA 3.1.
+	 */
+	{ "prefix-instructions",
+	CPU_P10,
+	ISA_V3_1, USABLE_HV|USABLE_OS|USABLE_PR,
+	HV_HFSCR, OS_FSCR,
+	13, 13, -1,
 	NULL, },
 
 	/*
@@ -972,6 +1025,13 @@ void dt_add_cpufeatures(struct dt_node *root)
 
 		cpu_feature_isa = ISA_V3_0B;
 		cpu_feature_cpu = CPU_P9P;
+		break;
+	case PVR_TYPE_P10:
+		if (!cpu_name)
+			cpu_name = "POWER10";
+
+		cpu_feature_isa = ISA_V3_1;
+		cpu_feature_cpu = CPU_P10;
 		break;
 	default:
 		return;
