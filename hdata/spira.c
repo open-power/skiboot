@@ -289,12 +289,23 @@ struct HDIF_common_hdr *__get_hdif(struct spira_ntuple *n, const char id[],
 	return h;
 }
 
-static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
-				      uint32_t proc_chip_id)
+uint32_t get_xscom_id(const struct sppcrd_chip_info *cinfo)
+{
+	if (proc_gen <= proc_gen_p9)
+		return be32_to_cpu(cinfo->xscom_id);
+
+	/* On P10 use Processor fabric topology id for chip id */
+	return (uint32_t)(cinfo->fab_topology_id);
+}
+
+static struct dt_node *add_xscom_node(uint64_t base,
+				      const struct sppcrd_chip_info *cinfo)
 {
 	struct dt_node *node;
 	uint64_t addr, size;
 	uint64_t freq;
+	uint32_t hw_id = get_xscom_id(cinfo);
+	uint32_t proc_chip_id = be32_to_cpu(cinfo->proc_chip_id);
 
 	switch (proc_gen) {
 	case proc_gen_p8:
@@ -302,12 +313,15 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 		addr = base | ((uint64_t)hw_id << PPC_BITLSHIFT(28));
 		break;
 	case proc_gen_p9:
-	case proc_gen_p10: /* XXX P10 */
-	default:
 		/* On P9 we need to put the chip ID in the natural powerbus
 		 * position.
 		 */
 		addr = base | (((uint64_t)hw_id) << 42);
+		break;
+	case proc_gen_p10:
+	default:
+		/* Use Primary topology table index for xscom address */
+		addr = base | (((uint64_t)cinfo->topology_id_table[cinfo->primary_topology_loc]) << 44);
 		break;
 	};
 
@@ -611,9 +625,7 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 			continue;
 
 		/* Create the XSCOM node */
-		np = add_xscom_node(xscom_base,
-				    be32_to_cpu(cinfo->xscom_id),
-				    be32_to_cpu(cinfo->proc_chip_id));
+		np = add_xscom_node(xscom_base, cinfo);
 		if (!np)
 			continue;
 
@@ -636,7 +648,7 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 					   SPPCRD_IDATA_KW_VPD);
 		if (vpd_node)
 			dt_add_property_cells(vpd_node, "ibm,chip-id",
-					      be32_to_cpu(cinfo->xscom_id));
+					      get_xscom_id(cinfo));
 
 		fru_id = HDIF_get_idata(hdif, SPPCRD_IDATA_FRU_ID, NULL);
 		if (fru_id)
@@ -875,7 +887,7 @@ static bool add_chiptod_new(void)
 				flags |= CHIPTOD_ID_FLAGS_PRIMARY;
 		}
 
-		add_chiptod_node(be32_to_cpu(cinfo->xscom_id), flags);
+		add_chiptod_node(get_xscom_id(cinfo), flags);
 		found = true;
 	}
 	return found;
@@ -947,7 +959,7 @@ static void add_nx(void)
 			continue;
 
 		if (cinfo->nx_state)
-			add_nx_node(be32_to_cpu(cinfo->xscom_id));
+			add_nx_node(get_xscom_id(cinfo));
 	}
 }
 
@@ -1397,7 +1409,7 @@ uint32_t pcid_to_chip_id(uint32_t proc_chip_id)
 			continue;
 		}
 		if (proc_chip_id == be32_to_cpu(cinfo->proc_chip_id))
-			return be32_to_cpu(cinfo->xscom_id);
+			return get_xscom_id(cinfo);
 	}
 
 	/* Not found, what to do ? Assert ? For now return a number

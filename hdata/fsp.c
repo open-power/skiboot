@@ -297,7 +297,7 @@ static void add_chip_id_to_sensors(struct dt_node *sensor_node, uint32_t slca_in
 		}
 
 		dt_add_property_cells(sensor_node,
-				      "ibm,chip-id", be32_to_cpu(cinfo->xscom_id));
+				      "ibm,chip-id", get_xscom_id(cinfo));
 		return;
 	}
 }

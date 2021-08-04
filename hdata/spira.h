@@ -1096,6 +1096,9 @@ struct sppcrd_chip_info {
 #define	CHIP_MAX_TOPOLOGY_ENTRIES	32
 	uint8_t topology_id_table[CHIP_MAX_TOPOLOGY_ENTRIES];
 	uint8_t	primary_topology_loc;	/* Index in topology_id_table */
+	__be32  abc_bus_speed;	/* SMP A */
+	__be32  wxyz_bus_speed;	/* SMP X */
+	uint8_t	fab_topology_id;/* topology id associated with the chip. */
 } __packed;
 
 /* Idata index 1 : Chip TOD */
