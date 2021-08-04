@@ -167,7 +167,7 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	if (err)
 		return;
 
-	if (proc_gen == proc_gen_p9) {
+	if (proc_gen >= proc_gen_p9) {
 		if (in_ipl) {
 			/* OCC is pre-loaded in P9, so send SUCCESS to FSP */
 			rsp = fsp_mkmsg(FSP_CMD_LOAD_OCC_STAT, 2, 0, seq_id);
@@ -316,6 +316,7 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 		rc = host_services_occ_stop();
 		break;
 	case proc_gen_p9:
+	case proc_gen_p10:
 		last_seq_id = seq_id;
 		chip = next_chip(NULL);
 		prd_fsp_occ_reset(chip->id);
