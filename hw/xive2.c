@@ -3039,7 +3039,7 @@ static uint64_t xive_convert_irq_flags(uint64_t iflags)
 	uint64_t oflags = 0;
 
 	if (iflags & XIVE_SRC_STORE_EOI)
-		oflags |= OPAL_XIVE_IRQ_STORE_EOI;
+		oflags |= OPAL_XIVE_IRQ_STORE_EOI2;
 
 	/* OPAL_XIVE_IRQ_TRIGGER_PAGE is only meant to be set if
 	 * the interrupt has a *separate* trigger page.
