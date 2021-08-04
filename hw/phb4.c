@@ -6023,7 +6023,7 @@ static void phb4_create(struct dt_node *np)
 		 */
 		xive2_register_hw_source(p->base_lsi, 8, 16,
 					 p->int_mmio + ((p->num_irqs - 8) << 16),
-					 XIVE_SRC_LSI, p, &phb4_lsi_ops);
+					 XIVE_SRC_LSI | irq_flags, p, &phb4_lsi_ops);
 	} else {
 		/* Register all interrupt sources with XIVE */
 		xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
