@@ -1621,6 +1621,7 @@ static void xive_config_esb_cache(struct xive *x)
 
 	if (xive_has_cap(x, CQ_XIVE_CAP_PHB_PQ_DISABLE)) {
 		val |= VC_ESBC_CFG_SPLIT_MODE | VC_ESBC_CFG_HASH_ARRAY_ENABLE;
+		val = SETFIELD(VC_ESBC_CFG_MAX_ENTRIES_IN_MODIFIED, val, 0xE);
 		xive_dbg(x, "ESB cache configured with split mode "
 			 "and hash array. VC_ESBC_CFG=%016llx\n", val);
 	} else
