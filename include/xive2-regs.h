@@ -31,7 +31,7 @@
 #define       CQ_XIVE_CAP_VP_INT_PRIO_4_8       2
 #define       CQ_XIVE_CAP_VP_INT_PRIO_8         3
 #define    CQ_XIVE_CAP_BLOCK_ID_WIDTH           PPC_BITMASK(12,13)
-
+#define    CQ_XIVE_CAP_VP_SAVE_RESTORE          PPC_BIT(38)
 #define    CQ_XIVE_CAP_PHB_PQ_DISABLE           PPC_BIT(56)
 #define    CQ_XIVE_CAP_PHB_ABT                  PPC_BIT(57)
 #define    CQ_XIVE_CAP_EXPLOITATION_MODE        PPC_BIT(58)
@@ -68,6 +68,10 @@
 #define    CQ_XIVE_CFG_GEN1_TIMA_CROWD_DIS      PPC_BIT(27) /* 0 if bit[25]=0 */
 #define    CQ_XIVE_CFG_GEN1_END_ESX             PPC_BIT(28) /* END ESx stores
                                                                are dropped */
+#define    CQ_XIVE_CFG_EN_VP_SAVE_RESTORE       PPC_BIT(38) /* 0 if bit[25]=1 */
+#define    CQ_XIVE_CFG_EN_VP_SAVE_REST_STRICT   PPC_BIT(39) /* 0 if bit[25]=1 */
+
+#define    CQ_XIVE_CFG_EN_VP_SAVE_RESTORE       PPC_BIT(38) /* 0 if bit[25]=1 */
 
 /* Interrupt Controller Base Address Register - 512 pages (32M) */
 #define X_CQ_IC_BAR				0x08
@@ -508,6 +512,8 @@ struct xive_end {
 struct xive_nvp {
 	beint32_t	w0;
 #define NVP_W0_VALID			PPC_BIT32(0)
+#define NVP_W0_HW			PPC_BIT32(7)
+#define NVP_W0_VPRIV			PPC_BITMASK32(14,15)
 #define NVP_W0_ESC_END			PPC_BIT32(25)	/* 'N' bit 0:ESB  1:END */
 	beint32_t	w1;
 	beint32_t	w2;

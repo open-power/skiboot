@@ -1177,6 +1177,7 @@ enum {
 enum {
 	OPAL_XIVE_VP_ENABLED		= 0x00000001,
 	OPAL_XIVE_VP_SINGLE_ESCALATION	= 0x00000002,
+	OPAL_XIVE_VP_SAVE_RESTORE	= 0x00000004,
 };
 
 /* "Any chip" replacement for chip ID for allocation functions */

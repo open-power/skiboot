@@ -1511,6 +1511,7 @@ static const struct {
 	{ CQ_XIVE_CAP_PHB_ABT, "PHB address based trigger mode support" },
 	{ CQ_XIVE_CAP_EXPLOITATION_MODE, "Exploitation mode" },
 	{ CQ_XIVE_CAP_STORE_EOI, "StoreEOI mode support" },
+	{ CQ_XIVE_CAP_VP_SAVE_RESTORE, "VP Context Save and Restore" },
 };
 
 static void xive_dump_capabilities(struct xive *x, uint64_t cap_val)
@@ -1542,6 +1543,8 @@ static const struct {
 	{ CQ_XIVE_CFG_GEN1_TIMA_HYP_BLK0, "Gen1 mode TIMA General Hypervisor Block0" },
 	{ CQ_XIVE_CFG_GEN1_TIMA_CROWD_DIS, "Gen1 mode TIMA Crowd disable" },
 	{ CQ_XIVE_CFG_GEN1_END_ESX, "Gen1 mode END ESx" },
+	{ CQ_XIVE_CFG_EN_VP_SAVE_RESTORE, "VP Context Save and Restore" },
+	{ CQ_XIVE_CFG_EN_VP_SAVE_REST_STRICT, "VP Context Save and Restore strict" },
 };
 
 static void xive_dump_configuration(struct xive *x, const char *prefix,
@@ -1592,6 +1595,11 @@ static bool xive_has_cap(struct xive *x, uint64_t cap)
 }
 
 #define XIVE_CAN_STORE_EOI(x) xive_has_cap(x, CQ_XIVE_CAP_STORE_EOI)
+
+static bool xive_cfg_save_restore(struct xive *x)
+{
+	return !!(x->config & CQ_XIVE_CFG_EN_VP_SAVE_RESTORE);
+}
 
 static void xive_config_fused_core(struct xive *x)
 {
@@ -1652,6 +1660,14 @@ static bool xive_config_init(struct xive *x)
 	 */
 	x->config |= CQ_XIVE_CFG_HYP_HARD_BLKID_OVERRIDE |
 		SETFIELD(CQ_XIVE_CFG_HYP_HARD_BLOCK_ID, 0ull, x->block_id);
+
+	/*
+	 * Enable "VP Context Save and Restore" by default. it is
+	 * compatible with KVM which currently does the context
+	 * save&restore in the entry/exit path of the vCPU
+	 */
+	if (x->capabilities & CQ_XIVE_CAP_VP_SAVE_RESTORE)
+		x->config |= CQ_XIVE_CFG_EN_VP_SAVE_RESTORE;
 
 	xive_dump_configuration(x, "new", x->config);
 	xive_regw(x, CQ_XIVE_CFG, x->config);
@@ -1901,6 +1917,9 @@ static void xive_create_mmio_dt_node(struct xive *x)
 
 	if (XIVE_CAN_STORE_EOI(x))
 		dt_add_property(xive_dt_node, "store-eoi", NULL, 0);
+
+	if (xive_cfg_save_restore(x))
+		dt_add_property(xive_dt_node, "vp-save-restore", NULL, 0);
 
 	xive_add_provisioning_properties();
 
@@ -3469,6 +3488,8 @@ static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 			return OPAL_PARAMETER;
 		if (xive_get_field32(NVP_W0_VALID, vp->w0))
 			*out_flags |= cpu_to_be64(OPAL_XIVE_VP_ENABLED);
+		if (xive_cfg_save_restore(x))
+			*out_flags |= cpu_to_be64(OPAL_XIVE_VP_SAVE_RESTORE);
 		if (xive_get_field32(END_W0_SILENT_ESCALATE, end->w0))
 			*out_flags |= cpu_to_be64(OPAL_XIVE_VP_SINGLE_ESCALATION);
 	}
@@ -3477,6 +3498,13 @@ static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 		uint64_t cam_value;
 
 		cam_value = (blk << x->vp_shift) | idx;
+
+		/*
+		 * If save-restore is enabled, force the CAM line
+		 * value with the H bit.
+		 */
+		if (xive_cfg_save_restore(x))
+			cam_value |= TM10_QW1W2_HO;
 
 		*out_cam_value = cpu_to_be64(cam_value);
 	}
@@ -3625,6 +3653,10 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 	if (!vp)
 		return OPAL_PARAMETER;
 
+	/* Consistency check. */
+	if ((flags & OPAL_XIVE_VP_SAVE_RESTORE) && !xive_cfg_save_restore(x))
+		return OPAL_PARAMETER;
+
 	lock(&x->lock);
 
 	vp_new = *vp;
@@ -3637,6 +3669,22 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 			rc = xive_setup_silent_gather(vp_id, true);
 		else
 			rc = xive_setup_silent_gather(vp_id, false);
+
+		/*
+		 * Prepare NVP to be HW owned for automatic save-restore
+		 */
+		if (xive_cfg_save_restore(x)) {
+			/*
+			 * Set NVP privilege level. Default to OS.
+			 * This check only makes sense for KVM guests
+			 * currently. We would need an extra flag to
+			 * distinguish from pool level.
+			 */
+			vp_new.w0 = xive_set_field32(NVP_W0_VPRIV, vp_new.w0, 0);
+
+			vp_new.w2 = xive_set_field32(NVP_W2_CPPR, vp_new.w2, 0xFF);
+			vp_new.w0 = xive_set_field32(NVP_W0_HW, vp_new.w0, 1);
+		}
 	} else {
 		/*
 		 * TODO (kvm): disabling a VP invalidates the associated ENDs.
