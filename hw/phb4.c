@@ -154,7 +154,7 @@ static inline bool is_phb5(void)
 static inline bool phb_pq_disable(struct phb4 *p __unused)
 {
 	if (is_phb5())
-		return 1;
+		return xive2_cap_phb_pq_disable();
 
 	return false;
 }
@@ -166,7 +166,7 @@ static inline bool phb_pq_disable(struct phb4 *p __unused)
 static inline bool phb_abt_mode(struct phb4 *p __unused)
 {
 	if (is_phb5())
-		return 1;
+		return xive2_cap_phb_abt();
 
 	return false;
 }

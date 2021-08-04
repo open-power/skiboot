@@ -223,6 +223,7 @@ struct xive {
 	struct dt_node		*x_node;
 
 	enum xive_generation	 generation;
+	uint64_t		 capabilities;
 	uint64_t		 config;
 
 	uint64_t		 xscom_base;
@@ -339,8 +340,6 @@ struct xive {
 	/* INT HW Errata */
 	uint64_t		quirks;
 };
-
-#define XIVE_CAN_STORE_EOI(x) XIVE2_STORE_EOI_ENABLED
 
 /* First XIVE unit configured on the system */
 static struct xive *one_xive;
@@ -1508,6 +1507,10 @@ static const struct {
 	uint64_t bitmask;
 	const char *name;
 } xive_capabilities[] = {
+	{ CQ_XIVE_CAP_PHB_PQ_DISABLE, "PHB PQ disable mode support" },
+	{ CQ_XIVE_CAP_PHB_ABT, "PHB address based trigger mode support" },
+	{ CQ_XIVE_CAP_EXPLOITATION_MODE, "Exploitation mode" },
+	{ CQ_XIVE_CAP_STORE_EOI, "StoreEOI mode support" },
 };
 
 static void xive_dump_capabilities(struct xive *x, uint64_t cap_val)
@@ -1583,6 +1586,13 @@ static void xive_dump_configuration(struct xive *x, const char *prefix,
 	 CQ_XIVE_CFG_GEN1_TIMA_CROWD_DIS |				\
 	 CQ_XIVE_CFG_GEN1_END_ESX)
 
+static bool xive_has_cap(struct xive *x, uint64_t cap)
+{
+	return !!x && !!(x->capabilities & cap);
+}
+
+#define XIVE_CAN_STORE_EOI(x) xive_has_cap(x, CQ_XIVE_CAP_STORE_EOI)
+
 static void xive_config_reduced_priorities_fixup(struct xive *x)
 {
 	if (xive_cfg_vp_prio_shift(x) < CQ_XIVE_CFG_INT_PRIO_8 &&
@@ -1598,12 +1608,10 @@ static void xive_config_reduced_priorities_fixup(struct xive *x)
 
 static bool xive_config_init(struct xive *x)
 {
-	uint64_t cap_val;
+	x->capabilities = xive_regr(x, CQ_XIVE_CAP);
+	xive_dump_capabilities(x, x->capabilities);
 
-	cap_val = xive_regr(x, CQ_XIVE_CAP);
-	xive_dump_capabilities(x, cap_val);
-
-	x->generation = GETFIELD(CQ_XIVE_CAP_VERSION, cap_val);
+	x->generation = GETFIELD(CQ_XIVE_CAP_VERSION, x->capabilities);
 
 	/*
 	 * Allow QEMU to override version for tests
@@ -4417,6 +4425,40 @@ static void xive_init_globals(void)
 
 	for (i = 0; i < XIVE_MAX_CHIPS; i++)
 		xive_block_to_chip[i] = XIVE_INVALID_CHIP;
+}
+
+/*
+ * The global availability of some capabilities used in other drivers
+ * (PHB, PSI) is deduced from the capabilities of the first XIVE chip
+ * of the system. It should be common to all chips.
+ */
+bool xive2_cap_phb_pq_disable(void)
+{
+	return xive_has_cap(one_xive, CQ_XIVE_CAP_PHB_PQ_DISABLE);
+}
+
+bool xive2_cap_phb_abt(void)
+{
+	if (!xive_has_cap(one_xive, CQ_XIVE_CAP_PHB_ABT))
+		return false;
+
+	/*
+	 * We need 'PQ disable' to use ABT mode, else the OS will use
+	 * two different sets of ESB pages (PHB and IC) to control the
+	 * interrupt sources. Can not work.
+	 */
+	if (!xive2_cap_phb_pq_disable()) {
+		prlog_once(PR_ERR, "ABT mode is set without PQ disable. "
+			   "Ignoring bogus configuration\n");
+		return false;
+	}
+
+	return true;
+}
+
+bool xive2_cap_store_eoi(void)
+{
+	return xive_has_cap(one_xive, CQ_XIVE_CAP_STORE_EOI);
 }
 
 void xive2_init(void)
