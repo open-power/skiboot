@@ -1609,15 +1609,20 @@ static bool xive_cfg_save_restore(struct xive *x)
  *   1/3rd of the cache is reserved for PHB ESBs and the rest to
  *   IPIs. This is sufficient to keep all the PHB ESBs in cache and
  *   avoid ESB cache misses during IO interrupt processing.
+ *
+ * hash_array_enable :
+ *   Internal cache hashing optimization. The hash_array tracks for
+ *   ESBs where the original trigger came from so that we avoid
+ *   getting the EAS into the cache twice.
  */
 static void xive_config_esb_cache(struct xive *x)
 {
 	uint64_t val = xive_regr(x, VC_ESBC_CFG);
 
 	if (xive_has_cap(x, CQ_XIVE_CAP_PHB_PQ_DISABLE)) {
-		val |= VC_ESBC_CFG_SPLIT_MODE;
-		xive_dbg(x, "ESB cache configured with split mode. "
-			 "VC_ESBC_CFG=%016llx\n", val);
+		val |= VC_ESBC_CFG_SPLIT_MODE | VC_ESBC_CFG_HASH_ARRAY_ENABLE;
+		xive_dbg(x, "ESB cache configured with split mode "
+			 "and hash array. VC_ESBC_CFG=%016llx\n", val);
 	} else
 		val &= ~VC_ESBC_CFG_SPLIT_MODE;
 

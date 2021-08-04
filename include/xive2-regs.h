@@ -230,6 +230,8 @@
 /* ESBC configuration */
 #define X_VC_ESBC_CFG				0x148
 #define VC_ESBC_CFG				0x240
+#define	 VC_ESBC_CFG_HASH_ARRAY_ENABLE		PPC_BIT(40)
+#define	 VC_ESBC_CFG_HASH_STORE_MODE		PPC_BITMASK(41,42)
 #define	 VC_ESBC_CFG_SPLIT_MODE			PPC_BIT(56)
 
 /* EASC flush control register */
