@@ -551,6 +551,10 @@ int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		i_core &= SPR_PIR_P9_MASK;
 		i_core <<= 2;
 		break;
+	case proc_gen_p10:
+		i_core &= SPR_PIR_P10_MASK;
+		i_core <<= 2;
+		break;
 	default:
 		return OPAL_UNSUPPORTED;
 	}

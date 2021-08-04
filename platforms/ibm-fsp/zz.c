@@ -160,6 +160,12 @@ static bool zz_probe(void)
 	if (dt_node_is_compatible(dt_root, "ibm,fleetwood-m9s")) {
 		return true;
         }
+
+	/* Add Denali FSP platform and map it to ZZ */
+	if (dt_node_is_compatible(dt_root, "ibm,denali")) {
+		return true;
+        }
+
 	return false;
 }
 
