@@ -2140,12 +2140,6 @@ uint64_t xive2_get_notify_port(uint32_t chip_id, uint32_t ent)
 	 *
 	 * P10 might now be randomizing the cache line bits in HW to
 	 * balance snoop bus usage
-	 *
-	 * TODO (phb5) : implement "address based triggers" (DD2.0?)
-	 *
-	 * The PHBs would no longer target the notify port page but
-	 * the "base ESB MMIO address" of the ESB/EAS range they are
-	 * allocated. Needs a XIVE API change for the PHBs.
 	 */
 	switch(ent) {
 	case XIVE_HW_SRC_PHBn(0):

@@ -159,6 +159,18 @@ static inline bool phb_pq_disable(struct phb4 *p __unused)
 	return false;
 }
 
+/*
+ * Use the ESB page of the XIVE IC for event notification. Latency
+ * improvement.
+ */
+static inline bool phb_abt_mode(struct phb4 *p __unused)
+{
+	if (is_phb5())
+		return 1;
+
+	return false;
+}
+
 static inline bool phb_can_store_eoi(struct phb4 *p)
 {
 	if (is_phb5())
@@ -5000,12 +5012,49 @@ static const struct phb_ops phb4_ops = {
 
 static void phb4_init_ioda3(struct phb4 *p)
 {
-	/* Init_18 - Interrupt Notify Base Address */
-	out_be64(p->regs + PHB_INT_NOTIFY_ADDR, p->irq_port);
+	if (is_phb5()) {
+		/*
+		 * When ABT is on, the MSIs on the PHB use the PQ state bits
+		 * of the IC and MSI triggers from the PHB are forwarded
+		 * directly to the IC ESB page. However, the LSIs are still
+		 * controlled locally on the PHB and LSI triggers use a
+		 * special offset for trigger injection.
+		 */
+		if (phb_abt_mode(p)) {
+			uint64_t mmio_base = xive2_get_esb_base(p->base_msi);
 
-	/* Init_19 - Interrupt Notify Base Index */
-	out_be64(p->regs + PHB_INT_NOTIFY_INDEX,
-		 xive2_get_notify_base(p->base_msi));
+			PHBDBG(p, "Using ABT mode. ESB: 0x%016llx\n", mmio_base);
+
+			/* Init_18 - Interrupt Notify Base Address */
+			out_be64(p->regs + PHB_INT_NOTIFY_ADDR,
+				 PHB_INT_NOTIFY_ADDR_64K | mmio_base);
+
+			/* Interrupt Notify Base Index is unused */
+		} else {
+			p->irq_port = xive2_get_notify_port(p->chip_id,
+						XIVE_HW_SRC_PHBn(p->index));
+
+			PHBDBG(p, "Using IC notif page at 0x%016llx\n",
+						p->irq_port);
+
+			/* Init_18 - Interrupt Notify Base Address */
+			out_be64(p->regs + PHB_INT_NOTIFY_ADDR, p->irq_port);
+
+			/* Init_19 - Interrupt Notify Base Index */
+			out_be64(p->regs + PHB_INT_NOTIFY_INDEX,
+				 xive2_get_notify_base(p->base_msi));
+		}
+
+	} else { /* p9 */
+		p->irq_port = xive_get_notify_port(p->chip_id,
+						   XIVE_HW_SRC_PHBn(p->index));
+		/* Init_18 - Interrupt Notify Base Address */
+		out_be64(p->regs + PHB_INT_NOTIFY_ADDR, p->irq_port);
+
+		/* Init_19 - Interrupt Notify Base Index */
+		out_be64(p->regs + PHB_INT_NOTIFY_INDEX,
+			 xive_get_notify_base(p->base_msi));
+	}
 
 	/* Init_19x - Not in spec: Initialize source ID */
 	PHBDBG(p, "Reset state SRC_ID: %016llx\n",
@@ -5384,6 +5433,8 @@ static void phb4_init_hw(struct phb4 *p)
 	val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE);
 	if (phb_pq_disable(p))
 		val |= PHB_CTRLR_IRQ_PQ_DISABLE;
+	if (phb_abt_mode(p))
+		val |= PHB_CTRLR_IRQ_ABT_MODE;
 	if (phb_can_store_eoi(p)) {
 		val |= PHB_CTRLR_IRQ_STORE_EOI;
 		PHBDBG(p, "store EOI is enabled\n");
@@ -5958,7 +6009,7 @@ static void phb4_create(struct dt_node *np)
 		 * ESB pages of the XIVE IC for the MSI sources instead of the
 		 * ESB pages of the PHB.
 		 */
-		if (phb_pq_disable(p)) {
+		if (phb_pq_disable(p) || phb_abt_mode(p)) {
 			xive2_register_esb_source(p->base_msi, p->num_irqs - 8);
 		} else {
 			xive2_register_hw_source(p->base_msi,
