@@ -3072,6 +3072,18 @@ static void phb4_assert_perst(struct pci_slot *slot, bool assert)
 	phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL, linkctl);
 }
 
+static void set_sys_disable_detect(struct phb4 *p, bool set)
+{
+	uint64_t val;
+
+	val = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+	if (set)
+		val |= PHB_PCIE_DLP_SYS_DISABLEDETECT;
+	else
+		val &= ~PHB_PCIE_DLP_SYS_DISABLEDETECT;
+	out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, val);
+}
+
 static int64_t phb4_hreset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -3086,6 +3098,12 @@ static int64_t phb4_hreset(struct pci_slot *slot)
 		if (!presence) {
 			PHBDBG(p, "HRESET: No device\n");
 			return OPAL_SUCCESS;
+		}
+
+		/* circumvention for HW551382 */
+		if (is_phb5()) {
+			PHBINF(p, "HRESET: Workaround for HW551382\n");
+			set_sys_disable_detect(p, true);
 		}
 
 		PHBDBG(p, "HRESET: Prepare for link down\n");
@@ -3120,6 +3138,8 @@ static int64_t phb4_hreset(struct pci_slot *slot)
 		pci_slot_set_state(slot, PHB4_SLOT_HRESET_DELAY2);
 		return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 	case PHB4_SLOT_HRESET_DELAY2:
+		if (is_phb5())
+			set_sys_disable_detect(p, false);
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
 	default:
@@ -3146,6 +3166,12 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		phb4_prepare_link_change(slot, false);
 
 		if (!p->skip_perst) {
+			/* circumvention for HW551382 */
+			if (is_phb5()) {
+				PHBINF(p, "FRESET: Workaround for HW551382\n");
+				set_sys_disable_detect(p, true);
+			}
+
 			PHBDBG(p, "FRESET: Assert\n");
 			phb4_assert_perst(slot, true);
 			pci_slot_set_state(slot, PHB4_SLOT_FRESET_ASSERT_DELAY);
@@ -3168,6 +3194,9 @@ static int64_t phb4_freset(struct pci_slot *slot)
 
 		if (pci_tracing)
 			phb4_link_trace(p, PHB_PCIE_DLP_LTSSM_L0, 3000);
+
+		if (is_phb5())
+			set_sys_disable_detect(p, false);
 
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
@@ -3397,6 +3426,12 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		PHBDBG(p, "CRESET: Starts\n");
 
 		p->creset_start_time = mftb();
+
+		/* circumvention for HW551382 */
+		if (is_phb5()) {
+			PHBINF(p, "CRESET: Workaround for HW551382\n");
+			set_sys_disable_detect(p, true);
+		}
 
 		phb4_prepare_link_change(slot, false);
 		/* Clear error inject register, preventing recursive errors */
