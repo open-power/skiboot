@@ -41,6 +41,7 @@
 #define   PSIHB_CR_PSI_LINK_ENABLE	PPC_BIT(5)
 #define   PSIHB_CR_FSP_RESET		PPC_BIT(6)
 #define   PSIHB_CR_PSIHB_RESET		PPC_BIT(7)
+#define   PSIHB10_CR_STORE_EOI		PPC_BIT(12)
 #define   PSIHB_CR_PSI_IRQ		PPC_BIT(16)	/* PSIHB interrupt */
 #define   PSIHB_CR_FSP_IRQ		PPC_BIT(17)	/* FSP interrupt */
 #define   PSIHB_CR_FSP_LINK_ACTIVE	PPC_BIT(18)	/* FSP link active */

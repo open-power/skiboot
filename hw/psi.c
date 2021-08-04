@@ -749,11 +749,14 @@ static const struct irq_source_ops psi_p10_irq_ops = {
 	.name = psi_p9_irq_name,
 };
 
+#define PSIHB10_CAN_STORE_EOI(x) XIVE2_STORE_EOI_ENABLED
+
 static void psi_init_p10_interrupts(struct psi *psi)
 {
 	struct proc_chip *chip;
 	u64 val;
 	uint32_t esb_shift = 16;
+	uint32_t flags = XIVE_SRC_LSI;
 
 	/* Grab chip */
 	chip = get_chip(psi->chip_id);
@@ -772,6 +775,16 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	prlog(PR_DEBUG, "PSI[0x%03x]: ESB MMIO at @%p\n",
 	       psi->chip_id, psi->esb_mmio);
 
+	/* Store EOI */
+	if (PSIHB10_CAN_STORE_EOI(psi)) {
+		val = in_be64(psi->regs + PSIHB_CR);
+		val |= PSIHB10_CR_STORE_EOI;
+		out_be64(psi->regs + PSIHB_CR, val);
+		prlog(PR_DEBUG, "PSI[0x%03x]: store EOI is enabled\n",
+		      psi->chip_id);
+		flags |= XIVE_SRC_STORE_EOI;
+	}
+
 	/* Grab and configure the notification port */
 	val = xive2_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
 	val |= PSIHB_ESB_NOTIF_VALID;
@@ -788,7 +801,7 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	      psi->chip_id, 0xf & (chip->ec_level >> 4), chip->ec_level & 0xf);
 
 	xive2_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
-				esb_shift, psi->esb_mmio, XIVE_SRC_LSI,
+				esb_shift, psi->esb_mmio, flags,
 				psi, &psi_p10_irq_ops);
 
 	/* Reset irq handling and switch to ESB mode */
