@@ -151,6 +151,7 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 				     int phb_index, u8 active_phbs)
 {
 	struct dt_node *stack;
+	const char *compat;
 	u64 eq[8];
 	u8 *gen4;
 	int i;
@@ -158,9 +159,14 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 	stack = dt_new_addr(pbcq, "stack", stack_index);
 	assert(stack);
 
+	if (proc_gen == proc_gen_p9)
+		compat = "ibm,power9-phb-stack";
+	else
+		compat = "ibm,power10-phb-stack";
+
 	dt_add_property_cells(stack, "reg", stack_index);
 	dt_add_property_cells(stack, "ibm,phb-index", phb_index);
-	dt_add_property_string(stack, "compatible", "ibm,power9-phb-stack");
+	dt_add_property_string(stack, "compatible", compat);
 
 	/* XXX: This should probably just return if the PHB is disabled
 	 *      rather than adding the extra properties.
@@ -190,6 +196,7 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 	return stack;
 }
 
+/* Add PHB4 on p9, PHB5 on p10 */
 static struct dt_node *io_add_phb4(const struct cechub_io_hub *hub,
 				   const struct HDIF_common_hdr *sp_iohubs,
 				   struct dt_node *xcom,
@@ -199,9 +206,20 @@ static struct dt_node *io_add_phb4(const struct cechub_io_hub *hub,
 {
 	struct dt_node *pbcq;
 	uint8_t active_phb_mask = hub->fab_br0_pdt;
-	uint32_t pe_xscom  = 0x4010c00 + (pec_index * 0x0000400);
-	uint32_t pci_xscom = 0xd010800 + (pec_index * 0x1000000);
+	uint32_t pe_xscom;
+	uint32_t pci_xscom;
+	const char *compat;
 	int i;
+
+	if (proc_gen == proc_gen_p9) {
+		pe_xscom  = 0x4010c00 + (pec_index * 0x0000400);
+		pci_xscom = 0xd010800 + (pec_index * 0x1000000);
+		compat = "ibm,power9-pbcq";
+	} else {
+		pe_xscom  = 0x3011800 - (pec_index * 0x1000000);
+		pci_xscom = 0x8010800 + (pec_index * 0x1000000);
+		compat = "ibm,power10-pbcq";
+	}
 
 	/* Create PBCQ node under xscom */
 	pbcq = dt_new_addr(xcom, "pbcq", pe_xscom);
@@ -214,7 +232,7 @@ static struct dt_node *io_add_phb4(const struct cechub_io_hub *hub,
 				pci_xscom, 0x200);
 
 	/* The hubs themselves go under the stacks */
-	dt_add_property_strings(pbcq, "compatible", "ibm,power9-pbcq");
+	dt_add_property_strings(pbcq, "compatible", compat);
 	dt_add_property_cells(pbcq, "ibm,pec-index", pec_index);
 	dt_add_property_cells(pbcq, "#address-cells", 1);
 	dt_add_property_cells(pbcq, "#size-cells", 0);
@@ -229,7 +247,7 @@ static struct dt_node *io_add_phb4(const struct cechub_io_hub *hub,
 	 */
 	io_get_loc_code(sp_iohubs, pbcq, "ibm,loc-code");
 
-	prlog(PR_INFO, "CEC: Added PHB4 PBCQ %d with %d stacks\n",
+	prlog(PR_INFO, "CEC: Added PBCQ %d with %d stacks\n",
 		pec_index, stacks);
 
 	/* the actual PHB nodes created later on by skiboot */
@@ -267,6 +285,7 @@ static struct dt_node *io_add_p8(const struct cechub_io_hub *hub,
 	return xscom;
 }
 
+/* Add PBCQs for p9/p10 */
 static struct dt_node *io_add_p9(const struct cechub_io_hub *hub,
 				 const struct HDIF_common_hdr *sp_iohubs)
 {
@@ -280,17 +299,22 @@ static struct dt_node *io_add_p9(const struct cechub_io_hub *hub,
 
 	xscom = find_xscom_for_chip(chip_id);
 	if (!xscom) {
-		prerror("P9: Can't find XSCOM for chip %d\n", chip_id);
+		prerror("IOHUB: Can't find XSCOM for chip %d\n", chip_id);
 		return NULL;
 	}
 
-	prlog(PR_DEBUG, "IOHUB: PHB4 active bridge mask %x\n",
+	prlog(PR_DEBUG, "IOHUB: PHB active bridge mask %x\n",
 		(u32) hub->fab_br0_pdt);
 
 	/* Create PBCQs */
-	io_add_phb4(hub, sp_iohubs, xscom, 0, 1, 0);
-	io_add_phb4(hub, sp_iohubs, xscom, 1, 2, 1);
-	io_add_phb4(hub, sp_iohubs, xscom, 2, 3, 3);
+	if (proc_gen == proc_gen_p9) {
+		io_add_phb4(hub, sp_iohubs, xscom, 0, 1, 0);
+		io_add_phb4(hub, sp_iohubs, xscom, 1, 2, 1);
+		io_add_phb4(hub, sp_iohubs, xscom, 2, 3, 3);
+	} else { /* p10 */
+		io_add_phb4(hub, sp_iohubs, xscom, 0, 3, 0);
+		io_add_phb4(hub, sp_iohubs, xscom, 1, 3, 3);
+	}
 
 	return xscom;
 }
@@ -806,6 +830,10 @@ static void io_parse_fru(const void *sp_iohubs)
 			prlog(PR_INFO, "CEC:     Axone !\n");
 			io_add_p9(hub, sp_iohubs);
 			break;
+		case CECHUB_HUB_RAINIER:
+			prlog(PR_INFO, "CEC:     Rainier !\n");
+			io_add_p9(hub, sp_iohubs);
+			break;
 		default:
 			prlog(PR_ERR, "CEC:     Hub ID 0x%04x unsupported !\n",
 			      hub_id);
@@ -817,7 +845,7 @@ static void io_parse_fru(const void *sp_iohubs)
 		io_parse_slots(sp_iohubs, chip_id);
 	}
 
-	if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p9)
+	if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
 		io_add_p8_cec_vpd(sp_iohubs);
 }
 

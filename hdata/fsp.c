@@ -355,7 +355,7 @@ static void add_ipmi_sensors(struct dt_node *bmc_node)
 static void bmc_create_node(const struct HDIF_common_hdr *sp)
 {
 	struct dt_node *bmc_node;
-	u32 fw_bar, io_bar, mem_bar, internal_bar;
+	u32 fw_bar, io_bar, mem_bar, internal_bar, mctp_base;
 	const struct spss_iopath *iopath;
 	const struct spss_sp_impl *sp_impl;
 	struct dt_node *lpcm, *lpc, *n;
@@ -370,7 +370,8 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	dt_add_property_cells(bmc_node, "#size-cells", 0);
 
 	/* Add sensor info under /bmc */
-	add_ipmi_sensors(bmc_node);
+	if (proc_gen < proc_gen_p10)
+		add_ipmi_sensors(bmc_node);
 
 	sp_impl = HDIF_get_idata(sp, SPSS_IDATA_SP_IMPL, &size);
 	if (CHECK_SPPTR(sp_impl) && (size > 8)) {
@@ -425,12 +426,17 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	mem_bar = be32_to_cpu(iopath->lpc.memory_bar);
 	io_bar = be32_to_cpu(iopath->lpc.io_bar);
 	internal_bar = be32_to_cpu(iopath->lpc.internal_bar);
+	mctp_base = be32_to_cpu(iopath->lpc.mctp_base);
 
 	prlog(PR_DEBUG, "LPC: IOPATH chip id = %x\n", chip_id);
 	prlog(PR_DEBUG, "LPC: FW BAR       = %#x\n", fw_bar);
 	prlog(PR_DEBUG, "LPC: MEM BAR      = %#x\n", mem_bar);
 	prlog(PR_DEBUG, "LPC: IO BAR       = %#x\n", io_bar);
 	prlog(PR_DEBUG, "LPC: Internal BAR = %#x\n", internal_bar);
+	if (proc_gen >= proc_gen_p10) {
+		/* MCTP is part of FW BAR */
+		prlog(PR_DEBUG, "LPC: MCTP base    = %#x\n", mctp_base);
+	}
 
 	/*
 	 * The internal address space BAR actually points to the LPC master

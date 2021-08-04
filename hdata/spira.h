@@ -304,7 +304,7 @@ struct spss_iopath {
 			__be32	firmware_bar;
 			__be32	internal_bar;
 
-			__be32	reserved2;
+			__be32	mctp_base;
 
 			__be64	uart_base;
 			__be32	uart_size;
@@ -316,13 +316,27 @@ struct spss_iopath {
 #define			UART_INT_LVL_LOW	0x1
 #define			UART_INT_RISING		0x2
 #define			UART_INT_LVL_HIGH	0x3
-			uint8_t reserved3[2];
+			uint8_t uart_valid;
+			uint8_t reserved3;
 
 			__be64	bt_base;
 			__be32	bt_size;
 			uint8_t	bt_sms_int_num;
 			uint8_t	bt_bmc_response_int_num;
 			uint8_t	reserved4[2];
+
+			__be16	kcs_data_reg_addr;
+			__be16	kcs_status_reg_addr;
+			uint8_t kcs_int_number;
+
+			__be64	uart2_base;
+			__be32	uart2_size;
+			__be32	uart2_clk;  /* UART baud clock in Hz */
+			__be32	uart2_baud; /* UART baud rate */
+			uint8_t uart2_int_number;
+			uint8_t uart2_int_type;
+			uint8_t uart2_valid;
+			uint8_t reserved5;
 		} __packed lpc;
 	};
 } __packed;
@@ -493,6 +507,7 @@ struct msvpd_ms_addr_config {
 	__be64	 max_possible_ms_address;
 	__be32	 deprecated;
 	__be64	 mirrorable_memory_starting_address;
+	__be64	 hrmor_stash_loc_address;
 } __packed;
 
 /* Idata index 1: Total configured mainstore */
@@ -651,6 +666,7 @@ struct cechub_io_hub {
 #define CECHUB_HUB_NIMBUS_LAGRANGE	0x0022	/* Nimbus+lagrange from spec */
 #define CECHUB_HUB_CUMULUS_DUOMO	0x0030	/* cumulus+duomo from spec */
 #define CECHUB_HUB_AXONE_HOPPER		0x0040	/* axone+hopper */
+#define CECHUB_HUB_RAINIER		0x0050
 	__be32		ec_level;
 	__be32		aff_dom2;	/* HDAT < v9.x only */
 	__be32		aff_dom3;	/* HDAT < v9.x only */

@@ -53,6 +53,8 @@ struct HDIF_ms_area_address_range {
 #define   PHYS_ATTR_STATUS_SAVE_FAILED	0x02
 #define   PHYS_ATTR_STATUS_SAVED	0x04
 #define   PHYS_ATTR_STATUS_NOT_SAVED	0x08
+#define   PHYS_ATTR_STATUS_ENCRYPTED	0x10
+#define   PHYS_ATTR_STATUS_ERR_DETECTED	0x40
 #define   PHYS_ATTR_STATUS_MEM_INVALID	0xff
 
 /* Memory Controller ID for Nimbus P9 systems */
@@ -514,7 +516,7 @@ static void add_memory_buffer_mmio(const struct HDIF_common_hdr *msarea)
 	struct dt_node *membuf;
 	beint64_t *reg, *flags;
 
-	if (PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P9P)
+	if (proc_gen <= proc_gen_p9 && PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P9P)
 		return;
 
 	if (be16_to_cpu(msarea->version) < 0x50) {
@@ -911,7 +913,8 @@ static bool __memory_parse(struct dt_node *root)
 	prlog(PR_DEBUG, "MS VPD: is at %p\n", ms_vpd);
 
 	msac = HDIF_get_idata(ms_vpd, MSVPD_IDATA_MS_ADDR_CONFIG, &size);
-	if (!CHECK_SPPTR(msac) || size < sizeof(*msac)) {
+	if (!CHECK_SPPTR(msac) ||
+	    size < offsetof(struct msvpd_ms_addr_config, max_possible_ms_address)) {
 		prerror("MS VPD: bad msac size %u @ %p\n", size, msac);
 		op_display(OP_FATAL, OP_MOD_MEM, 0x0002);
 		return false;
@@ -953,4 +956,3 @@ void memory_parse(void)
 		abort();
 	}
 }
-
