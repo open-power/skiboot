@@ -157,8 +157,12 @@ static void guess_chip_gen(void)
 		set_chip_gen(p9_chip_units);
 		return;
 
+	case 0x0080: /* power10 */
+		set_chip_gen(p10_chip_units);
+		return;
+
 	default:
-		fprintf(stderr, "Unsupported processor (pvr %#x)! Set the processor generation manually with -8 or -9\n", pvr);
+		fprintf(stderr, "Unsupported processor (pvr %#x)! Set the processor generation manually with -8, -9 or -0\n", pvr);
 		exit(1);
 	}
 }
@@ -773,7 +777,8 @@ static void usage(const char *progname)
 	fprintf(stderr, "Usage: %s [-a -e -f <file> -p] <command> [<args>]\n\n",
 			progname);
 	fprintf(stderr, "-8 --p8\n");
-	fprintf(stderr, "-9 --p9\n\tSet the processor generation\n\n");
+	fprintf(stderr, "-9 --p9\n");
+	fprintf(stderr, "-0 --p10\n\tSet the processor generation\n\n");
 	fprintf(stderr, "-e --ecc\n\tForce reading/writing with ECC bytes.\n\n");
 	fprintf(stderr, "-f --file <file>\n\tDon't search for MTD device,"
 	                " read from <file>.\n\n");
@@ -802,9 +807,10 @@ static struct option global_options[] = {
 	{ "ecc", no_argument, 0, 'e' },
 	{ "p8", no_argument, 0, '8' },
 	{ "p9", no_argument, 0, '9' },
+	{ "p10", no_argument, 0, '0' },
 	{ 0 },
 };
-static const char *global_optstring = "+ef:p89";
+static const char *global_optstring = "+ef:p890";
 
 int main(int argc, char **argv)
 {
@@ -852,6 +858,9 @@ int main(int argc, char **argv)
 			break;
 		case '9':
 			set_chip_gen(p9_chip_units);
+			break;
+		case '0':
+			set_chip_gen(p10_chip_units);
 			break;
 		case '?':
 			usage(progname);

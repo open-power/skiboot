@@ -71,3 +71,4 @@ struct chip_unit_desc {
 extern const struct chip_unit_desc *chip_units;
 extern const struct chip_unit_desc p8_chip_units[];
 extern const struct chip_unit_desc p9_chip_units[];
+extern const struct chip_unit_desc p10_chip_units[];
