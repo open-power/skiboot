@@ -4282,7 +4282,7 @@ static int64_t phb4_get_capp_info(int chip_id, struct phb *phb,
 
 static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 {
-	uint64_t reg;
+	uint64_t addr, reg;
 	uint32_t offset;
 	uint8_t link_width_x16 = 1;
 
@@ -4293,9 +4293,10 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 		/* Check if PEC2 is in x8 or x16 mode.
 		 * PEC0 is always in x16
 		 */
-		xscom_read(p->chip_id, XPEC_PCI2_CPLT_CONF1, &reg);
-		link_width_x16 = ((reg & XPEC_PCI2_IOVALID_MASK) ==
-				  XPEC_PCI2_IOVALID_X16);
+		addr = XPEC_P9_PCI_CPLT_CONF1 + 2 * XPEC_PCI_CPLT_OFFSET;
+		xscom_read(p->chip_id, addr, &reg);
+		link_width_x16 = ((reg & XPEC_P9_PCI_IOVALID_MASK) ==
+				  XPEC_P9_PCI_IOVALID_X16);
 	}
 
 	/* APC Master PowerBus Control Register */
@@ -4515,7 +4516,7 @@ static void phb4_init_capp_errors(struct phb4 *p)
 static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 				uint32_t capp_eng)
 {
-	uint64_t reg, start_addr, end_addr, stq_eng, dma_eng;
+	uint64_t addr, reg, start_addr, end_addr, stq_eng, dma_eng;
 	uint64_t mbt0, mbt1;
 	int i, window_num = -1;
 
@@ -4553,9 +4554,9 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 
 	if (p->index == CAPP1_PHB_INDEX) {
 		/* Check if PEC is in x8 or x16 mode */
-		xscom_read(p->chip_id, XPEC_PCI2_CPLT_CONF1, &reg);
-
-		if ((reg & XPEC_PCI2_IOVALID_MASK) == XPEC_PCI2_IOVALID_X16) {
+		addr = XPEC_P9_PCI_CPLT_CONF1 + 2 * XPEC_PCI_CPLT_OFFSET;
+		xscom_read(p->chip_id, addr, &reg);
+		if ((reg & XPEC_P9_PCI_IOVALID_MASK) == XPEC_P9_PCI_IOVALID_X16) {
 			/* PBCQ is operating as a x16 stack
 			 * - The maximum number of engines give to CAPP will be
 			 * 14 and will be assigned in the order of STQ 15 to 2.
