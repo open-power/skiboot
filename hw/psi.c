@@ -564,7 +564,16 @@ static void psi_p9_mask_unhandled_irq(struct irq_source *is, uint32_t isn)
 	 * have a handler for the interrupt then it needs to be masked to
 	 * prevent the IRQ from locking up the thread which handles it.
 	 */
-	xive_source_mask(is, isn);
+	switch (proc_gen) {
+	case proc_gen_p9:
+		xive_source_mask(is, isn);
+		break;
+	case proc_gen_p10:
+		xive2_source_mask(is, isn);
+		return;
+	default:
+		assert(false);
+	}
 
 }
 

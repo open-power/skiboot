@@ -91,6 +91,8 @@ uint64_t xive2_get_esb_base(uint32_t girq);
 void xive2_cpu_callin(struct cpu_thread *cpu);
 void *xive2_get_trigger_port(uint32_t girq);
 
+void xive2_source_mask(struct irq_source *is, uint32_t isn);
+
 void xive2_cpu_reset(void);
 void xive2_late_init(void);
 
