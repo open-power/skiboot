@@ -828,9 +828,9 @@ init_shared_sprs:
 
 	/* HID0:
 	 * Boot with PPC_BIT(5) set (dis_recovery).
-	 * Clear bit 5 to enable recovery.
+	 * Leave bit 5 set to disable recovery (due to HW570622)
 	 */
-	LOAD_IMM64(%r3, 0)
+	LOAD_IMM64(%r3, PPC_BIT(5))
 	sync
 	mtspr	SPR_HID0,%r3
 	isync

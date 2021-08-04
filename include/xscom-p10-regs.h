@@ -4,6 +4,8 @@
 /* Core FIR (Fault Isolation Register) */
 #define P10_CORE_FIR		0x440
 
+#define P10_CORE_FIRMASK_OR	0x445
+
 /* Core WOF (Whose On First) */
 #define P10_CORE_WOF		0x448
 

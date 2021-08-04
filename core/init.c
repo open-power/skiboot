@@ -47,6 +47,7 @@
 #include <debug_descriptor.h>
 #include <occ.h>
 #include <opal-dump.h>
+#include <xscom-p10-regs.h>
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
@@ -989,6 +990,38 @@ bool verify_romem(void)
 	return true;
 }
 
+static void mask_pc_system_xstop(void)
+{
+        struct cpu_thread *cpu;
+        uint32_t chip_id, core_id;
+        int rc;
+
+	if (proc_gen != proc_gen_p10)
+                return;
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return;
+
+        /*
+         * On P10 Mask PC system checkstop (bit 28). This is needed
+         * for HW570622. We keep processor recovery disabled via
+         * HID[5] and mask the checkstop that it can cause. CME does
+         * the recovery handling for us.
+         */
+        for_each_cpu(cpu) {
+                chip_id = cpu->chip_id;
+                core_id = pir_to_core_id(cpu->pir);
+
+                rc = xscom_write(chip_id,
+                                 XSCOM_ADDR_P10_EC(core_id, P10_CORE_FIRMASK_OR),
+                                 PPC_BIT(28));
+                if (rc)
+                        prerror("Error setting FIR MASK rc:%d on PIR:%x\n",
+                                rc, cpu->pir);
+        }
+}
+
+
 /* Called from head.S, thus no prototype. */
 void __noreturn __nomcount  main_cpu_entry(const void *fdt);
 
@@ -1169,6 +1202,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	init_all_cpus();
 	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
 		cpu_set_ipi_enable(true);
+
+        /* Once all CPU are up apply this workaround */
+        mask_pc_system_xstop();
 
 	/* Add the /opal node to the device-tree */
 	add_opal_node();
