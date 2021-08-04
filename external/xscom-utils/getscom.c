@@ -56,6 +56,9 @@ static void print_chip_info(uint32_t chip_id)
 	case 0xd9:
 		name = "P9P (Axone) processor";
 		break;
+	case 0xda:
+		name = "P10 processor";
+		break;
 	case 0xe9:
 		name = "Centaur memory buffer";
 		break;

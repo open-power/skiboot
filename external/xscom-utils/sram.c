@@ -28,6 +28,7 @@
 #define PVR_TYPE_P8NVL  0x004c /* Naples */
 #define PVR_TYPE_P9     0x004e
 #define PVR_TYPE_P9P    0x004f /* Axone */
+#define PVR_TYPE_P10	0x0080
 
 #ifdef __powerpc__
 static uint64_t get_xscom_base(void)
@@ -39,6 +40,7 @@ static uint64_t get_xscom_base(void)
 	switch (pvr >> 16) {
 	case PVR_TYPE_P9:
 	case PVR_TYPE_P9P:
+	case PVR_TYPE_P10: /* P10 OCB_PIB OCC Control Register is same for P9 and P10 */
 		return OCB_PIB_BASE_P9;
 
 	case PVR_TYPE_P8E:
