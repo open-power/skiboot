@@ -136,8 +136,6 @@ static void phb4_init_hw(struct phb4 *p);
 #define PHBLOGCFG(p, fmt, a...) do {} while (0)
 #endif
 
-#define PHB4_CAN_STORE_EOI(p) XIVE_STORE_EOI_ENABLED
-
 static bool pci_eeh_mmio;
 static bool pci_retry_all;
 static int rx_err_max = PHB4_RX_ERR_MAX;
@@ -150,6 +148,24 @@ static inline bool is_phb4(void)
 static inline bool is_phb5(void)
 {
 	return (proc_gen == proc_gen_p10);
+}
+
+/* PQ offloading on the XIVE IC. */
+static inline bool phb_pq_disable(struct phb4 *p __unused)
+{
+	if (is_phb5())
+		return 1;
+
+	return false;
+}
+
+static inline bool phb_can_store_eoi(struct phb4 *p)
+{
+	if (is_phb5())
+		/* PQ offloading is required for StoreEOI */
+		return XIVE2_STORE_EOI_ENABLED && phb_pq_disable(p);
+
+	return XIVE_STORE_EOI_ENABLED;
 }
 
 /* Note: The "ASB" name is historical, practically this means access via
@@ -5366,8 +5382,12 @@ static void phb4_init_hw(struct phb4 *p)
 	val = PHB_CTRLR_IRQ_PGSZ_64K;
 	val |= PHB_CTRLR_TCE_CLB_DISABLE; // HW557787 circumvention
 	val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE);
-	if (PHB4_CAN_STORE_EOI(p))
+	if (phb_pq_disable(p))
+		val |= PHB_CTRLR_IRQ_PQ_DISABLE;
+	if (phb_can_store_eoi(p)) {
 		val |= PHB_CTRLR_IRQ_STORE_EOI;
+		PHBDBG(p, "store EOI is enabled\n");
+	}
 
 	if (!pci_eeh_mmio)
 		val |= PHB_CTRLR_MMIO_EEH_DISABLE;
@@ -5927,16 +5947,29 @@ static void phb4_create(struct dt_node *np)
 
 	/* Compute XIVE source flags depending on PHB revision */
 	irq_flags = 0;
-	if (PHB4_CAN_STORE_EOI(p))
+	if (phb_can_store_eoi(p))
 		irq_flags |= XIVE_SRC_STORE_EOI;
 	else
 		irq_flags |= XIVE_SRC_TRIGGER_PAGE;
 
 	if (is_phb5()) {
-		/* Register all interrupt sources with XIVE */
-		xive2_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
-					 p->int_mmio, irq_flags, NULL, NULL);
+		/*
+		 * Register sources with XIVE. If offloading is on, use the
+		 * ESB pages of the XIVE IC for the MSI sources instead of the
+		 * ESB pages of the PHB.
+		 */
+		if (phb_pq_disable(p)) {
+			xive2_register_esb_source(p->base_msi, p->num_irqs - 8);
+		} else {
+			xive2_register_hw_source(p->base_msi,
+						 p->num_irqs - 8, 16,
+						 p->int_mmio, irq_flags,
+						 NULL, NULL);
+		}
 
+		/*
+		 * LSI sources always use the ESB pages of the PHB.
+		 */
 		xive2_register_hw_source(p->base_lsi, 8, 16,
 					 p->int_mmio + ((p->num_irqs - 8) << 16),
 					 XIVE_SRC_LSI, p, &phb4_lsi_ops);

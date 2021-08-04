@@ -2578,8 +2578,8 @@ void xive2_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,
 			       false, data, ops);
 }
 
-void xive2_register_ipi_source(uint32_t base, uint32_t count, void *data,
-			      const struct irq_source_ops *ops)
+static void __xive2_register_esb_source(uint32_t base, uint32_t count,
+				void *data, const struct irq_source_ops *ops)
 {
 	struct xive_src *s;
 	struct xive *x = xive_from_isn(base);
@@ -2588,7 +2588,6 @@ void xive2_register_ipi_source(uint32_t base, uint32_t count, void *data,
 	uint32_t flags = XIVE_SRC_EOI_PAGE1 | XIVE_SRC_TRIGGER_PAGE;
 
 	assert(x);
-	assert(base >= x->int_base && (base + count) <= x->int_ipi_top);
 
 	s = malloc(sizeof(struct xive_src));
 	assert(s);
@@ -2602,6 +2601,41 @@ void xive2_register_ipi_source(uint32_t base, uint32_t count, void *data,
 	mmio_base = x->esb_base + (1ul << XIVE_ESB_SHIFT) * base_idx;
 	__xive_register_source(x, s, base, count, XIVE_ESB_SHIFT, mmio_base,
 			       flags, false, data, ops);
+}
+
+/*
+ * Check that IPI sources have interrupt numbers in the IPI interrupt
+ * number range
+ */
+void xive2_register_ipi_source(uint32_t base, uint32_t count, void *data,
+			       const struct irq_source_ops *ops)
+{
+	struct xive *x = xive_from_isn(base);
+
+	assert(x);
+	assert(base >= x->int_base && (base + count) <= x->int_ipi_top);
+
+	__xive2_register_esb_source(base, count, data, ops);
+}
+
+/*
+ * Some HW sources (PHB) can disable the use of their own ESB pages
+ * and offload all the checks on ESB pages of the IC. The interrupt
+ * numbers are not necessarily in the IPI range.
+ */
+void xive2_register_esb_source(uint32_t base, uint32_t count)
+{
+	__xive2_register_esb_source(base, count, NULL, NULL);
+}
+
+uint64_t xive2_get_esb_base(uint32_t base)
+{
+	struct xive *x = xive_from_isn(base);
+	uint32_t base_idx = GIRQ_TO_IDX(base);
+
+	assert(x);
+
+	return (uint64_t) x->esb_base + (1ul << XIVE_ESB_SHIFT) * base_idx;
 }
 
 static void xive_set_quirks(struct xive *x, struct proc_chip *chip __unused)

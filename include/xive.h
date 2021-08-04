@@ -86,6 +86,8 @@ void xive2_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,
 			     const struct irq_source_ops *ops);
 void xive2_register_ipi_source(uint32_t base, uint32_t count, void *data,
 			      const struct irq_source_ops *ops);
+void xive2_register_esb_source(uint32_t base, uint32_t count);
+uint64_t xive2_get_esb_base(uint32_t girq);
 void xive2_cpu_callin(struct cpu_thread *cpu);
 void *xive2_get_trigger_port(uint32_t girq);
 
