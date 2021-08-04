@@ -115,6 +115,30 @@ static int nx_cfg_umac_status_ctrl(u32 gcid, u64 xcfg)
 	return rc;
 }
 
+static int nx_cfg_vas_rma_bar(u32 gcid, u64 xcfg)
+{
+	int rc = 0;
+	u64 cfg;
+
+	cfg = vas_get_rma_bar(gcid);
+	/*
+	 * NOTE: Write the entire bar address to SCOM. VAS/NX will extract
+	 *	 the relevant (NX_P10_VAS_RMA_WRITE_BAR) bits. IOW, _don't_
+	 *	 just write the bit field like:
+	 *	 cfg = SETFIELD(NX_P10_VAS_RMA_WRITE_BAR, 0ULL, cfg);
+	 */
+	rc = xscom_write(gcid, xcfg, cfg);
+
+	if (rc)
+		prerror("NX%d: ERROR: VAS RMA WRITE BAR, %d\n", gcid, rc);
+	else
+		prlog(PR_DEBUG, "NX%d: VAS RMA WRITE BAR, 0x%016lx, "
+				"xcfg 0x%llx\n", gcid, (unsigned long)cfg,
+				xcfg);
+
+	return rc;
+}
+
 int nx_cfg_rx_fifo(struct dt_node *node, const char *compat,
 			const char *priority, u32 gcid, u32 pid, u32 tid,
 			u64 umac_bar, u64 umac_notify)
@@ -272,6 +296,10 @@ void nx_create_compress_node(struct dt_node *node)
 
 	prlog(PR_INFO, "NX%d: 842 at 0x%x\n", gcid, pb_base);
 
+	/*
+	 * ibm,power9-nx is compatible on P10. So using same
+	 * compatible string.
+	 */
 	if (dt_node_is_compatible(node, "ibm,power9-nx")) {
 		u64 cfg_mmio, cfg_txwc, cfg_uctrl, cfg_dma;
 
@@ -296,6 +324,14 @@ void nx_create_compress_node(struct dt_node *node)
 		rc = nx_cfg_umac_status_ctrl(gcid, cfg_uctrl);
 		if (rc)
 			return;
+
+		if (proc_gen > proc_gen_p9) {
+			u64 cfg_rma = pb_base + NX_P10_VAS_RMA_WRITE_BAR;
+
+			rc = nx_cfg_vas_rma_bar(gcid, cfg_rma);
+			if (rc)
+				return;
+		}
 
 		p9_nx_enable_842(node, gcid, pb_base);
 		p9_nx_enable_gzip(node, gcid, pb_base);

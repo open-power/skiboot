@@ -281,6 +281,24 @@ static void get_rma_bar(struct proc_chip *chip, uint64_t *val)
 	*val = v;
 }
 
+/* Interface for NX - make sure VAS is fully initialized first */
+__attrconst uint64_t vas_get_rma_bar(int chipid)
+{
+	struct proc_chip *chip;
+	uint64_t addr;
+
+	if (!vas_initialized)
+		return 0ULL;
+
+	chip = get_chip(chipid);
+	if (!chip)
+		return 0ULL;
+
+	get_rma_bar(chip, &addr);
+
+	return addr;
+}
+
 /*
  * Initialize RMA BAR on this chip to correspond to its node/chip id.
  * This will cause VAS to accept paste commands to targeted for this chip.

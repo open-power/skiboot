@@ -141,6 +141,9 @@
 
 #define NX_P9_ERAT_STATUS_CTRL			NX_P9_SAT(0x3, 0x16)
 
+/* Introduced in P10, but P10 NX SCOM address is same as P9 */
+#define	NX_P10_VAS_RMA_WRITE_BAR		NX_P9_SAT(0x3, 0x19)
+
 /* NX Status Register */
 #define NX_P8_STATUS		NX_P8_SAT(0x1, 0x00)
 #define NX_P9_STATUS		NX_P9_SAT(0x1, 0x00) /* DMA Status register */
