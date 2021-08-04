@@ -1491,6 +1491,8 @@ static bool xive_configure_bars(struct xive *x)
 	xive_dbg(x, "NVP: %14p [0x%012llx]\n", x->nvp_base, x->nvp_size);
 	xive_dbg(x, "ESB: %14p [0x%012llx]\n", x->esb_base, x->esb_size);
 	xive_dbg(x, "END: %14p [0x%012llx]\n", x->end_base, x->end_size);
+	xive_dbg(x, "OVF: %14p [0x%012x]\n", x->q_ovf,
+		 VC_QUEUE_COUNT * PAGE_SIZE);
 
 	return true;
 }
@@ -1897,8 +1899,22 @@ static bool xive_prealloc_tables(struct xive *x)
 		return false;
 	}
 
-	/* Allocate the queue overflow pages */
-	x->q_ovf = local_alloc(x->chip_id, VC_QUEUE_COUNT * PAGE_SIZE, PAGE_SIZE);
+	/*
+	 * The Memory Coherence Directory uses 16M "granule" to track
+	 * shared copies of a cache line. If any cache line within the
+	 * 16M range gets touched by someone outside of the group, the
+	 * MCD forces accesses to any cache line within the range to
+	 * include everyone that might have a shared copy.
+	 */
+#define QUEUE_OVF_ALIGN (16 << 20) /* MCD granule size */
+
+	/*
+	 * Allocate the queue overflow pages and use a 16M alignment
+	 * to avoid sharing with other structures and reduce traffic
+	 * on the PowerBus.
+	 */
+	x->q_ovf = local_alloc(x->chip_id, VC_QUEUE_COUNT * PAGE_SIZE,
+			       QUEUE_OVF_ALIGN);
 	if (!x->q_ovf) {
 		xive_err(x, "Failed to allocate queue overflow\n");
 		return false;
