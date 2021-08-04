@@ -1225,8 +1225,11 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	if (proc_gen == proc_gen_p8)
 		cpu_set_ipi_enable(true);
 
-	/* On P9, initialize XIVE */
-	init_xive();
+	/* On P9 and P10, initialize XIVE */
+	if (proc_gen == proc_gen_p9)
+		init_xive();
+	else if (proc_gen == proc_gen_p10)
+		xive2_init();
 
 	/* Grab centaurs from device-tree if present (only on FSP-less) */
 	centaur_init();
@@ -1437,7 +1440,10 @@ void __noreturn __secondary_cpu_entry(void)
 	mtmsrd(MSR_RI, 1);
 
 	/* Some XIVE setup */
-	xive_cpu_callin(cpu);
+	if (proc_gen == proc_gen_p9)
+		xive_cpu_callin(cpu);
+	else if (proc_gen == proc_gen_p10)
+		xive2_cpu_callin(cpu);
 
 	/* Wait for work to do */
 	while(true) {

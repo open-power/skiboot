@@ -1776,7 +1776,8 @@ static void xive_create_mmio_dt_node(struct xive *x)
 	dt_add_property_cells(xive_dt_node, "ibm,xive-eq-sizes",
 			      12, 16, 21, 24);
 
-	dt_add_property_cells(xive_dt_node, "ibm,xive-#priorities", 8);
+	dt_add_property_cells(xive_dt_node, "ibm,xive-#priorities",
+			      NUM_INT_PRIORITIES);
 	dt_add_property(xive_dt_node, "single-escalation-support", NULL, 0);
 
 	xive_add_provisioning_properties();
@@ -4191,7 +4192,8 @@ static int64_t xive_setup_silent_gather(uint64_t vp_id, bool enable)
 	if (!memcmp(eq_orig, &eq, sizeof(eq)))
 		rc = 0;
 	else
-		rc = xive_eqc_cache_update(x, blk, idx + 7, &eq, false);
+		rc = xive_eqc_cache_update(x, blk, idx + XIVE_ESCALATION_PRIO,
+					   &eq, false);
 	if (rc)
 		return rc;
 

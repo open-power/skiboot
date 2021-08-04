@@ -772,12 +772,12 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	       psi->chip_id, psi->esb_mmio);
 
 	/* Grab and configure the notification port */
-	val = xive_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
+	val = xive2_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
 	val |= PSIHB_ESB_NOTIF_VALID;
 	out_be64(psi->regs + PSIHB_ESB_NOTIF_ADDR, val);
 
 	/* Setup interrupt offset */
-	val = xive_get_notify_base(psi->interrupt);
+	val = xive2_get_notify_base(psi->interrupt);
 	val <<= 32;
 	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
 
@@ -786,7 +786,7 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	      "PSI[0x%03x]: Interrupts sources registered for P10 DD%i.%i\n",
 	      psi->chip_id, 0xf & (chip->ec_level >> 4), chip->ec_level & 0xf);
 
-	xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
+	xive2_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
 				esb_shift, psi->esb_mmio, XIVE_SRC_LSI,
 				psi, &psi_p10_irq_ops);
 
@@ -956,6 +956,23 @@ static struct psi *psi_probe_p9(struct proc_chip *chip, u64 base)
 	return psi;
 }
 
+static struct psi *psi_probe_p10(struct proc_chip *chip, u64 base)
+{
+	struct psi *psi = NULL;
+	uint64_t addr;
+
+	phys_map_get(chip->id, PSIHB_REG, 0, &addr, NULL);
+	xscom_write(chip->id, base + PSIHB_XSCOM_P9_BASE,
+		    addr | PSIHB_XSCOM_P9_HBBAR_EN);
+
+	psi = alloc_psi(chip, base);
+	if (!psi)
+		return NULL;
+	psi->regs = (void *)addr;
+	psi->interrupt = xive2_alloc_hw_irqs(chip->id, P9_PSI_NUM_IRQS, 16);
+	return psi;
+}
+
 static bool psi_init_psihb(struct dt_node *psihb)
 {
 	uint32_t chip_id = dt_get_chip_id(psihb);
@@ -974,6 +991,8 @@ static bool psi_init_psihb(struct dt_node *psihb)
 		psi = psi_probe_p8(chip, base);
 	else if (dt_node_is_compatible(psihb, "ibm,power9-psihb-x"))
 		psi = psi_probe_p9(chip, base);
+	else if (dt_node_is_compatible(psihb, "ibm,power10-psihb-x"))
+		psi = psi_probe_p10(chip, base);
 	else {
 		prerror("PSI: Unknown processor type\n");
 		return false;

@@ -63,4 +63,33 @@ void xive_source_mask(struct irq_source *is, uint32_t isn);
 void xive_cpu_reset(void);
 void xive_late_init(void);
 
+/*
+ * POWER10
+ */
+
+/*
+ * StoreEOI requires the OS to enforce load-after-store ordering and
+ * the PHB5 should be configured in Address-based trigger mode with PQ
+ * state bit offloading.
+ */
+#define XIVE2_STORE_EOI_ENABLED 1
+
+void xive2_init(void);
+int64_t xive2_reset(void);
+
+uint32_t xive2_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align);
+uint32_t xive2_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align);
+uint64_t xive2_get_notify_port(uint32_t chip_id, uint32_t ent);
+__attrconst uint32_t xive2_get_notify_base(uint32_t girq);
+void xive2_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,
+			     void *mmio, uint32_t flags, void *data,
+			     const struct irq_source_ops *ops);
+void xive2_register_ipi_source(uint32_t base, uint32_t count, void *data,
+			      const struct irq_source_ops *ops);
+void xive2_cpu_callin(struct cpu_thread *cpu);
+void *xive2_get_trigger_port(uint32_t girq);
+
+void xive2_cpu_reset(void);
+void xive2_late_init(void);
+
 #endif /* XIVE_H */
