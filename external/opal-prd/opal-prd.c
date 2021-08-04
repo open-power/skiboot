@@ -1508,17 +1508,23 @@ static int pm_complex_load_start(void)
 
 	range = find_range("ibm,occ-common-area", 0);
 	if (!range) {
-		pr_log(LOG_ERR, "PM: ibm,occ-common-area not found");
-		return rc;
+		range = find_range("occ-common-area", 0);
+		if (!range) {
+			pr_log(LOG_ERR, "PM: occ-common-area not found");
+			return rc;
+		}
 	}
 	occ_common = range->physaddr;
 
 	for (i = 0; i < nr_chips; i++) {
 		range = find_range("ibm,homer-image", chips[i]);
 		if (!range) {
-			pr_log(LOG_ERR, "PM: ibm,homer-image not found 0x%lx",
-			       chips[i]);
-			return -1;
+			range = find_range("homer-image", chips[i]);
+			if (!range) {
+				pr_log(LOG_ERR, "PM: homer-image not found 0x%lx",
+				       chips[i]);
+				return -1;
+			}
 		}
 		homer = range->physaddr;
 
