@@ -105,6 +105,9 @@
 /* -- TOD Error interrupt register -- */
 #define TOD_ERROR_INJECT		0x00040031
 
+/* PC unit PIB address which recieves the timebase transfer from TOD */
+#define   PC_TOD			0x4A3
+
 /* Local FIR EH.TPCHIP.TPC.LOCAL_FIR */
 #define LOCAL_CORE_FIR		0x0104000C
 #define LFIR_SWITCH_COMPLETE	PPC_BIT(18)
@@ -122,7 +125,8 @@
 static enum chiptod_type {
 	chiptod_unknown,
 	chiptod_p8,
-	chiptod_p9
+	chiptod_p9,
+	chiptod_p10,
 } chiptod_type;
 
 enum chiptod_chip_role {
@@ -595,7 +599,8 @@ static bool chiptod_poll_running(void)
 
 static bool chiptod_to_tb(void)
 {
-	uint64_t tval, tfmr, tvbits;
+	uint32_t pir = this_cpu()->pir;
+	uint64_t tval, tfmr;
 	uint64_t timeout = 0;
 
 	/* Tell the ChipTOD about our fabric address
@@ -605,25 +610,51 @@ static bool chiptod_to_tb(void)
 	 * PIR between p7 and p8, we need to do the calculation differently.
 	 *
 	 * p7: 0b00001 || 3-bit core id
-	 * p8: 0b0001 || 4-bit core id
+	 * p8:  0b0001 || 4-bit core id
+	 * p9:   0b001 || 5-bit core id
+	 * p10:  0b001 || 5-bit core id
+	 *
+	 * However in P10 we don't use the core ID addressing, but rather core
+	 * scom addressing mode, which appears to work better.
 	 */
 
 	if (xscom_readme(TOD_PIB_MASTER, &tval)) {
 		prerror("XSCOM error reading PIB_MASTER\n");
 		return false;
 	}
-	if (chiptod_type == chiptod_p9) {
-		tvbits = (this_cpu()->pir >> 2) & 0x1f;
-		tvbits |= 0x20;
-	} else if (chiptod_type == chiptod_p8) {
-		tvbits = (this_cpu()->pir >> 3) & 0xf;
-		tvbits |= 0x10;
+
+	if (chiptod_type == chiptod_p10) {
+		uint32_t core_id = pir_to_core_id(pir);
+
+		if (this_cpu()->is_fused_core &&
+				PVR_VERS_MAJ(mfspr(SPR_PVR)) == 2) {
+			/* Workaround: must address the even small core. */
+			core_id &= ~1;
+		}
+
+		tval = XSCOM_ADDR_P10_EC(core_id, PC_TOD);
+
+		tval <<= 32; /* PIB slave address goes in PPC bits [0:31] */
+
+		tval |= PPC_BIT(35); /* Enable SCOM addressing. */
+
 	} else {
-		tvbits = (this_cpu()->pir >> 2) & 0x7;
-		tvbits |= 0x08;
+		uint64_t tvbits;
+
+		if (chiptod_type == chiptod_p9) {
+			tvbits = (pir >> 2) & 0x1f;
+			tvbits |= 0x20;
+		} else if (chiptod_type == chiptod_p8) {
+			tvbits = (pir >> 3) & 0xf;
+			tvbits |= 0x10;
+		} else {
+			tvbits = (pir >> 2) & 0x7;
+			tvbits |= 0x08;
+		}
+		tval &= ~TOD_PIBM_ADDR_CFG_MCAST;
+		tval = SETFIELD(TOD_PIBM_ADDR_CFG_SLADDR, tval, tvbits);
 	}
-	tval &= ~TOD_PIBM_ADDR_CFG_MCAST;
-	tval = SETFIELD(TOD_PIBM_ADDR_CFG_SLADDR, tval, tvbits);
+
 	if (xscom_writeme(TOD_PIB_MASTER, tval)) {
 		prerror("XSCOM error writing PIB_MASTER\n");
 		return false;
@@ -868,10 +899,21 @@ static void chiptod_sync_master(void *data)
 static void chiptod_sync_slave(void *data)
 {
 	bool *result = data;
+	bool do_sync = false;
 
 	/* Only get primaries, not threads */
-	if (this_cpu()->is_secondary) {
-		/* On secondaries we just cleanup the TFMR */
+	if (!this_cpu()->is_secondary)
+		do_sync = true;
+
+	if (chiptod_type == chiptod_p10 && this_cpu()->is_fused_core &&
+			PVR_VERS_MAJ(mfspr(SPR_PVR)) == 2) {
+		/* P10 DD2 fused core workaround, must sync on small cores */
+		if (this_cpu() == this_cpu()->ec_primary)
+			do_sync = true;
+	}
+
+	if (!do_sync) {
+		/* Just cleanup the TFMR */
 		chiptod_cleanup_thread_tfmr();
 		*result = true;
 		return;
@@ -1667,6 +1709,8 @@ static bool chiptod_probe(void)
 				chiptod_type = chiptod_p8;
 			if (dt_node_is_compatible(np, "ibm,power9-chiptod"))
 				chiptod_type = chiptod_p9;
+			if (dt_node_is_compatible(np, "ibm,power10-chiptod"))
+				chiptod_type = chiptod_p10;
 		}
 
 		if (dt_has_node_property(np, "secondary", NULL))
