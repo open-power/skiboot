@@ -766,6 +766,8 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	u64 val;
 	uint32_t esb_shift = 16;
 	uint32_t flags = XIVE_SRC_LSI;
+	struct irq_source *is;
+	int isn;
 
 	/* Grab chip */
 	chip = get_chip(psi->chip_id);
@@ -812,6 +814,11 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	xive2_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
 				esb_shift, psi->esb_mmio, flags,
 				psi, &psi_p10_irq_ops);
+
+	/* Mask all sources */
+	is = irq_find_source(psi->interrupt);
+	for (isn = is->start; isn < is->end; isn++)
+		xive2_source_mask(is, isn);
 
 	/* Reset irq handling and switch to ESB mode */
 	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);
