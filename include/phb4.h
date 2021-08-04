@@ -245,9 +245,9 @@ static inline void phb4_set_err_pending(struct phb4 *p, bool pending)
 	p->err_pending = pending;
 }
 
-#define MAX_PHBS_PER_CHIP_P10           6 /* Max 6 PHBs per chip on p10 */
 #define MAX_PHBS_PER_CHIP_P9            6 /* Max 6 PHBs per chip on p9 */
 #define MAX_PHBS_PER_CHIP_P9P           0x10 /* extra for virt PHBs */
+#define MAX_PHBS_PER_CHIP_P10           0x12 /* 6 PCI + 12 opencapi */
 
 static inline int phb4_get_opal_id(unsigned int chip_id, unsigned int index)
 {
