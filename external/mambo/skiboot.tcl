@@ -143,6 +143,17 @@ if { $default_config == "P9" } {
     }
 }
 
+if { $default_config == "P10" } {
+    # PVR configured for POWER10 DD1.0
+    myconf config processor/initial/PVR 0x800100
+    myconf config processor/initial/SIM_CTRL1 0xc228100400000000
+
+    if { $mconf(numa) } {
+        myconf config memory_region_id_shift 44
+    }
+}
+
+
 if { $mconf(numa) } {
     myconf config memory_regions $mconf(cpus)
 }
@@ -390,8 +401,8 @@ mysim of addprop $fake_nvram_node empty "name" "ibm,fake-nvram"
 
 set opal_node [mysim of addchild $root_node "ibm,opal" ""]
 
-# Allow P9 to use all idle states
-if { $default_config == "P9" } {
+# Allow P9/P10 to use all idle states
+if { $default_config == "P9" || $default_config == "P10" } {
     set power_mgt_node [mysim of addchild $opal_node "power-mgt" ""]
     mysim of addprop $power_mgt_node int "ibm,enabled-stop-levels" 0xffffffff
 }
@@ -461,7 +472,7 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
     lappend reg 0x22 0x120 1 0x22 0x0003 ;# 16G seg 16G pages
     mysim of addprop $cpu_node array "ibm,segment-page-sizes" reg
 
-    if { $default_config == "P9" } {
+    if { $default_config == "P9" || $default_config == "P10" } {
         # Set actual page size encodings
         set reg {}
         # 4K pages
@@ -476,8 +487,13 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
 
         set reg {}
 	# POWER9 PAPR defines upto bytes 62-63
+	# POWER10 PAPR defines upto byte 64-65
 	# header + bytes 0-5
-	lappend reg 0x4000f63fc70080c0
+	if { $default_config == "P9" } {
+		lappend reg 0x4000f63fc70080c0
+	} else {
+		lappend reg 0x4200f63fc70080c0
+	}
 	# bytes 6-13
 	lappend reg 0x8000000000000000
 	# bytes 14-21
@@ -492,8 +508,12 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
 	lappend reg 0x8000800080008000
 	# bytes 54-61 58/59=seg tbl
 	lappend reg 0x8000800080008000
-	# bytes 62-69
-	lappend reg 0x8000000000000000
+	# bytes 62-69 64/65=DAWR1(P10 only)
+	if { $default_config == "P9" } {
+		lappend reg 0x8000000000000000
+	} else {
+		lappend reg 0x8000800000000000
+	}
 	mysim of addprop $cpu_node array64 "ibm,pa-features" reg
     } else {
         set reg {}
@@ -514,7 +534,7 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
 }
 
 #Add In-Memory Collection Counter nodes
-if { $default_config == "P9" } {
+if { $default_config == "P9" || $default_config == "P10" } {
    #Add the base node "imc-counters"
    set imc_c [mysim of addchild $root_node "imc-counters" ""]
    mysim of addprop $imc_c string "compatible" "ibm,opal-in-memory-counters"
