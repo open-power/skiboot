@@ -266,6 +266,9 @@ static void p9_get_rma_bar(int chipid, uint64_t *val)
  *
  *    Thus the paste address for window id 4 is 0x00100000_00040400 and
  *    the _base_ paste address for Node 0 Chip 0 is 0x00100000_00000000.
+ *
+ * Note: Bit 11 (Foreign Address Enable) is set only for paste base address.
+ *	 Not for VAS/NX RMA BAR. RA(0:12) = 0 for VAS/NX RMA BAR.
  */
 
 static void get_rma_bar(struct proc_chip *chip, uint64_t *val)
@@ -273,7 +276,6 @@ static void get_rma_bar(struct proc_chip *chip, uint64_t *val)
 	uint64_t v;
 
 	v = 0ULL;
-	v = SETFIELD(RMA_FOREIGN_ADDR_ENABLE, v, 1);
 	v = SETFIELD(RMA_TOPOLOGY_INDEX, v, chip->primary_topology);
 
 	*val = v;
@@ -343,6 +345,12 @@ static inline void get_paste_bar(int chipid, uint64_t *start, uint64_t *len)
 			return;
 
 		get_rma_bar(chip, &val);
+
+		/*
+		 * RA(11) (Foreign Address Enable) is set only for paste
+		 * base address.
+		 */
+		val = SETFIELD(RMA_FOREIGN_ADDR_ENABLE, val, 1);
 	}
 
 	*start = val;
@@ -462,6 +470,7 @@ static void create_mm_dt_node(struct proc_chip *chip)
 {
 	struct dt_node *dn;
 	struct vas *vas;
+	const char *compat;
 	uint64_t hvwc_start, hvwc_len;
 	uint64_t uwc_start, uwc_len;
 	uint64_t pbf_start, pbf_nbits;
@@ -473,9 +482,14 @@ static void create_mm_dt_node(struct proc_chip *chip)
 	get_paste_bar(chip->id, &pbar_start, &pbar_len);
 	get_paste_bitfield(&pbf_start, &pbf_nbits);
 
+	if (proc_gen == proc_gen_p9)
+		compat = "ibm,power9-vas";
+	else
+		compat = "ibm,power10-vas";
+
 	dn = dt_new_addr(dt_root, "vas", hvwc_start);
 
-	dt_add_property_strings(dn, "compatible", "ibm,power9-vas",
+	dt_add_property_strings(dn, "compatible", compat,
 					"ibm,vas");
 
 	dt_add_property_u64s(dn, "reg", hvwc_start, hvwc_len,
@@ -579,13 +593,18 @@ void vas_init(void)
 {
 	bool enabled;
 	struct dt_node *np;
+	const char *compat;
 
-	if (proc_gen != proc_gen_p9)
+	if (proc_gen == proc_gen_p9)
+		compat = "ibm,power9-vas-x";
+	else if (proc_gen == proc_gen_p10)
+		compat = "ibm,power10-vas-x";
+	else
 		return;
 
 	enabled = vas_nx_enabled();
 
-	dt_for_each_compatible(dt_root, np, "ibm,power9-vas-x") {
+	dt_for_each_compatible(dt_root, np, compat) {
 		if (init_vas_inst(np, enabled))
 			goto out;
 	}
@@ -594,7 +613,7 @@ void vas_init(void)
 	return;
 
 out:
-	dt_for_each_compatible(dt_root, np, "ibm,power9-vas-x")
+	dt_for_each_compatible(dt_root, np, compat)
 		disable_vas_inst(np);
 
 	vas_err("Disabled (failed initialization)\n");
