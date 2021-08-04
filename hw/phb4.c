@@ -3011,10 +3011,10 @@ static unsigned int phb4_get_max_link_speed(struct phb4 *p, struct dt_node *np)
 	chip = get_chip(p->chip_id);
 
 	hw_max_link_speed = 4;
-	if (is_phb5())
+	if (is_phb5() && (p->index == 0 || p->index == 3))
 		hw_max_link_speed = 5;
 
-	/* Priority order: NVRAM -> dt -> GEN3 dd2.00 -> GEN4 */
+	/* Priority order: NVRAM -> dt -> GEN3 dd2.00 -> hw default */
 	max_link_speed = hw_max_link_speed;
 	if (p->rev == PHB4_REV_NIMBUS_DD20 &&
 	    ((0xf & chip->ec_level) == 0) && chip->ec_rev == 0)
