@@ -1601,6 +1601,29 @@ static bool xive_cfg_save_restore(struct xive *x)
 	return !!(x->config & CQ_XIVE_CFG_EN_VP_SAVE_RESTORE);
 }
 
+/*
+ * When PQ_disable is available, configure the ESB cache to improve
+ * performance for PHB ESBs.
+ *
+ * split_mode :
+ *   1/3rd of the cache is reserved for PHB ESBs and the rest to
+ *   IPIs. This is sufficient to keep all the PHB ESBs in cache and
+ *   avoid ESB cache misses during IO interrupt processing.
+ */
+static void xive_config_esb_cache(struct xive *x)
+{
+	uint64_t val = xive_regr(x, VC_ESBC_CFG);
+
+	if (xive_has_cap(x, CQ_XIVE_CAP_PHB_PQ_DISABLE)) {
+		val |= VC_ESBC_CFG_SPLIT_MODE;
+		xive_dbg(x, "ESB cache configured with split mode. "
+			 "VC_ESBC_CFG=%016llx\n", val);
+	} else
+		val &= ~VC_ESBC_CFG_SPLIT_MODE;
+
+	xive_regw(x, VC_ESBC_CFG, val);
+}
+
 static void xive_config_fused_core(struct xive *x)
 {
 	uint64_t val = xive_regr(x, TCTXT_CFG);
@@ -1715,6 +1738,8 @@ static bool xive_config_init(struct xive *x)
 		 XIVE_CAN_STORE_EOI(x) ? "" : "not ");
 
 	xive_config_fused_core(x);
+
+	xive_config_esb_cache(x);
 
 	xive_config_reduced_priorities_fixup(x);
 
