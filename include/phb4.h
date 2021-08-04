@@ -197,6 +197,7 @@ struct phb4 {
 	bool			lane_eq_en;
 	unsigned int		max_link_speed;
 	unsigned int		dt_max_link_speed;
+	unsigned int		max_link_width;
 
 	uint64_t		mrt_size;
 	uint64_t		mbt_size;

@@ -2726,17 +2726,13 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 	uint64_t reg;
 	uint32_t id;
 	uint16_t bdfn, lane_errs;
-	uint8_t trained_speed, phb_speed, dev_speed, target_speed, rx_errs;
-	uint8_t trained_width, phb_width, dev_width, target_width;
+	uint8_t trained_speed, dev_speed, target_speed, rx_errs;
+	uint8_t trained_width, dev_width, target_width;
 	bool optimal_speed, optimal_width, optimal, retry_enabled, rx_err_ok;
 
 
 	/* Current trained state */
 	phb4_get_link_info(slot, &trained_speed, &trained_width);
-
-	/* Get PHB capability */
-	/* NOTE: phb_speed will account for the software speed limit */
-	phb4_get_info(slot->phb, 0, &phb_speed, &phb_width);
 
 	/* Get device capability */
 	bdfn = 0x0100; /* bus=1 dev=0 device=0 */
@@ -2746,9 +2742,9 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 	phb4_get_info(slot->phb, bdfn, &dev_speed, &dev_width);
 
 	/* Work out if we are optimally trained */
-	target_speed = MIN(phb_speed, dev_speed);
+	target_speed = MIN(p->max_link_speed, dev_speed);
 	optimal_speed = (trained_speed >= target_speed);
-	target_width = MIN(phb_width, dev_width);
+	target_width = MIN(p->max_link_width, dev_width);
 	optimal_width = (trained_width >= target_width);
 	optimal = optimal_width && optimal_speed;
 	retry_enabled = (phb4_chip_retry_workaround() &&
@@ -2764,9 +2760,11 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 	       DEVICE(id), optimal ? "Optimal" : "Degraded",
 	       retry_enabled ? "enabled" : "disabled");
 	PHBDBG(p, "LINK: Speed Train:GEN%i PHB:GEN%i DEV:GEN%i%s\n",
-	       trained_speed, phb_speed, dev_speed, optimal_speed ? "" : " *");
+	       trained_speed, p->max_link_speed, dev_speed,
+	       optimal_speed ? "" : " *");
 	PHBDBG(p, "LINK: Width Train:x%02i PHB:x%02i DEV:x%02i%s\n",
-	       trained_width, phb_width, dev_width, optimal_width ? "" : " *");
+	       trained_width, p->max_link_width, dev_width,
+	       optimal_width ? "" : " *");
 	PHBDBG(p, "LINK: RX Errors Now:%i Max:%i Lane:0x%04x%s\n",
 	       rx_errs, rx_err_max, lane_errs, rx_err_ok ? "" : " *");
 
@@ -3043,6 +3041,75 @@ static unsigned int phb4_get_max_link_speed(struct phb4 *p, struct dt_node *np)
 	return max_link_speed;
 }
 
+static unsigned int __phb4_get_max_link_width(struct phb4 *p)
+{
+	uint64_t addr, reg;
+	unsigned int lane_config, width = 16;
+
+	/*
+	 * On P9, only PEC2 is configurable (no-/bi-/tri-furcation)
+	 */
+	switch (p->pec) {
+	case 0:
+		width = 16;
+		break;
+	case 1:
+		width = 8;
+		break;
+	case 2:
+		addr = XPEC_P9_PCI_CPLT_CONF1 + 2 * XPEC_PCI_CPLT_OFFSET;
+		xscom_read(p->chip_id, addr, &reg);
+		lane_config = GETFIELD(XPEC_P9_PCI_LANE_CFG, reg);
+
+		if (lane_config == 0b10 && p->index >= 4)
+			width = 4;
+		else
+			width = 8;
+	}
+	return width;
+}
+
+static unsigned int __phb5_get_max_link_width(struct phb4 *p)
+{
+	uint64_t addr, reg;
+	unsigned int lane_config, width = 16;
+
+	/*
+	 * On P10, the 2 PECs are identical and each can have a
+	 * different furcation, so we always need to check the PEC
+	 * config
+	 */
+	addr = XPEC_P10_PCI_CPLT_CONF1 + p->pec * XPEC_PCI_CPLT_OFFSET;
+	xscom_read(p->chip_id, addr, &reg);
+	lane_config = GETFIELD(XPEC_P10_PCI_LANE_CFG, reg);
+
+	switch (lane_config) {
+	case 0b00:
+		width = 16;
+		break;
+	case 0b01:
+		width = 8;
+		break;
+	case 0b10:
+		if (p->index == 0 || p->index == 3)
+			width = 8;
+		else
+			width = 4;
+		break;
+	default:
+		PHBERR(p, "Unexpected PEC lane config value %#x\n",
+		       lane_config);
+	}
+	return width;
+}
+
+static unsigned int phb4_get_max_link_width(struct phb4 *p)
+{
+	if (is_phb5())
+		return __phb5_get_max_link_width(p);
+	else
+		return __phb4_get_max_link_width(p);
+}
 
 static void phb4_assert_perst(struct pci_slot *slot, bool assert)
 {
@@ -5981,7 +6048,9 @@ static void phb4_create(struct dt_node *np)
 		goto failed;
 
 	p->max_link_speed = phb4_get_max_link_speed(p, np);
-	PHBINF(p, "Max link speed: GEN%i\n", p->max_link_speed);
+	p->max_link_width = phb4_get_max_link_width(p);
+	PHBINF(p, "Max link speed: GEN%i, max link width %i\n",
+	       p->max_link_speed, p->max_link_width);
 
 	/* Check for lane equalization values from HB or HDAT */
 	p->lane_eq_en = true;
