@@ -87,9 +87,11 @@ static struct slot_table_entry st_name[] = \
 
 extern const struct bmc_hw_config bmc_hw_ast2400;
 extern const struct bmc_hw_config bmc_hw_ast2500;
+extern const struct bmc_hw_config bmc_hw_ast2600;
 extern const struct bmc_platform bmc_plat_ast2400_ami;
 extern const struct bmc_platform bmc_plat_ast2500_ami;
 extern const struct bmc_platform bmc_plat_ast2500_openbmc;
+extern const struct bmc_platform bmc_plat_ast2600_openbmc;
 
 extern void astbmc_early_init(void);
 extern int64_t astbmc_ipmi_reboot(void);

@@ -266,8 +266,9 @@ static void astbmc_fixup_dt_mbox(struct dt_node *lpc)
 	 * can indicate they support mbox using the scratch register, or ipmi
 	 * by configuring the hiomap ipmi command. If neither are configured
 	 * for P8 then skiboot will drive the flash controller directly.
+	 * XXX P10
 	 */
-	if (proc_gen != proc_gen_p9 && !ast_scratch_reg_is_mbox())
+	if (proc_gen == proc_gen_p8 && !ast_scratch_reg_is_mbox())
 		return;
 
 	/* First check if the mbox interface is already there */
@@ -478,7 +479,7 @@ void astbmc_early_init(void)
 		 * never MBOX. Thus only populate the MBOX node on P9 to allow
 		 * fallback.
 		 */
-		if (proc_gen == proc_gen_p9) {
+		if (proc_gen >= proc_gen_p9) {
 			astbmc_fixup_dt_mbox(dt_find_primary_lpc());
 			ast_setup_sio_mbox(MBOX_IO_BASE, MBOX_LPC_IRQ);
 		}
@@ -530,6 +531,14 @@ const struct bmc_hw_config bmc_hw_ast2500 = {
 	.mcr_scu_strap = 0x00000000,
 };
 
+/* XXX P10: Update with Rainier values */
+const struct bmc_hw_config bmc_hw_ast2600 = {
+	.scu_revision_id = 0x05000303,
+	.mcr_configuration = 0x11200756,
+	.mcr_scu_mpll = 0x1008405F,
+	.mcr_scu_strap = 0x000030E0,
+};
+
 const struct bmc_platform bmc_plat_ast2400_ami = {
 	.name = "ast2400:ami",
 	.hw = &bmc_hw_ast2400,
@@ -545,5 +554,11 @@ const struct bmc_platform bmc_plat_ast2500_ami = {
 const struct bmc_platform bmc_plat_ast2500_openbmc = {
 	.name = "ast2500:openbmc",
 	.hw = &bmc_hw_ast2500,
+	.sw = &bmc_sw_openbmc,
+};
+
+const struct bmc_platform bmc_plat_ast2600_openbmc = {
+	.name = "ast2600:openbmc",
+	.hw = &bmc_hw_ast2600,
 	.sw = &bmc_sw_openbmc,
 };
