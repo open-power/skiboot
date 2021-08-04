@@ -12,11 +12,12 @@
 #include <nx.h>
 #include <chip.h>
 #include <xscom-p9-regs.h>
+#include <xscom-p10-regs.h>
 #include <phys-map.h>
 #include <vas.h>
 #include <p9_stop_api.H>
 
-static void p9_darn_init(void)
+static void darn_init(void)
 {
 	struct dt_node *nx;
 	struct proc_chip *chip;
@@ -45,11 +46,25 @@ static void p9_darn_init(void)
 
 		for_each_available_core_in_chip(c, chip->id) {
 			uint64_t addr;
-			addr = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir),
-						P9X_EX_NCU_DARN_BAR);
-			xscom_write(chip->id, addr,
-				    bar | P9X_EX_NCU_DARN_BAR_EN);
 
+			if (proc_gen == proc_gen_p9) {
+				addr = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir),
+						P9X_EX_NCU_DARN_BAR);
+				xscom_write(chip->id, addr,
+				    bar | P9X_EX_NCU_DARN_BAR_EN);
+			} else if (proc_gen >= proc_gen_p10) {
+				addr = XSCOM_ADDR_P10_NCU(pir_to_core_id(c->pir),
+						P10_NCU_DARN_BAR);
+				xscom_write(chip->id, addr,
+				    bar | P10_NCU_DARN_BAR_EN);
+				/*  Init for sibling core also */
+				if (c->is_fused_core) {
+					addr = XSCOM_ADDR_P10_NCU(pir_to_core_id(c->pir + 1),
+								  P10_NCU_DARN_BAR);
+					xscom_write(chip->id, addr,
+						    bar | P10_NCU_DARN_BAR_EN);
+				}
+			}
 		}
 	}
 }
@@ -59,7 +74,7 @@ void nx_p9_rng_late_init(void)
 	struct cpu_thread *c;
 	uint64_t rc;
 
-	if (proc_gen != proc_gen_p9)
+	if (proc_gen < proc_gen_p9)
 		return;
 	if (chip_quirk(QUIRK_NO_RNG))
 		return;
@@ -118,6 +133,6 @@ void nx_init(void)
 		nx_init_one(node);
 	}
 
-	if (proc_gen == proc_gen_p9)
-		p9_darn_init();
+	if (proc_gen >= proc_gen_p9)
+		darn_init();
 }
