@@ -42,7 +42,11 @@ enum phys_map_type {
 	MC_OCMB_CFG,
 	MC_OCMB_MMIO,
 	XSCOM,
-	RESV
+	RESV,
+	XIVE_NVC,
+	XIVE_NVPG,
+	XIVE_ESB,
+	XIVE_END,
 };
 
 extern void phys_map_get(uint64_t gcid, enum phys_map_type type,

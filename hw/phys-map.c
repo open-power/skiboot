@@ -26,6 +26,84 @@ struct phys_map_info {
 
 static const struct phys_map_info *phys_map;
 
+static const struct phys_map_entry phys_map_table_p10[] = {
+	/* System memory upto 4TB minus GPU memory */
+	{ SYSTEM_MEM,      0, 0x0000000000000000ull, 0x0000034000000000ull },
+
+	/* TODO: Figure out GPU memory */
+
+	/* 0 TB offset @ MMIO 0x0006000000000000ull */
+	{ PHB4_64BIT_MMIO, 0, 0x0006000000000000ull, 0x0000004000000000ull },
+	{ PHB4_64BIT_MMIO, 1, 0x0006004000000000ull, 0x0000004000000000ull },
+	{ PHB4_64BIT_MMIO, 2, 0x0006008000000000ull, 0x0000004000000000ull },
+	{ PHB4_32BIT_MMIO, 0, 0x000600c000000000ull, 0x0000000080000000ull },
+	{ PHB4_32BIT_MMIO, 1, 0x000600c080000000ull, 0x0000000080000000ull },
+	{ PHB4_32BIT_MMIO, 2, 0x000600c100000000ull, 0x0000000080000000ull },
+	{ PHB4_32BIT_MMIO, 3, 0x000600c180000000ull, 0x0000000080000000ull },
+	{ PHB4_32BIT_MMIO, 4, 0x000600c200000000ull, 0x0000000080000000ull },
+	{ PHB4_32BIT_MMIO, 5, 0x000600c280000000ull, 0x0000000080000000ull },
+	{ PHB4_XIVE_ESB  , 0, 0x000600c300000000ull, 0x0000000020000000ull },
+	{ PHB4_XIVE_ESB  , 1, 0x000600c320000000ull, 0x0000000020000000ull },
+	{ PHB4_XIVE_ESB  , 2, 0x000600c340000000ull, 0x0000000020000000ull },
+	{ PHB4_XIVE_ESB  , 3, 0x000600c360000000ull, 0x0000000020000000ull },
+	{ PHB4_XIVE_ESB  , 4, 0x000600c380000000ull, 0x0000000020000000ull },
+	{ PHB4_XIVE_ESB  , 5, 0x000600c3a0000000ull, 0x0000000020000000ull },
+	{ PHB4_REG_SPC   , 0, 0x000600c3c0000000ull, 0x0000000000100000ull },
+	{ PHB4_REG_SPC   , 1, 0x000600c3c0100000ull, 0x0000000000100000ull },
+	{ PHB4_REG_SPC   , 2, 0x000600c3c0200000ull, 0x0000000000100000ull },
+	{ PHB4_REG_SPC   , 3, 0x000600c3c0300000ull, 0x0000000000100000ull },
+	{ PHB4_REG_SPC   , 4, 0x000600c3c0400000ull, 0x0000000000100000ull },
+	{ PHB4_REG_SPC   , 5, 0x000600c3c0500000ull, 0x0000000000100000ull },
+	{ RESV	         , 0, 0x000600c3c0600000ull, 0x0000003c3fa00000ull },
+
+	/* 1 TB offset */
+	{ RESV		 , 1, 0x0006010000000000ull, 0x0000010000000000ull },
+
+	/* 2 TB offset */
+	{ PHB4_64BIT_MMIO, 3, 0x0006020000000000ull, 0x0000004000000000ull },
+	{ PHB4_64BIT_MMIO, 4, 0x0006024000000000ull, 0x0000004000000000ull },
+	{ PHB4_64BIT_MMIO, 5, 0x0006028000000000ull, 0x0000004000000000ull },
+	{ RESV	         , 2, 0x000602c000000000ull, 0x0000004000000000ull },
+
+	/* 3 TB offset */
+	{ LPC_BUS        , 0, 0x0006030000000000ull, 0x0000000100000000ull },
+	{ FSP_MMIO       , 0, 0x0006030100000000ull, 0x0000000100000000ull },
+	{ XIVE_IC	 , 0, 0x0006030200000000ull, 0x0000000002000000ull },
+	{ PSIHB_ESB	 , 0, 0x0006030202000000ull, 0x0000000000100000ull },
+	{ RESV		 , 3, 0x0006030202100000ull, 0x0000000000f00000ull },
+	{ PSIHB_REG      , 0, 0x0006030203000000ull, 0x0000000000100000ull },
+	{ RESV		 , 4, 0x0006030203100000ull, 0x0000000000080000ull },
+	{ XIVE_TM        , 0, 0x0006030203180000ull, 0x0000000000040000ull },
+	{ RESV		 , 5, 0x00060302031c0000ull, 0x0000000000010000ull },
+	{ NX_RNG         , 0, 0x00060302031d0000ull, 0x0000000000010000ull },
+	{ RESV		 , 6, 0x00060302031e0000ull, 0x0000000004e20000ull },
+	{ XIVE_NVC	 , 0, 0x0006030208000000ull, 0x0000000008000000ull },
+	{ RESV		 , 7, 0x0006030210000000ull, 0x00000000ee000000ull },
+	{ VAS_HYP_WIN    , 0, 0x00060302fe000000ull, 0x0000000002000000ull },
+	{ VAS_USER_WIN   , 0, 0x0006030300000000ull, 0x0000000100000000ull },
+
+	/* TODO: MC, OCMB, PAU */
+	{ RESV		 , 8, 0x0006030400000000ull, 0x000000f800000000ull },
+	{ XSCOM          , 0, 0x000603fc00000000ull, 0x0000000400000000ull },
+
+	/* 4 TB offset */
+	{ XIVE_NVPG      , 0, 0x0006040000000000ull, 0x0000010000000000ull },
+
+	/* 5 - 7 TB offset */
+	/* for P10 the END and ESB regions are separate in the MMIO
+	 * table */
+	{ XIVE_ESB       , 0, 0x0006050000000000ull, 0x0000010000000000ull },
+	{ XIVE_END       , 0, 0x0006060000000000ull, 0x0000020000000000ull },
+
+	/* 8 - 13 TB offset */
+	{ RESV		 , 9, 0x0006080000000000ull, 0x0000060000000000ull },
+
+	/* 14 TB offset */
+	{ RESV		 ,10, 0x00060e0000000000ull, 0x0000008000000000ull },
+
+	{ NULL_MAP, 0, 0, 0 },
+};
+
 static const struct phys_map_entry phys_map_table_nimbus[] = {
 
 	/* System memory upto 4TB minus GPU memory */
@@ -266,6 +344,11 @@ static const struct phys_map_info phys_map_axone = {
 	.table = phys_map_table_axone,
 };
 
+static const struct phys_map_info phys_map_p10 = {
+	.chip_select_shift = 44,
+	.table = phys_map_table_p10,
+};
+
 static inline bool phys_map_entry_null(const struct phys_map_entry *e)
 {
 	if (e->type == NULL_MAP)
@@ -352,9 +435,11 @@ void phys_map_init(unsigned long pvr)
 			name = "nimbus";
 			phys_map = &phys_map_nimbus;
 		}
+	} else if (proc_gen == proc_gen_p10) {
+		name = "p10";
+		phys_map = &phys_map_p10;
 	}
 
 	prlog(PR_DEBUG, "Assigning physical memory map table for %s\n", name);
 
 }
-

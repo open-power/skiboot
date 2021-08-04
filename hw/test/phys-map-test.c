@@ -172,14 +172,26 @@ static void check_map_call(void)
 unsigned long fake_pvr[] = {
 	0x004e0200,	/* PVR_P9 */
 	0x004f0100,	/* PVR_P9P */
+	0x00800100,	/* PVR_P10 */
 };
 
 int main(void)
 {
-	/* Fake we are POWER9 */
-	proc_gen = proc_gen_p9;
-
 	for (int i = 0; i < ARRAY_SIZE(fake_pvr); i++) {
+		switch(PVR_TYPE(fake_pvr[i])) {
+		case PVR_TYPE_P9:
+		case PVR_TYPE_P9P:
+			proc_gen = proc_gen_p9;
+			break;
+		case PVR_TYPE_P10:
+			proc_gen = proc_gen_p10;
+			break;
+		default:
+			printf("Unknown PVR 0x%lx\n", fake_pvr[i]);
+			return 1;
+			break;
+		}
+
 		phys_map_init(fake_pvr[i]);
 
 		/* Run tests */
