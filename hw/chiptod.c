@@ -499,6 +499,12 @@ static void chiptod_setup_base_tfmr(void)
 		core_freq = dt_prop_get_u64(cpu, "ibm,extended-clock-frequency");
 	else
 		core_freq = dt_prop_get_u32(cpu, "clock-frequency");
+
+	if (!core_freq) {
+		prlog(PR_ERR, "CPU clock frequency is not set\n");
+		abort();
+	}
+
 	tod_freq = 32000000;
 
 	/* Calculate the "Max Cycles Between Steps" value according
