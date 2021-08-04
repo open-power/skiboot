@@ -392,6 +392,18 @@
 #define X_TCTXT_EN1_RESET			0x307
 #define TCTXT_EN1_RESET				0x038
 
+/* TCTXT Config register */
+#define X_TCTXT_CFG                            0x328
+#define TCTXT_CFG                              0x140
+#define  TCTXT_CFG_FUSE_CORE_EN                        PPC_BIT(0)
+#define  TCTXT_CFG_PHYP_CORE_MODE              PPC_BIT(1) /* O:Linux 1:pHyp */
+#define  TCTXT_CFG_GEN1_HYP_TARGET_DIS         PPC_BIT(4)
+#define  TCTXT_CFG_GEN1_OS_ST_ACK              PPC_BIT(5)
+#define  TCTXT_CFG_GEN1_OGEN_FINE              PPC_BIT(6)
+#define  TCTXT_CFG_INT_MSGSND_DIS              PPC_BIT(17)
+#define  TCTXT_CFG_HOSTBOOT_MODE               PPC_BIT(20)
+#define  TCTXT_CFG_COMPLEX_STORE_DIS           PPC_BITMASK(25, 27)
+
 /*
  * VSD Tables
  */

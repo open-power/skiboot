@@ -1593,6 +1593,19 @@ static bool xive_has_cap(struct xive *x, uint64_t cap)
 
 #define XIVE_CAN_STORE_EOI(x) xive_has_cap(x, CQ_XIVE_CAP_STORE_EOI)
 
+static void xive_config_fused_core(struct xive *x)
+{
+	uint64_t val = xive_regr(x, TCTXT_CFG);
+
+	if (this_cpu()->is_fused_core) {
+		val |= TCTXT_CFG_FUSE_CORE_EN;
+		xive_dbg(x, "configured for fused cores. "
+			 "PC_TCTXT_CFG=%016llx\n", val);
+	} else
+		val &= ~TCTXT_CFG_FUSE_CORE_EN;
+	xive_regw(x, TCTXT_CFG, val);
+}
+
 static void xive_config_reduced_priorities_fixup(struct xive *x)
 {
 	if (xive_cfg_vp_prio_shift(x) < CQ_XIVE_CFG_INT_PRIO_8 &&
@@ -1684,6 +1697,8 @@ static bool xive_config_init(struct xive *x)
 
 	xive_dbg(x, "store EOI is %savailable\n",
 		 XIVE_CAN_STORE_EOI(x) ? "" : "not ");
+
+	xive_config_fused_core(x);
 
 	xive_config_reduced_priorities_fixup(x);
 
@@ -2980,7 +2995,7 @@ static void xive_init_cpu(struct cpu_thread *c)
 	 * of a pair is present we just do the setup for each of them, which
 	 * is harmless.
 	 */
-	if (cpu_is_thread0(c))
+	if (cpu_is_thread0(c) || cpu_is_core_chiplet_primary(c))
 		xive_configure_ex_special_bar(x, c);
 
 	/* Initialize the state structure */
