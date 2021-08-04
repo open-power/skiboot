@@ -796,16 +796,6 @@ static void psi_init_p10_interrupts(struct psi *psi)
 		flags |= XIVE_SRC_STORE_EOI;
 	}
 
-	/* Grab and configure the notification port */
-	val = xive2_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
-	val |= PSIHB_ESB_NOTIF_VALID;
-	out_be64(psi->regs + PSIHB_ESB_NOTIF_ADDR, val);
-
-	/* Setup interrupt offset */
-	val = xive2_get_notify_base(psi->interrupt);
-	val <<= 32;
-	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
-
 	/* Register sources */
 	prlog(PR_DEBUG,
 	      "PSI[0x%03x]: Interrupts sources registered for P10 DD%i.%i\n",
@@ -819,6 +809,16 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	is = irq_find_source(psi->interrupt);
 	for (isn = is->start; isn < is->end; isn++)
 		xive2_source_mask(is, isn);
+
+	/* Setup interrupt offset */
+	val = xive2_get_notify_base(psi->interrupt);
+	val <<= 32;
+	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
+
+	/* Grab and configure the notification port */
+	val = xive2_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
+	val |= PSIHB_ESB_NOTIF_VALID;
+	out_be64(psi->regs + PSIHB_ESB_NOTIF_ADDR, val);
 
 	/* Reset irq handling and switch to ESB mode */
 	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);
