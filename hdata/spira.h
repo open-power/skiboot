@@ -706,8 +706,11 @@ struct cechub_io_hub {
 		/* HDAT >= v9.x, HDIF version 0x6A adds phb_lane_eq with four
 		 *               words per PHB (4 PHBs).
 		 *
-		 * HDAT >= 10.x, HDIF version 0x7A adds space for another two
+		 * HDAT >= 10.x, HDIF version 0x7A adds space for another
 		 *               two PHBs (6 total) and the gen4 EQ values.
+		 *
+		 * HDAT >= 10.5x, HDIF version 0x8B adds space for the
+		 *                gen5 EQ values.
 		 */
 		struct {
 			/* Gen 3 PHB eq values, 6 PHBs */
@@ -715,6 +718,9 @@ struct cechub_io_hub {
 
 			/* Gen 4 PHB eq values */
 			__be64		phb4_lane_eq[6][4];
+
+			/* Gen 5 PHB eq values */
+			__be64		phb5_lane_eq[6][4];
 		};
 	};
 } __packed;
