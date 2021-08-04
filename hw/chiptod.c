@@ -221,6 +221,8 @@ static uint64_t base_tfmr;
 static struct lock chiptod_lock = LOCK_UNLOCKED;
 static bool chiptod_unrecoverable;
 
+#define NUM_SYNC_RETRIES 10
+
 static void _chiptod_cache_tod_regs(int32_t chip_id)
 {
 	int i;
@@ -892,7 +894,7 @@ static void chiptod_sync_master(void *data)
 	*result = true;
 	return;
  error:
-	prerror("Master sync failed! TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prerror("Master sync failed! TFMR=0x%016lx,  retrying...\n", mfspr(SPR_TFMR));
 	*result = false;
 }
 
@@ -962,7 +964,7 @@ static void chiptod_sync_slave(void *data)
 	*result = true;
 	return;
  error:
-	prerror("Slave sync failed ! TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prerror("Slave sync failed ! TFMR=0x%016lx, retrying...\n", mfspr(SPR_TFMR));
 	*result = false;
 }
 
@@ -1818,6 +1820,7 @@ void chiptod_init(void)
 {
 	struct cpu_thread *cpu0, *cpu;
 	bool sres;
+	int i;
 
 	/* Mambo and qemu doesn't simulate the chiptod */
 	if (chip_quirk(QUIRK_NO_CHIPTOD))
@@ -1841,10 +1844,14 @@ void chiptod_init(void)
 
 	prlog(PR_DEBUG, "Base TFMR=0x%016llx\n", base_tfmr);
 
-	/* Schedule master sync */
-	sres = false;
-	cpu_wait_job(cpu_queue_job(cpu0, "chiptod_sync_master",
+	i = NUM_SYNC_RETRIES;
+	do {
+		/* Schedule master sync */
+		sres = false;
+		cpu_wait_job(cpu_queue_job(cpu0, "chiptod_sync_master",
 				   chiptod_sync_master, &sres), true);
+	} while (!sres && i--);
+
 	if (!sres) {
 		op_display(OP_FATAL, OP_MOD_CHIPTOD, 2);
 		abort();
@@ -1858,13 +1865,19 @@ void chiptod_init(void)
 		if (cpu == cpu0)
 			continue;
 
-		/* Queue job */
-		sres = false;
-		cpu_wait_job(cpu_queue_job(cpu, "chiptod_sync_slave",
-					   chiptod_sync_slave, &sres),
-			     true);
+		i = NUM_SYNC_RETRIES;
+		do {
+			/* Queue job */
+			sres = false;
+			cpu_wait_job(cpu_queue_job(cpu, "chiptod_sync_slave",
+						   chiptod_sync_slave, &sres),
+				     true);
+		} while (!sres && i--);
+
 		if (!sres) {
 			op_display(OP_WARN, OP_MOD_CHIPTOD, 3|(cpu->pir << 8));
+			prerror("CHIPTOD: Failed to sync PIR 0x%04x\n",
+					this_cpu()->pir);
 
 			/* Disable threads */
 			cpu_disable_all_threads(cpu);
