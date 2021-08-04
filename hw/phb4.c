@@ -5387,8 +5387,12 @@ static void phb4_init_hw(struct phb4 *p)
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL1, be64_to_cpu(p->lane_eq[1]));
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL2, be64_to_cpu(p->lane_eq[2]));
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL3, be64_to_cpu(p->lane_eq[3]));
-		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL20, be64_to_cpu(p->lane_eq[4]));
-		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL21, be64_to_cpu(p->lane_eq[5]));
+		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL40, be64_to_cpu(p->lane_eq[4]));
+		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL41, be64_to_cpu(p->lane_eq[5]));
+		if (is_phb5()) {
+			out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL50, be64_to_cpu(p->lane_eq[6]));
+			out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL51, be64_to_cpu(p->lane_eq[7]));
+		}
 	}
 	if (!p->lane_eq_en) {
 		/* Read modify write and set to 2 bits */
@@ -5830,7 +5834,7 @@ static __be64 lane_eq_phb5_default[8] = {
 	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
 	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
 	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
-	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
+	CPU_TO_BE64(0x9999999999999999UL), CPU_TO_BE64(0x9999999999999999UL),
 };
 
 static void phb4_create(struct dt_node *np)
@@ -5842,7 +5846,7 @@ static void phb4_create(struct dt_node *np)
 	struct dt_node *iplp;
 	char *path;
 	uint32_t irq_base, irq_flags;
-	int i;
+	int i, eq_reg_count;
 	int chip_id;
 
 	chip_id = dt_prop_get_u32(np, "ibm,chip-id");
@@ -5942,7 +5946,11 @@ static void phb4_create(struct dt_node *np)
 	/* Check for lane equalization values from HB or HDAT */
 	p->lane_eq_en = true;
 	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
-	lane_eq_len_req = 6 * 8;
+	if (is_phb5())
+		eq_reg_count = 8;
+	else
+		eq_reg_count = 6;
+	lane_eq_len_req = eq_reg_count * 8;
 	if (p->lane_eq) {
 		if (lane_eq_len < lane_eq_len_req) {
 			PHBERR(p, "Device-tree has ibm,lane-eq too short: %ld"
