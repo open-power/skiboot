@@ -48,6 +48,9 @@ enum phys_map_type {
 extern void phys_map_get(uint64_t gcid, enum phys_map_type type,
 			 int index, uint64_t *addr, uint64_t *size);
 
+extern void __phys_map_get(uint64_t topology_idx, uint64_t gcid,
+			   enum phys_map_type type, int index, uint64_t *addr, uint64_t *size);
+
 extern void phys_map_init(unsigned long pvr);
 
 #endif /* __PHYS_MAP_H */

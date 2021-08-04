@@ -361,6 +361,7 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	struct dt_node *lpcm, *lpc, *n;
 	u64 lpcm_base, lpcm_end;
 	uint32_t chip_id;
+	uint32_t topology_idx;
 	int size;
 
 	bmc_node = dt_new(dt_root, "bmc");
@@ -399,8 +400,9 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	 * phys map offset
 	 */
 	chip_id = pcid_to_chip_id(be32_to_cpu(iopath->lpc.chip_id));
+	topology_idx = pcid_to_topology_idx(be32_to_cpu(iopath->lpc.chip_id));
 
-	phys_map_get(chip_id, LPC_BUS, 0, &lpcm_base, NULL);
+	__phys_map_get(topology_idx, chip_id, LPC_BUS, 0, &lpcm_base, NULL);
 	lpcm = dt_new_addr(dt_root, "lpcm-opb", lpcm_base);
 	assert(lpcm);
 

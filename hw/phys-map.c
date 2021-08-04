@@ -277,7 +277,7 @@ static inline bool phys_map_entry_null(const struct phys_map_entry *e)
 /* This crashes skiboot on error as any bad calls here are almost
  *  certainly a developer error
  */
-void phys_map_get(uint64_t gcid, enum phys_map_type type,
+void __phys_map_get(uint64_t topology_idx, uint64_t gcid, enum phys_map_type type,
 		  int index, uint64_t *addr, uint64_t *size) {
 	const struct phys_map_entry *e;
 	uint64_t a;
@@ -302,7 +302,7 @@ void phys_map_get(uint64_t gcid, enum phys_map_type type,
 		break;
 	}
 	a = e->addr;
-	a += gcid << phys_map->chip_select_shift;
+	a += topology_idx << (phys_map->chip_select_shift);
 
 	if (addr)
 		*addr = a;
@@ -320,6 +320,20 @@ error:
 	prlog(PR_EMERG, "ERROR: Failed to lookup BAR type:%i index:%i\n",
 	      type, index);
 	assert(0);
+}
+
+void phys_map_get(uint64_t gcid, enum phys_map_type type,
+		  int index, uint64_t *addr, uint64_t *size)
+{
+	struct proc_chip *chip;
+	uint64_t topology_idx = gcid;
+
+	if (proc_gen >= proc_gen_p10) {
+		chip = get_chip(gcid);
+		topology_idx = chip->primary_topology;
+	}
+
+	return __phys_map_get(topology_idx, gcid, type, index, addr, size);
 }
 
 void phys_map_init(unsigned long pvr)

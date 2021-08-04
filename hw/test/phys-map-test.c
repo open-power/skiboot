@@ -79,6 +79,11 @@ static inline bool map_call_entry_null(const struct map_call_entry *t)
 /* Pick a chip ID, any ID. */
 #define FAKE_CHIP_ID 8
 
+struct proc_chip *get_chip(uint32_t chip_id __unused)
+{
+	return NULL;
+}
+
 static void check_map_call(void)
 {
 	uint64_t start, size, end;
@@ -98,7 +103,7 @@ static void check_map_call(void)
 
 	/* Loop over table entries ...  */
 	for (e = phys_map->table; !phys_map_entry_null(e); e++) {
-		phys_map_get(FAKE_CHIP_ID, e->type, e->index, &start, &size);
+		__phys_map_get(FAKE_CHIP_ID, FAKE_CHIP_ID, e->type, e->index, &start, &size);
 
 		/* Check for alignment */
 		if ((e->type != SYSTEM_MEM) && (e->type != RESV)) {

@@ -1418,6 +1418,34 @@ uint32_t pcid_to_chip_id(uint32_t proc_chip_id)
 	return (uint32_t)-1;
 }
 
+uint32_t pcid_to_topology_idx(uint32_t proc_chip_id)
+{
+	unsigned int i;
+	const void *hdif;
+
+	/* First, try the proc_chip ntuples for chip data */
+	for_each_ntuple_idx(&spira.ntuples.proc_chip, hdif, i,
+			    SPPCRD_HDIF_SIG) {
+		const struct sppcrd_chip_info *cinfo;
+
+		cinfo = HDIF_get_idata(hdif, SPPCRD_IDATA_CHIP_INFO, NULL);
+		if (!CHECK_SPPTR(cinfo)) {
+			prerror("XSCOM: Bad ChipID data %d\n", i);
+			continue;
+		}
+		if (proc_chip_id == be32_to_cpu(cinfo->proc_chip_id)) {
+			if (proc_gen <= proc_gen_p9)
+				return get_xscom_id(cinfo);
+			else
+				return ((u32)cinfo->topology_id_table[cinfo->primary_topology_loc]);
+		}
+	}
+
+	/* Not found, what to do ? Assert ? For now return a number
+	 * guaranteed to not exist
+	 */
+	return (uint32_t)-1;
+}
 /* Create '/ibm,opal/led' node */
 static void dt_init_led_node(void)
 {

@@ -24,6 +24,7 @@ extern void vpd_data_parse(struct dt_node *node,
 
 extern struct dt_node *find_xscom_for_chip(uint32_t chip_id);
 extern uint32_t pcid_to_chip_id(uint32_t proc_chip_id);
+extern uint32_t pcid_to_topology_idx(uint32_t proc_chip_id);
 extern uint32_t get_xscom_id(const struct sppcrd_chip_info *cinfo);
 
 extern struct dt_node *add_core_common(struct dt_node *cpus,
