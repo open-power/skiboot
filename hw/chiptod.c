@@ -959,6 +959,30 @@ bool chiptod_wakeup_resync(void)
 	return false;
 }
 
+/*
+ * Fixup for p10 TOD bug workaround.
+ *
+ * The TOD may fail to start if all clocks in the system are derived from
+ * the same reference oscillator.
+ *
+ * Avoiding this is pretty easy: Whenever we clear/reset the TOD registers,
+ * make sure to init bits 26:31 of TOD_SLAVE_PATH_CTRL (0x40005) to 0b111111
+ * instead of 0b000000. The value 0 in TOD_S_PATH_CTRL_REG(26:31) must be
+ * avoided, and if it does get written it must be followed up by writing a
+ * value of all ones to clean up the resulting bad state before the (nonzero)
+ * final value can be written.
+ */
+static void fixup_tod_reg_value(struct chiptod_tod_regs *treg_entry)
+{
+	int32_t chip_id = this_cpu()->chip_id;
+
+	if (proc_gen != proc_gen_p10)
+		return;
+
+	if (treg_entry->xscom_addr == TOD_SLAVE_PATH_CTRL)
+		treg_entry->val[chip_id].data |= PPC_BITMASK(26,31);
+}
+
 static int __chiptod_recover_tod_errors(void)
 {
 	uint64_t terr;
@@ -997,8 +1021,12 @@ static int __chiptod_recover_tod_errors(void)
 			return 0;
 		}
 
+		fixup_tod_reg_value(&chiptod_tod_regs[i]);
+
 		prlog(PR_DEBUG, "Parity error, Restoring TOD register: "
-				"%08llx\n", chiptod_tod_regs[i].xscom_addr);
+				"%08llx = %016llx\n",
+				chiptod_tod_regs[i].xscom_addr,
+				chiptod_tod_regs[i].val[chip_id].data);
 		if (xscom_writeme(chiptod_tod_regs[i].xscom_addr,
 			chiptod_tod_regs[i].val[chip_id].data)) {
 			prerror("XSCOM error writing 0x%08llx reg.\n",

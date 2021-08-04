@@ -27,6 +27,7 @@
 #define MSR_LE		PPC_BIT(63)	/* Little Endian */
 
 /* PIR */
+#define SPR_PIR_P10_MASK	0x7fff	/* Mask of implemented bits */
 #define SPR_PIR_P9_MASK		0x7fff	/* Mask of implemented bits */
 #define SPR_PIR_P8_MASK		0x1fff	/* Mask of implemented bits */
 
@@ -114,6 +115,7 @@
 #define SPR_TFMR_MOVE_CHIP_TOD_TO_TB	PPC_BIT(18)
 #define SPR_TFMR_CLEAR_TB_ERRORS	PPC_BIT(24)
 /* Bits in TFMR - thread indep. status bits */
+#define SPR_TFMR_TFAC_XFER_ERROR	PPC_BIT(25)
 #define SPR_TFMR_HDEC_PARITY_ERROR	PPC_BIT(26)
 #define SPR_TFMR_TBST_CORRUPT		PPC_BIT(27)
 #define SPR_TFMR_TBST_ENCODED		PPC_BITMASK(28,31)
@@ -140,17 +142,21 @@
 /* Bits in HMER/HMEER */
 #define SPR_HMER_MALFUNCTION_ALERT	PPC_BIT(0)
 #define SPR_HMER_PROC_RECV_DONE		PPC_BIT(2)
-#define SPR_HMER_PROC_RECV_ERROR_MASKED	PPC_BIT(3)
+#define SPR_HMER_PROC_RECV_ERROR_MASKED	PPC_BIT(3) /* Not P10 */
 #define SPR_HMER_TFAC_ERROR		PPC_BIT(4)
-#define SPR_HMER_TFMR_PARITY_ERROR	PPC_BIT(5)
+#define SPR_HMER_TFMR_PARITY_ERROR	PPC_BIT(5) /* P9 */
+#define SPR_HMER_TFAC_SHADOW_XFER_ERROR	PPC_BIT(5) /* P10 */
+#define SPR_HMER_SPURR_SCALE_LIMIT	PPC_BIT(6) /* P10 */
 #define SPR_HMER_XSCOM_FAIL		PPC_BIT(8)
 #define SPR_HMER_XSCOM_DONE		PPC_BIT(9)
 #define SPR_HMER_PROC_RECV_AGAIN	PPC_BIT(11)
-#define SPR_HMER_WARN_RISE		PPC_BIT(14)
-#define SPR_HMER_WARN_FALL		PPC_BIT(15)
+#define SPR_HMER_WARN_RISE		PPC_BIT(14) /* Not P10 */
+#define SPR_HMER_WARN_FALL		PPC_BIT(15) /* Not P10 */
 #define SPR_HMER_SCOM_FIR_HMI		PPC_BIT(16)
-#define SPR_HMER_TRIG_FIR_HMI		PPC_BIT(17)
-#define SPR_HMER_HYP_RESOURCE_ERR	PPC_BIT(20)
+#define SPR_HMER_TRIG_FIR_HMI		PPC_BIT(17) /* Not P10 */
+#define SPR_HMER_THD_WAKE_BLOCKED_TM_SUSPEND	PPC_BIT(17) /* Not P10 */
+#define SPR_HMER_P10_TRIG_FIR_HMI	PPC_BIT(18)
+#define SPR_HMER_HYP_RESOURCE_ERR	PPC_BIT(20) /* Not P10 */
 #define SPR_HMER_XSCOM_STATUS		PPC_BITMASK(21,23)
 
 /*
@@ -165,14 +171,23 @@
 					 SPR_HMER_TFMR_PARITY_ERROR |\
 					 SPR_HMER_PROC_RECV_AGAIN)
 
+#define SPR_HMEER_P10_HMI_ENABLE_MASK	(SPR_HMER_MALFUNCTION_ALERT |\
+					 SPR_HMER_PROC_RECV_DONE |\
+					 SPR_HMER_TFAC_ERROR |\
+					 SPR_HMER_TFAC_SHADOW_XFER_ERROR |\
+					 SPR_HMER_SPURR_SCALE_LIMIT |\
+					 SPR_HMER_PROC_RECV_AGAIN)
+
 /* Bits in HID0 */
 #define SPR_HID0_POWER8_4LPARMODE	PPC_BIT(2)
 #define SPR_HID0_POWER8_2LPARMODE	PPC_BIT(6)
 #define SPR_HID0_POWER8_DYNLPARDIS	PPC_BIT(15)
 #define SPR_HID0_POWER8_HILE		PPC_BIT(19)
 #define SPR_HID0_POWER9_HILE		PPC_BIT(4)
+#define SPR_HID0_POWER10_HILE		PPC_BIT(4)
 #define SPR_HID0_POWER8_ENABLE_ATTN	PPC_BIT(31)
 #define SPR_HID0_POWER9_ENABLE_ATTN	(PPC_BIT(2) | PPC_BIT(3))
+#define SPR_HID0_POWER10_ENABLE_ATTN	(PPC_BIT(2) | PPC_BIT(3))
 #define SPR_HID0_POWER9_RADIX		PPC_BIT(8)
 
 /* PVR bits */
@@ -192,6 +207,7 @@
 #define PVR_TYPE_P8NVL	0x004c /* Naples */
 #define PVR_TYPE_P9	0x004e
 #define PVR_TYPE_P9P	0x004f /* Axone */
+#define PVR_TYPE_P10	0x0080
 
 #ifdef __ASSEMBLY__
 
@@ -236,16 +252,22 @@ static inline bool is_power9n(uint32_t version)
 
 static inline bool is_fused_core(uint32_t version)
 {
-	if (PVR_TYPE(version) != PVR_TYPE_P9)
-		return false;
+	if (PVR_TYPE(version) == PVR_TYPE_P9) {
+		switch(PVR_CHIP_TYPE(version)) {
+			case 0:
+			case 2:
+				return true;
+			default:
+				return false;
+		}
 
-	switch(PVR_CHIP_TYPE(version)) {
-		case 0:
-		case 2:
-			return true;
-		default:
+	} else if(PVR_TYPE(version) == PVR_TYPE_P10) {
+		if(PVR_CHIP_TYPE(version) & 0x01)
 			return false;
-	}
+		else
+			return true;
+	} else
+		return false;
 }
 
 static inline bool is_power9c(uint32_t version) 

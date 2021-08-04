@@ -16,7 +16,7 @@
 #define smt_lowest()
 #define smt_medium()
 
-enum proc_gen proc_gen = proc_gen_p9;
+enum proc_gen proc_gen = proc_gen_unknown;
 
 static uint64_t stamp, last;
 struct lock;

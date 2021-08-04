@@ -1167,7 +1167,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Initialize the rest of the cpu thread structs */
 	init_all_cpus();
-	if (proc_gen == proc_gen_p9)
+	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
 		cpu_set_ipi_enable(true);
 
 	/* Add the /opal node to the device-tree */

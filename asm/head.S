@@ -324,7 +324,7 @@ boot_offset:
  *   r28 :  PVR
  *   r27 :  DTB pointer (or NULL)
  *   r26 :  PIR thread mask
- *   r25 :  P9 fused core flag
+ *   r25 :  P9/10 fused core flag
  */
 .global boot_entry
 boot_entry:
@@ -342,6 +342,8 @@ boot_entry:
 	beq 	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P9P
 	beq 	3f
+	cmpwi	cr0,%r3,PVR_TYPE_P10
+	beq 	4f
 	attn		/* Unsupported CPU type... what do we do ? */
 	b 	.	/* loop here, just in case attn is disabled */
 
@@ -352,8 +354,17 @@ boot_entry:
 	mfspr	%r3, SPR_SPRD
 	andi.	%r25, %r3, 1
 	beq 1f
+	b   2f
 
-	/* P8 or P9 fused -> 8 threads */
+4:      /*
+	 * P10 fused core check (SPRC/SPRD method does not work).
+	 * PVR bit 12 set = normal code
+	 */
+	andi.	%r3, %r28, 0x1000
+	bne	1f
+	li	%r25, 1
+
+	/* P8 or P9 fused or P10 fused -> 8 threads */
 
 2:	li	%r26,7
 
@@ -730,6 +741,8 @@ init_shared_sprs:
 	beq	4f
 	cmpwi	cr0,%r3,PVR_TYPE_P9P
 	beq	4f
+	cmpwi	cr0,%r3,PVR_TYPE_P10
+	beq	5f
 	/* Unsupported CPU type... what do we do ? */
 	b	9f
 
@@ -806,6 +819,32 @@ init_shared_sprs:
 
 	LOAD_IMM64(%r3,0x00000103070F1F3F)
 	mtspr	SPR_RPR,%r3
+	b	9f
+
+5:	/* P10 */
+	/* TSCR: UM recommended value */
+	LOAD_IMM32(%r3,0x80287880)
+	mtspr	SPR_TSCR, %r3
+
+	/* HID0:
+	 * Boot with PPC_BIT(5) set (dis_recovery).
+	 * Clear bit 5 to enable recovery.
+	 */
+	LOAD_IMM64(%r3, 0)
+	sync
+	mtspr	SPR_HID0,%r3
+	isync
+
+	LOAD_IMM64(%r4,SPR_HMEER_P10_HMI_ENABLE_MASK)
+	mfspr	%r3,SPR_HMEER
+	or	%r3,%r3,%r4
+	sync
+	mtspr	SPR_HMEER,%r3
+	isync
+
+	LOAD_IMM64(%r3,0x00000103070F1F3F)
+	mtspr	SPR_RPR,%r3
+
 9:	blr
 
 .global init_replicated_sprs
@@ -822,6 +861,8 @@ init_replicated_sprs:
 	beq	4f
 	cmpwi	cr0,%r3,PVR_TYPE_P9P
 	beq	4f
+	cmpwi	cr0,%r3,PVR_TYPE_P10
+	beq	5f
 	/* Unsupported CPU type... what do we do ? */
 	b	9f
 
@@ -836,6 +877,16 @@ init_replicated_sprs:
 	b	9f
 
 4:	/* P9 */
+	/* LPCR: sane value */
+	LOAD_IMM64(%r3,0x0040000000000000)
+	mtspr	SPR_LPCR, %r3
+	sync
+	isync
+	/* DSCR: Stride-N Stream Enable */
+	LOAD_IMM64(%r3,0x0000000000000010)
+	mtspr	SPR_DSCR,%r3
+
+5:	/* P10 */
 	/* LPCR: sane value */
 	LOAD_IMM64(%r3,0x0040000000000000)
 	mtspr	SPR_LPCR, %r3

@@ -99,12 +99,14 @@ cleanup_local_tlb:
 	.global cleanup_global_tlb
 cleanup_global_tlb:
 
-	/* Only supported on P9 for now */
+	/* Only supported on P9, P10 for now */
 	mfspr	%r3,SPR_PVR
 	srdi	%r3,%r3,16
 	cmpwi	cr0,%r3,PVR_TYPE_P9
 	beq	cr0,1f
 	cmpwi	cr0,%r3,PVR_TYPE_P9P
+	beq	cr0,1f
+	cmpwi	cr0,%r3,PVR_TYPE_P10
 	beq	cr0,1f
 	blr
 

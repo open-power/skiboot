@@ -111,6 +111,8 @@ void add_core_associativity(struct cpu_thread *cpu)
 		core_id = (cpu->pir >> 3) & 0xf;
 	else if (proc_gen == proc_gen_p9)
 		core_id = (cpu->pir >> 2) & 0x1f;
+	else if (proc_gen == proc_gen_p10)
+		core_id = (cpu->pir >> 2) & 0x1f;
 	else
 		return;
 

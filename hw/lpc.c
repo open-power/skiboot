@@ -915,7 +915,8 @@ void lpc_finalize_interrupts(void)
 		if (chip->lpc && chip->psi &&
 		    (chip->type == PROC_CHIP_P9_NIMBUS ||
 		     chip->type == PROC_CHIP_P9_CUMULUS ||
-		     chip->type == PROC_CHIP_P9P))
+		     chip->type == PROC_CHIP_P9P ||
+		     chip->type == PROC_CHIP_P10))
 			lpc_create_int_map(chip->lpc, chip->psi->node);
 	}
 }
@@ -959,6 +960,7 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 	case PROC_CHIP_P9_NIMBUS:
 	case PROC_CHIP_P9_CUMULUS:
 	case PROC_CHIP_P9P:
+	case PROC_CHIP_P10:
 		/* On P9, we additionally setup the routing. */
 		lpc->has_serirq = true;
 		for (i = 0; i < LPC_NUM_SERIRQ; i++) {
@@ -1377,7 +1379,8 @@ void lpc_register_client(uint32_t chip_id,
 	has_routes =
 		chip->type == PROC_CHIP_P9_NIMBUS ||
 		chip->type == PROC_CHIP_P9_CUMULUS ||
-		chip->type == PROC_CHIP_P9P;
+		chip->type == PROC_CHIP_P9P ||
+		chip->type == PROC_CHIP_P10;
 
 	if (policy != IRQ_ATTR_TARGET_OPAL && !has_routes) {
 		prerror("Chip doesn't support OS interrupt policy\n");

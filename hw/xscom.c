@@ -94,7 +94,11 @@ static void xscom_reset(uint32_t gcid, bool need_delay)
 	mtspr(SPR_HMER, HMER_CLR_MASK);
 
 	/* Setup local and target scom addresses */
-	if (proc_gen == proc_gen_p9) {
+	if (proc_gen == proc_gen_p10) {
+		recv_status_reg = 0x00090018;
+		log_reg = 0x0090012;
+		err_reg = 0x0090013;
+	} else if (proc_gen == proc_gen_p9) {
 		recv_status_reg = 0x00090018;
 		log_reg = 0x0090012;
 		err_reg = 0x0090013;
@@ -497,7 +501,7 @@ static int xscom_indirect_read(uint32_t gcid, uint64_t pcb_addr, uint64_t *val)
 {
 	uint64_t form = xscom_indirect_form(pcb_addr);
 
-	if ((proc_gen == proc_gen_p9) && (form == 1))
+	if ((proc_gen >= proc_gen_p9) && (form == 1))
 		return OPAL_UNSUPPORTED;
 
 	return xscom_indirect_read_form0(gcid, pcb_addr, val);
@@ -565,7 +569,7 @@ static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
 {
 	uint64_t form = xscom_indirect_form(pcb_addr);
 
-	if ((proc_gen == proc_gen_p9) && (form == 1))
+	if ((proc_gen >= proc_gen_p9) && (form == 1))
 		return xscom_indirect_write_form1(gcid, pcb_addr, val);
 
 	return xscom_indirect_write_form0(gcid, pcb_addr, val);
@@ -576,7 +580,7 @@ static uint32_t xscom_decode_chiplet(uint32_t partid, uint64_t *pcb_addr)
 	uint32_t gcid = (partid & 0x0fffffff) >> 4;
 	uint32_t core = partid & 0xf;
 
-	if (proc_gen == proc_gen_p9) {
+	if (proc_gen >= proc_gen_p9) {
 		/* XXX Not supported */
 		*pcb_addr = 0;
 	} else {
@@ -821,7 +825,9 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 	 * something up
 	 */
 	if (chip_quirk(QUIRK_NO_F000F)) {
-		if (proc_gen == proc_gen_p9)
+		if (proc_gen == proc_gen_p10)
+			val = 0x120DA04980000000UL; /* P10 DD1.0 */
+		else if (proc_gen == proc_gen_p9)
 			val = 0x203D104980000000UL; /* P9 Nimbus DD2.3 */
 		else
 			val = 0x221EF04980000000UL; /* P8 Murano DD2.1 */
@@ -873,6 +879,10 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 		chip->type = PROC_CHIP_P9P;
 		assert(proc_gen == proc_gen_p9);
 		break;
+	case 0xda:
+		chip->type = PROC_CHIP_P10;
+		assert(proc_gen == proc_gen_p10);
+		break;
 	default:
 		printf("CHIP: Unknown chip type 0x%02x !!!\n",
 		       (unsigned char)(val & 0xff));
@@ -911,7 +921,7 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 		prlog(PR_INFO,"P9 DD%i.%i%d detected\n", 0xf & (chip->ec_level >> 4),
 		       chip->ec_level & 0xf, rev);
 		chip->ec_rev = rev;
-	}
+	} /* XXX P10 */
 }
 
 /*
@@ -949,7 +959,8 @@ void xscom_init(void)
 		struct proc_chip *chip;
 		const char *chip_name;
 		static const char *chip_names[] = {
-			"UNKNOWN", "P8E", "P8", "P8NVL", "P9N", "P9C", "P9P"
+			"UNKNOWN", "P8E", "P8", "P8NVL", "P9N", "P9C", "P9P",
+			"P10",
 		};
 
 		chip = get_chip(gcid);

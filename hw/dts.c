@@ -171,7 +171,11 @@ static void dts_async_read_temp(struct timer *t __unused, void *data,
 
 	swkup_rc = dctl_set_special_wakeup(cpu);
 
-	rc = dts_read_core_temp_p9(cpu->pir, &dts);
+	if (proc_gen == proc_gen_p9)
+		rc = dts_read_core_temp_p9(cpu->pir, &dts);
+	else /* (proc_gen == proc_gen_p10) */
+		rc = OPAL_UNSUPPORTED; /* XXX P10 */
+
 	if (!rc) {
 		if (cpu->sensor_attr == SENSOR_DTS_ATTR_TEMP_MAX)
 			*cpu->sensor_data = cpu_to_be64(dts.temp);
@@ -219,6 +223,7 @@ static int dts_read_core_temp(u32 pir, struct dts *dts, u8 attr,
 		rc = OPAL_ASYNC_COMPLETION;
 		unlock(&cpu->dts_lock);
 		break;
+	case proc_gen_p10: /* XXX P10 */
 	default:
 		rc = OPAL_UNSUPPORTED;
 	}

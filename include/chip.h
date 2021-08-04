@@ -100,10 +100,58 @@
 
 #define P9_PIRFUSED2NORMALTHREADID(pir) (((pir) >> 1) & 0x3)
 
+#define P10_PIR2FUSEDCOREID(pir) P9_PIR2FUSEDCOREID(pir)
+#define P10_PIRFUSED2NORMALCOREID(pir) P9_PIRFUSED2NORMALCOREID(pir)
+#define P10_PIRFUSED2NORMALTHREADID(pir) P9_PIRFUSED2NORMALTHREADID(pir)
+
 /* P9 specific ones mostly used by XIVE */
 #define P9_PIR2LOCALCPU(pir) ((pir) & 0xff)
 #define P9_PIRFROMLOCALCPU(chip, cpu)	(((chip) << 8) | (cpu))
 
+/*
+ * P10 PIR
+ * -------
+ *
+ * PIR layout:
+ *
+ * |  49|  50|  51|  52|  53|  54|  55|  56|  57|  58|  59|  60|  61|  62|  63|
+ * |Spare ID      |Topology ID        |Sp. |Quad ID       |Core ID  |Thread ID|
+ *
+ * Bit 56 is a spare quad ID. In big-core mode, thread ID extends to bit 61.
+ *
+ * P10 GCID
+ * --------
+ *
+ * - Global chip ID is also called Topology ID.
+ * - Node ID is called Group ID (? XXX P10).
+ *
+ * Global chip ID is a 4 bit number.
+ *
+ * There is a topology mode bit that can be 0 or 1, which changes GCID mapping.
+ *
+ * Topology mode 0:
+ *      NodeID    ChipID
+ * |              |    |
+ * |____|____|____|____|
+ *
+ * Topology mode 1:
+ *    NodeID    ChipID
+ * |         |         |
+ * |____|____|____|____|
+ */
+#define P10_PIR2GCID(pir) (((pir) >> 8) & 0xf)
+
+#define P10_PIR2COREID(pir) (((pir) >> 2) & 0x3f)
+
+#define P10_PIR2THREADID(pir) ((pir) & 0x3)
+
+// XXX P10 These depend on the topology mode, how to get that (system type?)
+#define P10_GCID2NODEID(gcid, mode) ((mode) == 0 ? ((gcid) >> 1) & 0x7 : ((gcid) >> 2) & 0x3)
+#define P10_GCID2CHIPID(gcid, mode) ((mode) == 0 ? (gcid) & 0x1 : (gcid) & 0x3)
+
+/* P10 specific ones mostly used by XIVE */
+#define P10_PIR2LOCALCPU(pir) ((pir) & 0xff)
+#define P10_PIRFROMLOCALCPU(chip, cpu)	(((chip) << 8) | (cpu))
 
 struct dt_node;
 struct centaur_chip;
@@ -123,6 +171,7 @@ enum proc_chip_type {
 	PROC_CHIP_P9_NIMBUS,
 	PROC_CHIP_P9_CUMULUS,
 	PROC_CHIP_P9P,
+	PROC_CHIP_P10,
 };
 
 /* Simulator quirks */

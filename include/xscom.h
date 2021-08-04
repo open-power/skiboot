@@ -137,6 +137,91 @@
 #define XSCOM_ADDR_P9_EC_SLAVE(core, addr) \
 	XSCOM_ADDR_P9_EC(core, (addr) | 0xf0000)
 
+/*
+ * Additional useful definitions for P10
+ */
+
+/*
+ * POWER10 pervasive structure
+ * Chip has 8 EQ chiplets (aka super-chiplets), and other nest chiplets.
+ * Each EQ contains 4 EX regions.
+ * Each EX contains an ECL2, L3, MMA.
+ * Each ECL2 contains an EC (core), L2, and NCU.
+ *
+ * Each EQ has a Quad Management Engine (QME), responsible for power management
+ * for the cores, among other things.
+ *
+ * POWER10 XSCOM address format:
+ *
+ *      | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16-31|
+ * MC=0 |WR|MC|SLAVE ADDR       |PIB MASTER |PORT NUMBER|LOCAL|
+ * MC=1 |WR|MC|MC TYPE |MC GROUP|PIB MASTER |PORT NUMBER|LOCAL|
+ *
+ * * Port is also known as PSCOM endpoint.
+ *
+ * WR is set by the xscom access functions (XSCOM_DATA_IND_READ bit)
+ * MC is always 0 (skiboot does not use multicast scoms).
+ *
+ * For unicast:
+ * EQ0-7 is addressed from 0x20 to 0x27 in the top 8 bits.
+ * L3 is on port 1
+ * NCU is on port 1
+ * ECL2 (core+L2) is on port 2 (XXX P10 scoms html doc suggests port 1?)
+ * QME is on port E.
+ *
+ * EQ chiplets (aka super chiplet) local address format:
+ *
+ *      | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|
+ *      |C0|C1|C2|C3|RING ID |SAT ID  |REGISTER ID      |
+ *
+ * EX0-4 are selected with one-hot encoding (C0-3)
+ *
+ * QME per-core register access address format:
+ *      | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|
+ *      |C0|C1|C2|C3| 1| 0| 0| 0|PER-CORE REGISTER ID   |
+ *
+ * NCU - ring 6 (port 1)
+ * L3  - ring 3 (port 1) (XXX P10 scoms html doc suggests ring 6)
+ * L2  - ring 0 (port 2) (XXX P10 scoms html doc suggests ring 4)
+ * EC (PC unit) - rings 2-5 (port 2)
+ *
+ * Other chiplets:
+ *
+ *      | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|
+ *      | 1|RING ID       |SAT ID     |REGISTER ID      |
+ */
+
+#define P10_CORE_EQ_CHIPLET(core)	(0x20 + ((core) >> 2))
+#define P10_CORE_PROC(core)		((core) & 0x3)
+
+#define XSCOM_P10_EQ(chiplet)		((chiplet) << 24)
+
+#define XSCOM_P10_QME(chiplet) \
+	(XSCOM_P10_EQ(chiplet) | (0xE << 16))
+
+#define XSCOM_P10_QME_CORE(chiplet, proc) \
+	(XSCOM_P10_QME(chiplet) | ((1 << (3 - proc)) << 12))
+
+#define XSCOM_P10_EC(chiplet, proc) \
+	(XSCOM_P10_EQ(chiplet) | (0x2 << 16) | ((1 << (3 - proc)) << 12))
+
+#define XSCOM_P10_NCU(chiplet, proc) \
+	(XSCOM_P10_EQ(chiplet) | (0x1 << 16) | ((1 << (3 - proc)) << 12))
+
+#define XSCOM_ADDR_P10_EQ(core, addr) \
+	(XSCOM_P10_EQ(P10_CORE_EQ_CHIPLET(core)) | (addr))
+
+#define XSCOM_ADDR_P10_QME(core, addr) \
+	(XSCOM_P10_QME(P10_CORE_EQ_CHIPLET(core)) | (addr))
+
+#define XSCOM_ADDR_P10_QME_CORE(core, addr) \
+	(XSCOM_P10_QME_CORE(P10_CORE_EQ_CHIPLET(core), P10_CORE_PROC(core)) | (addr))
+
+#define XSCOM_ADDR_P10_EC(core, addr) \
+	(XSCOM_P10_EC(P10_CORE_EQ_CHIPLET(core), P10_CORE_PROC(core)) | (addr))
+
+#define XSCOM_ADDR_P10_NCU(core, addr)					\
+	(XSCOM_P10_NCU(P10_CORE_EQ_CHIPLET(core), P10_CORE_PROC(core)) | (addr))
 
 /* Definitions relating to indirect XSCOMs shared with centaur */
 #define XSCOM_ADDR_IND_FLAG		PPC_BIT(0)
