@@ -170,6 +170,20 @@ static unsigned int htm_scom_index_p9[] = {
 	0x10012700
 };
 
+static unsigned int pdbar_scom_index_p10[] = {
+	0x2001868B,
+	0x2001468B,
+	0x2001268B,
+	0x2001168B
+};
+
+static unsigned int htm_scom_index_p10[] = {
+	0x20018680,
+	0x20014680,
+	0x20012680,
+	0x20011680
+};
+
 static struct imc_chip_cb *get_imc_cb(uint32_t chip_id)
 {
 	struct proc_chip *chip = get_chip(chip_id);
@@ -263,13 +277,23 @@ static bool is_imc_device_type_supported(struct dt_node *node)
 
 	if (val == IMC_COUNTER_TRACE) {
 		pvr = mfspr(SPR_PVR);
-		/*
-		 * Trace mode is supported in Nimbus DD2.2
-		 * and later versions.
-		 */
-		if ((chip->type == PROC_CHIP_P9_NIMBUS) &&
-			(PVR_VERS_MAJ(pvr) == 2) && (PVR_VERS_MIN(pvr) >= 2))
+
+		switch (chip->type) {
+		case PROC_CHIP_P9_NIMBUS:
+			/*
+			 * Trace mode is supported in Nimbus DD2.2
+			 * and later versions.
+			 */
+			if ((PVR_VERS_MAJ(pvr) == 2) &&
+				(PVR_VERS_MIN(pvr) >= 2))
+					return true;
+			break;
+		case PROC_CHIP_P10:
 			return true;
+		default:
+			return false;
+		}
+
 	}
 	return false;
 }
@@ -453,8 +477,8 @@ void imc_catalog_preload(void)
 	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
 		return;
 
-	/* Enable only for power 9 */
-	if (proc_gen != proc_gen_p9)
+	/* Enable only for power 9/10 */
+	if (proc_gen < proc_gen_p9)
 		return;
 
 	compress_buf = malloc(MAX_COMPRESSED_IMC_DTB_SIZE);
@@ -559,6 +583,17 @@ static int setup_imc_scoms(void)
 						IMC_TRACE_CPMC2SEL_VAL,
 						IMC_TRACE_BUFF_SIZE);
 		return 0;
+	case proc_gen_p10:
+		CORE_IMC_EVENT_MASK_ADDR = CORE_IMC_EVENT_MASK_ADDR_P10;
+		TRACE_IMC_ADDR = TRACE_IMC_ADDR_P10;
+		pdbar_scom_index = pdbar_scom_index_p10;
+		htm_scom_index = htm_scom_index_p10;
+		trace_scom_val = TRACE_IMC_SCOM(IMC_TRACE_CPMC1,
+						IMC_TRACE_CPMCLOAD_VAL,
+						IMC_TRACE_CPMC1SEL_VAL,
+						IMC_TRACE_CPMC2SEL_VAL,
+						IMC_TRACE_BUFF_SIZE);
+		return 0;
 	default:
 		prerror("%s: Unknown cpu type\n", __func__);
 		break;
@@ -586,8 +621,8 @@ void imc_init(void)
 		goto imc_mambo;
 	}
 
-	/* Enable only for power 9 */
-	if (proc_gen != proc_gen_p9)
+	/* Enable only for power 9/10 */
+	if (proc_gen < proc_gen_p9)
 		return;
 
 	if (!imc_xz)
@@ -720,6 +755,9 @@ static uint32_t get_imc_scom_addr_for_core(int core, uint64_t addr)
 	case proc_gen_p9:
 		scom_addr = XSCOM_ADDR_P9_EC(core, addr);
 		return scom_addr;
+	case proc_gen_p10:
+		scom_addr = XSCOM_ADDR_P10_EC(core, addr);
+		return scom_addr;
 	default:
 		return 0;
 	}
@@ -733,6 +771,9 @@ static uint32_t get_imc_scom_addr_for_quad(int core, uint64_t addr)
 	switch (proc_gen) {
 	case proc_gen_p9:
 		scom_addr = XSCOM_ADDR_P9_EQ(core, addr);
+		return scom_addr;
+	case proc_gen_p10:
+		scom_addr = XSCOM_ADDR_P10_EQ(core, addr);
 		return scom_addr;
 	default:
 		return 0;
