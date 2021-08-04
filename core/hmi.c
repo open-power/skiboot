@@ -602,6 +602,10 @@ static void find_capp_checkstop_reason(int flat_chip_id,
 	uint64_t reg;
 	int64_t rc;
 
+	/* CAPP exists on P8 and P9 only */
+	if (proc_gen != proc_gen_p8 && proc_gen != proc_gen_p9)
+		return;
+
 	/* Find the CAPP on the chip associated with the HMI. */
 	for_each_phb(phb) {
 		/* get the CAPP info */

@@ -1364,7 +1364,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Probe PHB3 on P8 */
 	probe_phb3();
 
-	/* Probe PHB4 on P9 */
+	/* Probe PHB4 on P9 and PHB5 on P10 */
 	probe_phb4();
 
 	/* Probe NPUs */

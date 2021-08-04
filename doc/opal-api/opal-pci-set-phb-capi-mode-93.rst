@@ -66,10 +66,11 @@ Notes
   allocate extra 16/8 dma read engines to the PHB depending on its stack
   (stack 0/ stack 1). This is needed to improve the Direct-GPU DMA read
   performance for the Mellanox CX5 card.
-* Mode `OPAL_PHB_CAPI_MODE_PCIE` not yet supported on Power-9.
+* Mode `OPAL_PHB_CAPI_MODE_PCIE` not supported on Power-9.
 * Requesting mode `OPAL_PHB_CAPI_MODE_CAPI` on Power-9 will disable fast-reboot.
 * Modes `OPAL_PHB_CAPI_MODE_DMA`, `OPAL_PHB_CAPI_MODE_SNOOP_OFF` are
-  not supported on Power-9 yet.
+  not supported on Power-9.
+* CAPI is only supported on Power-8 and Power-9.
 
 Return Codes
 ------------

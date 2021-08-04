@@ -154,9 +154,9 @@ struct phb4_err {
 #define PHB4_ETU_IN_RESET	0x00000020
 
 struct phb4 {
-	unsigned int		index;	    /* 0..5 index inside p9 */
+	unsigned int		index;	    /* 0..5 index inside p9/p10 */
 	unsigned int		flags;
-	unsigned int		chip_id;    /* Chip ID (== GCID on p9) */
+	unsigned int		chip_id;    /* Chip ID (== GCID on p9/p10) */
 	unsigned int		pec;
 	bool			broken;
 	unsigned int		rev;        /* 00MMmmmm */
@@ -245,16 +245,20 @@ static inline void phb4_set_err_pending(struct phb4 *p, bool pending)
 	p->err_pending = pending;
 }
 
-#define PHB4_PER_CHIP                        6 /* Max 6 PHBs per chip on p9 */
-#define PHB4_MAX_PHBS_PER_CHIP_P9            PHB4_PER_CHIP
-#define PHB4_MAX_PHBS_PER_CHIP_P9P           0x10 /* extra for virt PHBs */
+#define MAX_PHBS_PER_CHIP_P10           6 /* Max 6 PHBs per chip on p10 */
+#define MAX_PHBS_PER_CHIP_P9            6 /* Max 6 PHBs per chip on p9 */
+#define MAX_PHBS_PER_CHIP_P9P           0x10 /* extra for virt PHBs */
 
 static inline int phb4_get_opal_id(unsigned int chip_id, unsigned int index)
 {
-	if (PVR_TYPE(mfspr(SPR_PVR)) == PVR_TYPE_P9)
-		return chip_id * PHB4_MAX_PHBS_PER_CHIP_P9 + index;
-	else
-		return chip_id * PHB4_MAX_PHBS_PER_CHIP_P9P + index;
+	if (proc_gen == proc_gen_p10) {
+		return chip_id * MAX_PHBS_PER_CHIP_P10 + index;
+	} else {
+		if (PVR_TYPE(mfspr(SPR_PVR)) == PVR_TYPE_P9)
+			return chip_id * MAX_PHBS_PER_CHIP_P9 + index;
+		else
+			return chip_id * MAX_PHBS_PER_CHIP_P9P + index;
+	}
 }
 
 void phb4_pec2_dma_engine_realloc(struct phb4 *p);

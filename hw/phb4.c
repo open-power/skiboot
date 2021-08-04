@@ -142,6 +142,16 @@ static bool pci_eeh_mmio;
 static bool pci_retry_all;
 static int rx_err_max = PHB4_RX_ERR_MAX;
 
+static inline bool is_phb4(void)
+{
+	return (proc_gen == proc_gen_p9);
+}
+
+static inline bool is_phb5(void)
+{
+	return (proc_gen == proc_gen_p10);
+}
+
 /* Note: The "ASB" name is historical, practically this means access via
  * the XSCOM backdoor
  */
@@ -988,7 +998,7 @@ static int64_t phb4_wait_bit(struct phb4 *p, uint32_t reg,
 	 * XXX Add timeout...
 	 */
 	/* XXX SIMICS is nasty... */
-	if ((reg == PHB_TCE_KILL || reg == PHB_DMARD_SYNC) &&
+	if ((reg == PHB_TCE_KILL || reg == PHB_DMA_READ_WRITE_SYNC) &&
 	    chip_quirk(QUIRK_SIMICS))
 		return OPAL_SUCCESS;
 
@@ -1084,7 +1094,17 @@ static int64_t phb4_tce_kill(struct phb *phb, uint32_t kill_type,
 	}
 
 	/* Start DMA sync process */
-	out_be64(p->regs + PHB_DMARD_SYNC, PHB_DMARD_SYNC_START);
+	if (is_phb5()){
+		val = in_be64(p->regs + PHB_DMA_READ_WRITE_SYNC) &
+					(PHB_DMA_READ_SYNC_COMPLETE |
+					 PHB_DMA_WRITE_SYNC_COMPLETE);
+		out_be64(p->regs + PHB_DMA_READ_WRITE_SYNC,
+					val | PHB_DMA_READ_SYNC_START);
+
+	} else {
+		out_be64(p->regs + PHB_DMA_READ_WRITE_SYNC,
+			 PHB_DMA_READ_SYNC_START);
+	}
 
 	/* Wait for kill to complete */
 	rc = phb4_wait_bit(p, PHB_Q_DMA_R, PHB_Q_DMA_R_TCE_KILL_STATUS, 0);
@@ -1092,9 +1112,9 @@ static int64_t phb4_tce_kill(struct phb *phb, uint32_t kill_type,
 		return rc;
 
 	/* Wait for DMA sync to complete */
-	return phb4_wait_bit(p, PHB_DMARD_SYNC,
-			     PHB_DMARD_SYNC_COMPLETE,
-			     PHB_DMARD_SYNC_COMPLETE);
+	return phb4_wait_bit(p, PHB_DMA_READ_WRITE_SYNC,
+			     PHB_DMA_READ_SYNC_COMPLETE,
+			     PHB_DMA_READ_SYNC_COMPLETE);
 }
 
 /* phb4_ioda_reset - Reset the IODA tables
@@ -3537,7 +3557,11 @@ static void phb4_int_unmask_all(struct phb4 *p)
 {
 	/* Init_126..130 - Re-enable error interrupts */
 	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,         0xca8880cc00000000ull);
-	out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,     0x2008400e08200000ull);
+
+	if (is_phb5())
+		out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE, 0x200850be08200020ull);
+	else
+		out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE, 0x2008400e08200000ull);
 	out_be64(p->regs + PHB_RXE_ARB_ERR_IRQ_ENABLE, 0xc40038fc01804070ull);
 	out_be64(p->regs + PHB_RXE_MRG_ERR_IRQ_ENABLE, 0x00006100008000a8ull);
 	out_be64(p->regs + PHB_RXE_TCE_ERR_IRQ_ENABLE, 0x60510050c0000000ull);
@@ -4162,6 +4186,10 @@ static int64_t phb4_get_capp_info(int chip_id, struct phb *phb,
 	struct phb4 *p = phb_to_phb4(phb);
 	uint32_t offset;
 
+	/* Not even supposed to be here on P10, but doesn't hurt */
+	if (is_phb5())
+		return OPAL_UNSUPPORTED;
+
 	if (chip_id != p->chip_id)
 		return OPAL_PARAMETER;
 
@@ -4364,8 +4392,11 @@ static void phb4_init_capp_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0cb0,	0x35777073ff000000ull);
 }
 
- /*
- * The capi indicator is over the 8 most significant bits on p9 (and
+/*
+ * The capi, NBW and ASN indicators are used only on P9 to flag some
+ * types of incoming traffic for the PHB and have been removed on P10.
+ *
+ * The capi indicator is over the 8 most significant bits (and
  * not 16). We stay away from bits 59 (TVE select), 60 and 61 (MSI)
  *
  * For the mask, we keep bit 59 in, as capi messages must hit TVE#0.
@@ -4689,6 +4720,10 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 	struct capp *capp = p->capp;
 	uint64_t reg, ret;
 
+	/* No CAPI on P10. OpenCAPI only */
+	if (is_phb5())
+		return OPAL_UNSUPPORTED;
+
 	/* cant do a mode switch when capp is in recovery mode */
 	ret = capp_xscom_read(capp, CAPP_ERR_STATUS_CTRL, &reg);
 	if (ret != OPAL_SUCCESS)
@@ -4954,7 +4989,7 @@ static void phb4_init_ioda3(struct phb4 *p)
 
 	/* Init_19 - Interrupt Notify Base Index */
 	out_be64(p->regs + PHB_INT_NOTIFY_INDEX,
-		 xive_get_notify_base(p->base_msi));
+		 xive2_get_notify_base(p->base_msi));
 
 	/* Init_19x - Not in spec: Initialize source ID */
 	PHBDBG(p, "Reset state SRC_ID: %016llx\n",
@@ -4979,9 +5014,11 @@ static void phb4_init_ioda3(struct phb4 *p)
 	/* Init_24 - CRW Base Address Reg */
 	/* See enable_capi_mode() */
 
-	/* Init_25 - ASN Compare/Mask */
-	out_be64(p->regs + PHB_ASN_CMPM, ((u64)ASNIND << 48) |
-		 ((u64)ASNMASK << 32) | PHB_ASN_CMPM_ENABLE);
+	if (is_phb4()) {
+		/* Init_25 - ASN Compare/Mask - P9 only */
+		out_be64(p->regs + PHB_ASN_CMPM, ((u64)ASNIND << 48) |
+			 ((u64)ASNMASK << 32) | PHB_ASN_CMPM_ENABLE);
+	}
 
 	/* Init_26 - CAPI Compare/Mask */
 	/* See enable_capi_mode() */
@@ -5123,18 +5160,26 @@ static void phb4_init_errors(struct phb4 *p)
 
 	/* Init_73..81 - TXE errors */
 	out_be64(p->regs + 0x0d08,	0x0000000000000000ull);
+
 	/* Errata: Clear bit 17, otherwise a CFG write UR/CA will incorrectly
 	 * freeze a "random" PE (whatever last PE did an MMIO)
 	 */
-	out_be64(p->regs + 0x0d28,	0x0000000a00000000ull);
-	if (phb4_is_dd20(p)) {
-		out_be64(p->regs + 0x0d00,	0xf3acff0ff7ddfff0ull);
-		out_be64(p->regs + 0x0d18,	0xf3acff0ff7ddfff0ull);
-		out_be64(p->regs + 0x0d30,	0xdfffbd05f7ddfff0ull); /* XXX CAPI has diff. value */
-	} else  {
+	if (is_phb5()) {
+		out_be64(p->regs + 0x0d28,	0x0000500a00000000ull);
 		out_be64(p->regs + 0x0d00,	0xffffffffffffffffull);
 		out_be64(p->regs + 0x0d18,	0xffffff0fffffffffull);
-		out_be64(p->regs + 0x0d30,	0xdff7bd05f7ddfff0ull);
+		out_be64(p->regs + 0x0d30,	0xdff7af41f7ddffdfull);
+	} else {
+		out_be64(p->regs + 0x0d28,	0x0000000a00000000ull);
+		if (phb4_is_dd20(p)) {
+			out_be64(p->regs + 0x0d00,	0xf3acff0ff7ddfff0ull);
+			out_be64(p->regs + 0x0d18,	0xf3acff0ff7ddfff0ull);
+			out_be64(p->regs + 0x0d30,	0xdfffbd05f7ddfff0ull); /* XXX CAPI has diff. value */
+		} else  {
+			out_be64(p->regs + 0x0d00,	0xffffffffffffffffull);
+			out_be64(p->regs + 0x0d18,	0xffffff0fffffffffull);
+			out_be64(p->regs + 0x0d30,	0xdff7bd05f7ddfff0ull);
+		}
 	}
 
 	out_be64(p->regs + 0x0d40,	0x0000000000000000ull);
@@ -5241,7 +5286,7 @@ static void phb4_init_hw(struct phb4 *p)
 {
 	uint64_t val, creset;
 
-	PHBDBG(p, "Initializing PHB4...\n");
+	PHBDBG(p, "Initializing PHB...\n");
 
 	/* Init_1 - Sync reset
 	 *
@@ -5286,6 +5331,18 @@ static void phb4_init_hw(struct phb4 *p)
 		val = in_be64(p->regs + PHB_PCIE_DLP_CTL);
 		val |= PHB_PCIE_DLP_CTL_BYPASS_PH2 | PHB_PCIE_DLP_CTL_BYPASS_PH3;
 		out_be64(p->regs + PHB_PCIE_DLP_CTL, val);
+	}
+
+	if (is_phb5()) {
+		/* disable scaled flow control for now. SW527785 */
+		PHBDBG(p, "LINK: Disabling scaled flow control\n");
+		val = in_be64(p->regs + PHB_PCIE_DLP_CTL);
+		val |= PHB_PCIE_DLP_CTL_SFC_DISABLE;
+		out_be64(p->regs + PHB_PCIE_DLP_CTL, val);
+
+		/* lane equalization settings need to be tuned on P10 */
+		out_be64(p->regs + PHB_PCIE_PDL_PHY_EQ_CNTL,
+			 0x80F4FFFFFF0F9C00);
 	}
 
 	/* Init_14 - Clear link training */
@@ -5698,6 +5755,13 @@ static __be64 lane_eq_default[8] = {
 	CPU_TO_BE64(0x7777777777777777UL), CPU_TO_BE64(0x7777777777777777UL),
 };
 
+static __be64 lane_eq_phb5_default[8] = {
+	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
+	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
+	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
+	CPU_TO_BE64(0x4444444444444444UL), CPU_TO_BE64(0x4444444444444444UL),
+};
+
 static void phb4_create(struct dt_node *np)
 {
 	const struct dt_property *prop;
@@ -5816,7 +5880,10 @@ static void phb4_create(struct dt_node *np)
 		}
 	} else {
 		PHBDBG(p, "Using default lane equalization settings\n");
-		p->lane_eq = lane_eq_default;
+		if (is_phb5())
+			p->lane_eq = lane_eq_phb5_default;
+		else
+			p->lane_eq = lane_eq_default;
 	}
 	if (p->lane_eq) {
 		PHBDBG(p, "Override lane equalization settings:\n");
@@ -5830,7 +5897,10 @@ static void phb4_create(struct dt_node *np)
 	 * 2K or 4K interrupts ... for now we just use 4K but that
 	 * needs to be fixed
 	 */
-	irq_base = xive_alloc_hw_irqs(p->chip_id, p->num_irqs, p->num_irqs);
+	if (is_phb5())
+		irq_base = xive2_alloc_hw_irqs(p->chip_id, p->num_irqs, p->num_irqs);
+	else
+		irq_base = xive_alloc_hw_irqs(p->chip_id, p->num_irqs, p->num_irqs);
 	if (irq_base == XIVE_IRQ_ERROR) {
 		PHBERR(p, "Failed to allocate %d interrupt sources\n",
 		       p->num_irqs);
@@ -5838,8 +5908,6 @@ static void phb4_create(struct dt_node *np)
 	}
 	p->base_msi = irq_base;
 	p->base_lsi = irq_base + p->num_irqs - 8;
-	p->irq_port = xive_get_notify_port(p->chip_id,
-					   XIVE_HW_SRC_PHBn(p->index));
 	p->num_pes = p->max_num_pes;
 
 	/* Allocate the SkiBoot internal in-memory tables for the PHB */
@@ -5854,7 +5922,8 @@ static void phb4_create(struct dt_node *np)
 	phb4_init_hw(p);
 
 	/* init capp that might get attached to the phb */
-	phb4_init_capp(p);
+	if (is_phb4())
+		phb4_init_capp(p);
 
 	/* Compute XIVE source flags depending on PHB revision */
 	irq_flags = 0;
@@ -5863,13 +5932,23 @@ static void phb4_create(struct dt_node *np)
 	else
 		irq_flags |= XIVE_SRC_TRIGGER_PAGE;
 
-	/* Register all interrupt sources with XIVE */
-	xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
-				p->int_mmio, irq_flags, NULL, NULL);
+	if (is_phb5()) {
+		/* Register all interrupt sources with XIVE */
+		xive2_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
+					 p->int_mmio, irq_flags, NULL, NULL);
 
-	xive_register_hw_source(p->base_lsi, 8, 16,
-				p->int_mmio + ((p->num_irqs - 8) << 16),
-				XIVE_SRC_LSI, p, &phb4_lsi_ops);
+		xive2_register_hw_source(p->base_lsi, 8, 16,
+					 p->int_mmio + ((p->num_irqs - 8) << 16),
+					 XIVE_SRC_LSI, p, &phb4_lsi_ops);
+	} else {
+		/* Register all interrupt sources with XIVE */
+		xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
+					p->int_mmio, irq_flags, NULL, NULL);
+
+		xive_register_hw_source(p->base_lsi, 8, 16,
+					p->int_mmio + ((p->num_irqs - 8) << 16),
+					XIVE_SRC_LSI, p, &phb4_lsi_ops);
+	}
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)
@@ -5889,6 +5968,7 @@ static void phb4_create(struct dt_node *np)
 static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 			     uint32_t nest_base, uint32_t pci_base)
 {
+	enum phys_map_type phys_mmio64, phys_mmio32, phys_xive_esb, phys_reg_spc;
 	uint32_t pci_stack, nest_stack, etu_base, gcid, phb_num, stk_index;
 	uint64_t val, phb_bar = 0, irq_bar = 0, bar_en;
 	uint64_t mmio0_bar = 0, mmio0_bmask, mmio0_sz;
@@ -5902,12 +5982,27 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	unsigned int max_link_speed;
 	int rc;
 
+	assert(is_phb5() || is_phb4()); /* Sanity check */
+
 	gcid = dt_get_chip_id(stk_node);
 	stk_index = dt_prop_get_u32(stk_node, "reg");
 	phb_num = dt_prop_get_u32(stk_node, "ibm,phb-index");
 	path = dt_get_path(stk_node);
-	prlog(PR_INFO, "PHB: Chip %d Found PHB4 PBCQ%d Stack %d at %s\n",
-	      gcid, pec_index, stk_index, path);
+	if (is_phb5()) {
+		phys_mmio64 = PHB5_64BIT_MMIO;
+		phys_mmio32 = PHB5_32BIT_MMIO;
+		phys_xive_esb = PHB5_XIVE_ESB;
+		phys_reg_spc = PHB5_REG_SPC;
+		prlog(PR_INFO, "PHB: Chip %d Found PHB5 PBCQ%d Stack %d at %s\n",
+		      gcid, pec_index, stk_index, path);
+	} else {
+		phys_mmio64 = PHB4_64BIT_MMIO;
+		phys_mmio32 = PHB4_32BIT_MMIO;
+		phys_xive_esb = PHB4_XIVE_ESB;
+		phys_reg_spc = PHB4_REG_SPC;
+		prlog(PR_INFO, "PHB: Chip %d Found PHB4 PBCQ%d Stack %d at %s\n",
+		      gcid, pec_index, stk_index, path);
+	}
 	free(path);
 
 	pci_stack = pci_base + 0x40 * (stk_index + 1);
@@ -5921,7 +6016,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	bar_en = 0;
 
 	/* Initialize PHB register BAR */
-	phys_map_get(gcid, PHB4_REG_SPC, phb_num, &phb_bar, NULL);
+	phys_map_get(gcid, phys_reg_spc, phb_num, &phb_bar, NULL);
 	rc = xscom_write(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR,
 			 phb_bar << 8);
 
@@ -5935,18 +6030,18 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	bar_en |= XPEC_NEST_STK_BAR_EN_PHB;
 
 	/* Same with INT BAR (ESB) */
-	phys_map_get(gcid, PHB4_XIVE_ESB, phb_num, &irq_bar, NULL);
+	phys_map_get(gcid, phys_xive_esb, phb_num, &irq_bar, NULL);
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, irq_bar << 8);
 	bar_en |= XPEC_NEST_STK_BAR_EN_INT;
 
 
 	/* Same with MMIO windows */
-	phys_map_get(gcid, PHB4_64BIT_MMIO, phb_num, &mmio0_bar, &mmio0_sz);
+	phys_map_get(gcid, phys_mmio64, phb_num, &mmio0_bar, &mmio0_sz);
 	mmio0_bmask =  (~(mmio0_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, mmio0_bar << 8);
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0_MASK, mmio0_bmask << 8);
 
-	phys_map_get(gcid, PHB4_32BIT_MMIO, phb_num, &mmio1_bar, &mmio1_sz);
+	phys_map_get(gcid, phys_mmio32, phb_num, &mmio1_bar, &mmio1_sz);
 	mmio1_bmask =  (~(mmio1_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1, mmio1_bar << 8);
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1_MASK, mmio1_bmask << 8);
@@ -5994,7 +6089,10 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	if (!np)
 		return;
 
-	dt_add_property_strings(np, "compatible", "ibm,power9-pciex", "ibm,ioda3-phb");
+	if (is_phb5())
+		dt_add_property_strings(np, "compatible", "ibm,power10-pciex", "ibm,ioda3-phb");
+	else
+		dt_add_property_strings(np, "compatible", "ibm,power9-pciex", "ibm,ioda3-phb");
 	dt_add_property_strings(np, "device_type", "pciex");
 	dt_add_property_u64s(np, "reg",
 				phb_bar, 0x1000,
@@ -6078,12 +6176,24 @@ void probe_phb4(void)
 		rx_err_max = MAX(rx_err_max, 0);
 		rx_err_max = MIN(rx_err_max, 255);
 	}
-	prlog(PR_DEBUG, "PHB4: Maximum RX errors during training: %d\n", rx_err_max);
-	/* Look for PBCQ XSCOM nodes */
-	dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
-		phb4_probe_pbcq(np);
 
-	/* Look for newly created PHB nodes */
-	dt_for_each_compatible(dt_root, np, "ibm,power9-pciex")
-		phb4_create(np);
+	if (is_phb5()) {
+		prlog(PR_DEBUG, "PHB5: Maximum RX errors during training: %d\n", rx_err_max);
+		/* Look for PBCQ XSCOM nodes */
+		dt_for_each_compatible(dt_root, np, "ibm,power10-pbcq")
+			phb4_probe_pbcq(np);
+
+		/* Look for newly created PHB nodes */
+		dt_for_each_compatible(dt_root, np, "ibm,power10-pciex")
+			phb4_create(np);
+	} else {
+		prlog(PR_DEBUG, "PHB4: Maximum RX errors during training: %d\n", rx_err_max);
+		/* Look for PBCQ XSCOM nodes */
+		dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
+			phb4_probe_pbcq(np);
+
+		/* Look for newly created PHB nodes */
+		dt_for_each_compatible(dt_root, np, "ibm,power9-pciex")
+			phb4_create(np);
+	}
 }

@@ -42,15 +42,12 @@ int preload_capp_ucode(void)
 	uint64_t rc;
 	int ret;
 
+	/* CAPI is supported on P8 and P9 only */
 	p = dt_find_compatible_node(dt_root, NULL, "ibm,power8-pbcq");
-
-	if (!p) {
+	if (!p)
 		p = dt_find_compatible_node(dt_root, NULL, "ibm,power9-pbcq");
-		if (!p) {
-			prlog(PR_INFO, "CAPI: WARNING: no compat thing found\n");
-			return OPAL_SUCCESS;
-		}
-	}
+	if (!p)
+		return OPAL_SUCCESS;
 
 	chip = get_chip(dt_get_chip_id(p));
 
