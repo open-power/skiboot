@@ -688,6 +688,18 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 					be32_to_cpu(cinfo->sw_xstop_fir_scom),
 					fir_bit);
 		}
+
+		if (proc_gen >= proc_gen_p10) {
+			uint8_t primary_loc = cinfo->primary_topology_loc;
+
+			if (primary_loc >= CHIP_MAX_TOPOLOGY_ENTRIES) {
+				prerror("XSCOM: Invalid primary topology index %d\n",
+					primary_loc);
+				continue;
+			}
+			dt_add_property_cells(np, "ibm,primary-topology-index",
+					cinfo->topology_id_table[primary_loc]);
+		}
 	}
 
 	return i > 0;

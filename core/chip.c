@@ -133,6 +133,9 @@ static void init_chip(struct dt_node *dn)
 	if (lc)
 		chip->loc_code = strdup(lc);
 
+	chip->primary_topology = dt_prop_get_u32_def(dn,
+		"ibm,primary-topology-index", 0xffffffff);
+
 	prlog(PR_INFO, "CHIP: Initialised chip %d from %s\n", id, dn->name);
 	chips[id] = chip;
 }

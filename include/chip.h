@@ -277,6 +277,9 @@ struct proc_chip {
 
 	/* Used during OCC init */
 	bool			ex_present;
+
+	/* Used by hw/vas.c on p10 */
+	uint32_t		primary_topology;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);

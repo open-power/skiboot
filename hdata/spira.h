@@ -1092,7 +1092,10 @@ struct sppcrd_chip_info {
 	/* From latest version (possibly 0x21 and later) */
 	__be32 sw_xstop_fir_scom;
 	uint8_t sw_xstop_fir_bitpos;
-	uint8_t	reserved_1[3];
+	/* Latest version for P10 */
+#define	CHIP_MAX_TOPOLOGY_ENTRIES	32
+	uint8_t topology_id_table[CHIP_MAX_TOPOLOGY_ENTRIES];
+	uint8_t	primary_topology_loc;	/* Index in topology_id_table */
 } __packed;
 
 /* Idata index 1 : Chip TOD */
