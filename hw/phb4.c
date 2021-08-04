@@ -3008,12 +3008,16 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 
 static unsigned int phb4_get_max_link_speed(struct phb4 *p, struct dt_node *np)
 {
-	unsigned int max_link_speed;
+	unsigned int max_link_speed, hw_max_link_speed;
 	struct proc_chip *chip;
 	chip = get_chip(p->chip_id);
 
+	hw_max_link_speed = 4;
+	if (is_phb5())
+		hw_max_link_speed = 5;
+
 	/* Priority order: NVRAM -> dt -> GEN3 dd2.00 -> GEN4 */
-	max_link_speed = 4;
+	max_link_speed = hw_max_link_speed;
 	if (p->rev == PHB4_REV_NIMBUS_DD20 &&
 	    ((0xf & chip->ec_level) == 0) && chip->ec_rev == 0)
 		max_link_speed = 3;
@@ -3033,8 +3037,8 @@ static unsigned int phb4_get_max_link_speed(struct phb4 *p, struct dt_node *np)
 	}
 	if (pcie_max_link_speed)
 		max_link_speed = pcie_max_link_speed;
-	if (max_link_speed > 4) /* clamp to 4 */
-		max_link_speed = 4;
+	if (max_link_speed > hw_max_link_speed)
+		max_link_speed = hw_max_link_speed;
 
 	return max_link_speed;
 }
