@@ -10,6 +10,7 @@
 #include <xscom.h>
 #include <xscom-p8-regs.h>
 #include <xscom-p9-regs.h>
+#include <xscom-p10-regs.h>
 #include <io.h>
 #include <cpu.h>
 #include <chip.h>
@@ -24,7 +25,7 @@
 #include <sbe-p8.h>
 #include <xive.h>
 
-#include <p9_stop_api.H>
+#include <p10_stop_api.H>
 #include <p8_pore_table_gen_api.H>
 #include <sbe_xip_image.h>
 
@@ -219,6 +220,30 @@ static bool slw_set_overrides(struct proc_chip *chip, struct cpu_thread *c)
 
 	return true;
 }
+
+static bool slw_set_overrides_p10(struct proc_chip *chip, struct cpu_thread *c)
+{
+	uint64_t tmp;
+	int rc;
+	uint32_t core = pir_to_core_id(c->pir);
+
+	/* Special wakeup bits that could hold power mgt */
+	rc = xscom_read(chip->id,
+			XSCOM_ADDR_P10_QME_CORE(core, P10_QME_SPWU_HYP),
+			&tmp);
+        if (rc) {
+          log_simple_error(&e_info(OPAL_RC_SLW_SET),
+                           "SLW: Failed to read P10_QME_SPWU_HYP\n");
+          return false;
+        }
+        if (tmp & P10_SPWU_REQ)
+		prlog(PR_WARNING,
+		        "SLW: core %d P10_QME_SPWU_HYP requested 0x%016llx\n",
+		      core, tmp);
+
+	return true;
+}
+
 
 static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
 {
@@ -872,6 +897,31 @@ static void slw_late_init_p9(struct proc_chip *chip)
 	}
 }
 
+static void slw_late_init_p10(struct proc_chip *chip)
+{
+	struct cpu_thread *c;
+	int rc;
+
+	prlog(PR_INFO, "SLW: Configuring self-restore for HRMOR\n");
+	for_each_available_cpu(c) {
+		if (c->chip_id != chip->id)
+			continue;
+		/*
+		 * Clear HRMOR. Need to update only for thread
+		 * 0 of each core. Doing it anyway for all threads
+		 */
+		rc =  proc_stop_save_cpureg((void *)chip->homer_base,
+						PROC_STOP_SPR_HRMOR, 0,
+						c->pir);
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_SLW_REG),
+			"SLW: Failed to set HRMOR for CPU %x,RC=0x%x\n",
+			c->pir, rc);
+			prlog(PR_ERR, "Disabling deep stop states\n");
+		}
+	}
+}
+
 /* Add device tree properties to describe idle states */
 void add_cpu_idle_state_properties(void)
 {
@@ -971,7 +1021,7 @@ void add_cpu_idle_state_properties(void)
 					xive_late_init();
 					nx_p9_rng_late_init();
 				} else if (chip->type == PROC_CHIP_P10) {
-					/* TODO (p10): need P10 stop state engine */
+					slw_late_init_p10(chip);
 					xive2_late_init();
 				}
 			}
@@ -1380,6 +1430,20 @@ static void slw_init_chip_p9(struct proc_chip *chip)
 
 }
 
+static void slw_init_chip_p10(struct proc_chip *chip)
+{
+	struct cpu_thread *c;
+
+	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
+
+	/* At power ON setup inits for power-mgt */
+	for_each_available_core_in_chip(c, chip->id)
+		slw_set_overrides_p10(chip, c);
+
+
+}
+
+
 static bool  slw_image_check_p9(struct proc_chip *chip)
 {
 
@@ -1575,8 +1639,13 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 					 wakeup_engine_state,chip->id);
 			return OPAL_INTERNAL_ERROR;
 		}
-		rc = p9_stop_save_cpureg((void *)chip->homer_base,
+		if (proc_gen == proc_gen_p9) {
+			rc = p9_stop_save_cpureg((void *)chip->homer_base,
 					 sprn, val, cpu_pir);
+		} else {
+			rc = proc_stop_save_cpureg((void *)chip->homer_base,
+					 sprn, val, cpu_pir);
+		}
 
 	} else if (proc_gen == proc_gen_p8) {
 		int spr_is_supported = 0;
@@ -1640,13 +1709,22 @@ void slw_init(void)
 				slw_late_init_p8(chip);
 		}
 		p8_sbe_init_timer();
-	} else if (proc_gen >= proc_gen_p9) {
+	} else if (proc_gen == proc_gen_p9) {
 		for_each_chip(chip) {
 			slw_init_chip_p9(chip);
 			if(slw_image_check_p9(chip))
 				wakeup_engine_state = WAKEUP_ENGINE_PRESENT;
 			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 				slw_late_init_p9(chip);
+		}
+	} else if (proc_gen == proc_gen_p10) {
+		for_each_chip(chip) {
+			slw_init_chip_p10(chip);
+			if(slw_image_check_p9(chip))
+				wakeup_engine_state = WAKEUP_ENGINE_PRESENT;
+			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT) {
+				slw_late_init_p10(chip);
+			}
 		}
 	}
 	add_cpu_idle_state_properties();

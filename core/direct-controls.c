@@ -602,14 +602,37 @@ static int p10_core_set_special_wakeup(struct cpu_thread *cpu)
 			 * CORE_GATED will be unset on a successful special
 			 * wakeup of the core which indicates that the core is
 			 * out of stop state. If CORE_GATED is still set then
-			 * raise error.
+			 * check SPWU register and raise error only if SPWU_DONE
+			 * is not set, else print a warning and consider SPWU
+			 * operation as successful.
+			 * This is in conjunction with a micocode bug, which
+			 * calls out the fact that SPW can succeed in the case
+			 * the core is gated but SPWU_HYP bit is set.
 			 */
 			if (p10_core_is_gated(cpu)) {
+				if(xscom_read(chip_id, spwu_addr, &val)) {
+					prlog(PR_ERR, "Core %u:%u:"
+					      " unable to read QME_SPWU_HYP\n",
+					      chip_id, core_id);
+					return OPAL_HARDWARE;
+				}
+				if (val & P10_SPWU_DONE) {
+					/*
+					 * If SPWU DONE bit is set then
+					 * SPWU operation is complete
+					 */
+					prlog(PR_DEBUG, "Special wakeup on "
+					      "%u:%u: core remains gated while"
+					      " SPWU_HYP DONE set\n",
+					      chip_id, core_id);
+					return 0;
+				}
 				/* Deassert spwu for this strange error */
 				xscom_write(chip_id, spwu_addr, 0);
-				prlog(PR_ERR, "Failed special wakeup on %u:%u"
-						" core remains gated.\n",
-						chip_id, core_id);
+				prlog(PR_ERR,
+				      "Failed special wakeup on %u:%u"
+				      " core remains gated.\n",
+				      chip_id, core_id);
 				return OPAL_HARDWARE;
 			} else {
 				return 0;
