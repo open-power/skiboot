@@ -753,8 +753,7 @@ static void psi_init_p10_interrupts(struct psi *psi)
 {
 	struct proc_chip *chip;
 	u64 val;
-	/* TODO (clg) : fix ESB page size to 64k when ready */
-	uint32_t esb_shift = 12;
+	uint32_t esb_shift = 16;
 
 	/* Grab chip */
 	chip = get_chip(psi->chip_id);
@@ -764,10 +763,12 @@ static void psi_init_p10_interrupts(struct psi *psi)
 	/* Configure the CI BAR */
 	phys_map_get(chip->id, PSIHB_ESB, 0, &val, NULL);
 	val |= PSIHB_ESB_CI_VALID;
+	if (esb_shift == 16)
+		val |= PSIHB10_ESB_CI_64K;
 	out_be64(psi->regs + PSIHB_ESB_CI_BASE, val);
 
 	val = in_be64(psi->regs + PSIHB_ESB_CI_BASE);
-	psi->esb_mmio = (void *)(val & ~PSIHB_ESB_CI_VALID);
+	psi->esb_mmio = (void *)(val & ~(PSIHB_ESB_CI_VALID|PSIHB10_ESB_CI_64K));
 	prlog(PR_DEBUG, "PSI[0x%03x]: ESB MMIO at @%p\n",
 	       psi->chip_id, psi->esb_mmio);
 
