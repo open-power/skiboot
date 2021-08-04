@@ -171,6 +171,14 @@ static enum {
 } xive_mode = XIVE_MODE_NONE;
 
 /*
+ * The XIVE exploitation mode options indicates the active features and
+ * is part of the mode parameter of the opal_xive_reset() call
+ */
+static uint64_t xive_expl_options;
+
+#define XIVE_EXPL_ALL_OPTIONS 0
+
+/*
  * Each source controller has one of these. There's one embedded in
  * the XIVE struct for IPIs
  */
@@ -3895,11 +3903,11 @@ void xive2_cpu_reset(void)
 	in_be64(xs->tm_ring1 + TM_SPC_PULL_POOL_CTX);
 }
 
-static int64_t __xive_reset(uint64_t version)
+static int64_t __xive_reset(uint64_t mode)
 {
 	struct proc_chip *chip;
 
-	xive_mode = version;
+	xive_mode = mode;
 
 	/* Mask all interrupt sources */
 	irq_for_each_source(xive_reset_mask_source_cb, NULL);
@@ -3937,13 +3945,20 @@ int64_t xive2_reset(void)
 	return __xive_reset(XIVE_MODE_EXPL);
 }
 
-static int64_t opal_xive_reset(uint64_t version)
+static int64_t opal_xive_reset(uint64_t mode)
 {
-	prlog(PR_DEBUG, "XIVE reset, version: %d...\n", (int)version);
+	prlog(PR_DEBUG, "XIVE reset. mode = %llx\n", mode);
 
-	if (version != XIVE_MODE_EXPL) {
-		prerror("ignoring version %lld at reset. "
-			"XIVE exploitation mode is the default\n", version);
+	if (!(mode & XIVE_MODE_EXPL)) {
+		prlog(PR_NOTICE, "No emulation mode. XIVE exploitation mode "
+		      "is the default\n");
+	}
+
+	xive_expl_options = mode & ~XIVE_MODE_EXPL;
+	if (xive_expl_options & ~XIVE_EXPL_ALL_OPTIONS) {
+		prerror("invalid XIVE exploitation mode option %016llx\n",
+			xive_expl_options);
+		return OPAL_PARAMETER;
 	}
 
 	return __xive_reset(XIVE_MODE_EXPL);
