@@ -160,6 +160,11 @@ static void reset_fir(struct proc_chip *chip)
 #define	P9_RMA_LSMP_64K_SYS_ID		PPC_BITMASK(8, 12)
 #define	P9_RMA_LSMP_64K_NODE_ID		PPC_BITMASK(15, 18)
 #define	P9_RMA_LSMP_64K_CHIP_ID		PPC_BITMASK(19, 21)
+
+/* Paste base address format (on P10 or later) */
+#define RMA_FOREIGN_ADDR_ENABLE		PPC_BITMASK(8, 11)
+#define RMA_TOPOLOGY_INDEX		PPC_BITMASK(15, 19)
+
 #define	RMA_LSMP_WINID_START_BIT	32
 #define	RMA_LSMP_WINID_NUM_BITS		16
 
@@ -222,6 +227,59 @@ static void p9_get_rma_bar(int chipid, uint64_t *val)
 }
 
 /*
+ * The start/base of the paste BAR is computed using the tables 1.1 through
+ * 1.3 in Section 1.3.3.1 (Send Message w/Paste Commands (cl_rma_w)) of VAS
+ * P10 Workbook.
+ *
+ * With 64K mode and Large SMP Mode the bits are used as follows:
+ *
+ *	Bits	Values		Comments
+ *	--------------------------------------
+ *	0:7	0b 0000_0000	Reserved
+ *	8:11	0b 0001		Foreign Address Enable
+ *	12	0b 0		SMF
+ *	13:14	0b 00		Memory Select
+ *
+ *	15:19	0 throuh 16	Topology Index
+ *	20:23	0b 0000		Chip Internal Address
+ *
+ *	24:31	0b 0000_0000	RPN 0:7, Reserved
+ *	32:47	0 through 64K	Send Window Id
+ *	48:51	0b 0000		Spare
+ *
+ *	52	0b 0		Reserved
+ *	53	0b 1		Report Enable (Set to 1 for NX).
+ *	54	0b 0		Reserved
+ *
+ *	55:56	0b 00		Snoop Bus
+ *	57:63	0b 0000_000	Reserved
+ *
+ * Example: For Node 0, Chip 0, Window id 4, Report Enable 1:
+ *
+ *    Byte0    Byte1    Byte2    Byte3    Byte4    Byte5    Byte6    Byte7
+ *    00000000 00010000 00000000 00000000 00000000 00000100 00000100 00000000
+ *                      |   |             |               |      |
+ *                      +---+             +-------+-------+      v
+ *                        |                       |          Report Enable
+ *                        v                       v
+ *                 Topology Index            Window id 4
+ *
+ *    Thus the paste address for window id 4 is 0x00100000_00040400 and
+ *    the _base_ paste address for Node 0 Chip 0 is 0x00100000_00000000.
+ */
+
+static void get_rma_bar(struct proc_chip *chip, uint64_t *val)
+{
+	uint64_t v;
+
+	v = 0ULL;
+	v = SETFIELD(RMA_FOREIGN_ADDR_ENABLE, v, 1);
+	v = SETFIELD(RMA_TOPOLOGY_INDEX, v, chip->primary_topology);
+
+	*val = v;
+}
+
+/*
  * Initialize RMA BAR on this chip to correspond to its node/chip id.
  * This will cause VAS to accept paste commands to targeted for this chip.
  * Initialize RMA Base Address Mask Register (BAMR) to its default value.
@@ -231,7 +289,10 @@ static int init_rma(struct proc_chip *chip)
 	int rc;
 	uint64_t val;
 
-	p9_get_rma_bar(chip->id, &val);
+	if (proc_gen == proc_gen_p9)
+		p9_get_rma_bar(chip->id, &val);
+	else
+		get_rma_bar(chip, &val);
 
 	rc = vas_scom_write(chip, VAS_RMA_BAR, val);
 	if (rc)
@@ -271,9 +332,18 @@ static int init_rma(struct proc_chip *chip)
 
 static inline void get_paste_bar(int chipid, uint64_t *start, uint64_t *len)
 {
+	struct proc_chip *chip;
 	uint64_t val;
 
-	p9_get_rma_bar(chipid, &val);
+	if (proc_gen == proc_gen_p9)
+		p9_get_rma_bar(chipid, &val);
+	else {
+		chip = get_chip(chipid);
+		if (!chip)
+			return;
+
+		get_rma_bar(chip, &val);
+	}
 
 	*start = val;
 	*len = VAS_PASTE_BAR_LEN;
@@ -394,8 +464,8 @@ static void create_mm_dt_node(struct proc_chip *chip)
 	struct vas *vas;
 	uint64_t hvwc_start, hvwc_len;
 	uint64_t uwc_start, uwc_len;
-	uint64_t pbar_start, pbar_len;
 	uint64_t pbf_start, pbf_nbits;
+	uint64_t pbar_start = 0, pbar_len = 0;
 
 	vas = chip->vas;
 	get_hvwc_mmio_bar(chip->id, &hvwc_start, &hvwc_len);
