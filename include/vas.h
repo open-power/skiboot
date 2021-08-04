@@ -67,9 +67,10 @@ extern __attrconst uint64_t vas_get_wcbs_bar(int chipid);
 #define VAS_WINDOWS_PER_CHIP		65536		/* 64K */
 
 /*
- * SCOM Base Address from P9 SCOM Assignment spreadsheet
+ * SCOM Base Address from P9/P10 SCOM Assignment spreadsheet
  */
-#define VAS_SCOM_BASE_ADDR		0x03011800
+#define	P9_VAS_SCOM_BASE_ADDR		0x03011800
+#define VAS_SCOM_BASE_ADDR		0x02011400
 
 /*
  * NOTE: VAS_SCOM_BASE_ADDR (0x3011800) includes the SCOM ring of 6. So,

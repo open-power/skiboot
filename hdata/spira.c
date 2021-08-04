@@ -12,6 +12,7 @@
 #include <fsp-attn.h>
 #include <fsp-leds.h>
 #include <skiboot.h>
+#include <vas.h>
 
 #include "hdata.h"
 #include "hostservices.h"
@@ -475,17 +476,23 @@ static void add_xive_node(struct dt_node *np)
 	dt_add_property(xive, "force-assign-bars", NULL, 0);
 }
 
-/*
- * SCOM Base Address from P9 SCOM Assignment spreadsheet
- */
-#define VAS_SCOM_BASE_ADDR		0x03011800
-
 static void add_vas_node(struct dt_node *np, int idx)
 {
-	struct  dt_node *vas = dt_new_addr(np, "vas", VAS_SCOM_BASE_ADDR);
+	struct  dt_node *vas;
+	const char *comp;
+	uint64_t base_addr;
 
-	dt_add_property_cells(vas, "reg", VAS_SCOM_BASE_ADDR, 0x300);
-	dt_add_property_string(vas, "compatible", "ibm,power9-vas-x");
+	if (proc_gen == proc_gen_p9) {
+		base_addr = P9_VAS_SCOM_BASE_ADDR;
+		comp = "ibm,power9-vas-x";
+	} else {
+		base_addr = VAS_SCOM_BASE_ADDR;
+		comp = "ibm,power10-vas-x";
+	}
+
+	vas = dt_new_addr(np, "vas", base_addr);
+	dt_add_property_cells(vas, "reg", base_addr, 0x300);
+	dt_add_property_string(vas, "compatible", comp);
 	dt_add_property_cells(vas, "ibm,vas-id", idx);
 }
 
@@ -906,10 +913,10 @@ static void add_nx_node(u32 gcid)
 					"ibm,power8-nx");
 		break;
 	case proc_gen_p9:
+	case proc_gen_p10:
 		/* POWER9 NX is not software compatible with P8 NX */
 		dt_add_property_strings(nx, "compatible", "ibm,power9-nx");
 		break;
-	case proc_gen_p10: /* XXX P10 */
 	default:
 		return;
 	}
