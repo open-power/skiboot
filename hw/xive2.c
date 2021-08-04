@@ -20,6 +20,7 @@
 #include <bitmap.h>
 #include <buddy.h>
 #include <phys-map.h>
+#include <p10_stop_api.H>
 
 
 /* Verbose debug */
@@ -3013,10 +3014,30 @@ static void xive_configure_ex_special_bar(struct xive *x, struct cpu_thread *c)
 
 void xive2_late_init(void)
 {
+	struct cpu_thread *c;
+
 	prlog(PR_INFO, "SLW: Configuring self-restore for NCU_SPEC_BAR\n");
-	/*
-	 * TODO (p10): need P10 stop state engine and fix for STOP11
-	 */
+	for_each_present_cpu(c) {
+		if(cpu_is_thread0(c)) {
+			struct proc_chip *chip = get_chip(c->chip_id);
+			struct xive *x = chip->xive;
+			uint64_t xa, val, rc;
+			xa = XSCOM_ADDR_P10_NCU(pir_to_core_id(c->pir), P10_NCU_SPEC_BAR);
+			val = (uint64_t)x->tm_base | P10_NCU_SPEC_BAR_ENABLE;
+			/* Bail out if wakeup engine has already failed */
+			if (wakeup_engine_state != WAKEUP_ENGINE_PRESENT) {
+				prlog(PR_ERR, "XIVE proc_stop_api fail detected\n");
+				break;
+			}
+			rc = proc_stop_save_scom((void *)chip->homer_base, xa, val,
+				PROC_STOP_SCOM_REPLACE, PROC_STOP_SECTION_L3);
+			if (rc) {
+				xive_cpu_err(c, "proc_stop_save_scom failed for NCU_SPEC_BAR rc=%lld\n",
+					     rc);
+				wakeup_engine_state = WAKEUP_ENGINE_FAILED;
+			}
+		}
+	}
 }
 
 static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
