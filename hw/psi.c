@@ -266,7 +266,10 @@ static void psi_spurious_fsp_irq(struct psi *psi)
 
 	prlog(PR_NOTICE, "PSI: Spurious interrupt, attempting clear\n");
 
-	if (proc_gen == proc_gen_p9) {
+	if (proc_gen == proc_gen_p10) {
+		reg = PSIHB_XSCOM_P10_HBCSR_CLR;
+		bit = PSIHB_XSCOM_P10_HBSCR_FSP_IRQ;
+	} else if (proc_gen == proc_gen_p9) {
 		reg = PSIHB_XSCOM_P9_HBCSR_CLR;
 		bit = PSIHB_XSCOM_P9_HBSCR_FSP_IRQ;
 	} else if (proc_gen == proc_gen_p8) {
@@ -737,6 +740,61 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, 0);
 }
 
+/*
+ * P9 and P10 have the same PSIHB interface
+ */
+static const struct irq_source_ops psi_p10_irq_ops = {
+	.interrupt = psihb_p9_interrupt,
+	.attributes = psi_p9_irq_attributes,
+	.name = psi_p9_irq_name,
+};
+
+static void psi_init_p10_interrupts(struct psi *psi)
+{
+	struct proc_chip *chip;
+	u64 val;
+	/* TODO (clg) : fix ESB page size to 64k when ready */
+	uint32_t esb_shift = 12;
+
+	/* Grab chip */
+	chip = get_chip(psi->chip_id);
+	if (!chip)
+		return;
+
+	/* Configure the CI BAR */
+	phys_map_get(chip->id, PSIHB_ESB, 0, &val, NULL);
+	val |= PSIHB_ESB_CI_VALID;
+	out_be64(psi->regs + PSIHB_ESB_CI_BASE, val);
+
+	val = in_be64(psi->regs + PSIHB_ESB_CI_BASE);
+	psi->esb_mmio = (void *)(val & ~PSIHB_ESB_CI_VALID);
+	prlog(PR_DEBUG, "PSI[0x%03x]: ESB MMIO at @%p\n",
+	       psi->chip_id, psi->esb_mmio);
+
+	/* Grab and configure the notification port */
+	val = xive_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
+	val |= PSIHB_ESB_NOTIF_VALID;
+	out_be64(psi->regs + PSIHB_ESB_NOTIF_ADDR, val);
+
+	/* Setup interrupt offset */
+	val = xive_get_notify_base(psi->interrupt);
+	val <<= 32;
+	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
+
+	/* Register sources */
+	prlog(PR_DEBUG,
+	      "PSI[0x%03x]: Interrupts sources registered for P10 DD%i.%i\n",
+	      psi->chip_id, 0xf & (chip->ec_level >> 4), chip->ec_level & 0xf);
+
+	xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
+				esb_shift, psi->esb_mmio, XIVE_SRC_LSI,
+				psi, &psi_p10_irq_ops);
+
+	/* Reset irq handling and switch to ESB mode */
+	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);
+	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, 0);
+}
+
 static void psi_init_interrupts(struct psi *psi)
 {
 	/* Configure the interrupt BUID and mask it */
@@ -746,6 +804,9 @@ static void psi_init_interrupts(struct psi *psi)
 		break;
 	case proc_gen_p9:
 		psi_init_p9_interrupts(psi);
+		break;
+	case proc_gen_p10:
+		psi_init_p10_interrupts(psi);
 		break;
 	default:
 		/* Unknown: just no interrupts */
@@ -826,6 +887,7 @@ static void psi_create_mm_dtnode(struct psi *psi)
 					"ibm,power8-psi");
 		break;
 	case proc_gen_p9:
+	case proc_gen_p10:
 		dt_add_property_strings(np, "compatible", "ibm,psi",
 					"ibm,power9-psi");
 		psi_create_p9_int_map(psi, np);
