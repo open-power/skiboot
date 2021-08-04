@@ -315,21 +315,15 @@ static bool p8_i2c_has_irqs(struct p8_i2c_master *master)
 	 * DD2.0. When operating without interrupts, we need to bump the
 	 * timeouts as we rely solely on the polls from Linux which can
 	 * be up to 2s apart !
-	 *
-	 * Also we don't have interrupts for the Centaur i2c.
 	 */
-	switch (chip->type) {
-	case PROC_CHIP_P8_MURANO:
-		return chip->ec_level >= 0x21;
-	case PROC_CHIP_P8_VENICE:
-		return chip->ec_level >= 0x20;
-	case PROC_CHIP_P8_NAPLES:
-	case PROC_CHIP_P9_NIMBUS:
-	case PROC_CHIP_P9_CUMULUS:
+	if (proc_gen >= proc_gen_p9)
 		return true;
-	default:
-		return false;
-	}
+	else if (chip->type == PROC_CHIP_P8_MURANO)
+		return chip->ec_level >= 0x21;
+	else if (chip->type == PROC_CHIP_P8_VENICE)
+		return chip->ec_level >= 0x20;
+
+	return true;
 }
 
 static int p8_i2c_enable_irqs(struct p8_i2c_master *master)
@@ -928,8 +922,8 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
  */
 static bool occ_uses_master(struct p8_i2c_master *master)
 {
-	/* OCC uses I2CM Engines 1,2 and 3, only on POWER9 */
-	if (master->type == I2C_POWER8 && proc_gen == proc_gen_p9)
+	/* OCC uses I2CM Engines 1,2 and 3, only on POWER9/10 */
+	if (master->type == I2C_POWER8 && proc_gen >= proc_gen_p9)
 		return master->engine_id >= 1;
 
 	return false;
@@ -1591,7 +1585,12 @@ void p8_i2c_init(void)
 	int i;
 
 	/* setup the handshake reg */
-	occflg = 0x6C08A;
+	if (proc_gen <= proc_gen_p9)
+		occflg = 0x6C08A;
+	else if (proc_gen == proc_gen_p10)
+		occflg = 0x6C0AC;
+	else
+		return;
 
 	prlog(PR_INFO, "I2C: OCC flag reg: %x\n", occflg);
 
