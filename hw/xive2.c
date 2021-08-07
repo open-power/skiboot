@@ -25,7 +25,6 @@
 
 /* Verbose debug */
 #undef XIVE_VERBOSE_DEBUG
-#undef DEBUG
 
 /* Extra debug options used in debug builds */
 #ifdef DEBUG
@@ -2938,6 +2937,7 @@ static void xive_special_cache_check(struct xive *x, uint32_t blk, uint32_t idx)
 		struct xive_nvp *vp_m = xive_get_vp(x, idx);
 
 		memset(vp_m, (~i) & 0xff, sizeof(*vp_m));
+		vp_m->w0 = xive_set_field32(NVP_W0_VALID, vp_m->w0, 0);
 		sync();
 		vp.w1 = (i << 16) | i;
 		assert(!xive_nxc_cache_update(x, blk, idx, &vp, true));
