@@ -1166,6 +1166,9 @@ static bool xive_check_endc_update(struct xive *x, uint32_t idx, struct xive_end
 
 	assert(end_p);
 	end2 = *end_p;
+	end2.w0 &= ~END_W0_RESERVED;
+	end2.w1 &= ~END_W1_RESERVED;
+	end2.w7 &= ~END_W7_F0_RESERVED;
 	if (memcmp(end, &end2, sizeof(struct xive_end)) != 0) {
 		xive_err(x, "END update mismatch idx %d\n", idx);
 		xive_err(x, "want: %08x %08x %08x %08x\n",
