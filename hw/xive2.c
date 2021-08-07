@@ -1975,6 +1975,11 @@ static void xive_create_mmio_dt_node(struct xive *x)
 
 }
 
+uint32_t xive2_get_phandle(void)
+{
+	return xive_dt_node->phandle;
+}
+
 static void xive_setup_forward_ports(struct xive *x, struct proc_chip *remote_chip)
 {
 	struct xive *remote_xive = remote_chip->xive;
