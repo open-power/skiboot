@@ -1051,6 +1051,14 @@ static int64_t phb4_tce_kill(struct phb *phb, uint32_t kill_type,
 	uint64_t val;
 	int64_t rc;
 
+	/*
+	 * HW560152: a page-level kill can be dropped if the
+	 *	 processing queue is backed-up, which can cause data
+	 *	 integrity issues
+	 */
+	if (kill_type == OPAL_PCI_TCE_KILL_PAGES)
+		kill_type = OPAL_PCI_TCE_KILL_PE;
+
 	sync();
 	switch(kill_type) {
 	case OPAL_PCI_TCE_KILL_PAGES:
