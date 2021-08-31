@@ -51,7 +51,16 @@ astbmc   zaius        Power9N     Ingrasys (Foxconn) "ingrasys,zaius"           
 astbmc   mihawk       Power9N                        "{wistron,ibm},mihawk"     Mihawk, IC922
 astbmc   nicole       Power9N     Yadro              "YADRO,nicole"             Nicole
 ibm-fsp  zz           Power9N                        "ibm,zz-(1|2)s(2|4)u"
+astbmc   swift        Power9P                        "ibm,swift"                Swift
+astbmc   mowgli       Power9N     Wistron            "ibm,mowgli"               Mowgli
 ======== ============ =========== ================== ========================== ============================= =======
+
+======== ============ =========== ================== ========================== ============================= =======
+Platform Sub platform Host CPU(s) Manufacturer       compatible                 Other names/Notes             Link(s)
+======== ============ =========== ================== ========================== ============================= =======
+astbmc   rainier      Power10                        "ibm,rainier"              Rainier
+======== ============ =========== ================== ========================== ============================= =======
+
 
 
 Dropped Platforms
