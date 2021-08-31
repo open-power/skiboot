@@ -705,8 +705,10 @@ mysim memory fread $mconf(boot_load) $boot_size $mconf(boot_image)
 set payload_size [file size $mconf(payload)]
 mysim memory fread $mconf(payload_addr) $payload_size $mconf(payload)
 
-if { $payload_size > [expr $mconf(boot_load) - $mconf(payload_addr)] } {
-	error "vmlinux is too large, consider adjusting PAYLOAD_ADDR"
+set available_space [expr $mconf(boot_load) - $mconf(payload_addr)]
+if { $payload_size > $available_space } {
+    set overflow [expr $payload_size - $available_space]
+    error "vmlinux is too large by $overflow bytes ($payload_size > $available_space), consider adjusting PAYLOAD_ADDR"
 }
 
 # Flatten it
