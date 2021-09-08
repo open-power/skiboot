@@ -637,6 +637,9 @@ static void cpu_pm_disable(void)
 
 void cpu_set_sreset_enable(bool enabled)
 {
+	if (proc_chip_quirks & QUIRK_AWAN)
+		return;
+
 	if (sreset_enabled == enabled)
 		return;
 
@@ -688,7 +691,7 @@ void cpu_set_ipi_enable(bool enabled)
 		sync();
 		if (!enabled)
 			cpu_pm_disable();
-		else
+		else if (!chip_quirk(QUIRK_AWAN))
 			pm_enabled = true;
 	}
 }

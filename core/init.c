@@ -999,7 +999,7 @@ static void mask_pc_system_xstop(void)
 	if (proc_gen != proc_gen_p10)
                 return;
 
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS) || chip_quirk(QUIRK_AWAN))
 		return;
 
         /*
