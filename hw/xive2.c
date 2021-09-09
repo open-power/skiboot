@@ -2384,6 +2384,12 @@ static inline bool xive_end_for_target(uint32_t target, uint8_t prio,
 		assert(false);
 	}
 
+	if (!bitmap_tst_bit(*x->end_map, end_idx >> xive_cfg_vp_prio_shift(x))) {
+		xive_err(x, "END 0x%x:0x%x is not allocated for target 0x%08x/%d !\n",
+			 end_blk, end_idx, target, prio);
+		return false;
+	}
+
 	if (out_end_blk)
 		*out_end_blk = end_blk;
 	if (out_end_idx)
