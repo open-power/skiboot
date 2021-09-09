@@ -112,6 +112,7 @@
 #include <xscom-p9-regs.h>
 #include <phys-map.h>
 #include <nvram.h>
+#include <opal-debug.h>
 
 /* Enable this to disable error interrupts for debug purposes */
 #undef DISABLE_ERR_INTS
@@ -2059,94 +2060,78 @@ static void __unused phb4_dump_peltv(struct phb4 *p)
 	}
 }
 
-static void __unused phb4_dump_ioda_table(struct phb4 *p, int table)
-{
+static struct phb4_ioda_table {
+	int index;
 	const char *name;
-	int entries, i;
+	int entries;
+} phb4_ioda_tables[] = {
+	{ IODA3_TBL_LIST,  "LIST",  8    },
+	{ IODA3_TBL_MIST,  "MIST",  1024 },
+	{ IODA3_TBL_RCAM,  "RCAM",  128  },
+	{ IODA3_TBL_MRT,   "MRT",   16   },
+	{ IODA3_TBL_PESTA, "PESTA", 512  },
+	{ IODA3_TBL_PESTB, "PESTB", 512  },
+	{ IODA3_TBL_TVT,   "TVT",   512  },
+	{ IODA3_TBL_TCAM,  "TCAM",  1024 },
+	{ IODA3_TBL_TDR,   "TDR",   1024 },
+	{ IODA3_TBL_MBT,   "MBT",   64   }, /* special case */
+	{ IODA3_TBL_MDT,   "MDT",   512  },
+	{ IODA3_TBL_PEEV,  "PEEV",  8    },
+};
 
-	switch (table) {
-	case IODA3_TBL_LIST:
-		name = "LIST";
-		entries = 8;
-		break;
-	case IODA3_TBL_MIST:
-		name = "MIST";
-		entries = 1024;
-		break;
-	case IODA3_TBL_RCAM:
-		name = "RCAM";
-		entries = 128;
-		break;
-	case IODA3_TBL_MRT:
-		name = "MRT";
-		entries = 16;
-		break;
-	case IODA3_TBL_PESTA:
-		name = "PESTA";
-		entries = 512;
-		break;
-	case IODA3_TBL_PESTB:
-		name = "PESTB";
-		entries = 512;
-		break;
-	case IODA3_TBL_TVT:
-		name = "TVT";
-		entries = 512;
-		break;
-	case IODA3_TBL_TCAM:
-		name = "TCAM";
-		entries = 1024;
-		break;
-	case IODA3_TBL_TDR:
-		name = "TDR";
-		entries = 1024;
-		break;
-	case IODA3_TBL_MBT: /* special case, see below */
-		name = "MBT";
-		entries = 64;
-		break;
-	case IODA3_TBL_MDT:
-		name = "MDT";
-		entries = 512;
-		break;
-	case IODA3_TBL_PEEV:
-		name = "PEEV";
-		entries = 8;
-		break;
-	default:
-		PHBERR(p, "Invalid IODA table %d!\n", table);
-		return;
+static struct phb4_ioda_table *phb4_ioda_table_find(const char *name)
+{
+	int  i;
+
+	for (i = 0; i < ARRAY_SIZE(phb4_ioda_tables); i++) {
+		if (!strcmp(phb4_ioda_tables[i].name, name))
+			return &phb4_ioda_tables[i];
 	}
 
-	PHBERR(p, "Start %s dump (only non-zero entries are printed):\n", name);
+	return NULL;
+}
 
-	phb4_ioda_sel(p, table, 0, true);
+static int phb4_ioda_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct phb4 *p = d->private;
+	struct phb4_ioda_table *table = phb4_ioda_table_find(d->name);
+	int i;
+	int n = 0;
+
+	assert(table);
+
+	phb4_ioda_sel(p, table->index, 0, true);
 
 	/*
 	 * Each entry in the MBT is 16 bytes. Every other table has 8 byte
 	 * entries so we special case the MDT to keep the output readable.
 	 */
-	if (table == IODA3_TBL_MBT) {
+	if (table->index == IODA3_TBL_MBT) {
 		for (i = 0; i < 32; i++) {
 			uint64_t v1 = phb4_read_reg_asb(p, PHB_IODA_DATA0);
 			uint64_t v2 = phb4_read_reg_asb(p, PHB_IODA_DATA0);
 
 			if (!v1 && !v2)
 				continue;
-			PHBERR(p, "MBT[%03x] = %016llx %016llx\n", i, v1, v2);
+			n += snprintf(buf + n, size - n,
+				      "MBT[%03x] = %016llx %016llx\n", i, v1, v2);
 		}
 	} else {
-		for (i = 0; i < entries; i++) {
+		for (i = 0; i < table->entries; i++) {
 			uint64_t v = phb4_read_reg_asb(p, PHB_IODA_DATA0);
 
 			if (!v)
 				continue;
-			PHBERR(p, "%s[%03x] = %016llx\n", name, i, v);
+			n += snprintf(buf + n, size - n, "%s[%03x] = %016llx\n",
+				      table->name, i, v);
 		}
 	}
-
-	PHBERR(p, "End %s dump\n", name);
+	return n;
 }
+
+static const struct opal_debug_ops phb4_ioda_ops = {
+	.read = phb4_ioda_read,
+};
 
 static void phb4_eeh_dump_regs(struct phb4 *p)
 {
@@ -6167,6 +6152,10 @@ static void phb4_create(struct dt_node *np)
 
 	dt_add_property_string(np, "status", "okay");
 
+	/* Debug nodes */
+	for (i = 0; i < ARRAY_SIZE(phb4_ioda_tables); i++)
+		opal_debug_create(phb4_ioda_tables[i].name, np, p,
+				  &phb4_ioda_ops);
 	return;
 
  failed:
