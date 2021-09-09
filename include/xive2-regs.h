@@ -151,6 +151,34 @@
 #define X_CQ_CFG_PB_GEN				0x14
 #define CQ_CFG_PB_GEN				0x0A0
 
+/* Performance Counter Control */
+#define X_CQ_PM_CTL				0x27
+#define CQ_PM_CTL				0x138
+#define    CQ_PM_CTL_ENABLE			PPC_BITMASK(0,7)
+#define    CQ_PM_CTL_RESET			PPC_BITMASK(8,15)
+#define    CQ_PM_CTL_SOURCE_SUBUNIT		PPC_BITMASK(16,17)
+#define    CQ_PM_CTL_CQ_GROUP_SEL		PPC_BITMASK(18,22)
+#define    CQ_PM_CTL_COUNT_EVERY_CYCLE		PPC_BITMASK(24,31)
+
+/* Performance Counter [n] (n = 0:7) */
+#define X_CQ_PMC_0				0x28
+#define X_CQ_PMC_1				0x29
+#define X_CQ_PMC_2				0x2A
+#define X_CQ_PMC_3				0x2B
+#define X_CQ_PMC_4				0x2C
+#define X_CQ_PMC_5				0x2D
+#define X_CQ_PMC_6				0x2E
+#define X_CQ_PMC_7				0x2F
+
+#define CQ_PMC_0				0x140
+#define CQ_PMC_1				0x148
+#define CQ_PMC_2				0x150
+#define CQ_PMC_3				0x158
+#define CQ_PMC_4				0x160
+#define CQ_PMC_5				0x168
+#define CQ_PMC_6				0x170
+#define CQ_PMC_7				0x178
+
 /* FIR
  *     (And-Mask)
  *     (Or-Mask)
@@ -209,6 +237,22 @@
 #define  VC_QUEUES_CFG_MEMB_EN		 	PPC_BIT(38)
 #define  VC_QUEUES_CFG_MEMB_SZ			PPC_BITMASK(42,47)
 
+/* IRQs/ERQs performance events selection [n] (n = 0:7) */
+#define X_VC_QUEUES_PERF_EVENT_SEL0		0x126
+#define VC_QUEUES_PERF_EVENT_SEL0		0x130
+
+/* ATX performance events selection 1 */
+#define X_VC_ATX_PERF_EVENT_SEL_1		0x132
+#define VC_ATX_PERF_EVENT_SEL_1			0x190
+
+/* ATX performance events selection 2 */
+#define X_VC_ATX_PERF_EVENT_SEL_2		0x133
+#define VC_ATX_PERF_EVENT_SEL_2			0x198
+
+/* ATX performance events selection 3 */
+#define X_VC_ATX_PERF_EVENT_SEL_3		0x134
+#define VC_ATX_PERF_EVENT_SEL_3			0x1A0
+
 /*
  * VC1
  */
@@ -235,6 +279,22 @@
 #define	 VC_ESBC_CFG_SPLIT_MODE			PPC_BIT(56)
 #define	 VC_ESBC_CFG_MAX_ENTRIES_IN_MODIFIED	PPC_BITMASK(59,63)
 
+/* ESBC performance events selection 1 */
+#define X_VC_ESBC_PERF_EVENT_SEL_1		0x158
+#define VC_ESBC_PERF_EVENT_SEL_1		0x2C0
+
+/* ESBC performance events selection 2 */
+#define X_VC_ESBC_PERF_EVENT_SEL_2		0x159
+#define VC_ESBC_PERF_EVENT_SEL_2		0x2C8
+
+/* ESBC performance events selection 3 */
+#define X_VC_ESBC_PERF_EVENT_SEL_3		0x15A
+#define VC_ESBC_PERF_EVENT_SEL_3		0x2D0
+
+/* ESBC additional performance	*/
+#define X_VC_ESBC_ADDITIONAL_PERF		0x15B
+#define VC_ESBC_ADDITIONAL_PERF			0x2D8
+
 /* EASC flush control register */
 #define X_VC_EASC_FLUSH_CTRL			0x160
 #define VC_EASC_FLUSH_CTRL			0x300
@@ -248,6 +308,22 @@
 #define  VC_EASC_FLUSH_POLL_OFFSET		PPC_BITMASK(4,31)  /* 28-bit */
 #define  VC_EASC_FLUSH_POLL_BLOCK_ID_MASK	PPC_BITMASK(32,35)
 #define  VC_EASC_FLUSH_POLL_OFFSET_MASK		PPC_BITMASK(36,63) /* 28-bit */
+
+/* EASC performance events selection 1 */
+#define X_VC_EASC_PERF_EVENT_SEL_1		0x178
+#define VC_EASC_PERF_EVENT_SEL_1		0x3C0
+
+/* EASC performance events selection 2 */
+#define X_VC_EASC_PERF_EVENT_SEL_2		0x179
+#define VC_EASC_PERF_EVENT_SEL_2		0x3C8
+
+/* EASC performance events selection 3 */
+#define X_VC_EASC_PERF_EVENT_SEL_3		0x17A
+#define VC_EASC_PERF_EVENT_SEL_3		0x3D0
+
+/* EASC additional performance	*/
+#define X_VC_EASC_ADDITIONAL_PERF		0x17B
+#define VC_EASC_ADDITIONAL_PERF			0x3D8
 
 /*
  * VC2
@@ -281,6 +357,30 @@
 #define   VC_ENDC_SYNC_QUEUE_POOL		PPC_BIT(5)
 #define   VC_ENDC_SYNC_QUEUE_HARD		PPC_BIT(6)
 #define   VC_QUEUE_COUNT                        7
+
+/* ENDC performance events selection 1 */
+#define X_VC_ENDC_PERF_EVENT_SEL_1		0x198
+#define VC_ENDC_PERF_EVENT_SEL_1		0x4C0
+
+/* ENDC performance events selection 2 */
+#define X_VC_ENDC_PERF_EVENT_SEL_2		0x199
+#define VC_ENDC_PERF_EVENT_SEL_2		0x4C8
+
+/* ENDC performance events selection 3 */
+#define X_VC_ENDC_PERF_EVENT_SEL_3		0x19A
+#define VC_ENDC_PERF_EVENT_SEL_3		0x4D0
+
+/* ENDC performance events selection 4 */
+#define X_VC_ENDC_PERF_EVENT_SEL_4		0x19B
+#define VC_ENDC_PERF_EVENT_SEL_4		0x4D8
+
+/* ENDC additional performance 1 */
+#define X_VC_ENDC_ADDITIONAL_PERF_1		0x19C
+#define VC_ENDC_ADDITIONAL_PERF_1		0x4E0
+
+/* ENDC additional performance 2 */
+#define X_VC_ENDC_ADDITIONAL_PERF_2		0x19D
+#define VC_ENDC_ADDITIONAL_PERF_2		0x4E8
 
 /* ENDC cache watch specification 0  */
 #define X_VC_ENDC_WATCH0_SPEC			0x1A0
@@ -358,6 +458,26 @@
 #define  PC_NXC_FLUSH_POLL_NXC_TYPE_MASK	PPC_BITMASK(34,35) /* 0: Ignore */
 #define  PC_NXC_FLUSH_POLL_BLOCK_ID_MASK	PPC_BITMASK(36,39)
 #define  PC_NXC_FLUSH_POLL_OFFSET_MASK		PPC_BITMASK(40,63) /* 24-bit */
+
+/* NxC performance events selection 1 */
+#define X_PC_NXC_PERF_EVENT_SEL_1		0x298
+#define PC_NXC_PERF_EVENT_SEL_1			0x4C0
+
+/* NxC performance events selection 2 */
+#define X_PC_NXC_PERF_EVENT_SEL_2		0x299
+#define PC_NXC_PERF_EVENT_SEL_2			0x4C8
+
+/* NxC performance events selection 3 */
+#define X_PC_NXC_PERF_EVENT_SEL_3		0x29A
+#define PC_NXC_PERF_EVENT_SEL_3			0x4D0
+
+/* NxC additional performance 1 */
+#define X_PC_NXC_ADDITIONAL_PERF_1		0x29B
+#define PC_NXC_ADDITIONAL_PERF_1		0x4D8
+
+/* NxC additional performance 2 */
+#define X_PC_NXC_ADDITIONAL_PERF_2		0x29C
+#define PC_NXC_ADDITIONAL_PERF_2		0x4E0
 
 /* NxC Cache Watch 0 Specification */
 #define X_PC_NXC_WATCH0_SPEC			0x2A0

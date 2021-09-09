@@ -4826,6 +4826,93 @@ static int xive2_nvpt_read(struct opal_debug *d, void *buf, uint64_t size)
 	return n;
 }
 
+static int xive2_perf_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int n = 0;
+	int i;
+
+	n += snprintf(buf + n, size - n, "Performance counters [%d]\n",
+		      x->block_id);
+	n += snprintf(buf + n, size - n, "CQ_PM_CTL = %016llx\n",
+		      xive_regr(x, CQ_PM_CTL));
+	for (i = 0; i < 8; i++)
+		n += snprintf(buf + n, size - n, "CQ_PMC[%d] = %016llx\n", i,
+			      xive_regr(x, CQ_PMC_0 + i * 8));
+	return n;
+}
+
+/*
+ * 0:3   DPS prefetches
+ * 4:7   event trigger demands
+ * 8:11  Store EOI demands
+ * 12:15 SetPQ demands
+ */
+#define ESBC_PERF_EVENT_SEL_1 0x9ABB000000000000
+
+/*
+ * 0:3   triggers received from AIB
+ * 4:7   triggers on IRQ to IQA interface (demands only)
+ * 8:11  triggers on IQA to DPS interface (demands only)
+ * 12:15 triggers on IQA to IQS interface (triggers directly forwarded to ENDC)
+ * 16:19 triggers on IQS to EQA interface
+ * 20:23 triggers on EQA to ERQ interface
+ * 24:27 triggers on EQA to ATX interface
+ * 28:31 triggers on EQA to ENDC interface
+*/
+#define QUEUES_PERF_EVENT_SEL0 0x80000EDC00000000
+
+static int xive2_perf_write(struct opal_debug *d  __unused, void *buf,
+			    uint64_t size)
+{
+	struct xive *x = d->private;
+	int i;
+
+	if (!strncmp(buf, "stop", size)) {
+		xive_regw(x, CQ_PM_CTL, 0);
+		for (i = 0; i < 8; i ++)
+			xive_regw(x, VC_QUEUES_PERF_EVENT_SEL0 + i * 8, 0);
+		xive_regw(x, VC_ESBC_PERF_EVENT_SEL_1, 0);
+	} else if (!strncmp(buf, "cq-st-retries", size)) {
+		xive_regw(x, CQ_PM_CTL, 0xFFFFC20400000000);
+	} else if (!strncmp(buf, "cq-ld-retries", size)) {
+		xive_regw(x, CQ_PM_CTL, 0xFFFFC60100000000);
+	} else if (!strncmp(buf, "vc-queue-ops", size)) {
+		for (i = 0; i < 8; i ++)
+			xive_regw(x, VC_QUEUES_PERF_EVENT_SEL0 + i * 8,
+				  QUEUES_PERF_EVENT_SEL0);
+		xive_regw(x, VC_ESBC_PERF_EVENT_SEL_1, ESBC_PERF_EVENT_SEL_1);
+		xive_regw(x, CQ_PM_CTL, 0xFFFF800100000000);
+	} else
+		return OPAL_PARAMETER;
+
+	return OPAL_SUCCESS;
+}
+
+static int xive2_perf_extra_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "Performance additional counters [%d]\n",
+		      x->block_id);
+
+	n += snprintf(buf + n, size - n, "VC_ESBC_ADDITIONAL_PERF = %016llx\n",
+		      xive_regr(x, VC_ESBC_ADDITIONAL_PERF));
+	n += snprintf(buf + n, size - n, "VC_EASC_ADDITIONAL_PERF = %016llx\n",
+		      xive_regr(x, VC_EASC_ADDITIONAL_PERF));
+	n += snprintf(buf + n, size - n, "VC_ENDC_ADDITIONAL_PERF_1 = %016llx\n",
+		      xive_regr(x, VC_ENDC_ADDITIONAL_PERF_1));
+	n += snprintf(buf + n, size - n, "VC_ENDC_ADDITIONAL_PERF_2 = %016llx\n",
+		      xive_regr(x, VC_ENDC_ADDITIONAL_PERF_2));
+	n += snprintf(buf + n, size - n, "PC_NXC_ADDITIONAL_PERF_1 = %016llx\n",
+		      xive_regr(x, PC_NXC_ADDITIONAL_PERF_1));
+	n += snprintf(buf + n, size - n, "PC_NXC_ADDITIONAL_PERF_2 = %016llx\n",
+		      xive_regr(x, PC_NXC_ADDITIONAL_PERF_2));
+
+	return n;
+}
+
 static const struct opal_debug_ops xive2_eat_ops = {
 	.read = xive2_eat_read,
 };
@@ -4838,6 +4925,13 @@ static const struct opal_debug_ops xive2_esc_ops = {
 static const struct opal_debug_ops xive2_nvpt_ops = {
 	.read = xive2_nvpt_read,
 };
+static const struct opal_debug_ops xive2_perf_ops = {
+	.read = xive2_perf_read,
+	.write = xive2_perf_write,
+};
+static const struct opal_debug_ops xive2_perf_extra_ops = {
+	.read = xive2_perf_extra_read,
+};
 
 static const struct {
 	const char *name;
@@ -4847,6 +4941,8 @@ static const struct {
 	{ "xive-endt",	&xive2_endt_ops,  },
 	{ "xive-esc",	&xive2_esc_ops,  },
 	{ "xive-nvpt",	&xive2_nvpt_ops,  },
+	{ "xive-perf",	&xive2_perf_ops, },
+	{ "xive-perf-extra",	&xive2_perf_extra_ops, },
 };
 
 static void xive2_init_debug(struct xive *x)
