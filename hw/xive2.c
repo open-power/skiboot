@@ -466,6 +466,7 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
 static uint32_t xive_chips_alloc_bits = 0;
 static struct buddy *xive_vp_buddy;
 static struct lock xive_buddy_lock = LOCK_UNLOCKED;
+static uint32_t xive_preferred_chip = OPAL_XIVE_ANY_CHIP;
 
 /* VP# decoding/encoding */
 static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
@@ -503,6 +504,9 @@ static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
 	/* Extract block ID */
 	if (blk)
 		*blk = (index >> (o - n)) & ((1 << n) - 1);
+
+	if (xive_preferred_chip != OPAL_XIVE_ANY_CHIP)
+		*blk = xive_chip_to_block(xive_preferred_chip);
 
 	/* Return order as well if asked for */
 	if (order)
@@ -877,13 +881,24 @@ static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t orde
 	return true;
 }
 
+static void xive_init_vp_allocator_chip(uint32_t chip_id)
+{
+	if (chip_id == OPAL_XIVE_ANY_CHIP)  {
+		xive_chips_alloc_bits = ilog2(xive_block_count);
+		prlog(PR_INFO, "XIVE: %d chips considered for VP allocations\n",
+		      1 << xive_chips_alloc_bits);
+	} else {
+		xive_chips_alloc_bits = 0;
+		prlog(PR_INFO, "XIVE: single chip %d considered for VP allocations\n",
+		      chip_id);
+	}
+	xive_preferred_chip = chip_id;
+}
+
 static void xive_init_vp_allocator(void)
 {
 	/* Initialize chip alloc bits */
-	xive_chips_alloc_bits = ilog2(xive_block_count);
-
-	prlog(PR_INFO, "%d chips considered for VP allocations\n",
-	      1 << xive_chips_alloc_bits);
+	xive_init_vp_allocator_chip(OPAL_XIVE_ANY_CHIP);
 
 	/* Allocate a buddy big enough for XIVE_VP_ORDER allocations.
 	 *
@@ -922,7 +937,9 @@ static uint32_t xive_alloc_vps(uint32_t order)
 
 	/* Provision on every chip considered for allocation */
 	for (i = 0; i < (1 << xive_chips_alloc_bits); i++) {
-		struct xive *x = xive_from_pc_blk(i);
+		uint32_t blk = xive_preferred_chip == OPAL_XIVE_ANY_CHIP ?
+			i : xive_chip_to_block(xive_preferred_chip);
+		struct xive *x = xive_from_pc_blk(blk);
 		bool success;
 
 		/* Return internal error & log rather than assert ? */
@@ -4173,8 +4190,13 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 		return OPAL_PARAMETER;
 	if (group)
 		return OPAL_PARAMETER;
-	if (blk)
-		return OPAL_PARAMETER;
+	if (xive_preferred_chip == OPAL_XIVE_ANY_CHIP) {
+		if (blk)
+		    return OPAL_PARAMETER;
+	} else {
+		if (blk != xive_chip_to_block(xive_preferred_chip))
+			return OPAL_PARAMETER;
+	}
 	if (order < (xive_chips_alloc_bits + 1))
 		return OPAL_PARAMETER;
 	if (idx & ((1 << (order - xive_chips_alloc_bits)) - 1))
@@ -4371,7 +4393,10 @@ static int64_t opal_xive_allocate_irq(uint32_t chip_id)
 
 	if (chip_id == OPAL_XIVE_ANY_CHIP) {
 		try_all = true;
-		chip_id = this_cpu()->chip_id;
+		if (xive_preferred_chip == OPAL_XIVE_ANY_CHIP)
+			chip_id = this_cpu()->chip_id;
+		else
+			chip_id = xive_preferred_chip;
 	}
 	chip = get_chip(chip_id);
 	if (!chip)
@@ -4933,6 +4958,49 @@ static const struct opal_debug_ops xive2_perf_extra_ops = {
 	.read = xive2_perf_extra_read,
 };
 
+static int xive2_vp_alloc_read(struct opal_debug *d __unused, void *buf,
+			      uint64_t size)
+{
+	int n = 0;
+
+	if (xive_preferred_chip == OPAL_XIVE_ANY_CHIP)
+		n += snprintf(buf + n, size - n, "VP allocator : distributed\n");
+	else
+		n += snprintf(buf + n, size - n, "VP allocator : single chip %d\n",
+			      xive_preferred_chip);
+
+	return n;
+}
+
+static int xive2_vp_alloc_write(struct opal_debug *d  __unused, void *buf,
+			       uint64_t size)
+{
+	int chip_id;
+
+	if (!strncmp(buf, "distributed", size)) {
+		chip_id = OPAL_XIVE_ANY_CHIP;
+	} else if (!strncmp(buf, "single", size)) {
+		chip_id = 0;
+	} else {
+		char *p = NULL;
+
+		chip_id = strtol(buf, &p, 10);
+		if (*p || p == buf)
+			return OPAL_PARAMETER;
+		if (!get_chip(chip_id))
+			return OPAL_PARAMETER;
+	}
+
+	if (xive_preferred_chip != chip_id)
+		xive_init_vp_allocator_chip(chip_id);
+	return OPAL_SUCCESS;
+}
+
+static const struct opal_debug_ops xive2_vp_alloc_ops = {
+	.read = xive2_vp_alloc_read,
+	.write = xive2_vp_alloc_write,
+};
+
 static const struct {
 	const char *name;
 	const struct opal_debug_ops *ops;
@@ -4943,6 +5011,7 @@ static const struct {
 	{ "xive-nvpt",	&xive2_nvpt_ops,  },
 	{ "xive-perf",	&xive2_perf_ops, },
 	{ "xive-perf-extra",	&xive2_perf_extra_ops, },
+	{ "xive-vp-alloc",	&xive2_vp_alloc_ops, },
 };
 
 static void xive2_init_debug(struct xive *x)
