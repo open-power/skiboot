@@ -583,6 +583,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	/* Use nvram bootargs over device tree */
 	cmdline = nvram_query_safe("bootargs");
+	cmdline = "loglevel=7";
 	if (cmdline) {
 		dt_check_del_prop(dt_chosen, "bootargs");
 		dt_add_property_string(dt_chosen, "bootargs", cmdline);

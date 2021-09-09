@@ -84,8 +84,6 @@
  *
  * As of mid-2019, a 2 socket Romulus uses ~4MB heap.
  */
-#define HEAP_BASE		(SKIBOOT_BASE + 0x00600000)
-#define HEAP_SIZE		0x00a00000
 
 /* This is the location of our console buffer at base + 16M */
 #define INMEM_CON_START		(SKIBOOT_BASE + 0x01000000)
@@ -119,7 +117,14 @@
  *
  * (Ensure this has at least a 64k alignment)
  */
-#define SKIBOOT_SIZE		0x01c10000
+#define SKIBOOT_END		0x01c10000
+
+#define HEAP_BASE		(SKIBOOT_BASE + SKIBOOT_END)
+
+/* Actual HEAP usage us 11MB for big core and 12MB for small core large config */
+#define HEAP_SIZE		0x01000000 /* Make it 16MB for large system */
+
+#define SKIBOOT_SIZE           (SKIBOOT_END + HEAP_SIZE)
 
 /* We start laying out the CPU stacks from here, indexed by PIR
  * each stack is STACK_SIZE in size (naturally aligned power of
