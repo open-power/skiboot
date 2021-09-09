@@ -19,6 +19,7 @@
 #include <buddy.h>
 #include <phys-map.h>
 #include <p9_stop_api.H>
+#include <opal-debug.h>
 
 /* Always notify from EQ to VP (no EOI on EQs). Will speed up
  * EOIs at the expense of potentially higher powerbus traffic.
@@ -5155,6 +5156,8 @@ static void xive_init_globals(void)
 		xive_block_to_chip[i] = XIVE_INVALID_CHIP;
 }
 
+static void xive_init_debug(struct xive *x);
+
 void init_xive(void)
 {
 	struct dt_node *np;
@@ -5234,5 +5237,175 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_GET_QUEUE_STATE, opal_xive_get_queue_state, 4);
 	opal_register(OPAL_XIVE_SET_QUEUE_STATE, opal_xive_set_queue_state, 4);
 	opal_register(OPAL_XIVE_GET_VP_STATE, opal_xive_get_vp_state, 2);
+
+	for_each_chip(chip) {
+		if (chip->xive)
+			xive_init_debug(chip->xive);
+	}
+}
+
+static int xive_ivt_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	struct xive_ive *ivt = x->ivt_base;
+	int i;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "IVT[%d]\n", x->block_id);
+	for (i = 0; i < XIVE_INT_COUNT; i++) {
+		struct xive_ive *ive = &ivt[i];
+		uint32_t eq_blk, eq_idx, eq_data;
+		/* TODO: get ESB mmio */
+
+		if (xive_get_field64(IVE_MASKED, ive->w) ||
+		    !xive_get_field64(IVE_VALID, ive->w))
+			continue;
+		n += snprintf(buf + n, size - n, "%08x ",
+			      BLKIDX_TO_GIRQ(x->block_id, i));
+		lock(&x->lock);
+		eq_blk = xive_get_field64(IVE_EQ_BLOCK, ive->w);
+		eq_idx = xive_get_field64(IVE_EQ_INDEX, ive->w);
+		eq_data = xive_get_field64(IVE_EQ_DATA, ive->w);
+		unlock(&x->lock);
+
+		n += snprintf(buf + n, size - n, "eq=%x/%x data=%x\n",
+			      eq_blk, eq_idx, eq_data);
+	}
+
+	return n;
+}
+
+static int xive_eqt_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int i, j;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "EQT[%d]\n", x->block_id);
+	bitmap_for_each_one(*x->eq_map, XIVE_EQ_COUNT >> 3, i) {
+		for (j = 0; j < NUM_INT_PRIORITIES; j++) {
+			struct xive_eq *eq;
+			uint32_t idx = (i << 3) | j;
+
+			eq = xive_get_eq(x, idx);
+			if (!eq || !xive_get_field32(EQ_W0_VALID, eq->w0))
+				continue;
+
+			lock(&x->lock);
+			xive_eqc_scrub(x, x->block_id, idx);
+			unlock(&x->lock);
+
+			n += snprintf(buf + n, size - n,
+				      "%08x    %08x %08x %08x %08x %08x %08x %08x %08x\n",
+				      idx,
+				      eq->w0, eq->w1, eq->w2, eq->w3,
+				      eq->w4, eq->w5, eq->w6, eq->w7);
+		}
+	}
+	return n;
+}
+
+static int xive_esc_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int i, j;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "ESC IVT[%d]\n", x->block_id);
+	bitmap_for_each_one(*x->eq_map, XIVE_EQ_COUNT >> 3, i) {
+		for (j = 0; j < NUM_INT_PRIORITIES; j++) {
+			uint32_t idx = (i << 3) | j;
+			struct xive_eq *eq;
+			struct xive_ive *ive;
+			uint32_t eq_blk, eq_idx, eq_data;
+
+			eq = xive_get_eq(x, idx);
+			if (!eq || !xive_get_field32(EQ_W0_VALID, eq->w0))
+				continue;
+			if (!xive_get_field32(EQ_W0_ESCALATE_CTL, eq->w0))
+				continue;
+
+			ive = (struct xive_ive*)(char *)&eq->w4;
+
+			n += snprintf(buf + n, size - n, "%08x ",
+				      MAKE_ESCALATION_GIRQ(x->block_id, i));
+			lock(&x->lock);
+			xive_eqc_scrub(x, x->block_id, idx);
+			eq_blk = xive_get_field64(IVE_EQ_BLOCK, ive->w);
+			eq_idx = xive_get_field64(IVE_EQ_INDEX, ive->w);
+			eq_data = xive_get_field64(IVE_EQ_DATA, ive->w);
+			unlock(&x->lock);
+
+			n += snprintf(buf + n, size - n, "eq=%x/%x data=%x\n",
+				      eq_blk, eq_idx, eq_data);
+		}
+	}
+	return n;
+}
+
+static int xive_vpt_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int i;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "VPT[%d]\n", x->block_id);
+	for (i = 0; i < XIVE_VP_COUNT; i++) {
+		struct xive_vp *vp;
+#if 0
+		/* Ignore the physical CPU VPs */
+		if (i >= XIVE_HW_VP_BASE &&
+		    i < (XIVE_HW_VP_BASE + XIVE_HW_VP_COUNT))
+			continue;
+#endif
+		vp = xive_get_vp(x, i);
+		if (!vp || !xive_get_field32(VP_W0_VALID, vp->w0))
+			continue;
+		lock(&x->lock);
+		xive_vpc_scrub(x, x->block_id, i);
+		unlock(&x->lock);
+		n += snprintf(buf + n, size - n,
+			      "%08x    %08x %08x %08x %08x %08x %08x %08x %08x\n",
+			      i,
+			      vp->w0, vp->w1, vp->w2, vp->w3,
+			      vp->w4, vp->w5, vp->w6, vp->w7);
+	}
+	return n;
+}
+
+static const struct opal_debug_ops xive_ivt_ops = {
+	.read = xive_ivt_read,
+};
+static const struct opal_debug_ops xive_eqt_ops = {
+	.read = xive_eqt_read,
+};
+static const struct opal_debug_ops xive_esc_ops = {
+	.read = xive_esc_read,
+};
+static const struct opal_debug_ops xive_vpt_ops = {
+	.read = xive_vpt_read,
+};
+
+static const struct {
+	const char *name;
+	const struct opal_debug_ops *ops;
+} xive_debug_handlers[] = {
+	{ "xive-ivt",	&xive_ivt_ops,  },
+	{ "xive-eqt",	&xive_eqt_ops,  },
+	{ "xive-esc",	&xive_esc_ops,  },
+	{ "xive-vpt",	&xive_vpt_ops,  },
+};
+
+static void xive_init_debug(struct xive *x)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(xive_debug_handlers); i++) {
+		struct opal_debug *d;
+		d = opal_debug_create(xive_debug_handlers[i].name, xive_dt_node,
+				      x, xive_debug_handlers[i].ops);
+
+		dt_add_property_cells(d->node, "ibm,chip-id", x->chip_id);
+	}
 }
 
