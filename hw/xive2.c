@@ -21,6 +21,7 @@
 #include <buddy.h>
 #include <phys-map.h>
 #include <p10_stop_api.H>
+#include <opal-debug.h>
 
 
 /* Verbose debug */
@@ -4613,6 +4614,8 @@ bool xive2_cap_store_eoi(void)
 	return xive_has_cap(one_xive, CQ_XIVE_CAP_STORE_EOI);
 }
 
+static void xive2_init_debug(struct xive *x);
+
 void xive2_init(void)
 {
 	struct dt_node *np;
@@ -4684,4 +4687,177 @@ void xive2_init(void)
 	opal_register(OPAL_XIVE_GET_QUEUE_STATE, opal_xive_get_queue_state, 4);
 	opal_register(OPAL_XIVE_SET_QUEUE_STATE, opal_xive_set_queue_state, 4);
 	opal_register(OPAL_XIVE_GET_VP_STATE, opal_xive_get_vp_state, 2);
+
+	for_each_chip(chip) {
+		if (chip->xive)
+			xive2_init_debug(chip->xive);
+	}
+}
+
+static int xive2_eat_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	struct xive_eas *eat = x->eat_base;
+	int i;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "EAT[%d] #%ld\n",
+		      x->block_id, XIVE_INT_COUNT);
+	for (i = 0; i < XIVE_INT_COUNT; i++) {
+		struct xive_eas *eas = &eat[i];
+		uint32_t eq_blk, eq_idx, eq_data;
+		/* TODO: get ESB mmio */
+
+		if (xive_get_field64(EAS_MASKED, eas->w) ||
+		    !xive_get_field64(EAS_VALID, eas->w))
+			continue;
+		n += snprintf(buf + n, size - n, "%08x ",
+			      BLKIDX_TO_GIRQ(x->block_id, i));
+		lock(&x->lock);
+		eq_blk = xive_get_field64(EAS_END_BLOCK, eas->w);
+		eq_idx = xive_get_field64(EAS_END_INDEX, eas->w);
+		eq_data = xive_get_field64(EAS_END_DATA, eas->w);
+		unlock(&x->lock);
+
+		n += snprintf(buf + n, size - n, "eq=%x/%x data=%x\n",
+			      eq_blk, eq_idx, eq_data);
+	}
+
+	return n;
+}
+
+static int xive2_endt_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int i, j;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "ENDT[%d] #%ld \n",
+		      x->block_id, XIVE_END_COUNT);
+	bitmap_for_each_one(*x->end_map, xive_end_bitmap_size(x), i) {
+		for (j = 0; j < xive_cfg_vp_prio(x); j++) {
+			struct xive_end *end;
+			uint32_t idx = (i << 3) | j;
+
+			lock(&x->lock);
+			xive_endc_scrub(x, x->block_id, idx);
+			unlock(&x->lock);
+
+			end = xive_get_end(x, idx);
+			if (!end || !xive_get_field32(END_W0_VALID, end->w0))
+				continue;
+
+			n += snprintf(buf + n, size - n,
+				      "%08x    %08x %08x %08x %08x %08x %08x %08x %08x\n",
+				      idx,
+				      end->w0, end->w1, end->w2, end->w3,
+				      end->w4, end->w5, end->w6, end->w7);
+		}
+	}
+	return n;
+}
+
+static int xive2_esc_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int i, j;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "ESC EAT[%d]\n", x->block_id);
+	bitmap_for_each_one(*x->end_map, xive_end_bitmap_size(x), i) {
+		for (j = 0; j < xive_cfg_vp_prio(x); j++) {
+			uint32_t idx = (i << 3) | j;
+			struct xive_end *end;
+			struct xive_eas *eas;
+			uint32_t end_blk, end_idx, end_data;
+
+			end = xive_get_end(x, idx);
+			if (!end || !xive_get_field32(END_W0_VALID, end->w0))
+				continue;
+			if (!xive_get_field32(END_W0_ESCALATE_CTL, end->w0))
+				continue;
+
+			eas = (struct xive_eas*)(char *)&end->w4;
+
+			n += snprintf(buf + n, size - n, "%08x ",
+				      MAKE_ESCALATION_GIRQ(x->block_id, i));
+			lock(&x->lock);
+			xive_endc_scrub(x, x->block_id, idx);
+			end_blk = xive_get_field64(EAS_END_BLOCK, eas->w);
+			end_idx = xive_get_field64(EAS_END_INDEX, eas->w);
+			end_data = xive_get_field64(EAS_END_DATA, eas->w);
+			unlock(&x->lock);
+
+			n += snprintf(buf + n, size - n, "end=%x/%x data=%x\n",
+				      end_blk, end_idx, end_data);
+		}
+	}
+	return n;
+}
+
+static int xive2_nvpt_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int i;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "NVPT[%d] #%ld\n",
+		      x->block_id, XIVE_VP_COUNT(x));
+	for (i = 0; i < XIVE_VP_COUNT(x); i++) {
+		struct xive_nvp *nvp;
+#if 0
+		/* Ignore the physical CPU NVPs */
+		if (i >= xive_hw_vp_base &&
+		    i < (xive_hw_vp_base + xive_hw_vp_count))
+			continue;
+#endif
+		nvp = xive_get_vp(x, i);
+		if (!nvp || !xive_get_field32(NVP_W0_VALID, nvp->w0))
+			continue;
+		lock(&x->lock);
+		xive_nxc_scrub(x, x->block_id, i);
+		unlock(&x->lock);
+		n += snprintf(buf + n, size - n,
+			      "%08x    %08x %08x %08x %08x %08x %08x %08x %08x\n",
+			      i,
+			      nvp->w0, nvp->w1, nvp->w2, nvp->w3,
+			      nvp->w4, nvp->w5, nvp->w6, nvp->w7);
+	}
+	return n;
+}
+
+static const struct opal_debug_ops xive2_eat_ops = {
+	.read = xive2_eat_read,
+};
+static const struct opal_debug_ops xive2_endt_ops = {
+	.read = xive2_endt_read,
+};
+static const struct opal_debug_ops xive2_esc_ops = {
+	.read = xive2_esc_read,
+};
+static const struct opal_debug_ops xive2_nvpt_ops = {
+	.read = xive2_nvpt_read,
+};
+
+static const struct {
+	const char *name;
+	const struct opal_debug_ops *ops;
+} xive2_debug_handlers[] = {
+	{ "xive-eat",	&xive2_eat_ops,  },
+	{ "xive-endt",	&xive2_endt_ops,  },
+	{ "xive-esc",	&xive2_esc_ops,  },
+	{ "xive-nvpt",	&xive2_nvpt_ops,  },
+};
+
+static void xive2_init_debug(struct xive *x)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(xive2_debug_handlers); i++) {
+		struct opal_debug *d;
+		d = opal_debug_create(xive2_debug_handlers[i].name, xive_dt_node,
+				      x, xive2_debug_handlers[i].ops);
+
+		dt_add_property_cells(d->node, "ibm,chip-id", x->chip_id);
+	}
 }
