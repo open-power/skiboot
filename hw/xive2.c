@@ -4135,6 +4135,8 @@ int64_t xive2_reset(void)
 
 static int64_t opal_xive_reset(uint64_t mode)
 {
+	bool skip_reset = chip_quirk(QUIRK_QEMU);
+
 	prlog(PR_DEBUG, "XIVE reset. mode = %llx\n", mode);
 
 	if (!(mode & XIVE_MODE_EXPL)) {
@@ -4147,6 +4149,11 @@ static int64_t opal_xive_reset(uint64_t mode)
 		prerror("invalid XIVE exploitation mode option %016llx\n",
 			xive_expl_options);
 		return OPAL_PARAMETER;
+	}
+
+	if (skip_reset) {
+		prlog(PR_DEBUG, "XIVE reset skipped\n");
+		return OPAL_SUCCESS;
 	}
 
 	return __xive_reset(XIVE_MODE_EXPL);
