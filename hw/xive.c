@@ -5373,6 +5373,27 @@ static int xive_vpt_read(struct opal_debug *d, void *buf, uint64_t size)
 	return n;
 }
 
+static int xive_perf_read(struct opal_debug *d, void *buf, uint64_t size)
+{
+	struct xive *x = d->private;
+	int n = 0;
+
+	n += snprintf(buf + n, size - n, "Performance counters [%d]\n", x->block_id);
+
+#define perf_read(reg)	\
+	n += snprintf(buf + n, size - n, "%30s = %016llx\n", #reg, \
+	      in_be64(x->ic_base + reg))
+
+	perf_read(PC_VPC_ADDITIONAL_PERF_1);
+	perf_read(PC_VPC_ADDITIONAL_PERF_2);
+	perf_read(VC_EQC_ADDITIONAL_PERF_1);
+	perf_read(VC_EQC_ADDITIONAL_PERF_2);
+	perf_read(VC_IVC_ADDITIONAL_PERF);
+	perf_read(VC_SBC_ADDITIONAL_PERF);
+
+	return n;
+}
+
 static const struct opal_debug_ops xive_ivt_ops = {
 	.read = xive_ivt_read,
 };
@@ -5385,6 +5406,9 @@ static const struct opal_debug_ops xive_esc_ops = {
 static const struct opal_debug_ops xive_vpt_ops = {
 	.read = xive_vpt_read,
 };
+static const struct opal_debug_ops xive_perf_ops = {
+	.read = xive_perf_read,
+};
 
 static const struct {
 	const char *name;
@@ -5394,6 +5418,7 @@ static const struct {
 	{ "xive-eqt",	&xive_eqt_ops,  },
 	{ "xive-esc",	&xive_esc_ops,  },
 	{ "xive-vpt",	&xive_vpt_ops,  },
+	{ "xive-perf",	&xive_perf_ops, },
 };
 
 static void xive_init_debug(struct xive *x)
