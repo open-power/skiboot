@@ -6121,12 +6121,14 @@ static void phb4_create(struct dt_node *np)
 	if (is_phb4())
 		phb4_init_capp(p);
 
-	/* Compute XIVE source flags depending on PHB revision */
-	irq_flags = 0;
+	/*
+	 * The PHB ESBs support stores to trigger the interrupt. Add
+	 * the XIVE_SRC_TRIGGER_PAGE flag to return a trigger page to
+	 * the OS.
+	 */
+	irq_flags = XIVE_SRC_TRIGGER_PAGE;
 	if (phb_can_store_eoi(p))
 		irq_flags |= XIVE_SRC_STORE_EOI;
-	else
-		irq_flags |= XIVE_SRC_TRIGGER_PAGE;
 
 	if (is_phb5()) {
 		/*
