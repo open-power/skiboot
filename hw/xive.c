@@ -1555,8 +1555,9 @@ static bool xive_config_init(struct xive *x)
 	val = xive_regr(x, VC_SBC_CONFIG);
 	if (XIVE_CAN_STORE_EOI(x))
 		val |= VC_SBC_CONF_CPLX_CIST | VC_SBC_CONF_CIST_BOTH;
-	else
-		xive_dbg(x, "store EOI is disabled\n");
+
+	xive_dbg(x, "store EOI is %sabled\n",
+		 XIVE_CAN_STORE_EOI(x) ? "en" : "dis");
 
 	val |= VC_SBC_CONF_NO_UPD_PRF;
 	xive_regw(x, VC_SBC_CONFIG, val);
@@ -1779,6 +1780,9 @@ static void xive_create_mmio_dt_node(struct xive *x)
 	dt_add_property_cells(xive_dt_node, "ibm,xive-#priorities",
 			      NUM_INT_PRIORITIES);
 	dt_add_property(xive_dt_node, "single-escalation-support", NULL, 0);
+
+	if (XIVE_CAN_STORE_EOI(x))
+		dt_add_property(xive_dt_node, "store-eoi", NULL, 0);
 
 	xive_add_provisioning_properties();
 }
