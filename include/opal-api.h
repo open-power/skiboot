@@ -227,7 +227,9 @@
 #define OPAL_SECVAR_ENQUEUE_UPDATE		178
 #define OPAL_PHB_SET_OPTION			179
 #define OPAL_PHB_GET_OPTION			180
-#define OPAL_LAST				180
+#define OPAL_DEBUG_READ				181
+#define OPAL_DEBUG_WRITE			182
+#define OPAL_LAST				182
 
 #define QUIESCE_HOLD			1 /* Spin all calls at entry */
 #define QUIESCE_REJECT			2 /* Fail all calls with OPAL_BUSY */
