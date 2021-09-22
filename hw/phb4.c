@@ -5827,12 +5827,14 @@ static void phb4_add_properties(struct phb4 *p)
 	dt_add_property_cells(np, "ibm,phb-diag-data-size",
 			      sizeof(struct OpalIoPhb4ErrorData));
 
-	/* Indicate to Linux that CAPP timebase sync is supported */
-	dt_add_property_string(np, "ibm,capp-timebase-sync", NULL);
+	if (is_phb4()) {
+		/* Indicate to Linux that CAPP timebase sync is supported */
+		dt_add_property_string(np, "ibm,capp-timebase-sync", NULL);
 
-	/* Tell Linux Compare/Mask indication values */
-	dt_add_property_cells(np, "ibm,phb-indications", CAPIIND, ASNIND,
-			      NBWIND);
+		/* Tell Linux Compare/Mask indication values */
+		dt_add_property_cells(np, "ibm,phb-indications", CAPIIND, ASNIND,
+				      NBWIND);
+	}
 }
 
 static bool phb4_calculate_windows(struct phb4 *p)
@@ -6346,8 +6348,9 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 		max_link_speed = dt_prop_get_u32(stk_node, "ibm,max-link-speed");
 		dt_add_property_cells(np, "ibm,max-link-speed", max_link_speed);
 	}
-	dt_add_property_cells(np, "ibm,capi-flags",
-			      OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL);
+	if (is_phb4())
+		dt_add_property_cells(np, "ibm,capi-flags",
+				      OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL);
 
 	add_chip_dev_associativity(np);
 }
