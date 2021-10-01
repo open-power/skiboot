@@ -135,8 +135,11 @@ if { $default_config == "PEGASUS" } {
 
 if { $default_config == "P9" } {
     # PVR configured for POWER9 DD2.3 Scale out 24 Core (ie SMT4)
+    # This still is not configured with LPAR-per-thread, which will make
+    # multi-thread KVM not work properly. And possibly even small-core is
+    # not set correctly either.
     myconf config processor/initial/PVR 0x4e1203
-    myconf config processor/initial/SIM_CTRL1 0x4228301710000000
+    myconf config processor/initial/SIM_CTRL1 0x42283c1710000000
 
     if { $mconf(numa) } {
         myconf config memory_region_id_shift 45
