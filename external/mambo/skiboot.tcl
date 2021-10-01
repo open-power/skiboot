@@ -144,9 +144,11 @@ if { $default_config == "P9" } {
 }
 
 if { $default_config == "P10" } {
-    # PVR configured for POWER10 DD1.0
-    myconf config processor/initial/PVR 0x800100
-    myconf config processor/initial/SIM_CTRL1 0xc228100400000000
+    # PVR configured for POWER10 DD2.0, big-core, LPAR-per-thread
+    # Small-core has bit 0x1000 set.
+    myconf config processor/initial/PVR 0x800200
+    myconf config processor/initial/SIM_CTRL  0x0c1dd60000000000
+    myconf config processor/initial/SIM_CTRL1 0xc0400c0400040a40
 
     if { $mconf(numa) } {
         myconf config memory_region_id_shift 44
@@ -163,6 +165,16 @@ if { [info exists env(SKIBOOT_SIMCONF)] } {
 }
 
 define machine myconf mysim
+
+# Some mambo does not expose SIM_CTRL as a config option. Also set the SPRs
+# after machine is defined.
+if { $default_config == "P10" } {
+    for { set c 0 } { $c < $mconf(cpus) } { incr c } {
+        for { set t 0 } { $t < $mconf(threads) } { incr t } {
+	    mysim mcm 0 cpu $c thread $t set spr ctrl 0x0c1dd60000000000
+        }
+    }
+}
 
 #
 # Include various utilities
