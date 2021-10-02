@@ -147,11 +147,28 @@ if { $default_config == "P9" } {
 }
 
 if { $default_config == "P10" } {
-    # PVR configured for POWER10 DD2.0, big-core, LPAR-per-thread
-    # Small-core has bit 0x1000 set.
-    myconf config processor/initial/PVR 0x800200
+    # PVR configured for POWER10 DD2.0, LPAR-per-thread
     myconf config processor/initial/SIM_CTRL  0x0c1dd60000000000
-    myconf config processor/initial/SIM_CTRL1 0xc0400c0400040a40
+    if { $mconf(threads) == 8 } {
+        # Big-core mode.
+        myconf config processor/initial/PVR 0x00800200
+        myconf config processor/initial/SIM_CTRL1 0xc0400c0400040a40
+	puts "Set P10 big-core mode"
+    } else {
+        # Small-core mode.
+        myconf config processor/initial/PVR 0x00801200
+        myconf config processor/initial/SIM_CTRL1 0xc0400c0401040a40
+        if { $mconf(threads) != 1 && $mconf(threads) != 2 && $mconf(threads) != 4 } {
+            puts "ERROR: Bad threads configuration"
+            exit
+        }
+        if { $mconf(threads) != 4 && $mconf(cpus) != 1 } {
+            puts "ERROR: Bad threads, cpus configuration"
+            exit
+        }
+
+	puts "Set P10 small-core mode"
+    }
 
     if { $mconf(numa) } {
         myconf config memory_region_id_shift 44
