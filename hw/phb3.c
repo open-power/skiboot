@@ -444,7 +444,6 @@ static void phb3_switch_port_init(struct phb *phb,
 				  struct pci_device *dev,
 				  int ecap, int aercap)
 {
-	struct phb3 *p = phb_to_phb3(phb);
 	uint16_t bdfn = dev->bdfn;
 	uint16_t val16;
 	uint32_t val32;
@@ -498,17 +497,8 @@ static void phb3_switch_port_init(struct phb *phb,
 			 PCIECAP_AER_UE_SEVERITY_INTERNAL);
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_UE_SEVERITY, val32);
 
-	/*
-	 * Mask various correctable errors
-	 *
-         * On Murano and Venice DD1.0 we disable emission of corrected
-         * error messages to the PHB completely to workaround errata
-         * HW257476 causing the loss of tags.
-	 */
-	if (p->rev < PHB3_REV_MURANO_DD20)
-		val32 = 0xffffffff;
-	else
-		val32 = PCIECAP_AER_CE_MASK_ADV_NONFATAL;
+	/* Mask various correctable errors */
+	val32 = PCIECAP_AER_CE_MASK_ADV_NONFATAL;
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CE_MASK, val32);
 
 	/* Enable ECRC generation and disable ECRC check */
@@ -522,7 +512,6 @@ static void phb3_endpoint_init(struct phb *phb,
 			       struct pci_device *dev,
 			       int ecap, int aercap)
 {
-	struct phb3 *p = phb_to_phb3(phb);
 	uint16_t bdfn = dev->bdfn;
 	uint16_t val16;
 	uint32_t val32;
@@ -543,15 +532,6 @@ static void phb3_endpoint_init(struct phb *phb,
 	/* HW279570 - Disable reporting of correctable errors */
 	val16 &= ~PCICAP_EXP_DEVCTL_CE_REPORT;
 	pci_cfg_write16(phb, bdfn, ecap + PCICAP_EXP_DEVCTL, val16);
-
-	/*
-	 * On Murano and Venice DD1.0 we disable emission of corrected
-	 * error messages to the PHB completely to workaround errata
-	 * HW257476 causing the loss of tags.
-	 */
-	if (p->rev < PHB3_REV_MURANO_DD20)
-		pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CE_MASK,
-				0xffffffff);
 
 	/* Enable ECRC generation and check */
 	pci_cfg_read32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, &val32);
@@ -855,11 +835,9 @@ static int64_t phb3_ioda_reset(struct phb *phb, bool purge)
 	out_be64(p->regs + PHB_TCE_KILL, PHB_TCE_KILL_ALL);
 
 	/* Clear RBA */
-	if (p->rev >= PHB3_REV_MURANO_DD20) {
-		phb3_ioda_sel(p, IODA2_TBL_RBA, 0, true);
-		for (i = 0; i < 32; i++)
-			out_be64(p->regs + PHB_IODA_DATA0, 0x0ul);
-	}
+	phb3_ioda_sel(p, IODA2_TBL_RBA, 0, true);
+	for (i = 0; i < 32; i++)
+		out_be64(p->regs + PHB_IODA_DATA0, 0x0ul);
 
 	/* Clear PEST & PEEV */
 	for (i = 0; i < PHB3_MAX_PE_NUM; i++) {
@@ -3926,11 +3904,7 @@ static void phb3_init_ioda2(struct phb3 *p)
 	/* DD2.0 or the subsequent chips don't have memory
 	 * resident RBA.
 	 */
-	if (p->rev >= PHB3_REV_MURANO_DD20)
-		out_be64(p->regs + PHB_RBA_BAR, 0x0ul);
-	else
-		out_be64(p->regs + PHB_RBA_BAR,
-			 p->tbl_rba | PHB_RBA_BAR_ENABLE);
+	out_be64(p->regs + PHB_RBA_BAR, 0x0ul);
 
 	/* Init_18..21 - Setup M32 */
 	out_be64(p->regs + PHB_M32_BASE_ADDR, p->mm1_base);
@@ -3952,7 +3926,7 @@ static void phb3_init_ioda2(struct phb3 *p)
 	else if (p->rev >= PHB3_REV_MURANO_DD20)
 		out_be64(p->regs + PHB_INTREP_TIMER, 0x0004000000000000UL);
 	else
-		out_be64(p->regs + PHB_INTREP_TIMER, 0);
+		assert(0); // DD1 not supported
 
 	/* Init_25 - PHB3 Configuration Register. Clear TCE cache then
 	 *           configure the PHB
@@ -4225,16 +4199,7 @@ static void phb3_init_errors(struct phb3 *p)
 	out_be64(p->regs + PHB_INB_ERR1_STATUS,		   0x0000000000000000UL);
 	out_be64(p->regs + PHB_INB_ERR_LEM_ENABLE,	   0xffffffffffffffffUL);
 
-	/*
-	 * Workaround for errata HW257476, turn correctable messages into
-	 * ER freezes on Murano and Venice DD1.0
-	 */
-	if (p->rev < PHB3_REV_MURANO_DD20)
-		out_be64(p->regs + PHB_INB_ERR_FREEZE_ENABLE,
-			                                   0x0000600000000070UL);
-	else
-		out_be64(p->regs + PHB_INB_ERR_FREEZE_ENABLE,
-			                                   0x0000600000000060UL);
+	out_be64(p->regs + PHB_INB_ERR_FREEZE_ENABLE,	   0x0000600000000060UL);
 
 	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcff80fbff7ff08cUL);
 	out_be64(p->regs + PHB_INB_ERR_LOG_0,		   0x0000000000000000UL);
@@ -4381,12 +4346,10 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	 *          Enable IVC for Murano DD2.0 or later one
 	 */
 #ifdef IVT_TABLE_IVE_16B
-	val = 0xf3a80e4b00000000UL;
+	val = 0xf3a80e5b00000000UL;
 #else
-	val = 0xf3a80ecb00000000UL;
+	val = 0xf3a80edb00000000UL;
 #endif
-	if (p->rev >= PHB3_REV_MURANO_DD20)
-		val |= 0x0000010000000000UL;
 	if (first_init && p->rev >= PHB3_REV_NAPLES_DD10) {
 		/* Enable 32-bit bypass support on Naples and tell the OS
 		 * about it
@@ -4451,10 +4414,7 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	 * Murano DD2.0 and later but lacks sufficient testing. We will re-enable
 	 * it once that has been done.
 	 */
-	if (p->rev >= PHB3_REV_MURANO_DD20)
-		out_be64(p->regs + PHB_TCE_SPEC_CTL,		0xf000000000000000UL);
-	else
-		out_be64(p->regs + PHB_TCE_SPEC_CTL,		0x0ul);
+	out_be64(p->regs + PHB_TCE_SPEC_CTL,			0xf000000000000000UL);
 
 	/* Errata#20131017: avoid TCE queue overflow */
 	if (p->rev == PHB3_REV_MURANO_DD20)
@@ -4508,10 +4468,6 @@ static void phb3_allocate_tables(struct phb3 *p)
 	p->tbl_ivt = (uint64_t)local_alloc(p->chip_id, IVT_TABLE_SIZE, IVT_TABLE_SIZE);
 	assert(p->tbl_ivt);
 	memset((void *)p->tbl_ivt, 0, IVT_TABLE_SIZE);
-
-	p->tbl_rba = (uint64_t)local_alloc(p->chip_id, RBA_TABLE_SIZE, RBA_TABLE_SIZE);
-	assert(p->tbl_rba);
-	memset((void *)p->tbl_rba, 0, RBA_TABLE_SIZE);
 }
 
 static void phb3_add_properties(struct phb3 *p)
@@ -4610,7 +4566,7 @@ static void phb3_add_properties(struct phb3 *p)
 	dt_add_property_cells(np, "ibm,opal-ive-stride",
 		IVT_TABLE_STRIDE);
 	dt_add_property_cells(np, "ibm,opal-rba-table",
-		hi32(p->tbl_rba), lo32(p->tbl_rba), RBA_TABLE_SIZE);
+		0, 0, 0);
 
 	dt_add_property_cells(np, "ibm,phb-diag-data-size",
 			      sizeof(struct OpalIoPhb3ErrorData));

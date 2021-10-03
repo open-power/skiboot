@@ -122,6 +122,7 @@
 /* RBA Table : 256 bytes - Reject Bit Array
  *
  * 2048 interrupts, 1 bit each, indiates the reject state of interrupts
+ * Not used (Murano / Venice DD1 only)
  */
 #define RBA_TABLE_SIZE		0x100
 
@@ -217,7 +218,6 @@ struct phb3 {
 	uint64_t		tbl_peltv;
 	uint64_t		tbl_pest;
 	uint64_t		tbl_ivt;
-	uint64_t		tbl_rba;
 
 	bool			skip_perst; /* Skip first perst */
 	bool			has_link;

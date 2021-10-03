@@ -315,11 +315,6 @@ extern enum wakeup_engine_states wakeup_engine_state;
 extern bool has_deep_states;
 extern void nx_p9_rng_late_init(void);
 
-
-
-/* SLW reinit function for switching core settings */
-extern int64_t slw_reinit(uint64_t flags);
-
 /* Patch SPR in SLW image */
 extern int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val);
 

@@ -35,7 +35,6 @@ unsigned int cpu_thread_count;
 unsigned int cpu_max_pir;
 struct cpu_thread *boot_cpu;
 static struct lock reinit_lock = LOCK_UNLOCKED;
-static bool hile_supported;
 static bool radix_supported;
 static unsigned long hid0_hile;
 static unsigned long hid0_attn;
@@ -1004,27 +1003,23 @@ void init_boot_cpu(void)
 	case PVR_TYPE_P8E:
 	case PVR_TYPE_P8:
 		proc_gen = proc_gen_p8;
-		hile_supported = PVR_VERS_MAJ(mfspr(SPR_PVR)) >= 2;
 		hid0_hile = SPR_HID0_POWER8_HILE;
 		hid0_attn = SPR_HID0_POWER8_ENABLE_ATTN;
 		break;
 	case PVR_TYPE_P8NVL:
 		proc_gen = proc_gen_p8;
-		hile_supported = true;
 		hid0_hile = SPR_HID0_POWER8_HILE;
 		hid0_attn = SPR_HID0_POWER8_ENABLE_ATTN;
 		break;
 	case PVR_TYPE_P9:
 	case PVR_TYPE_P9P:
 		proc_gen = proc_gen_p9;
-		hile_supported = true;
 		radix_supported = true;
 		hid0_hile = SPR_HID0_POWER9_HILE;
 		hid0_attn = SPR_HID0_POWER9_ENABLE_ATTN;
 		break;
 	case PVR_TYPE_P10:
 		proc_gen = proc_gen_p10;
-		hile_supported = true;
 		radix_supported = true;
 		hid0_hile = SPR_HID0_POWER10_HILE;
 		hid0_attn = SPR_HID0_POWER10_ENABLE_ATTN;
@@ -1059,6 +1054,11 @@ void init_boot_cpu(void)
 	default:
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
 		cpu_thread_count = 1;
+	}
+
+	if (proc_gen == proc_gen_p8 && (PVR_VERS_MAJ(mfspr(SPR_PVR)) == 1)) {
+		prerror("CPU: POWER8 DD1 is not supported\n");
+		abort();
 	}
 
 	if (is_power9n(pvr) && (PVR_VERS_MAJ(pvr) == 1)) {
@@ -1602,7 +1602,7 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	}
 	/*
 	 * Now we need to mark ourselves "active" or we'll be skipped
-	 * by the various "for_each_active_..." calls done by slw_reinit()
+	 * by the various "for_each_active_..."
 	 */
 	this_cpu()->state = cpu_state_active;
 	this_cpu()->in_reinit = true;
@@ -1616,10 +1616,8 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	 */
 	cpu_cleanup_all();
 
-	/* If HILE change via HID0 is supported ... */
-	if (hile_supported &&
-	    (flags & (OPAL_REINIT_CPUS_HILE_BE |
-		      OPAL_REINIT_CPUS_HILE_LE))) {
+	if (flags & (OPAL_REINIT_CPUS_HILE_BE |
+		     OPAL_REINIT_CPUS_HILE_LE)) {
 		bool hile = !!(flags & OPAL_REINIT_CPUS_HILE_LE);
 
 		flags &= ~(OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE);
@@ -1674,10 +1672,7 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 			rc = OPAL_SUCCESS;
 	}
 
-	/* Handle P8 DD1 SLW reinit */
-	if (flags != 0 && proc_gen == proc_gen_p8 && !hile_supported)
-		rc = slw_reinit(flags);
-	else if (flags != 0)
+	if (flags != 0)
 		rc = OPAL_UNSUPPORTED;
 
 	/* And undo the above */
