@@ -1883,7 +1883,6 @@ static void phb4_read_phb_status(struct phb4 *p,
 				 struct OpalIoPhb4ErrorData *stat)
 {
 	uint32_t i;
-	__be64 *pPEST;
 	uint16_t __16;
 	uint32_t __32;
 	uint64_t __64;
@@ -2005,17 +2004,16 @@ static void phb4_read_phb_status(struct phb4 *p,
 	 * be fetched from IODA and the left content from memory
 	 * resident tables.
 	 */
-	 pPEST = (__be64 *)p->tbl_pest;
 	 phb4_ioda_sel(p, IODA3_TBL_PESTA, 0, true);
 	 for (i = 0; i < p->max_num_pes; i++) {
 		 stat->pestA[i] = cpu_to_be64(phb4_read_reg_asb(p, PHB_IODA_DATA0));
-		 stat->pestA[i] |= pPEST[2 * i];
+		 stat->pestA[i] |= p->tbl_pest[2 * i];
 	 }
 
 	 phb4_ioda_sel(p, IODA3_TBL_PESTB, 0, true);
 	 for (i = 0; i < p->max_num_pes; i++) {
 		 stat->pestB[i] = cpu_to_be64(phb4_read_reg_asb(p, PHB_IODA_DATA0));
-		 stat->pestB[i] |= pPEST[2 * i + 1];
+		 stat->pestB[i] |= p->tbl_pest[2 * i + 1];
 	 }
 }
 
@@ -3739,14 +3737,11 @@ static void phb4_int_mask_active(struct phb4 *p)
 static uint64_t phb4_get_pesta(struct phb4 *p, uint64_t pe_number)
 {
 	uint64_t pesta;
-	__be64 *pPEST;
-
-	pPEST = (__be64 *)p->tbl_pest;
 
 	phb4_ioda_sel(p, IODA3_TBL_PESTA, pe_number, false);
 	pesta = phb4_read_reg(p, PHB_IODA_DATA0);
 	if (pesta & IODA3_PESTA_MMIO_FROZEN)
-		pesta |= be64_to_cpu(pPEST[2*pe_number]);
+		pesta |= be64_to_cpu(p->tbl_pest[2*pe_number]);
 
 	return pesta;
 }
@@ -5189,7 +5184,7 @@ static void phb4_init_ioda3(struct phb4 *p)
 
 	/* Init_23 - Setup PEST BAR */
 	out_be64(p->regs + PHB_PEST_BAR,
-		 p->tbl_pest | PHB_PEST_BAR_ENABLE);
+		 (u64)p->tbl_pest | PHB_PEST_BAR_ENABLE);
 
 	/* Init_24 - CRW Base Address Reg */
 	/* See enable_capi_mode() */
@@ -5712,9 +5707,9 @@ static void phb4_allocate_tables(struct phb4 *p)
 	assert(p->tbl_peltv);
 	memset(p->tbl_peltv, 0, p->tbl_peltv_size);
 
-	p->tbl_pest = (uint64_t)local_alloc(p->chip_id, p->tbl_pest_size, p->tbl_pest_size);
+	p->tbl_pest = local_alloc(p->chip_id, p->tbl_pest_size, p->tbl_pest_size);
 	assert(p->tbl_pest);
-	memset((void *)p->tbl_pest, 0, p->tbl_pest_size);
+	memset(p->tbl_pest, 0, p->tbl_pest_size);
 }
 
 static void phb4_add_properties(struct phb4 *p)
@@ -5822,7 +5817,7 @@ static void phb4_add_properties(struct phb4 *p)
 		p->tbl_peltv_size);
 
 	dt_add_property_cells(np, "ibm,opal-pest-table",
-		hi32(p->tbl_pest), lo32(p->tbl_pest), p->tbl_pest_size);
+		hi32((u64)p->tbl_pest), lo32((u64)p->tbl_pest), p->tbl_pest_size);
 
 	dt_add_property_cells(np, "ibm,phb-diag-data-size",
 			      sizeof(struct OpalIoPhb4ErrorData));
