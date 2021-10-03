@@ -829,8 +829,13 @@ init_shared_sprs:
 	/* HID0:
 	 * Boot with PPC_BIT(5) set (dis_recovery).
 	 * Leave bit 5 set to disable recovery (due to HW570622)
+	 * Set/clear bit 4 (HILE) depending on skiboot endian
 	 */
+#if HAVE_BIG_ENDIAN
 	LOAD_IMM64(%r3, PPC_BIT(5))
+#else
+	LOAD_IMM64(%r3, PPC_BIT(5) | PPC_BIT(4))
+#endif
 	sync
 	mtspr	SPR_HID0,%r3
 	isync
