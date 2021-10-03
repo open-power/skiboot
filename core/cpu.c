@@ -80,6 +80,12 @@ unsigned long __attrconst cpu_emergency_stack_top(unsigned int pir)
 
 void __nomcount cpu_relax(void)
 {
+	if ((mfspr(SPR_PPR32) >> 18) != 0x4) {
+		printf("cpu_relax called when not at medium SMT priority: "
+			"PPR[PRI]=0x%lx\n", mfspr(SPR_PPR32) >> 18);
+		backtrace();
+	}
+
 	/* Relax a bit to give sibling threads some breathing space */
 	smt_lowest();
 	asm volatile("nop; nop; nop; nop;\n"
