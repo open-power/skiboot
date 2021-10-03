@@ -1977,6 +1977,9 @@ static void xive_create_mmio_dt_node(struct xive *x)
 
 uint32_t xive2_get_phandle(void)
 {
+	if (!xive_dt_node)
+		return 0;
+
 	return xive_dt_node->phandle;
 }
 

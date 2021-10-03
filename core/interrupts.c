@@ -204,9 +204,14 @@ void add_opal_interrupts(void)
 {
 	struct irq_source *is;
 	unsigned int i, ns, tns = 0, count = 0;
+	uint32_t parent;
 	uint32_t isn;
 	__be32 *irqs = NULL;
 	char *names = NULL;
+
+	parent = get_ics_phandle();
+	if (!parent)
+		return;
 
 	lock(&irq_lock);
 	list_for_each(&irq_sources, is, link) {
@@ -251,7 +256,7 @@ void add_opal_interrupts(void)
 	/* First create the standard "interrupts" property and the
 	 * corresponding names property
 	 */
-	dt_add_property_cells(opal_node, "interrupt-parent", get_ics_phandle());
+	dt_add_property_cells(opal_node, "interrupt-parent", parent);
 	dt_add_property(opal_node, "interrupts", irqs, count * 8);
 	dt_add_property(opal_node, "opal-interrupts-names", names, tns);
 	dt_add_property(opal_node, "interrupt-names", names, tns);
