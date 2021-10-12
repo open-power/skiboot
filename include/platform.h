@@ -69,6 +69,11 @@ struct platform_ocapi {
 	uint8_t i2c_presence_brick5;	/* I2C pin to read for presence on brick 5 */
 	bool odl_phy_swap;		/* Swap ODL1 to use brick 2 rather than
 					 * brick 1 lanes */
+	uint8_t i2c_dev_addr;		/* I2C device address */
+	uint8_t i2c_intreset_pin;	/* I2C pin to write to reset */
+	uint8_t i2c_predetect_pin;	/* I2C pin to read for presence */
+	int64_t (*i2c_assert_reset)(uint8_t i2c_bus_id);
+	int64_t (*i2c_deassert_reset)(uint8_t i2c_bus_id);
 	const char *(*ocapi_slot_label)(uint32_t chip_id, uint32_t brick_index);
 	const struct ocapi_phy_setup *phy_setup;
 };
