@@ -8,6 +8,8 @@
 #include <phb4.h>
 #include <npu2.h>
 
+#define TL_RATE_BUF_SIZE	32
+
 static int64_t opal_npu_init_context(uint64_t phb_id, int pid __unused,
 				     uint64_t msr, uint64_t bdf)
 {
@@ -161,3 +163,65 @@ static int64_t opal_npu_get_relaxed_order(uint64_t phb_id,
 	return phb4->ro_state;
 }
 opal_call(OPAL_NPU_GET_RELAXED_ORDER, opal_npu_get_relaxed_order, 2);
+
+#define MAX_PE_HANDLE	((1 << 15) - 1)
+
+static int64_t opal_npu_spa_setup(uint64_t phb_id, uint32_t bdfn,
+				  uint64_t addr, uint64_t PE_mask)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+
+	if (!phb)
+		return OPAL_PARAMETER;
+
+	/* 4k aligned */
+	if (addr & 0xFFF)
+		return OPAL_PARAMETER;
+
+	if (PE_mask > 15)
+		return OPAL_PARAMETER;
+
+	if (phb->phb_type == phb_type_npu_v2_opencapi)
+		return npu2_opencapi_spa_setup(phb, bdfn, addr, PE_mask);
+
+	return OPAL_PARAMETER;
+}
+opal_call(OPAL_NPU_SPA_SETUP, opal_npu_spa_setup, 4);
+
+static int64_t opal_npu_spa_clear_cache(uint64_t phb_id, uint32_t bdfn,
+					uint64_t PE_handle)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+
+	if (!phb)
+		return OPAL_PARAMETER;
+
+	if (PE_handle > MAX_PE_HANDLE)
+		return OPAL_PARAMETER;
+
+	if (phb->phb_type == phb_type_npu_v2_opencapi)
+		return npu2_opencapi_spa_clear_cache(phb, bdfn, PE_handle);
+
+	return OPAL_PARAMETER;
+}
+opal_call(OPAL_NPU_SPA_CLEAR_CACHE, opal_npu_spa_clear_cache, 3);
+
+static int64_t opal_npu_tl_set(uint64_t phb_id, uint32_t bdfn,
+		    long capabilities, uint64_t rate_phys, int rate_sz)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	char *rate = (char *) rate_phys;
+
+	if (!phb)
+		return OPAL_PARAMETER;
+
+	if (!opal_addr_valid(rate) || rate_sz != TL_RATE_BUF_SIZE)
+		return OPAL_PARAMETER;
+
+	if (phb->phb_type == phb_type_npu_v2_opencapi)
+		return npu2_opencapi_tl_set(phb, bdfn, capabilities,
+					    rate);
+
+	return OPAL_PARAMETER;
+}
+opal_call(OPAL_NPU_TL_SET, opal_npu_tl_set, 5);
