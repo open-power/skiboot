@@ -26,5 +26,31 @@
 #define PAU_REG_OFFSET(reg)			((reg) & 0xffff)
 
 #define PAU_BLOCK_CQ_SM(n)			PAU_BLOCK(4, (n))
+#define PAU_BLOCK_CQ_CTL			PAU_BLOCK(4, 4)
+
+/*
+ * CQ_SM block registers
+ *
+ * Definitions here use PAU_BLOCK_CQ_SM(0), but when pau_write() is given
+ * one of these, it will do corresponding writes to every CQ_SM block.
+ */
+#define PAU_MCP_MISC_CFG0			(PAU_BLOCK_CQ_SM(0) + 0x000)
+#define   PAU_MCP_MISC_CFG0_MA_MCRESP_OPT_WRP	PPC_BIT(9)
+#define   PAU_MCP_MISC_CFG0_ENABLE_PBUS		PPC_BIT(26)
+#define PAU_SNP_MISC_CFG0			(PAU_BLOCK_CQ_SM(0) + 0x180)
+#define   PAU_SNP_MISC_CFG0_ENABLE_PBUS		PPC_BIT(2)
+#define PAU_NTL_BAR(brk)			(PAU_BLOCK_CQ_SM(0) + 0x1b8 + (brk) * 8)
+#define   PAU_NTL_BAR_ADDR			PPC_BITMASK(3, 35)
+#define   PAU_NTL_BAR_SIZE			PPC_BITMASK(39, 43)
+#define PAU_MMIO_BAR				(PAU_BLOCK_CQ_SM(0) + 0x1e0)
+#define   PAU_MMIO_BAR_ENABLE			PPC_BIT(0)
+#define   PAU_MMIO_BAR_ADDR			PPC_BITMASK(3, 27)
+#define PAU_GENID_BAR				(PAU_BLOCK_CQ_SM(0) + 0x1e8)
+#define   PAU_GENID_BAR_ADDR			PPC_BITMASK(3, 32)
+
+/* CQ_CTL block registers */
+#define PAU_CTL_MISC_MMIOPA_CONFIG(brk)		(PAU_BLOCK_CQ_CTL + 0x098 + (brk) * 8)
+#define   PAU_CTL_MISC_MMIOPA_CONFIG_BAR_ADDR	PPC_BITMASK(1, 35)
+#define   PAU_CTL_MISC_MMIOPA_CONFIG_BAR_SIZE	PPC_BITMASK(39, 43)
 
 #endif /* __PAU_REGS_H */
