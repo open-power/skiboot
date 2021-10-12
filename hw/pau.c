@@ -599,6 +599,138 @@ PAU_OPENCAPI_PCI_CFG_WRITE(8, u8)
 PAU_OPENCAPI_PCI_CFG_WRITE(16, u16)
 PAU_OPENCAPI_PCI_CFG_WRITE(32, u32)
 
+static int64_t pau_opencapi_eeh_freeze_status(struct phb *phb __unused,
+					      uint64_t pe_num __unused,
+					      uint8_t *freeze_state,
+					      uint16_t *pci_error_type,
+					      uint16_t *severity)
+{
+	*freeze_state = OPAL_EEH_STOPPED_NOT_FROZEN;
+	*pci_error_type = OPAL_EEH_NO_ERROR;
+
+	if (severity)
+		*severity = OPAL_EEH_SEV_NO_ERROR;
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t pau_opencapi_ioda_reset(struct phb __unused * phb,
+				       bool __unused purge)
+{
+	/* Not relevant to OpenCAPI - we do this just to silence the error */
+	return OPAL_SUCCESS;
+}
+
+static int64_t pau_opencapi_next_error(struct phb *phb,
+				       uint64_t *first_frozen_pe,
+				       uint16_t *pci_error_type,
+				       uint16_t *severity)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	struct pau *pau = dev->pau;
+	uint32_t pe_num;
+	uint64_t val;
+
+	if (!first_frozen_pe || !pci_error_type || !severity)
+		return OPAL_PARAMETER;
+
+	if (dev->status & PAU_DEV_STATUS_BROKEN) {
+		val = pau_read(pau, PAU_MISC_BDF2PE_CFG(dev->index));
+		pe_num = GETFIELD(PAU_MISC_BDF2PE_CFG_PE, val);
+
+		PAUDEVDBG(dev, "Reporting device as broken\n");
+		PAUDEVDBG(dev, "Brick %d fenced! (pe_num: %08x\n",
+				pau_dev_index(dev, PAU_LINKS_OPENCAPI_PER_PAU),
+				pe_num);
+		*first_frozen_pe = pe_num;
+		*pci_error_type = OPAL_EEH_PHB_ERROR;
+		*severity = OPAL_EEH_SEV_PHB_DEAD;
+	} else {
+		*first_frozen_pe = -1;
+		*pci_error_type = OPAL_EEH_NO_ERROR;
+		*severity = OPAL_EEH_SEV_NO_ERROR;
+	}
+	return OPAL_SUCCESS;
+}
+
+static uint32_t pau_opencapi_dev_interrupt_level(struct pau_dev *dev)
+{
+	/* Interrupt Levels
+	 * 35: Translation failure for OCAPI link 0
+	 * 36: Translation failure for OCAPI link 1
+	 */
+	const uint32_t level[2] = {35, 36};
+
+	return level[dev->index];
+}
+
+static int pau_opencapi_dt_add_interrupts(struct phb *phb,
+					  struct pci_device *pd,
+					  void *data __unused)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	struct pau *pau = dev->pau;
+	uint64_t dsisr, dar, tfc, handle;
+	uint32_t irq;
+
+	irq = pau->irq_base + pau_opencapi_dev_interrupt_level(dev);
+
+	/* When an address translation fail causes the PAU to send an
+	 * interrupt, information is stored in three registers for use
+	 * by the interrupt handler. The OS accesses them by mmio.
+	 */
+	dsisr  = pau->regs[0] + PAU_OTL_MISC_PSL_DSISR_AN(dev->index);
+	dar    = pau->regs[0] + PAU_OTL_MISC_PSL_DAR_AN(dev->index);
+	tfc    = pau->regs[0] + PAU_OTL_MISC_PSL_TFC_AN(dev->index);
+	handle = pau->regs[0] + PAU_OTL_MISC_PSL_PEHANDLE_AN(dev->index);
+	dt_add_property_cells(pd->dn, "ibm,opal-xsl-irq", irq);
+	dt_add_property_cells(pd->dn, "ibm,opal-xsl-mmio",
+			hi32(dsisr), lo32(dsisr),
+			hi32(dar), lo32(dar),
+			hi32(tfc), lo32(tfc),
+			hi32(handle), lo32(handle));
+	return 0;
+}
+
+static void pau_opencapi_phb_final_fixup(struct phb *phb)
+{
+	pci_walk_dev(phb, NULL, pau_opencapi_dt_add_interrupts, NULL);
+}
+
+static int64_t pau_opencapi_set_pe(struct phb *phb,
+				   uint64_t pe_num,
+				   uint64_t bdfn,
+				   uint8_t bcompare,
+				   uint8_t dcompare,
+				   uint8_t fcompare,
+				   uint8_t action)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	struct pau *pau = dev->pau;
+	uint64_t val;
+
+	PAUDEVDBG(dev, "Set partitionable endpoint = %08llx, bdfn =  %08llx\n",
+			pe_num, bdfn);
+
+	if (action != OPAL_MAP_PE && action != OPAL_UNMAP_PE)
+		return OPAL_PARAMETER;
+
+	if (pe_num >= PAU_MAX_PE_NUM)
+		return OPAL_PARAMETER;
+
+	if (bcompare != OpalPciBusAll ||
+	    dcompare != OPAL_COMPARE_RID_DEVICE_NUMBER ||
+	    fcompare != OPAL_COMPARE_RID_FUNCTION_NUMBER)
+		return OPAL_UNSUPPORTED;
+
+	val = PAU_MISC_BDF2PE_CFG_ENABLE;
+	val = SETFIELD(PAU_MISC_BDF2PE_CFG_PE, val, pe_num);
+	val = SETFIELD(PAU_MISC_BDF2PE_CFG_BDF, val, 0);
+	pau_write(pau, PAU_MISC_BDF2PE_CFG(dev->index), val);
+
+	return OPAL_SUCCESS;
+}
+
 static const struct phb_ops pau_opencapi_ops = {
 	.cfg_read8		= pau_opencapi_pcicfg_read8,
 	.cfg_read16		= pau_opencapi_pcicfg_read16,
@@ -606,6 +738,11 @@ static const struct phb_ops pau_opencapi_ops = {
 	.cfg_write8		= pau_opencapi_pcicfg_write8,
 	.cfg_write16		= pau_opencapi_pcicfg_write16,
 	.cfg_write32		= pau_opencapi_pcicfg_write32,
+	.eeh_freeze_status	= pau_opencapi_eeh_freeze_status,
+	.next_error		= pau_opencapi_next_error,
+	.ioda_reset		= pau_opencapi_ioda_reset,
+	.phb_final_fixup	= pau_opencapi_phb_final_fixup,
+	.set_pe			= pau_opencapi_set_pe,
 };
 
 static void pau_opencapi_create_phb(struct pau_dev *dev)
