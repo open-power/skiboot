@@ -200,6 +200,8 @@ static inline uint64_t pau_read(struct pau *pau, uint64_t reg)
 }
 
 void pau_opencapi_dump_scoms(struct pau *pau);
+int64_t pau_opencapi_map_atsd_lpar(struct phb *phb, uint64_t __unused bdf,
+				   uint64_t lparid, uint64_t __unused lpcr);
 int64_t pau_opencapi_spa_setup(struct phb *phb, uint32_t __unused bdfn,
 			       uint64_t addr, uint64_t PE_mask);
 int64_t pau_opencapi_spa_clear_cache(struct phb *phb,

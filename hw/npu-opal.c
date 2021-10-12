@@ -52,6 +52,9 @@ static int64_t opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	if (phb->phb_type == phb_type_npu_v2)
 		return npu2_map_lpar(phb, bdf, lparid, lpcr);
 
+	if (phb->phb_type == phb_type_pau_opencapi)
+		return pau_opencapi_map_atsd_lpar(phb, bdf, lparid, lpcr);
+
 	return OPAL_PARAMETER;
 }
 opal_call(OPAL_NPU_MAP_LPAR, opal_npu_map_lpar, 4);
