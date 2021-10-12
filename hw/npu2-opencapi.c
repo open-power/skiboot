@@ -2295,17 +2295,12 @@ out:
 	return rc;
 }
 
-static int64_t opal_npu_mem_alloc(uint64_t phb_id, uint32_t __unused bdfn,
-				  uint64_t size, __be64 *__bar)
+int64_t npu2_opencapi_mem_alloc(struct phb *phb, uint32_t __unused bdfn,
+				uint64_t size, uint64_t *__bar)
 {
-	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2_dev *dev;
 	uint64_t bar;
 	int64_t rc;
-
-
-	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
-		return OPAL_PARAMETER;
 
 	dev = phb_to_npu2_dev_ocapi(phb);
 	if (!dev)
@@ -2320,16 +2315,10 @@ static int64_t opal_npu_mem_alloc(uint64_t phb_id, uint32_t __unused bdfn,
 
 	return rc;
 }
-opal_call(OPAL_NPU_MEM_ALLOC, opal_npu_mem_alloc, 4);
 
-static int64_t opal_npu_mem_release(uint64_t phb_id, uint32_t __unused bdfn)
+int64_t npu2_opencapi_mem_release(struct phb *phb, uint32_t __unused bdfn)
 {
-	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2_dev *dev;
-
-
-	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
-		return OPAL_PARAMETER;
 
 	dev = phb_to_npu2_dev_ocapi(phb);
 	if (!dev)
@@ -2337,4 +2326,3 @@ static int64_t opal_npu_mem_release(uint64_t phb_id, uint32_t __unused bdfn)
 
 	return release_mem_bar(dev);
 }
-opal_call(OPAL_NPU_MEM_RELEASE, opal_npu_mem_release, 2);
