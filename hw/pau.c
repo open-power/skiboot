@@ -33,6 +33,50 @@ struct pau_dev *pau_next_dev(struct pau *pau, struct pau_dev *dev,
 	return NULL;
 }
 
+static void pau_opencapi_dump_scom_reg(struct pau *pau, uint64_t reg)
+{
+	PAUDBG(pau, "0x%llx = 0x%016llx\n", reg, pau_read(pau, reg));
+}
+
+void pau_opencapi_dump_scoms(struct pau *pau)
+{
+	struct pau_dev *dev;
+	uint64_t cq_sm;
+
+	for (uint32_t i = 1; i < 4; i++) {
+		cq_sm = PAU_BLOCK_CQ_SM(i);
+
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE0));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE1));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE2));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE3));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE4));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE5));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE6));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_MESSAGE7));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_FIRST0));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_FIRST1));
+		pau_opencapi_dump_scom_reg(pau, cq_sm + PAU_REG_OFFSET(PAU_MCP_MISC_CERR_FIRST2));
+	}
+
+	pau_opencapi_dump_scom_reg(pau, PAU_CTL_MISC_CERR_MESSAGE0);
+	pau_opencapi_dump_scom_reg(pau, PAU_CTL_MISC_CERR_MESSAGE1);
+	pau_opencapi_dump_scom_reg(pau, PAU_CTL_MISC_CERR_MESSAGE2);
+	pau_opencapi_dump_scom_reg(pau, PAU_CTL_MISC_CERR_FIRST0);
+	pau_opencapi_dump_scom_reg(pau, PAU_CTL_MISC_CERR_FIRST1);
+	pau_opencapi_dump_scom_reg(pau, PAU_DAT_MISC_CERR_ECC_HOLD);
+	pau_opencapi_dump_scom_reg(pau, PAU_DAT_MISC_CERR_ECC_MASK);
+	pau_opencapi_dump_scom_reg(pau, PAU_DAT_MISC_CERR_ECC_FIRST);
+
+	pau_for_each_opencapi_dev(dev, pau) {
+		pau_opencapi_dump_scom_reg(pau, PAU_OTL_MISC_ERR_RPT_HOLD0(dev->index));
+		pau_opencapi_dump_scom_reg(pau, PAU_OTL_MISC_OTL_REM0(dev->index));
+		pau_opencapi_dump_scom_reg(pau, PAU_OTL_MISC_ERROR_SIG_RXI(dev->index));
+		pau_opencapi_dump_scom_reg(pau, PAU_OTL_MISC_ERROR_SIG_RXO(dev->index));
+		pau_opencapi_dump_scom_reg(pau, PAU_OTL_MISC_ERR_RPT_HOLD1(dev->index));
+	}
+}
+
 static void pau_dt_create_link(struct dt_node *pau, uint32_t pau_index,
 			       uint32_t dev_index)
 {

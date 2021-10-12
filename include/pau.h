@@ -189,4 +189,6 @@ static inline uint64_t pau_read(struct pau *pau, uint64_t reg)
 	return pau_scom_read(pau, reg, PAU_MISC_DA_LEN_8B);
 }
 
+void pau_opencapi_dump_scoms(struct pau *pau);
+
 #endif /* __PAU_H */
