@@ -33,6 +33,7 @@ struct pau_dev {
 	uint32_t		index;
 	struct dt_node		*dn;
 	struct phb		phb;
+	uint32_t		status;
 
 	struct pau_bar		ntl_bar;
 	struct pau_bar		genid_bar;
@@ -59,6 +60,7 @@ struct pau {
 	uint64_t		regs[2];
 	bool			mmio_access;
 
+	uint32_t		irq_base;
 	struct lock		lock;
 
 	uint32_t		links;
