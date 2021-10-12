@@ -40,6 +40,8 @@ struct pau_dev {
 	struct dt_node		*dn;
 	struct phb		phb;
 	uint32_t		status;
+	unsigned long		train_start;
+	unsigned long		train_timeout;
 
 	struct pau_bar		ntl_bar;
 	struct pau_bar		genid_bar;

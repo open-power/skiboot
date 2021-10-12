@@ -15,6 +15,22 @@
 #define PAU_MAX_PE_NUM		16
 #define PAU_RESERVED_PE_NUM	15
 
+#define PAU_SLOT_NORMAL 		PCI_SLOT_STATE_NORMAL
+#define PAU_SLOT_LINK			PCI_SLOT_STATE_LINK
+#define   PAU_SLOT_LINK_START		(PAU_SLOT_LINK + 1)
+#define   PAU_SLOT_LINK_WAIT		(PAU_SLOT_LINK + 2)
+#define   PAU_SLOT_LINK_TRAINED		(PAU_SLOT_LINK + 3)
+#define PAU_SLOT_FRESET			PCI_SLOT_STATE_FRESET
+#define   PAU_SLOT_FRESET_START		(PAU_SLOT_FRESET + 1)
+#define   PAU_SLOT_FRESET_INIT		(PAU_SLOT_FRESET + 2)
+#define   PAU_SLOT_FRESET_ASSERT_DELAY	(PAU_SLOT_FRESET + 3)
+#define   PAU_SLOT_FRESET_DEASSERT_DELAY	(PAU_SLOT_FRESET + 4)
+#define   PAU_SLOT_FRESET_INIT_DELAY	(PAU_SLOT_FRESET + 5)
+
+#define PAU_LINK_TRAINING_RETRIES	2
+#define PAU_LINK_TRAINING_TIMEOUT	15000 /* ms */
+#define PAU_LINK_STATE_TRAINED		0x7
+
 struct pau_dev *pau_next_dev(struct pau *pau, struct pau_dev *dev,
 			     enum pau_dev_type type)
 {
@@ -168,6 +184,7 @@ static void pau_dt_create_pau(struct dt_node *xscom, uint32_t pau_index)
 	dt_add_property_cells(pau, "#address-cells", 1);
 	dt_add_property_cells(pau, "reg", pau_base[pau_index], 0x2c);
 	dt_add_property_string(pau, "compatible", "ibm,power10-pau");
+	dt_add_property_cells(pau, "ibm,pau-chiplet", pau_base[pau_index] >> 24);
 	dt_add_property_cells(pau, "ibm,pau-index", pau_index);
 
 	links = PAU_LINKS_OPENCAPI_PER_PAU;
@@ -202,12 +219,14 @@ static struct pau *pau_create(struct dt_node *dn)
 	assert(pau);
 
 	init_lock(&pau->lock);
+	init_lock(&pau->procedure_state.lock);
 
 	pau->dt_node = dn;
 	pau->index = dt_prop_get_u32(dn, "ibm,pau-index");
 	pau->xscom_base = dt_get_address(dn, 0, NULL);
 
 	pau->chip_id = dt_get_chip_id(dn);
+	pau->op_chiplet = dt_prop_get_u32(dn, "ibm,pau-chiplet");
 	assert(get_chip(pau->chip_id));
 
 	pau->links = PAU_LINKS_OPENCAPI_PER_PAU;
@@ -503,6 +522,452 @@ static void pau_opencapi_enable_bars(struct pau_dev *dev, bool enable)
 	pau_write(pau, reg, val);
 }
 
+static int64_t pau_opencapi_creset(struct pci_slot *slot)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(slot->phb);
+
+	PAUDEVERR(dev, "creset not supported\n");
+	return OPAL_UNSUPPORTED;
+}
+
+static int64_t pau_opencapi_hreset(struct pci_slot *slot)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(slot->phb);
+
+	PAUDEVERR(dev, "hreset not supported\n");
+	return OPAL_UNSUPPORTED;
+}
+
+static void pau_opencapi_assert_odl_reset(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	reg = P10_OB_ODL_CONFIG(dev->op_unit, dev->odl_index);
+	val = P10_OB_ODL_CONFIG_RESET;
+	val = SETFIELD(P10_OB_ODL_CONFIG_VERSION, val, 0b000100); // OCAPI 4
+	val = SETFIELD(P10_OB_ODL_CONFIG_TRAIN_MODE, val, 0b0101); // ts2
+	val = SETFIELD(P10_OB_ODL_CONFIG_SUPPORTED_MODES, val, 0b0010);
+	val |= P10_OB_ODL_CONFIG_X4_BACKOFF_ENABLE;
+	val = SETFIELD(P10_OB_ODL_CONFIG_PHY_CNTR_LIMIT, val, 0b1111);
+	val |= P10_OB_ODL_CONFIG_DEBUG_ENABLE;
+	val = SETFIELD(P10_OB_ODL_CONFIG_FWD_PROGRESS_TIMER, val, 0b0110);
+	xscom_write(pau->chip_id, reg, val);
+}
+
+static void pau_opencapi_deassert_odl_reset(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	reg = P10_OB_ODL_CONFIG(dev->op_unit, dev->odl_index);
+	xscom_read(pau->chip_id, reg, &val);
+	val &= ~P10_OB_ODL_CONFIG_RESET;
+	xscom_write(pau->chip_id, reg, val);
+}
+
+static void pau_opencapi_training_mode(struct pau_dev *dev,
+				       uint8_t pattern)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	reg = P10_OB_ODL_CONFIG(dev->op_unit, dev->odl_index);
+	xscom_read(pau->chip_id, reg, &val);
+	val = SETFIELD(P10_OB_ODL_CONFIG_TRAIN_MODE, val, pattern);
+	xscom_write(pau->chip_id, reg, val);
+}
+
+static int64_t pau_opencapi_assert_adapter_reset(struct pau_dev *dev)
+{
+	int64_t rc = OPAL_PARAMETER;
+
+	if (platform.ocapi->i2c_assert_reset)
+		rc = platform.ocapi->i2c_assert_reset(dev->i2c_bus_id);
+
+	if (rc)
+		PAUDEVERR(dev, "Error writing I2C reset signal: %lld\n", rc);
+	return rc;
+}
+
+static int64_t pau_opencapi_deassert_adapter_reset(struct pau_dev *dev)
+{
+	int64_t rc = OPAL_PARAMETER;
+
+	if (platform.ocapi->i2c_deassert_reset)
+		rc = platform.ocapi->i2c_deassert_reset(dev->i2c_bus_id);
+
+	if (rc)
+		PAUDEVERR(dev, "Error writing I2C reset signal: %lld\n", rc);
+	return rc;
+}
+
+static void pau_opencapi_fence_brick(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+
+	PAUDEVDBG(dev, "Fencing brick\n");
+	pau_opencapi_set_fence_control(dev, 0b11);
+
+	/* Place all bricks into Fence state */
+	pau_write(pau, PAU_MISC_FENCE_STATE,
+		  PAU_MISC_FENCE_STATE_SET(pau_dev_index(dev, PAU_LINKS_OPENCAPI_PER_PAU)));
+}
+
+static void pau_opencapi_unfence_brick(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+
+	PAUDEVDBG(dev, "Unfencing brick\n");
+	pau_write(pau, PAU_MISC_FENCE_STATE,
+		  PAU_MISC_FENCE_STATE_CLEAR(pau_dev_index(dev, PAU_LINKS_OPENCAPI_PER_PAU)));
+
+	pau_opencapi_set_fence_control(dev, 0b10);
+	pau_opencapi_set_fence_control(dev, 0b00);
+}
+
+static int64_t pau_opencapi_freset(struct pci_slot *slot)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(slot->phb);
+	uint8_t presence = 1;
+	int64_t rc = OPAL_SUCCESS;
+
+	switch (slot->state) {
+	case PAU_SLOT_NORMAL:
+	case PAU_SLOT_FRESET_START:
+		PAUDEVDBG(dev, "FRESET: Starts\n");
+
+		if (slot->ops.get_presence_state)
+			slot->ops.get_presence_state(slot, &presence);
+		if (!presence) {
+			/*
+			 * FIXME: if there's no card on the link, we
+			 * should consider powering off the unused
+			 * lanes to save energy
+			 */
+			PAUDEVINF(dev, "no card detected\n");
+			return OPAL_SUCCESS;
+		}
+		slot->link_retries = PAU_LINK_TRAINING_RETRIES;
+		/* fall-through */
+	case PAU_SLOT_FRESET_INIT:
+		pau_opencapi_fence_brick(dev);
+		pau_opencapi_enable_bars(dev, false);
+		pau_opencapi_assert_odl_reset(dev);
+		pau_opencapi_assert_adapter_reset(dev);
+		pci_slot_set_state(slot, PAU_SLOT_FRESET_ASSERT_DELAY);
+		/* assert for 5ms */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+
+	case PAU_SLOT_FRESET_ASSERT_DELAY:
+		rc = pau_dev_phy_reset(dev);
+		if (rc) {
+			PAUDEVERR(dev, "FRESET: PHY reset error\n");
+			return OPAL_HARDWARE;
+		}
+		pau_opencapi_deassert_odl_reset(dev);
+		pau_opencapi_deassert_adapter_reset(dev);
+		pci_slot_set_state(slot, PAU_SLOT_FRESET_DEASSERT_DELAY);
+		/* give 250ms to device to be ready */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(250));
+
+	case PAU_SLOT_FRESET_DEASSERT_DELAY:
+		pau_opencapi_unfence_brick(dev);
+		pau_opencapi_enable_bars(dev, true);
+		pau_opencapi_training_mode(dev, 0b0001); /* send pattern A */
+		pci_slot_set_state(slot, PAU_SLOT_FRESET_INIT_DELAY);
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+
+	case PAU_SLOT_FRESET_INIT_DELAY:
+		pau_opencapi_training_mode(dev, 0b1000); /* enable training */
+		dev->train_start = mftb();
+		dev->train_timeout = dev->train_start +
+			msecs_to_tb(PAU_LINK_TRAINING_TIMEOUT);
+		pci_slot_set_state(slot, PAU_SLOT_LINK_START);
+		return slot->ops.poll_link(slot);
+
+	default:
+		PAUDEVERR(dev, "FRESET: unexpected slot state %08x\n",
+			   slot->state);
+	}
+	pci_slot_set_state(slot, PAU_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static uint64_t pau_opencapi_get_odl_endpoint_info(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t val;
+
+	xscom_read(pau->chip_id,
+		   P10_OB_ODL_DLX_INFO(dev->op_unit, dev->odl_index),
+		   &val);
+	return val;
+}
+
+static uint64_t pau_opencapi_get_odl_training_status(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t val;
+
+	xscom_read(pau->chip_id,
+		   P10_OB_ODL_TRAIN_STAT(dev->op_unit, dev->odl_index),
+		   &val);
+	return val;
+}
+
+static uint64_t pau_opencapi_get_odl_status(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t val;
+
+	xscom_read(pau->chip_id,
+		   P10_OB_ODL_STATUS(dev->op_unit, dev->odl_index),
+		   &val);
+	return val;
+}
+
+static uint64_t pau_opencapi_get_odl_link_speed_status(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t val;
+
+	xscom_read(pau->chip_id,
+		   P10_OB_ODL_LINK_SPEED_STATUS(dev->op_unit, dev->odl_index),
+		   &val);
+	return val;
+}
+
+static enum OpalShpcLinkState pau_opencapi_get_link_width(uint64_t status)
+{
+	uint64_t tx_lanes, rx_lanes, state;
+
+	state = GETFIELD(P10_OB_ODL_STATUS_TRAINING_STATE, status);
+	if (state != PAU_LINK_STATE_TRAINED)
+		return OPAL_SHPC_LINK_DOWN;
+
+	rx_lanes = GETFIELD(P10_OB_ODL_STATUS_RX_TRAINED_LANES, status);
+	tx_lanes = GETFIELD(P10_OB_ODL_STATUS_TX_TRAINED_LANES, status);
+	if ((rx_lanes != 0xFF) || (tx_lanes != 0xFF))
+		return OPAL_SHPC_LINK_UP_x4;
+	else
+		return OPAL_SHPC_LINK_UP_x8;
+}
+
+static int64_t pau_opencapi_get_link_state(struct pci_slot *slot,
+					   uint8_t *val)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(slot->phb);
+	uint64_t status;
+
+	status = pau_opencapi_get_odl_status(dev);
+	*val = pau_opencapi_get_link_width(status);
+
+	return OPAL_SUCCESS;
+
+}
+
+static int64_t pau_opencapi_get_power_state(struct pci_slot *slot,
+					    uint8_t *val)
+{
+	*val = slot->power_state;
+	return OPAL_SUCCESS;
+}
+
+static int64_t pau_opencapi_get_presence_state(struct pci_slot __unused * slot,
+					       uint8_t *val)
+{
+	/*
+	 * Presence detection for OpenCAPI is currently done at the start of
+	 * PAU initialisation, and we only create slots if a device is present.
+	 * As such we will never be asked to get the presence of a slot that's
+	 * empty.
+	 *
+	 * This may change if we ever support hotplug down the track.
+	 */
+	*val = OPAL_PCI_SLOT_PRESENT;
+	return OPAL_SUCCESS;
+}
+
+static void pau_opencapi_check_trained_link(struct pau_dev *dev,
+					    uint64_t status)
+{
+	if (pau_opencapi_get_link_width(status) != OPAL_SHPC_LINK_UP_x8) {
+		PAUDEVERR(dev, "Link trained in degraded mode (%016llx)\n",
+				status);
+		PAUDEVDBG(dev, "Link endpoint info: %016llx\n",
+				pau_opencapi_get_odl_endpoint_info(dev));
+	}
+}
+
+static int64_t pau_opencapi_retry_state(struct pci_slot *slot,
+					uint64_t status)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(slot->phb);
+
+	if (!slot->link_retries--) {
+		/**
+		 * @fwts-label OCAPILinkTrainingFailed
+		 * @fwts-advice The OpenCAPI link training procedure failed.
+		 * This indicates a hardware or firmware bug. OpenCAPI
+		 * functionality will not be available on this link.
+		 */
+		PAUDEVERR(dev,
+			   "Link failed to train, final link status: %016llx\n",
+			   status);
+		PAUDEVDBG(dev, "Final link training status: %016llx (Link Speed Status: %016llx)\n",
+			   pau_opencapi_get_odl_training_status(dev),
+			   pau_opencapi_get_odl_link_speed_status(dev));
+		return OPAL_HARDWARE;
+	}
+
+	PAUDEVERR(dev, "Link failed to train, retrying\n");
+	PAUDEVERR(dev, "Link status: %016llx, training status: %016llx "
+		       "(Link Speed Status: %016llx)\n",
+		status,
+		pau_opencapi_get_odl_training_status(dev),
+		pau_opencapi_get_odl_link_speed_status(dev));
+
+	pci_slot_set_state(slot, PAU_SLOT_FRESET_INIT);
+	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+}
+
+static void pau_opencapi_otl_tx_send_enable(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	/* Allows OTL TX to send out packets to AFU */
+	PAUDEVDBG(dev, "OTL TX Send Enable\n");
+
+	reg = PAU_OTL_MISC_CFG_TX2(dev->index);
+	val = pau_read(pau, reg);
+	val |= PAU_OTL_MISC_CFG_TX2_SEND_EN;
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_setup_perf_counters(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	PAUDEVDBG(dev, "Setup perf counter\n");
+
+	reg = P10_OB_ODL_PERF_MON_CONFIG(dev->op_unit);
+	xscom_read(pau->chip_id, reg, &val);
+	val = SETFIELD(P10_OB_ODL_PERF_MON_CONFIG_ENABLE, val,
+		       P10_OB_ODL_PERF_MON_CONFIG_LINK0 >> dev->index);
+	val = SETFIELD(P10_OB_ODL_PERF_MON_CONFIG_SIZE, val,
+		       P10_OB_ODL_PERF_MON_CONFIG_SIZE16);
+	xscom_write(pau->chip_id, reg, val);
+	PAUDEVDBG(dev, "perf counter config %llx = %llx\n", reg, val);
+
+	reg = P10_OB_ODL_PERF_MON_SELECT(dev->op_unit);
+	xscom_read(pau->chip_id, reg, &val);
+	val = SETFIELD(P10_OB_ODL_PERF_MON_SELECT_COUNTER >> (dev->index * 16),
+		val, P10_OB_ODL_PERF_MON_SELECT_CRC_ODL);
+	val = SETFIELD(P10_OB_ODL_PERF_MON_SELECT_COUNTER >> ((dev->index * 16) + 8),
+		val, P10_OB_ODL_PERF_MON_SELECT_CRC_DLX);
+	xscom_write(pau->chip_id, reg, val);
+	PAUDEVDBG(dev, "perf counter select %llx = %llx\n", reg, val);
+}
+
+static void pau_opencapi_check_perf_counters(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	reg = P10_OB_PERF_COUNTER0(dev->op_unit);
+	xscom_read(pau->chip_id, reg, &val);
+
+	if (val)
+		PAUDEVERR(dev, "CRC error count perf_counter0..3=0%#llx\n",
+			  val);
+}
+
+static int64_t pau_opencapi_poll_link(struct pci_slot *slot)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(slot->phb);
+	uint64_t status;
+
+	switch (slot->state) {
+	case PAU_SLOT_NORMAL:
+	case PAU_SLOT_LINK_START:
+		PAUDEVDBG(dev, "Start polling\n");
+		pci_slot_set_state(slot, PAU_SLOT_LINK_WAIT);
+		/* fall-through */
+	case PAU_SLOT_LINK_WAIT:
+		status = pau_opencapi_get_odl_status(dev);
+		if (GETFIELD(P10_OB_ODL_STATUS_TRAINING_STATE, status) ==
+			PAU_LINK_STATE_TRAINED) {
+			PAUDEVINF(dev, "link trained in %ld ms (Link Speed Status: %016llx)\n",
+				   tb_to_msecs(mftb() - dev->train_start),
+				   pau_opencapi_get_odl_link_speed_status(dev));
+			pau_opencapi_check_trained_link(dev, status);
+
+			pci_slot_set_state(slot, PAU_SLOT_LINK_TRAINED);
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+		}
+		if (tb_compare(mftb(), dev->train_timeout) == TB_AAFTERB)
+			return pau_opencapi_retry_state(slot, status);
+
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+
+	case PAU_SLOT_LINK_TRAINED:
+		pau_opencapi_otl_tx_send_enable(dev);
+		pci_slot_set_state(slot, PAU_SLOT_NORMAL);
+		if (dev->status & PAU_DEV_STATUS_BROKEN) {
+			PAUDEVERR(dev, "Resetting a device which hit a "
+				       "previous error. Device recovery "
+				       "is not supported, so future behavior is undefined\n");
+			dev->status &= ~PAU_DEV_STATUS_BROKEN;
+		}
+		pau_opencapi_check_perf_counters(dev);
+		dev->phb.scan_map = 1;
+		return OPAL_SUCCESS;
+
+	default:
+		PAUDEVERR(dev, "unexpected slot state %08x\n", slot->state);
+
+	}
+	pci_slot_set_state(slot, PAU_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static void pau_opencapi_prepare_link_change(struct pci_slot *slot __unused,
+					     bool up __unused)
+{
+	/*
+	 * PCI hotplug wants it defined, but we don't need to do anything
+	 */
+}
+
+static int64_t pau_opencapi_set_power_state(struct pci_slot *slot,
+					    uint8_t val)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(slot->phb);
+
+	switch (val) {
+	case PCI_SLOT_POWER_OFF:
+		PAUDEVDBG(dev, "Fake power off\n");
+		pau_opencapi_fence_brick(dev);
+		pau_opencapi_assert_adapter_reset(dev);
+		slot->power_state = PCI_SLOT_POWER_OFF;
+		return OPAL_SUCCESS;
+
+	case PCI_SLOT_POWER_ON:
+		if (slot->power_state != PCI_SLOT_POWER_OFF)
+			return OPAL_SUCCESS;
+		PAUDEVDBG(dev, "Fake power on\n");
+		slot->power_state = PCI_SLOT_POWER_ON;
+		slot->state = PAU_SLOT_NORMAL;
+		return OPAL_SUCCESS;
+
+	default:
+		return OPAL_UNSUPPORTED;
+	}
+}
+
 static void pau_opencapi_create_phb_slot(struct pau_dev *dev)
 {
 	struct pci_slot *slot;
@@ -516,6 +981,21 @@ static void pau_opencapi_create_phb_slot(struct pau_dev *dev)
 		 */
 		PAUDEVERR(dev, "Cannot create PHB slot\n");
 	}
+
+	/* Elementary functions */
+	slot->ops.creset                = pau_opencapi_creset;
+	slot->ops.hreset                = pau_opencapi_hreset;
+	slot->ops.freset                = pau_opencapi_freset;
+	slot->ops.get_link_state        = pau_opencapi_get_link_state;
+	slot->ops.get_power_state       = pau_opencapi_get_power_state;
+	slot->ops.get_presence_state    = pau_opencapi_get_presence_state;
+	slot->ops.poll_link             = pau_opencapi_poll_link;
+	slot->ops.prepare_link_change   = pau_opencapi_prepare_link_change;
+	slot->ops.set_power_state       = pau_opencapi_set_power_state;
+
+	/* hotplug capability */
+	slot->pluggable = 1;
+
 }
 
 static int64_t pau_opencapi_pcicfg_check(struct pau_dev *dev,
@@ -827,6 +1307,26 @@ static void pau_opencapi_dt_add_mmio_window(struct pau_dev *dev)
 			      hi32(mm_win[1]), lo32(mm_win[1]));
 }
 
+static void pau_opencapi_dt_add_hotpluggable(struct pau_dev *dev)
+{
+	struct pci_slot *slot = dev->phb.slot;
+	struct dt_node *dn = dev->phb.dt_node;
+	char label[40];
+
+	/*
+	 * Add a few definitions to the DT so that the linux PCI
+	 * hotplug framework can find the slot and identify it as
+	 * hot-pluggable.
+	 *
+	 * The "ibm,slot-label" property is used by linux as the slot name
+	 */
+	pci_slot_add_dt_properties(slot, dn);
+
+	snprintf(label, sizeof(label), "OPENCAPI-%04x",
+		 (int)PCI_SLOT_PHB_INDEX(slot->id));
+	dt_add_property_string(dn, "ibm,slot-label", label);
+}
+
 static void pau_opencapi_dt_add_props(struct pau_dev *dev)
 {
 	struct dt_node *dn = dev->phb.dt_node;
@@ -856,6 +1356,7 @@ static void pau_opencapi_dt_add_props(struct pau_dev *dev)
 	dt_add_property_cells(dn, "ibm,opal-reserved-pe", PAU_RESERVED_PE_NUM);
 
 	pau_opencapi_dt_add_mmio_window(dev);
+	pau_opencapi_dt_add_hotpluggable(dev);
 }
 
 static void pau_opencapi_set_transport_mux_controls(struct pau_dev *dev)
@@ -872,6 +1373,30 @@ static void pau_opencapi_set_transport_mux_controls(struct pau_dev *dev)
 	typemap |= GETFIELD(PAU_MISC_OPTICAL_IO_CONFIG_OTL, val);
 	val = SETFIELD(PAU_MISC_OPTICAL_IO_CONFIG_OTL, val, typemap);
 	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_odl_config_phy(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint8_t typemap = 0;
+	uint64_t reg, val;
+
+	PAUDEVDBG(dev, "Configure ODL\n");
+
+	/* ODL must be in reset when enabling.
+	 * It stays in reset until the link is trained
+	 */
+	pau_opencapi_assert_odl_reset(dev);
+
+	/* DLO (Open CAPI links) */
+	typemap = 0x2 >> dev->odl_index;
+
+	reg = P10_OB_ODL_PHY_CONFIG(dev->op_unit);
+	xscom_read(pau->chip_id, reg, &val);
+	typemap |= GETFIELD(P10_OB_ODL_PHY_CONFIG_LINK_SELECT, val);
+	val = SETFIELD(P10_OB_ODL_PHY_CONFIG_LINK_SELECT, val, typemap);
+	val = SETFIELD(P10_OB_ODL_PHY_CONFIG_DL_SELECT, val, 0b10);
+	xscom_write(pau->chip_id, reg, val);
 }
 
 static void pau_opencapi_enable_xsl_clocks(struct pau *pau)
@@ -1165,6 +1690,7 @@ static void pau_opencapi_init_hw(struct pau *pau)
 	pau_for_each_opencapi_dev(dev, pau) {
 		PAUDEVINF(dev, "Configuring link ...\n");
 		pau_opencapi_set_transport_mux_controls(dev);	/* step 1 */
+		pau_opencapi_odl_config_phy(dev);
 	}
 	pau_opencapi_enable_xsl_clocks(pau);		/* step 2 */
 	pau_opencapi_enable_misc_clocks(pau);		/* step 3 */
@@ -1231,6 +1757,9 @@ static void pau_opencapi_init_hw(struct pau *pau)
 		/* Procedure 17.1.3.11 - Interrupt Configuration */
 		/* done in pau_opencapi_setup_irqs() */
 		pau_opencapi_enable_interrupt_on_error(dev);
+
+		/* enable performance monitor */
+		pau_opencapi_setup_perf_counters(dev);
 
 		/* Reset disabled. Place OTLs into Run State */
 		pau_opencapi_set_fence_control(dev, 0b00);
