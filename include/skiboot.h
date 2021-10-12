@@ -163,6 +163,11 @@ extern void start_kernel32(uint64_t entry, void* fdt,
 			   uint64_t mem_top) __noreturn;
 extern void start_kernel_secondary(uint64_t entry) __noreturn;
 
+/* Re-set r16 register with CPU pointer, based on stack (r1) value */
+extern void restore_cpu_ptr_r16(void);
+/* Set r16 register with value in 'r16' parameter */
+extern void set_cpu_ptr_r16(uint64_t r16);
+
 /* Get description of machine from HDAT and create device-tree */
 extern int parse_hdat(bool is_opal);
 

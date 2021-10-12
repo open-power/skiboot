@@ -1124,3 +1124,13 @@ start_kernel_secondary:
 	mtspr	SPR_HSRR1,%r10
 	mfspr	%r3,SPR_PIR
 	hrfid
+
+.global restore_cpu_ptr_r16
+restore_cpu_ptr_r16:
+	GET_CPU()
+	blr
+
+.global set_cpu_ptr_r16
+set_cpu_ptr_r16:
+	mr	%r16,%r3
+	blr
