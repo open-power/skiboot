@@ -10,6 +10,7 @@ struct pci_device;
 struct pci_slot;
 struct errorlog;
 struct npu2;
+struct pau;
 
 enum resource_id {
 	RESOURCE_ID_KERNEL,
@@ -125,6 +126,9 @@ struct platform {
 
 	/* NPU device detection */
 	void		(*npu2_device_detect)(struct npu2 *npu);
+
+	/* PAU device detection */
+	void		(*pau_device_detect)(struct pau *pau);
 
 	/*
 	 * Probe platform, return true on a match, called before
