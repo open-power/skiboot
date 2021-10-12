@@ -22,6 +22,7 @@ enum pau_dev_type {
 
 /* Used to expose a hardware BAR (or logical slice of it) outside skiboot */
 struct pau_bar {
+	bool			enable;
 	uint64_t		addr;
 	uint64_t		size;
 	uint64_t		cfg;
