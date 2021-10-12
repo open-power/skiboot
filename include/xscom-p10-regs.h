@@ -53,4 +53,6 @@
 #define  P10_NCU_DARN_BAR_EN		PPC_BIT(0)
 #define  P10_NCU_DARN_BAR_ADDRMSK	0x000ffffffffff000ull /* 4k aligned */
 
+#define P10_ROOT_CONTROL_7		0x50017
+
 #endif /* __XSCOM_P10_REGS_H__ */

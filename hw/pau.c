@@ -8,6 +8,7 @@
 #include <phys-map.h>
 #include <pau.h>
 #include <pau-regs.h>
+#include <xscom-p10-regs.h>
 
 /* Number of PEs supported */
 #define PAU_MAX_PE_NUM		16
@@ -174,6 +175,7 @@ static struct pau *pau_create(struct dt_node *dn)
 		dev->pau = pau;
 		dev->dn = link;
 		dev->odl_index = dt_prop_get_u32(link, "ibm,odl-index");
+		dev->pau_unit = dt_prop_get_u32(link, "ibm,pau-unit");
 		dev->op_unit = dt_prop_get_u32(link, "ibm,op-unit");
 		dev->phy_lane_mask = dt_prop_get_u32(link, "ibm,pau-lane-mask");
 	};
@@ -234,6 +236,22 @@ static int pau_opencapi_set_fence_control(struct pau_dev *dev,
 	PAUDEVERR(dev, "Bad fence status: expected 0x%x, got 0x%x\n",
 		       state_requested, status);
 	return OPAL_HARDWARE;
+}
+
+static void pau_opencapi_mask_firs(struct pau *pau)
+{
+	uint64_t reg, val;
+
+	reg = pau->xscom_base + PAU_FIR_MASK(1);
+	xscom_read(pau->chip_id, reg, &val);
+	val |= PAU_FIR1_NDL_BRICKS_0_5;
+	val |= PAU_FIR1_NDL_BRICKS_6_11;
+	xscom_write(pau->chip_id, reg, val);
+
+	reg = pau->xscom_base + PAU_FIR_MASK(2);
+	xscom_read(pau->chip_id, reg, &val);
+	val |= PAU_FIR2_OTL_PERR;
+	xscom_write(pau->chip_id, reg, val);
 }
 
 static void pau_opencapi_assign_bars(struct pau *pau)
@@ -671,10 +689,134 @@ static void pau_opencapi_enable_powerbus(struct pau *pau)
 	pau_write(pau, reg, val);
 }
 
+static void pau_opencapi_tl_config(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t val;
+
+	PAUDEVDBG(dev, "TL Configuration\n");
+
+	/* OTL Config 0 */
+	val = 0;
+	val |= PAU_OTL_MISC_CFG0_EN;
+	val |= PAU_OTL_MISC_CFG0_BLOCK_PE_HANDLE;
+	val = SETFIELD(PAU_OTL_MISC_CFG0_BRICKID, val, dev->index);
+	val |= PAU_OTL_MISC_CFG0_ENABLE_4_0;
+	val |= PAU_OTL_MISC_CFG0_XLATE_RELEASE;
+	val |= PAU_OTL_MISC_CFG0_ENABLE_5_0;
+	pau_write(pau, PAU_OTL_MISC_CFG0(dev->index), val);
+
+	/* OTL Config 1 */
+	val = 0;
+	val = SETFIELD(PAU_OTL_MISC_CFG_TX_DRDY_WAIT, val, 0b010);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TX_TEMP0_RATE, val, 0b0000);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TX_TEMP1_RATE, val, 0b0011);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TX_TEMP2_RATE, val, 0b0111);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TX_TEMP3_RATE, val, 0b0010);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TX_CRET_FREQ, val, 0b001);
+	pau_write(pau, PAU_OTL_MISC_CFG_TX(dev->index), val);
+
+	/* OTL Config 2 - Done after link training, in otl_tx_send_enable() */
+
+	/* TLX Credit Configuration */
+	val = 0;
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_VC0, val, 0x40);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_VC1, val, 0x40);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_VC2, val, 0x40);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_VC3, val, 0x40);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_DCP0, val, 0x80);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_SPARE, val, 0x80);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_DCP2, val, 0x80);
+	val = SETFIELD(PAU_OTL_MISC_CFG_TLX_CREDITS_DCP3, val, 0x80);
+	pau_write(pau, PAU_OTL_MISC_CFG_TLX_CREDITS(dev->index), val);
+}
+
+static void pau_opencapi_enable_otlcq_interface(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint8_t typemap = 0;
+	uint64_t reg, val;
+
+	PAUDEVDBG(dev, "Enabling OTL-CQ Interface\n");
+
+	typemap |= 0x10 >> dev->index;
+	reg = PAU_CTL_MISC_CFG0;
+	val = pau_read(pau, reg);
+	typemap |= GETFIELD(PAU_CTL_MISC_CFG0_OTL_ENABLE, val);
+	val = SETFIELD(PAU_CTL_MISC_CFG0_OTL_ENABLE, val, typemap);
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_address_translation_config(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	PAUDEVDBG(dev, "Address Translation Configuration\n");
+
+	/* OpenCAPI 4.0 Mode */
+	reg = PAU_XSL_OSL_XLATE_CFG(dev->index);
+	val = pau_read(pau, reg);
+	val |= PAU_XSL_OSL_XLATE_CFG_AFU_DIAL;
+	val &= ~PAU_XSL_OSL_XLATE_CFG_OPENCAPI3;
+	pau_write(pau, reg, val);
+
+	/* MMIO shootdowns (OpenCAPI 5.0) */
+	reg = PAU_XTS_CFG3;
+	val = pau_read(pau, reg);
+	val |= PAU_XTS_CFG3_MMIOSD_OCAPI;
+	pau_write(pau, reg, val);
+
+	/* XSL_GP  - use defaults */
+}
+
+static void pau_opencapi_enable_ref_clock(struct pau_dev *dev)
+{
+	uint64_t reg, val;
+	int bit;
+
+	switch (dev->pau_unit) {
+	case 0:
+		if (dev->index == 0)
+			bit = 16;
+		else
+			bit = 17;
+		break;
+	case 3:
+		if (dev->index == 0)
+			bit = 18;
+		else
+			bit = 19;
+		break;
+	case 4:
+		bit = 20;
+		break;
+	case 5:
+		bit = 21;
+		break;
+	case 6:
+		bit = 22;
+		break;
+	case 7:
+		bit = 23;
+		break;
+	default:
+		assert(false);
+	}
+
+	reg = P10_ROOT_CONTROL_7;
+	xscom_read(dev->pau->chip_id, reg, &val);
+	val |= PPC_BIT(bit);
+	PAUDEVDBG(dev, "Enabling ref clock for PAU%d => %llx\n",
+		  dev->pau_unit, val);
+	xscom_write(dev->pau->chip_id, reg, val);
+}
+
 static void pau_opencapi_init_hw(struct pau *pau)
 {
 	struct pau_dev *dev = NULL;
 
+	pau_opencapi_mask_firs(pau);
 	pau_opencapi_assign_bars(pau);
 
 	/* Create phb */
@@ -708,6 +850,56 @@ static void pau_opencapi_init_hw(struct pau *pau)
 	 * and machine state allocation
 	 */
 	pau->mmio_access = true;
+
+	pau_for_each_opencapi_dev(dev, pau) {
+		/* Procedure 17.1.3.4 - Transaction Layer Configuration
+		 * OCAPI Link Transaction Layer functions
+		 */
+		pau_opencapi_tl_config(dev);
+
+		/* Procedure 17.1.3.4.1 - Enabling OTL-CQ Interface */
+		pau_opencapi_enable_otlcq_interface(dev);
+
+		/* Procedure 17.1.3.4.2 - Place OTL into Reset State
+		 * Reset (Fence) both OTL and the PowerBus for this
+		 * Brick
+		 */
+		pau_opencapi_set_fence_control(dev, 0b11);
+
+		/* Take PAU out of OTL Reset State
+		 * Reset (Fence) only the PowerBus for this Brick, OTL
+		 * will be operational
+		 */
+		pau_opencapi_set_fence_control(dev, 0b10);
+
+		/* Procedure 17.1.3.5 - Address Translation Configuration */
+		pau_opencapi_address_translation_config(dev);
+
+		/* Procedure 17.1.3.6 - AFU Memory Range BARs */
+		/* Will be done out of this process */
+
+		/* Procedure 17.1.3.8 - AFU MMIO Range BARs */
+		/* done in pau_opencapi_assign_bars() */
+
+		/* Procedure 17.1.3.9 - AFU Config BARs */
+		/* done in pau_opencapi_assign_bars() */
+
+		/* Precedure 17.1.3.10 - Relaxed Ordering Configuration */
+		/* Procedure 17.1.3.10.1 - Generation-Id Registers MMIO Bars */
+		/* done in pau_opencapi_assign_bars() */
+
+		/* Procedure 17.1.3.10.2 - Relaxed Ordering Source Configuration */
+		/* For an OpenCAPI AFU that uses M2 Memory Mode,
+		 * Relaxed Ordering can be used for accesses to the
+		 * AFU's memory
+		 */
+
+		/* Reset disabled. Place OTLs into Run State */
+		pau_opencapi_set_fence_control(dev, 0b00);
+
+		/* Enable reference clock */
+		pau_opencapi_enable_ref_clock(dev);
+	}
 }
 
 static void pau_opencapi_init(struct pau *pau)
