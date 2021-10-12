@@ -200,6 +200,13 @@ static inline uint64_t pau_read(struct pau *pau, uint64_t reg)
 }
 
 void pau_opencapi_dump_scoms(struct pau *pau);
+int64_t pau_opencapi_spa_setup(struct phb *phb, uint32_t __unused bdfn,
+			       uint64_t addr, uint64_t PE_mask);
+int64_t pau_opencapi_spa_clear_cache(struct phb *phb,
+				     uint32_t __unused bdfn,
+				     uint64_t PE_handle);
+int64_t pau_opencapi_tl_set(struct phb *phb, uint32_t __unused bdfn,
+			    long capabilities, char *rate_buf);
 
 /* PHY */
 int pau_dev_phy_reset(struct pau_dev *dev);
