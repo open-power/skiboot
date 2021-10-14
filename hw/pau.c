@@ -14,6 +14,9 @@
 #define PAU_MAX_PE_NUM		16
 #define PAU_RESERVED_PE_NUM	15
 
+#define PAU_TL_MAX_TEMPLATE	63
+#define PAU_TL_RATE_BUF_SIZE	32
+
 #define PAU_SLOT_NORMAL 		PCI_SLOT_STATE_NORMAL
 #define PAU_SLOT_LINK			PCI_SLOT_STATE_LINK
 #define   PAU_SLOT_LINK_START		(PAU_SLOT_LINK + 1)
@@ -263,6 +266,157 @@ static void pau_device_detect_fixup(struct pau_dev *dev)
 
 	PAUDEVDBG(dev, "Link type unknown\n");
 	dt_add_property_strings(dn, "ibm,pau-link-type", "unknown");
+}
+
+int64_t pau_opencapi_spa_setup(struct phb *phb, uint32_t __unused bdfn,
+			       uint64_t addr, uint64_t PE_mask)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+	int64_t rc;
+
+	lock(&pau->lock);
+
+	reg = PAU_XSL_OSL_SPAP_AN(dev->index);
+	val = pau_read(pau, reg);
+	if ((addr && (val & PAU_XSL_OSL_SPAP_AN_EN)) ||
+		(!addr && !(val & PAU_XSL_OSL_SPAP_AN_EN))) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
+
+	/* SPA is disabled by passing a NULL address */
+	val = addr;
+	if (addr)
+		val = addr | PAU_XSL_OSL_SPAP_AN_EN;
+	pau_write(pau, reg, val);
+
+	/*
+	 * set the PE mask that the OS uses for PASID -> PE handle
+	 * conversion
+	 */
+	reg = PAU_OTL_MISC_CFG0(dev->index);
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_OTL_MISC_CFG0_PE_MASK, val, PE_mask);
+	pau_write(pau, reg, val);
+	rc = OPAL_SUCCESS;
+out:
+	unlock(&pau->lock);
+	return rc;
+}
+
+int64_t pau_opencapi_spa_clear_cache(struct phb *phb,
+				     uint32_t __unused bdfn,
+				     uint64_t PE_handle)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+	int64_t rc, retries = 5;
+
+	lock(&pau->lock);
+
+	reg = PAU_XSL_OSL_CCINV;
+	val = pau_read(pau, reg);
+	if (val & PAU_XSL_OSL_CCINV_PENDING) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
+
+	val = PAU_XSL_OSL_CCINV_REMOVE;
+	val |= SETFIELD(PAU_XSL_OSL_CCINV_PE_HANDLE, val, PE_handle);
+	if (dev->index)
+		val |= PAU_XSL_OSL_CCINV_BRICK;
+	pau_write(pau, reg, val);
+
+	rc = OPAL_HARDWARE;
+	while (retries--) {
+		val = pau_read(pau, reg);
+		if (!(val & PAU_XSL_OSL_CCINV_PENDING)) {
+			rc = OPAL_SUCCESS;
+			break;
+		}
+		/* the bit expected to flip in less than 200us */
+		time_wait_us(200);
+	}
+out:
+	unlock(&pau->lock);
+	return rc;
+}
+
+static int pau_opencapi_get_templ_rate(unsigned int templ,
+				       char *rate_buf)
+{
+	int shift, idx, val;
+
+	/*
+	 * Each rate is encoded over 4 bits (0->15), with 15 being the
+	 * slowest. The buffer is a succession of rates for all the
+	 * templates. The first 4 bits are for template 63, followed
+	 * by 4 bits for template 62, ... etc. So the rate for
+	 * template 0 is at the very end of the buffer.
+	 */
+	idx = (PAU_TL_MAX_TEMPLATE - templ) / 2;
+	shift = 4 * (1 - ((PAU_TL_MAX_TEMPLATE - templ) % 2));
+	val = rate_buf[idx] >> shift;
+	return val;
+}
+
+static bool pau_opencapi_is_templ_supported(unsigned int templ,
+					    long capabilities)
+{
+	return !!(capabilities & (1ull << templ));
+}
+
+int64_t pau_opencapi_tl_set(struct phb *phb, uint32_t __unused bdfn,
+			    long capabilities, char *rate_buf)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	struct pau *pau;
+	uint64_t reg, val, templ_rate;
+	int i, rate_pos;
+
+	if (!dev)
+		return OPAL_PARAMETER;
+	pau = dev->pau;
+
+	/* The 'capabilities' argument defines what TL template the
+	 * device can receive. OpenCAPI 5.0 defines 64 templates, so
+	 * that's one bit per template.
+	 *
+	 * For each template, the device processing time may vary, so
+	 * the device advertises at what rate a message of a given
+	 * template can be sent. That's encoded in the 'rate' buffer.
+	 *
+	 * On P10, PAU only knows about TL templates 0 -> 3.
+	 * Per the spec, template 0 must be supported.
+	 */
+	if (!pau_opencapi_is_templ_supported(0, capabilities))
+		return OPAL_PARAMETER;
+
+	reg = PAU_OTL_MISC_CFG_TX(dev->index);
+	val = pau_read(pau, reg);
+	val &= ~PAU_OTL_MISC_CFG_TX_TEMP1_EN;
+	val &= ~PAU_OTL_MISC_CFG_TX_TEMP2_EN;
+	val &= ~PAU_OTL_MISC_CFG_TX_TEMP3_EN;
+
+	for (i = 0; i < 4; i++) {
+		/* Skip template 0 as it is implicitly enabled.
+		 * Enable other template If supported by AFU
+		 */
+		if (i && pau_opencapi_is_templ_supported(i, capabilities))
+			val |= PAU_OTL_MISC_CFG_TX_TEMP_EN(i);
+		/* The tx rate should still be set for template 0 */
+		templ_rate = pau_opencapi_get_templ_rate(i, rate_buf);
+		rate_pos = 8 + i * 4;
+		val = SETFIELD(PAU_OTL_MISC_CFG_TX_TEMP_RATE(rate_pos, rate_pos + 3),
+			       val, templ_rate);
+	}
+	pau_write(pau, reg, val);
+	PAUDEVDBG(dev, "OTL configuration register set to %llx\n", val);
+
+	return OPAL_SUCCESS;
 }
 
 #define CQ_CTL_STATUS_TIMEOUT  10 /* milliseconds */

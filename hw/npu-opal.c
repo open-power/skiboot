@@ -7,6 +7,7 @@
 #include <pci.h>
 #include <phb4.h>
 #include <npu2.h>
+#include <pau.h>
 
 #define TL_RATE_BUF_SIZE	32
 
@@ -184,6 +185,9 @@ static int64_t opal_npu_spa_setup(uint64_t phb_id, uint32_t bdfn,
 	if (phb->phb_type == phb_type_npu_v2_opencapi)
 		return npu2_opencapi_spa_setup(phb, bdfn, addr, PE_mask);
 
+	if (phb->phb_type == phb_type_pau_opencapi)
+		return pau_opencapi_spa_setup(phb, bdfn, addr, PE_mask);
+
 	return OPAL_PARAMETER;
 }
 opal_call(OPAL_NPU_SPA_SETUP, opal_npu_spa_setup, 4);
@@ -201,6 +205,9 @@ static int64_t opal_npu_spa_clear_cache(uint64_t phb_id, uint32_t bdfn,
 
 	if (phb->phb_type == phb_type_npu_v2_opencapi)
 		return npu2_opencapi_spa_clear_cache(phb, bdfn, PE_handle);
+
+	if (phb->phb_type == phb_type_pau_opencapi)
+		return pau_opencapi_spa_clear_cache(phb, bdfn, PE_handle);
 
 	return OPAL_PARAMETER;
 }
@@ -221,6 +228,10 @@ static int64_t opal_npu_tl_set(uint64_t phb_id, uint32_t bdfn,
 	if (phb->phb_type == phb_type_npu_v2_opencapi)
 		return npu2_opencapi_tl_set(phb, bdfn, capabilities,
 					    rate);
+
+	if (phb->phb_type == phb_type_pau_opencapi)
+		return pau_opencapi_tl_set(phb, bdfn, capabilities,
+					   rate);
 
 	return OPAL_PARAMETER;
 }
