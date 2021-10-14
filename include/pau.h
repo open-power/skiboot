@@ -8,6 +8,7 @@
 #include <io.h>
 #include <pci.h>
 #include <xscom.h>
+#include <phb4.h>
 #include <pau-regs.h>
 
 #define PAU_NBR 6
@@ -30,6 +31,7 @@ struct pau_dev {
 	enum pau_dev_type	type;
 	uint32_t		index;
 	struct dt_node		*dn;
+	struct phb		phb;
 
 	struct pau_bar		ntl_bar;
 	struct pau_bar		genid_bar;
@@ -86,6 +88,12 @@ static inline uint32_t pau_dev_index(struct pau_dev *dev, int links)
 	return dev->pau->index * links + dev->index;
 }
 
+static inline struct pau_dev *pau_phb_to_opencapi_dev(struct phb *phb)
+{
+	assert(phb->phb_type == phb_type_pau_opencapi);
+	return container_of(phb, struct pau_dev, phb);
+}
+
 struct pau_dev *pau_next_dev(struct pau *pau, struct pau_dev *dev,
 			       enum pau_dev_type type);
 
@@ -103,6 +111,11 @@ static inline int pau_get_phb_index(unsigned int pau_index,
 				    unsigned int link_index)
 {
 	return PAU_PHB_INDEX_BASE + pau_index * 2 + link_index;
+}
+
+static inline int pau_get_opal_id(unsigned int chip_id, unsigned int index)
+{
+	return phb4_get_opal_id(chip_id, index);
 }
 
 /*

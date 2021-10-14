@@ -2,12 +2,18 @@
  * Copyright 2021 IBM Corp.
  */
 
+#include <interrupts.h>
+#include <pci-slot.h>
 #include <phys-map.h>
 #include <pau.h>
 #include <pau-regs.h>
 
+/* Number of PEs supported */
+#define PAU_MAX_PE_NUM		16
+#define PAU_RESERVED_PE_NUM	15
+
 struct pau_dev *pau_next_dev(struct pau *pau, struct pau_dev *dev,
-			       enum pau_dev_type type)
+			     enum pau_dev_type type)
 {
 	uint32_t i = 0;
 
@@ -250,9 +256,235 @@ static void pau_opencapi_assign_bars(struct pau *pau)
 	}
 }
 
+static void pau_opencapi_create_phb_slot(struct pau_dev *dev)
+{
+	struct pci_slot *slot;
+
+	slot = pci_slot_alloc(&dev->phb, NULL);
+	if (!slot) {
+		/**
+		 * @fwts-label OCAPICannotCreatePHBSlot
+		 * @fwts-advice Firmware probably ran out of memory creating
+		 * PAU slot. OpenCAPI functionality could be broken.
+		 */
+		PAUDEVERR(dev, "Cannot create PHB slot\n");
+	}
+}
+
+static int64_t pau_opencapi_pcicfg_check(struct pau_dev *dev,
+					 uint32_t offset,
+					 uint32_t size)
+{
+	if (!dev || offset > 0xfff || (offset & (size - 1)))
+		return OPAL_PARAMETER;
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t pau_opencapi_pcicfg_read(struct phb *phb, uint32_t bdfn,
+					uint32_t offset, uint32_t size,
+					void *data)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	uint64_t cfg_addr, genid_base;
+	int64_t rc;
+
+	rc = pau_opencapi_pcicfg_check(dev, offset, size);
+	if (rc)
+		return rc;
+
+	/* Config Address for Brick 0 – Offset 0
+	 * Config Address for Brick 1 – Offset 256
+	 */
+	genid_base = dev->genid_bar.cfg + (dev->index << 8);
+
+	cfg_addr = PAU_CTL_MISC_CFG_ADDR_ENABLE;
+	cfg_addr = SETFIELD(PAU_CTL_MISC_CFG_ADDR_BUS_NBR |
+			    PAU_CTL_MISC_CFG_ADDR_DEVICE_NBR |
+			    PAU_CTL_MISC_CFG_ADDR_FUNCTION_NBR,
+			    cfg_addr, bdfn);
+	cfg_addr = SETFIELD(PAU_CTL_MISC_CFG_ADDR_REGISTER_NBR,
+			    cfg_addr, offset & ~3u);
+
+	out_be64((uint64_t *)genid_base, cfg_addr);
+	sync();
+
+	switch (size) {
+	case 1:
+		*((uint8_t *)data) =
+			in_8((uint8_t *)(genid_base + 128 + (offset & 3)));
+		break;
+	case 2:
+		*((uint16_t *)data) =
+			in_le16((uint16_t *)(genid_base + 128 + (offset & 2)));
+		break;
+	case 4:
+		*((uint32_t *)data) = in_le32((uint32_t *)(genid_base + 128));
+		break;
+	default:
+		return OPAL_PARAMETER;
+	}
+
+	return OPAL_SUCCESS;
+}
+
+#define PAU_OPENCAPI_PCI_CFG_READ(size, type)					\
+static int64_t pau_opencapi_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
+					      uint32_t offset, type * data)	\
+{										\
+	/* Initialize data in case of error */					\
+	*data = (type)0xffffffff;						\
+	return pau_opencapi_pcicfg_read(phb, bdfn, offset, sizeof(type), data);	\
+}
+
+static int64_t pau_opencapi_pcicfg_write(struct phb *phb, uint32_t bdfn,
+					 uint32_t offset, uint32_t size,
+					 uint32_t data)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	uint64_t genid_base, cfg_addr;
+	int64_t rc;
+
+	rc = pau_opencapi_pcicfg_check(dev, offset, size);
+	if (rc)
+		return rc;
+
+	/* Config Address for Brick 0 – Offset 0
+	 * Config Address for Brick 1 – Offset 256
+	 */
+	genid_base = dev->genid_bar.cfg + (dev->index << 8);
+
+	cfg_addr = PAU_CTL_MISC_CFG_ADDR_ENABLE;
+	cfg_addr = SETFIELD(PAU_CTL_MISC_CFG_ADDR_BUS_NBR |
+			    PAU_CTL_MISC_CFG_ADDR_DEVICE_NBR |
+			    PAU_CTL_MISC_CFG_ADDR_FUNCTION_NBR,
+			    cfg_addr, bdfn);
+	cfg_addr = SETFIELD(PAU_CTL_MISC_CFG_ADDR_REGISTER_NBR,
+			    cfg_addr, offset & ~3u);
+
+	out_be64((uint64_t *)genid_base, cfg_addr);
+	sync();
+
+	switch (size) {
+	case 1:
+		out_8((uint8_t *)(genid_base + 128 + (offset & 3)), data);
+		break;
+	case 2:
+		out_le16((uint16_t *)(genid_base + 128 + (offset & 2)), data);
+		break;
+	case 4:
+		out_le32((uint32_t *)(genid_base + 128), data);
+		break;
+	default:
+		return OPAL_PARAMETER;
+	}
+
+	return OPAL_SUCCESS;
+}
+
+#define PAU_OPENCAPI_PCI_CFG_WRITE(size, type)					\
+static int64_t pau_opencapi_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
+						uint32_t offset, type data)	\
+{										\
+	return pau_opencapi_pcicfg_write(phb, bdfn, offset, sizeof(type), data);\
+}
+
+PAU_OPENCAPI_PCI_CFG_READ(8, u8)
+PAU_OPENCAPI_PCI_CFG_READ(16, u16)
+PAU_OPENCAPI_PCI_CFG_READ(32, u32)
+PAU_OPENCAPI_PCI_CFG_WRITE(8, u8)
+PAU_OPENCAPI_PCI_CFG_WRITE(16, u16)
+PAU_OPENCAPI_PCI_CFG_WRITE(32, u32)
+
+static const struct phb_ops pau_opencapi_ops = {
+	.cfg_read8		= pau_opencapi_pcicfg_read8,
+	.cfg_read16		= pau_opencapi_pcicfg_read16,
+	.cfg_read32		= pau_opencapi_pcicfg_read32,
+	.cfg_write8		= pau_opencapi_pcicfg_write8,
+	.cfg_write16		= pau_opencapi_pcicfg_write16,
+	.cfg_write32		= pau_opencapi_pcicfg_write32,
+};
+
+static void pau_opencapi_create_phb(struct pau_dev *dev)
+{
+	struct phb *phb = &dev->phb;
+	uint64_t mm_win[2];
+
+	mm_win[0] = dev->ntl_bar.addr;
+	mm_win[1] = dev->ntl_bar.size;
+
+	phb->phb_type = phb_type_pau_opencapi;
+	phb->scan_map = 0;
+
+	phb->ops = &pau_opencapi_ops;
+	phb->dt_node = dt_new_addr(dt_root, "pciex", mm_win[0]);
+	assert(phb->dt_node);
+
+	pci_register_phb(phb, pau_get_opal_id(dev->pau->chip_id,
+					      pau_get_phb_index(dev->pau->index, dev->index)));
+	pau_opencapi_create_phb_slot(dev);
+}
+
+static void pau_opencapi_dt_add_mmio_window(struct pau_dev *dev)
+{
+	struct dt_node *dn = dev->phb.dt_node;
+	uint64_t mm_win[2];
+
+	mm_win[0] = dev->ntl_bar.addr;
+	mm_win[1] = dev->ntl_bar.size;
+	PAUDEVDBG(dev, "Setting AFU MMIO window to %016llx  %016llx\n",
+			mm_win[0], mm_win[1]);
+
+	dt_add_property(dn, "reg", mm_win, sizeof(mm_win));
+	dt_add_property(dn, "ibm,mmio-window", mm_win, sizeof(mm_win));
+	dt_add_property_cells(dn, "ranges", 0x02000000,
+			      hi32(mm_win[0]), lo32(mm_win[0]),
+			      hi32(mm_win[0]), lo32(mm_win[0]),
+			      hi32(mm_win[1]), lo32(mm_win[1]));
+}
+
+static void pau_opencapi_dt_add_props(struct pau_dev *dev)
+{
+	struct dt_node *dn = dev->phb.dt_node;
+	struct pau *pau = dev->pau;
+
+	dt_add_property_strings(dn,
+				"compatible",
+				"ibm,power10-pau-opencapi-pciex",
+				"ibm,ioda3-pau-opencapi-phb",
+				"ibm,ioda2-npu2-opencapi-phb");
+
+	dt_add_property_cells(dn, "#address-cells", 3);
+	dt_add_property_cells(dn, "#size-cells", 2);
+	dt_add_property_cells(dn, "#interrupt-cells", 1);
+	dt_add_property_cells(dn, "bus-range", 0, 0xff);
+	dt_add_property_cells(dn, "clock-frequency", 0x200, 0);
+	dt_add_property_cells(dn, "interrupt-parent", get_ics_phandle());
+
+	dt_add_property_strings(dn, "device_type", "pciex");
+	dt_add_property_cells(dn, "ibm,pau-index", pau->index);
+	dt_add_property_cells(dn, "ibm,chip-id", pau->chip_id);
+	dt_add_property_cells(dn, "ibm,xscom-base", pau->xscom_base);
+	dt_add_property_cells(dn, "ibm,npcq", pau->dt_node->phandle);
+	dt_add_property_cells(dn, "ibm,links", 1);
+	dt_add_property_cells(dn, "ibm,phb-diag-data-size", 0);
+	dt_add_property_cells(dn, "ibm,opal-num-pes", PAU_MAX_PE_NUM);
+	dt_add_property_cells(dn, "ibm,opal-reserved-pe", PAU_RESERVED_PE_NUM);
+
+	pau_opencapi_dt_add_mmio_window(dev);
+}
+
 static void pau_opencapi_init_hw(struct pau *pau)
 {
+	struct pau_dev *dev = NULL;
+
 	pau_opencapi_assign_bars(pau);
+
+	/* Create phb */
+	pau_for_each_opencapi_dev(dev, pau) {
+		pau_opencapi_create_phb(dev);
+		pau_opencapi_dt_add_props(dev);
+	}
 }
 
 static void pau_opencapi_init(struct pau *pau)
