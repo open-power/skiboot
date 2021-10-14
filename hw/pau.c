@@ -199,6 +199,42 @@ static void pau_device_detect_fixup(struct pau_dev *dev)
 	dt_add_property_strings(dn, "ibm,pau-link-type", "unknown");
 }
 
+#define CQ_CTL_STATUS_TIMEOUT  10 /* milliseconds */
+
+static int pau_opencapi_set_fence_control(struct pau_dev *dev,
+					  uint8_t state_requested)
+{
+	uint64_t timeout = mftb() + msecs_to_tb(CQ_CTL_STATUS_TIMEOUT);
+	uint8_t status;
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	reg = PAU_CTL_MISC_FENCE_CTRL(dev->index);
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_CTL_MISC_FENCE_REQUEST, val, state_requested);
+	pau_write(pau, reg, val);
+
+	/* Wait for fence status to update */
+	do {
+		reg = PAU_CTL_MISC_STATUS(dev->index);
+		val = pau_read(pau, reg);
+		status = GETFIELD(PAU_CTL_MISC_STATUS_AM_FENCED(dev->index), val);
+		if (status == state_requested)
+			return OPAL_SUCCESS;
+		time_wait_ms(1);
+	} while (tb_compare(mftb(), timeout) == TB_ABEFOREB);
+
+	/*
+	 * @fwts-label OCAPIFenceStatusTimeout
+	 * @fwts-advice The PAU fence status did not update as expected. This
+	 * could be the result of a firmware or hardware bug. OpenCAPI
+	 * functionality could be broken.
+	 */
+	PAUDEVERR(dev, "Bad fence status: expected 0x%x, got 0x%x\n",
+		       state_requested, status);
+	return OPAL_HARDWARE;
+}
+
 static void pau_opencapi_assign_bars(struct pau *pau)
 {
 	struct pau_dev *dev;
@@ -254,6 +290,37 @@ static void pau_opencapi_assign_bars(struct pau *pau)
 		/* +320K = Bricks 0-4 Config Addr/Data registers */
 		dev->genid_bar.cfg = addr + 0x50000;
 	}
+}
+
+static void pau_opencapi_enable_bars(struct pau_dev *dev, bool enable)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	if (dev->ntl_bar.enable == enable) /* No state change */
+		return;
+
+	dev->ntl_bar.enable = enable;
+	dev->genid_bar.enable = enable;
+
+	reg = PAU_NTL_BAR(dev->index);
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_NTL_BAR_ENABLE, val, enable);
+	pau_write(pau, reg, val);
+
+	/*
+	 * Generation IDs are a single space in the hardware but we split them
+	 * per device. Only disable in hardware if every device has disabled.
+	 */
+	if (!enable)
+		pau_for_each_dev(dev, pau)
+			if (dev->genid_bar.enable)
+				return;
+
+	reg = PAU_GENID_BAR;
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_GENID_BAR_ENABLE, val, enable);
+	pau_write(pau, reg, val);
 }
 
 static void pau_opencapi_create_phb_slot(struct pau_dev *dev)
@@ -474,6 +541,135 @@ static void pau_opencapi_dt_add_props(struct pau_dev *dev)
 	pau_opencapi_dt_add_mmio_window(dev);
 }
 
+static void pau_opencapi_set_transport_mux_controls(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint32_t typemap = 0;
+	uint64_t reg, val = 0;
+
+	PAUDEVDBG(dev, "Setting transport mux controls\n");
+	typemap = 0x2 >> dev->index;
+
+	reg = PAU_MISC_OPTICAL_IO_CONFIG;
+	val = pau_read(pau, reg);
+	typemap |= GETFIELD(PAU_MISC_OPTICAL_IO_CONFIG_OTL, val);
+	val = SETFIELD(PAU_MISC_OPTICAL_IO_CONFIG_OTL, val, typemap);
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_enable_xsl_clocks(struct pau *pau)
+{
+	uint64_t reg, val;
+
+	PAUDBG(pau, "Enable clocks in XSL\n");
+
+	reg = PAU_XSL_WRAP_CFG;
+	val = pau_read(pau, reg);
+	val |= PAU_XSL_WRAP_CFG_CLOCK_ENABLE;
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_enable_misc_clocks(struct pau *pau)
+{
+	uint64_t reg, val;
+
+	PAUDBG(pau, "Enable clocks in MISC\n");
+
+	/* clear any spurious NDL stall or no_stall_c_err_rpts */
+	reg = PAU_MISC_HOLD;
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_MISC_HOLD_NDL_STALL, val, 0b0000);
+	pau_write(pau, reg, val);
+
+	reg = PAU_MISC_CONFIG;
+	val = pau_read(pau, reg);
+	val |= PAU_MISC_CONFIG_OC_MODE;
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_set_npcq_config(struct pau *pau)
+{
+	struct pau_dev *dev;
+	uint8_t oc_typemap = 0;
+	uint64_t reg, val;
+
+	/* MCP_MISC_CFG0
+	 * SNP_MISC_CFG0 done in pau_opencapi_enable_pb
+	 */
+	pau_for_each_opencapi_dev(dev, pau)
+		oc_typemap |= 0x10 >> dev->index;
+
+	PAUDBG(pau, "Set NPCQ Config\n");
+	reg = PAU_CTL_MISC_CFG2;
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_CTL_MISC_CFG2_OCAPI_MODE, val, oc_typemap);
+	val = SETFIELD(PAU_CTL_MISC_CFG2_OCAPI_4, val, oc_typemap);
+	val = SETFIELD(PAU_CTL_MISC_CFG2_OCAPI_C2, val, oc_typemap);
+	val = SETFIELD(PAU_CTL_MISC_CFG2_OCAPI_AMO, val, oc_typemap);
+	val = SETFIELD(PAU_CTL_MISC_CFG2_OCAPI_MEM_OS_BIT, val, oc_typemap);
+	pau_write(pau, reg, val);
+
+	reg = PAU_DAT_MISC_CFG1;
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_DAT_MISC_CFG1_OCAPI_MODE, val, oc_typemap);
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_enable_xsl_xts_interfaces(struct pau *pau)
+{
+	uint64_t reg, val;
+
+	PAUDBG(pau, "Enable XSL-XTS Interfaces\n");
+	reg = PAU_XTS_CFG;
+	val = pau_read(pau, reg);
+	val |= PAU_XTS_CFG_OPENCAPI;
+	pau_write(pau, reg, val);
+
+	reg = PAU_XTS_CFG2;
+	val = pau_read(pau, reg);
+	val |= PAU_XTS_CFG2_XSL2_ENA;
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_enable_sm_allocation(struct pau *pau)
+{
+	uint64_t reg, val;
+
+	PAUDBG(pau, "Enable State Machine Allocation\n");
+
+	reg = PAU_MISC_MACHINE_ALLOC;
+	val = pau_read(pau, reg);
+	val |= PAU_MISC_MACHINE_ALLOC_ENABLE;
+	pau_write(pau, reg, val);
+}
+
+static void pau_opencapi_enable_powerbus(struct pau *pau)
+{
+	struct pau_dev *dev;
+	uint8_t oc_typemap = 0;
+	uint64_t reg, val;
+
+	PAUDBG(pau, "Enable PowerBus\n");
+
+	pau_for_each_opencapi_dev(dev, pau)
+		oc_typemap |= 0x10 >> dev->index;
+
+	/* PowerBus interfaces must be enabled prior to MMIO */
+	reg = PAU_MCP_MISC_CFG0;
+	val = pau_read(pau, reg);
+	val |= PAU_MCP_MISC_CFG0_ENABLE_PBUS;
+	val |= PAU_MCP_MISC_CFG0_MA_MCRESP_OPT_WRP;
+	val = SETFIELD(PAU_MCP_MISC_CFG0_OCAPI_MODE, val, oc_typemap);
+	pau_write(pau, reg, val);
+
+	reg = PAU_SNP_MISC_CFG0;
+	val = pau_read(pau, reg);
+	val |= PAU_SNP_MISC_CFG0_ENABLE_PBUS;
+	val = SETFIELD(PAU_SNP_MISC_CFG0_OCAPI_MODE, val, oc_typemap);
+	val = SETFIELD(PAU_SNP_MISC_CFG0_OCAPI_C2, val, oc_typemap);
+	pau_write(pau, reg, val);
+}
+
 static void pau_opencapi_init_hw(struct pau *pau)
 {
 	struct pau_dev *dev = NULL;
@@ -482,9 +678,35 @@ static void pau_opencapi_init_hw(struct pau *pau)
 
 	/* Create phb */
 	pau_for_each_opencapi_dev(dev, pau) {
+		PAUDEVINF(dev, "Create phb\n");
 		pau_opencapi_create_phb(dev);
+		pau_opencapi_enable_bars(dev, true);
 		pau_opencapi_dt_add_props(dev);
 	}
+
+	/* Procedure 17.1.3.1 - Enabling OpenCAPI */
+	pau_for_each_opencapi_dev(dev, pau) {
+		PAUDEVINF(dev, "Configuring link ...\n");
+		pau_opencapi_set_transport_mux_controls(dev);	/* step 1 */
+	}
+	pau_opencapi_enable_xsl_clocks(pau);		/* step 2 */
+	pau_opencapi_enable_misc_clocks(pau);		/* step 3 */
+
+	/* OTL disabled */
+	pau_for_each_opencapi_dev(dev, pau)
+		pau_opencapi_set_fence_control(dev, 0b01);
+
+	pau_opencapi_set_npcq_config(pau);		/* step 4 */
+	pau_opencapi_enable_xsl_xts_interfaces(pau);	/* step 5 */
+	pau_opencapi_enable_sm_allocation(pau);		/* step 6 */
+	pau_opencapi_enable_powerbus(pau);		/* step 7 */
+
+	/*
+	 * access to the PAU registers through mmio requires setting
+	 * up the PAU mmio BAR (in pau_opencapi_assign_bars() above)
+	 * and machine state allocation
+	 */
+	pau->mmio_access = true;
 }
 
 static void pau_opencapi_init(struct pau *pau)
