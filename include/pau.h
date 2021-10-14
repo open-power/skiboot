@@ -24,6 +24,9 @@ struct pau_dev {
 	uint32_t		index;
 	struct dt_node		*dn;
 
+	/* Associated I2C information */
+	uint8_t			i2c_bus_id;
+
 	/* Associated PHY information */
 	uint32_t		pau_unit; /* 0,3,4,5,6,7 */
 	uint32_t		odl_index;
