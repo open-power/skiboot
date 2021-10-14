@@ -28,6 +28,12 @@ struct pau_bar {
 	uint64_t		cfg;
 };
 
+struct phy_proc_state {
+	struct lock		lock; /* protect any change to this structure */
+	unsigned long		timeout;
+	uint16_t		step;
+};
+
 struct pau_dev {
 	enum pau_dev_type	type;
 	uint32_t		index;
@@ -54,6 +60,7 @@ struct pau {
 	uint32_t		index;
 	struct dt_node		*dt_node;
 	uint32_t		chip_id;
+	uint32_t		op_chiplet; /* from pervasive: 0x10 -> 0x13 */
 	uint64_t		xscom_base;
 
 	/* Global MMIO window (all PAU regs) */
@@ -65,6 +72,7 @@ struct pau {
 
 	uint32_t		links;
 	struct pau_dev		devices[PAU_LINKS_OPENCAPI_PER_PAU];
+	struct phy_proc_state	procedure_state;
 };
 
 #define PAUDBG(pau, fmt, a...) PAULOG(PR_DEBUG, pau, fmt, ##a)
@@ -190,5 +198,8 @@ static inline uint64_t pau_read(struct pau *pau, uint64_t reg)
 }
 
 void pau_opencapi_dump_scoms(struct pau *pau);
+
+/* PHY */
+int pau_dev_phy_reset(struct pau_dev *dev);
 
 #endif /* __PAU_H */
