@@ -271,4 +271,11 @@ static inline int npu2_get_phb_index(unsigned int brick_index)
 	return NPU2_PHB_INDEX_BASE + brick_index;
 }
 
+int64_t npu2_opencapi_spa_setup(struct phb *phb, uint32_t __unused bdfn,
+				uint64_t addr, uint64_t PE_mask);
+int64_t npu2_opencapi_spa_clear_cache(struct phb *phb, uint32_t __unused bdfn,
+				      uint64_t PE_handle);
+int64_t npu2_opencapi_tl_set(struct phb *phb, uint32_t __unused bdfn,
+		    long capabilities, char *rate);
+
 #endif /* __NPU2_H */
