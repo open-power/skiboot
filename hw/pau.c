@@ -5,6 +5,7 @@
 #include <interrupts.h>
 #include <pci-slot.h>
 #include <phys-map.h>
+#include <xive.h>
 #include <pau.h>
 #include <pau-regs.h>
 #include <xscom-p10-regs.h>
@@ -237,6 +238,15 @@ static int pau_opencapi_set_fence_control(struct pau_dev *dev,
 	return OPAL_HARDWARE;
 }
 
+#define PAU_DEV_STATUS_BROKEN	0x1
+
+static void pau_opencapi_set_broken(struct pau_dev *dev)
+{
+	PAUDEVDBG(dev, "Update status to broken\n");
+
+	dev->status = PAU_DEV_STATUS_BROKEN;
+}
+
 static void pau_opencapi_mask_firs(struct pau *pau)
 {
 	uint64_t reg, val;
@@ -308,6 +318,113 @@ static void pau_opencapi_assign_bars(struct pau *pau)
 		/* +320K = Bricks 0-4 Config Addr/Data registers */
 		dev->genid_bar.cfg = addr + 0x50000;
 	}
+}
+
+static uint64_t pau_opencapi_ipi_attributes(struct irq_source *is,
+					    uint32_t isn)
+{
+	struct pau *pau = is->data;
+	uint32_t level = isn - pau->irq_base;
+
+	if (level >= 37 && level <= 40) {
+		/* level 37-40: OTL/XSL interrupt */
+		return IRQ_ATTR_TARGET_OPAL |
+		       IRQ_ATTR_TARGET_RARE |
+		       IRQ_ATTR_TYPE_MSI;
+	}
+
+	return IRQ_ATTR_TARGET_LINUX;
+}
+
+static void pau_opencapi_ipi_interrupt(struct irq_source *is,
+				       uint32_t isn)
+{
+	struct pau *pau = is->data;
+	uint32_t level = isn - pau->irq_base;
+	struct pau_dev *dev;
+
+	switch (level) {
+	case 37 ... 40:
+		pau_for_each_opencapi_dev(dev, pau)
+			pau_opencapi_set_broken(dev);
+
+		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+					OPAL_EVENT_PCI_ERROR);
+		break;
+	default:
+		PAUERR(pau, "Received unknown interrupt %d\n", level);
+		return;
+	}
+}
+
+#define PAU_IRQ_LEVELS 60
+
+static char *pau_opencapi_ipi_name(struct irq_source *is, uint32_t isn)
+{
+	struct pau *pau = is->data;
+	uint32_t level = isn - pau->irq_base;
+
+	switch (level) {
+	case 0 ... 19:
+		return strdup("Reserved");
+	case 20:
+		return strdup("An error event related to PAU CQ functions");
+	case 21:
+		return strdup("An error event related to PAU MISC functions");
+	case 22 ... 34:
+		return strdup("Reserved");
+	case 35:
+		return strdup("Translation failure for OCAPI link 0");
+	case 36:
+		return strdup("Translation failure for OCAPI link 1");
+	case 37:
+		return strdup("An error event related to OTL for link 0");
+	case 38:
+		return strdup("An error event related to OTL for link 1");
+	case 39:
+		return strdup("An error event related to XSL for link 0");
+	case 40:
+		return strdup("An error event related to XSL for link 1");
+	case 41 ... 59:
+		return strdup("Reserved");
+	}
+
+	return strdup("Unknown");
+}
+
+static const struct irq_source_ops pau_opencapi_ipi_ops = {
+	.attributes	= pau_opencapi_ipi_attributes,
+	.interrupt	= pau_opencapi_ipi_interrupt,
+	.name		= pau_opencapi_ipi_name,
+};
+
+static void pau_opencapi_setup_irqs(struct pau *pau)
+{
+	uint64_t reg, val;
+	uint32_t base;
+
+	base = xive2_alloc_ipi_irqs(pau->chip_id, PAU_IRQ_LEVELS, 64);
+	if (base == XIVE_IRQ_ERROR) {
+		PAUERR(pau, "Failed to allocate interrupt sources\n");
+		return;
+	}
+
+	xive2_register_ipi_source(base, PAU_IRQ_LEVELS, pau, &pau_opencapi_ipi_ops);
+
+	/* Set IPI configuration */
+	reg = PAU_MISC_CONFIG;
+	val = pau_read(pau, reg);
+	val = SETFIELD(PAU_MISC_CONFIG_IPI_PS, val, PAU_MISC_CONFIG_IPI_PS_64K);
+	val = SETFIELD(PAU_MISC_CONFIG_IPI_OS, val, PAU_MISC_CONFIG_IPI_OS_AIX);
+	pau_write(pau, reg, val);
+
+	/* Set IRQ base */
+	reg = PAU_MISC_INT_BAR;
+	val = SETFIELD(PAU_MISC_INT_BAR_ADDR, 0ull,
+		       (uint64_t)xive2_get_trigger_port(base) >> 12);
+	pau_write(pau, reg, val);
+
+	pau->irq_base = base;
 }
 
 static void pau_opencapi_enable_bars(struct pau_dev *dev, bool enable)
@@ -769,6 +886,41 @@ static void pau_opencapi_address_translation_config(struct pau_dev *dev)
 	/* XSL_GP  - use defaults */
 }
 
+static void pau_opencapi_enable_interrupt_on_error(struct pau_dev *dev)
+{
+	struct pau *pau = dev->pau;
+	uint64_t reg, val;
+
+	PAUDEVDBG(dev, "Enable Interrupt-on-error\n");
+
+	/* translation fault */
+	reg = PAU_MISC_INT_2_CONFIG;
+	val = pau_read(pau, reg);
+	val |= PAU_MISC_INT_2_CONFIG_XFAULT_2_5(dev->index);
+	pau_write(pau, reg, val);
+
+	/* freeze disable */
+	reg = PAU_MISC_FREEZE_1_CONFIG;
+	val = pau_read(pau, reg);
+	val &= ~PAU_FIR1_NDL_BRICKS_0_5;
+	val &= ~PAU_FIR1_NDL_BRICKS_6_11;
+	pau_write(pau, reg, val);
+
+	/* fence disable */
+	reg = PAU_MISC_FENCE_1_CONFIG;
+	val = pau_read(pau, reg);
+	val &= ~PAU_FIR1_NDL_BRICKS_0_5;
+	val &= ~PAU_FIR1_NDL_BRICKS_6_11;
+	pau_write(pau, reg, val);
+
+	/* irq disable */
+	reg = PAU_MISC_INT_1_CONFIG;
+	val = pau_read(pau, reg);
+	val &= ~PAU_FIR1_NDL_BRICKS_0_5;
+	val &= ~PAU_FIR1_NDL_BRICKS_6_11;
+	pau_write(pau, reg, val);
+}
+
 static void pau_opencapi_enable_ref_clock(struct pau_dev *dev)
 {
 	uint64_t reg, val;
@@ -817,6 +969,7 @@ static void pau_opencapi_init_hw(struct pau *pau)
 
 	pau_opencapi_mask_firs(pau);
 	pau_opencapi_assign_bars(pau);
+	pau_opencapi_setup_irqs(pau);
 
 	/* Create phb */
 	pau_for_each_opencapi_dev(dev, pau) {
@@ -892,6 +1045,10 @@ static void pau_opencapi_init_hw(struct pau *pau)
 		 * Relaxed Ordering can be used for accesses to the
 		 * AFU's memory
 		 */
+
+		/* Procedure 17.1.3.11 - Interrupt Configuration */
+		/* done in pau_opencapi_setup_irqs() */
+		pau_opencapi_enable_interrupt_on_error(dev);
 
 		/* Reset disabled. Place OTLs into Run State */
 		pau_opencapi_set_fence_control(dev, 0b00);
