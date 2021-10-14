@@ -30,7 +30,12 @@ static const struct phys_map_entry phys_map_table_p10[] = {
 	/* System memory upto 4TB minus GPU memory */
 	{ SYSTEM_MEM,      0, 0x0000000000000000ull, 0x0000034000000000ull },
 
-	/* TODO: Figure out GPU memory */
+	/* Configure OpenCapi memory as before with the old chips.
+	 * Keep in mind that we would need to rework this by allocating
+	 * a new topology id.
+	 */
+	{ OCAPI_MEM,	   0, 0x0002000000000000ull, 0x0000040000000000ull },
+	{ OCAPI_MEM,	   1, 0x0002040000000000ull, 0x0000040000000000ull },
 
 	/* 0 TB offset @ MMIO 0x0006000000000000ull */
 	{ PHB5_64BIT_MMIO, 0, 0x0006000000000000ull, 0x0000004000000000ull },

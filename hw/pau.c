@@ -442,6 +442,99 @@ int64_t pau_opencapi_tl_set(struct phb *phb, uint32_t __unused bdfn,
 	return OPAL_SUCCESS;
 }
 
+static int64_t pau_opencapi_afu_memory_bars(struct pau_dev *dev,
+					    uint64_t size,
+					    uint64_t *bar)
+{
+	struct pau *pau = dev->pau;
+	uint64_t addr, psize;
+	uint64_t reg, val;
+
+	PAUDEVDBG(dev, "Setup AFU Memory BARs\n");
+
+	if (dev->memory_bar.enable) {
+		PAUDEVERR(dev, "AFU memory allocation failed - BAR already in use\n");
+		return OPAL_RESOURCE;
+	}
+
+	phys_map_get(pau->chip_id, OCAPI_MEM,
+		     dev->index,
+		     &addr, &psize);
+
+	if (size > psize) {
+		PAUDEVERR(dev, "Invalid AFU memory BAR allocation size "
+			       "requested: 0x%llx bytes (limit 0x%llx)\n",
+			  size, psize);
+		return OPAL_PARAMETER;
+	}
+
+	if (size < (1 << 30))
+		size = 1 << 30;
+
+	dev->memory_bar.enable = true;
+	dev->memory_bar.addr = addr;
+	dev->memory_bar.size = size;
+
+	reg = PAU_GPU_MEM_BAR(dev->index);
+	val = PAU_GPU_MEM_BAR_ENABLE |
+	      PAU_GPU_MEM_BAR_POISON;
+	val = SETFIELD(PAU_GPU_MEM_BAR_ADDR, val, addr >> 30);
+	if (!is_pow2(size))
+		size = 1ull << (ilog2(size) + 1);
+
+	size = (size >> 30) - 1;
+	val = SETFIELD(PAU_GPU_MEM_BAR_SIZE, val, size);
+	pau_write(pau, reg, val);
+
+	reg = PAU_CTL_MISC_GPU_MEM_BAR(dev->index);
+	pau_write(pau, reg, val);
+
+	reg = PAU_XSL_GPU_MEM_BAR(dev->index);
+	pau_write(pau, reg, val);
+
+	*bar = addr;
+	return OPAL_SUCCESS;
+}
+
+int64_t pau_opencapi_mem_alloc(struct phb *phb, uint32_t __unused bdfn,
+			       uint64_t size, uint64_t *bar)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	int64_t rc;
+
+	if (!dev)
+		return OPAL_PARAMETER;
+
+	if (!opal_addr_valid(bar))
+		return OPAL_PARAMETER;
+
+	lock(&dev->pau->lock);
+	rc = pau_opencapi_afu_memory_bars(dev, size, bar);
+
+	unlock(&dev->pau->lock);
+	return rc;
+}
+
+int64_t pau_opencapi_mem_release(struct phb *phb, uint32_t __unused bdfn)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+
+	if (!dev)
+		return OPAL_PARAMETER;
+
+	lock(&dev->pau->lock);
+	pau_write(dev->pau, PAU_GPU_MEM_BAR(dev->index), 0ull);
+	pau_write(dev->pau, PAU_CTL_MISC_GPU_MEM_BAR(dev->index), 0ull);
+	pau_write(dev->pau, PAU_XSL_GPU_MEM_BAR(dev->index), 0ull);
+
+	dev->memory_bar.enable = false;
+	dev->memory_bar.addr = 0ull;
+	dev->memory_bar.size = 0ull;
+	unlock(&dev->pau->lock);
+
+	return OPAL_SUCCESS;
+}
+
 #define CQ_CTL_STATUS_TIMEOUT  10 /* milliseconds */
 
 static int pau_opencapi_set_fence_control(struct pau_dev *dev,

@@ -45,6 +45,7 @@ struct pau_dev {
 
 	struct pau_bar		ntl_bar;
 	struct pau_bar		genid_bar;
+	struct pau_bar		memory_bar;
 
 	/* Associated I2C information */
 	uint8_t			i2c_bus_id;
@@ -209,6 +210,9 @@ int64_t pau_opencapi_spa_clear_cache(struct phb *phb,
 				     uint64_t PE_handle);
 int64_t pau_opencapi_tl_set(struct phb *phb, uint32_t __unused bdfn,
 			    long capabilities, char *rate_buf);
+int64_t pau_opencapi_mem_alloc(struct phb *phb, uint32_t __unused bdfn,
+			       uint64_t size, uint64_t *bar);
+int64_t pau_opencapi_mem_release(struct phb *phb, uint32_t __unused bdfn);
 
 /* PHY */
 int pau_dev_phy_reset(struct pau_dev *dev);
