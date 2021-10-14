@@ -193,6 +193,80 @@ static void pau_device_detect_fixup(struct pau_dev *dev)
 	dt_add_property_strings(dn, "ibm,pau-link-type", "unknown");
 }
 
+static void pau_opencapi_assign_bars(struct pau *pau)
+{
+	struct pau_dev *dev;
+	uint64_t addr, size, val;
+
+	/* Global MMIO bar (per pau)
+	 * 16M aligned address -> 0x1000000 (bit 24)
+	 */
+	phys_map_get(pau->chip_id, PAU_REGS, pau->index, &addr, &size);
+	val = SETFIELD(PAU_MMIO_BAR_ADDR, 0ull, addr >> 24);
+	val |= PAU_MMIO_BAR_ENABLE;
+	pau_write(pau, PAU_MMIO_BAR, val);
+
+	PAUINF(pau, "MMIO base: 0x%016llx (%lldMB)\n", addr, size >> 20);
+	pau->regs[0] = addr;
+	pau->regs[1] = size;
+
+	/* NTL bar (per device)
+	 * 64K aligned address -> 0x10000 (bit 16)
+	 */
+	pau_for_each_dev(dev, pau) {
+		if (dev->type == PAU_DEV_TYPE_UNKNOWN)
+			continue;
+
+		phys_map_get(pau->chip_id, PAU_OCAPI_MMIO,
+			     pau_dev_index(dev, PAU_LINKS_OPENCAPI_PER_PAU),
+			     &addr, &size);
+
+		val = SETFIELD(PAU_NTL_BAR_ADDR, 0ull, addr >> 16);
+		val = SETFIELD(PAU_NTL_BAR_SIZE, val, ilog2(size >> 16));
+		pau_write(pau, PAU_NTL_BAR(dev->index), val);
+
+		val = SETFIELD(PAU_CTL_MISC_MMIOPA_CONFIG_BAR_ADDR, 0ull, addr >> 16);
+		val = SETFIELD(PAU_CTL_MISC_MMIOPA_CONFIG_BAR_SIZE, val, ilog2(size >> 16));
+		pau_write(pau, PAU_CTL_MISC_MMIOPA_CONFIG(dev->index), val);
+
+		dev->ntl_bar.addr = addr;
+		dev->ntl_bar.size = size;
+	}
+
+	/* GENID bar (logically divided per device)
+	 * 512K aligned address -> 0x80000 (bit 19)
+	 */
+	phys_map_get(pau->chip_id, PAU_GENID, pau->index, &addr, &size);
+	val = SETFIELD(PAU_GENID_BAR_ADDR, 0ull, addr >> 19);
+	pau_write(pau, PAU_GENID_BAR, val);
+
+	pau_for_each_dev(dev, pau) {
+		if (dev->type == PAU_DEV_TYPE_UNKNOWN)
+			continue;
+
+		dev->genid_bar.size = size;
+		/* +320K = Bricks 0-4 Config Addr/Data registers */
+		dev->genid_bar.cfg = addr + 0x50000;
+	}
+}
+
+static void pau_opencapi_init_hw(struct pau *pau)
+{
+	pau_opencapi_assign_bars(pau);
+}
+
+static void pau_opencapi_init(struct pau *pau)
+{
+	if (!pau_next_dev(pau, NULL, PAU_DEV_TYPE_OPENCAPI))
+		return;
+
+	assert(platform.ocapi);
+
+	pau_opencapi_init_hw(pau);
+
+	disable_fast_reboot("OpenCAPI device enabled");
+}
+
 static void pau_init(struct pau *pau)
 {
 	struct pau_dev *dev;
@@ -201,6 +275,7 @@ static void pau_init(struct pau *pau)
 	pau_for_each_dev(dev, pau)
 		pau_device_detect_fixup(dev);
 
+	pau_opencapi_init(pau);
 }
 
 void probe_pau(void)

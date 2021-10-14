@@ -19,10 +19,20 @@ enum pau_dev_type {
 	PAU_DEV_TYPE_ANY = INT_MAX
 };
 
+/* Used to expose a hardware BAR (or logical slice of it) outside skiboot */
+struct pau_bar {
+	uint64_t		addr;
+	uint64_t		size;
+	uint64_t		cfg;
+};
+
 struct pau_dev {
 	enum pau_dev_type	type;
 	uint32_t		index;
 	struct dt_node		*dn;
+
+	struct pau_bar		ntl_bar;
+	struct pau_bar		genid_bar;
 
 	/* Associated I2C information */
 	uint8_t			i2c_bus_id;
@@ -44,6 +54,7 @@ struct pau {
 
 	/* Global MMIO window (all PAU regs) */
 	uint64_t		regs[2];
+	bool			mmio_access;
 
 	struct lock		lock;
 
@@ -92,6 +103,74 @@ static inline int pau_get_phb_index(unsigned int pau_index,
 				    unsigned int link_index)
 {
 	return PAU_PHB_INDEX_BASE + pau_index * 2 + link_index;
+}
+
+/*
+ * We use the indirect method because it uses the same addresses as
+ * the MMIO offsets (PAU RING)
+ */
+static inline void pau_scom_sel(struct pau *pau, uint64_t reg,
+				uint64_t size)
+{
+	uint64_t val;
+
+	val = SETFIELD(PAU_MISC_DA_ADDR, 0ull, reg);
+	val = SETFIELD(PAU_MISC_DA_LEN, val, size);
+	xscom_write(pau->chip_id,
+		    pau->xscom_base + PAU_MISC_SCOM_IND_SCOM_ADDR,
+		    val);
+}
+
+static inline void pau_scom_write(struct pau *pau, uint64_t reg,
+				  uint64_t size,
+				  uint64_t val)
+{
+	pau_scom_sel(pau, reg, size);
+	xscom_write(pau->chip_id,
+		    pau->xscom_base + PAU_MISC_SCOM_IND_SCOM_DATA,
+		    val);
+}
+
+static inline uint64_t pau_scom_read(struct pau *pau, uint64_t reg,
+				     uint64_t size)
+{
+	uint64_t val;
+
+	pau_scom_sel(pau, reg, size);
+	xscom_read(pau->chip_id,
+		   pau->xscom_base + PAU_MISC_SCOM_IND_SCOM_DATA,
+		   &val);
+
+	return val;
+}
+
+static inline void pau_write(struct pau *pau, uint64_t reg,
+			     uint64_t val)
+{
+	void *mmio = (void *)pau->regs[0];
+
+	if (pau->mmio_access)
+		out_be64(mmio + reg, val);
+	else
+		pau_scom_write(pau, reg, PAU_MISC_DA_LEN_8B, val);
+
+	/* CQ_SM writes should be mirrored in all four blocks */
+	if (PAU_REG_BLOCK(reg) != PAU_BLOCK_CQ_SM(0))
+		return;
+
+	for (uint32_t i = 1; i < 4; i++)
+		pau_write(pau, PAU_BLOCK_CQ_SM(i) + PAU_REG_OFFSET(reg),
+			   val);
+}
+
+static inline uint64_t pau_read(struct pau *pau, uint64_t reg)
+{
+	void *mmio = (void *)pau->regs[0];
+
+	if (pau->mmio_access)
+		return in_be64(mmio + reg);
+
+	return pau_scom_read(pau, reg, PAU_MISC_DA_LEN_8B);
 }
 
 #endif /* __PAU_H */
