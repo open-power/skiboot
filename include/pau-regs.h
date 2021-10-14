@@ -37,6 +37,7 @@
 #define PAU_BLOCK_XSL				PAU_BLOCK(4, 0xE)
 #define PAU_BLOCK_PAU_XTS			PAU_BLOCK(7, 1)
 #define PAU_BLOCK_PAU_MISC			PAU_BLOCK(7, 2)
+#define PAU_BLOCK_PAU_XTS_ATSD(n)		PAU_BLOCK(8, (n))
 
 /*
  * CQ_SM block registers
@@ -176,6 +177,9 @@
 #define   PAU_XTS_CFG2_XSL2_ENA			PPC_BIT(55)
 #define PAU_XTS_CFG3				(PAU_BLOCK_PAU_XTS + 0x068)
 #define   PAU_XTS_CFG3_MMIOSD_OCAPI		PPC_BIT(5)
+#define PAU_XTS_ATSD_HYP(n)			(PAU_BLOCK_PAU_XTS + 0x100 + (n) * 8)
+#define   PAU_XTS_ATSD_HYP_MSR_HV		PPC_BIT(51)
+#define   PAU_XTS_ATSD_HYP_LPARID		PPC_BITMASK(52, 63)
 
 /* MISC block registers */
 #define PAU_MISC_OPTICAL_IO_CONFIG		(PAU_BLOCK_PAU_MISC + 0x018)
@@ -203,5 +207,9 @@
 #define PAU_MISC_INT_2_CONFIG			(PAU_BLOCK_PAU_MISC + 0x408)
 #define   PAU_MISC_INT_2_CONFIG_XFAULT_2_5(n)	PPC_BIT(0 + (n))
 #define   PAU_MISC_INT_2_CONFIG_XFAULT_0_1(n)	PPC_BIT(54 + (n))
+
+/* PAU_XTS_ATSD block registers */
+#define PAU_XTS_ATSD_LAUNCH(n)			(PAU_BLOCK_PAU_XTS_ATSD(n) + 0x000)
+#define PAU_XTS_ATSD_MAX			16
 
 #endif /* __PAU_REGS_H */

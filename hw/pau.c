@@ -268,6 +268,29 @@ static void pau_device_detect_fixup(struct pau_dev *dev)
 	dt_add_property_strings(dn, "ibm,pau-link-type", "unknown");
 }
 
+int64_t pau_opencapi_map_atsd_lpar(struct phb *phb, uint64_t __unused bdf,
+				   uint64_t lparid, uint64_t __unused lpcr)
+{
+	struct pau_dev *dev = pau_phb_to_opencapi_dev(phb);
+	struct pau *pau = dev->pau;
+	uint64_t val;
+
+	if (lparid >= PAU_XTS_ATSD_MAX)
+		return OPAL_PARAMETER;
+
+	lock(&pau->lock);
+
+	/* We need to allocate an ATSD per link */
+	val = SETFIELD(PAU_XTS_ATSD_HYP_LPARID, 0ull, lparid);
+	if (!lparid)
+		val |= PAU_XTS_ATSD_HYP_MSR_HV;
+
+	pau_write(pau, PAU_XTS_ATSD_HYP(lparid), val);
+
+	unlock(&pau->lock);
+	return OPAL_SUCCESS;
+}
+
 int64_t pau_opencapi_spa_setup(struct phb *phb, uint32_t __unused bdfn,
 			       uint64_t addr, uint64_t PE_mask)
 {
@@ -1442,6 +1465,18 @@ static void pau_opencapi_create_phb(struct pau_dev *dev)
 	pau_opencapi_create_phb_slot(dev);
 }
 
+static void pau_dt_add_mmio_atsd(struct pau_dev *dev)
+{
+	struct dt_node *dn = dev->phb.dt_node;
+	struct pau *pau = dev->pau;
+	uint64_t mmio_atsd[PAU_XTS_ATSD_MAX];
+
+	for (uint32_t i = 0; i < PAU_XTS_ATSD_MAX; i++)
+		mmio_atsd[i] = pau->regs[0] + PAU_XTS_ATSD_LAUNCH(i);
+
+	dt_add_property(dn, "ibm,mmio-atsd", mmio_atsd, sizeof(mmio_atsd));
+}
+
 static void pau_opencapi_dt_add_mmio_window(struct pau_dev *dev)
 {
 	struct dt_node *dn = dev->phb.dt_node;
@@ -1508,6 +1543,7 @@ static void pau_opencapi_dt_add_props(struct pau_dev *dev)
 	dt_add_property_cells(dn, "ibm,opal-num-pes", PAU_MAX_PE_NUM);
 	dt_add_property_cells(dn, "ibm,opal-reserved-pe", PAU_RESERVED_PE_NUM);
 
+	pau_dt_add_mmio_atsd(dev);
 	pau_opencapi_dt_add_mmio_window(dev);
 	pau_opencapi_dt_add_hotpluggable(dev);
 }
