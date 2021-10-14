@@ -15,6 +15,9 @@
 #define P10_NX_DMA_ENGINE_FIR	0x02011100 /* DMA & Engine FIR Data Register */
 #define P10_NX_PBI_FIR		0x02011080 /* PowerBus Interface FIR Register */
 
+/* pMisc Receive Malfunction Alert Register */
+#define P10_MALFUNC_ALERT	0x00090022
+
 #define P10_EC_CORE_THREAD_STATE	0x412 /* XXX P10 is this right? */
 #define P10_THREAD_STOPPED(t)		PPC_BIT(56 + (t))
 
