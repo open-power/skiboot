@@ -1955,7 +1955,12 @@ static void xive_create_mmio_dt_node(struct xive *x)
 			     tb + 3 * stride, stride);
 
 	dt_add_property_strings(xive_dt_node, "compatible",
-				"ibm,opal-xive-pe", "ibm,opal-intc");
+				"ibm,opal-xive-pe", "ibm,opal-xive-vc",
+				"ibm,opal-intc");
+
+	dt_add_property(xive_dt_node, "interrupt-controller", NULL, 0);
+	dt_add_property_cells(xive_dt_node, "#address-cells", 0);
+	dt_add_property_cells(xive_dt_node, "#interrupt-cells", 2);
 
 	dt_add_property_cells(xive_dt_node, "ibm,xive-eq-sizes",
 			      12, 16, 21, 24);
