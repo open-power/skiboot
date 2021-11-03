@@ -45,9 +45,11 @@
   /* DWARF 3 */								\
   .debug_pubtypes 0 : { *(.debug_pubtypes) }				\
   .debug_ranges   0 : { *(.debug_ranges) }				\
-  /* DWARF Extension.  */						\
+  /* DWARF 5 */								\
   .debug_macro    0 : { *(.debug_macro) }				\
-  .debug_addr     0 : { *(.debug_addr) }
+  .debug_addr     0 : { *(.debug_addr) }				\
+  .debug_rnglists 0 : { *(.debug_rnglists) }				\
+  .debug_loclists 0 : { *(.debug_loclists) }
 
 ENTRY(boot_entry);
 SECTIONS
