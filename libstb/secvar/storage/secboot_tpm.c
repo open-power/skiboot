@@ -127,12 +127,15 @@ static int secboot_format(void)
 		prlog(PR_ERR, "Bank hash failed to calculate somehow\n");
 		return rc;
 	}
+	/* Clear bank_hash[1] anyway, to match initial zeroed bank hash state */
+	memset(tpmnv_control_image->bank_hash[1], 0x00, sizeof(tpmnv_control_image->bank_hash[1]));
+
+	tpmnv_control_image->active_bit = 0;
 
 	rc = tpmnv_ops.write(SECBOOT_TPMNV_CONTROL_INDEX,
-			     tpmnv_control_image->bank_hash[0],
-			     SHA256_DIGEST_SIZE,
-			     offsetof(struct tpmnv_control,
-			     bank_hash[0]));
+			     tpmnv_control_image,
+			     sizeof(struct tpmnv_control),
+			     0);
 	if (rc) {
 		prlog(PR_ERR, "Could not write fresh formatted bank hashes to CONTROL index, rc=%d\n", rc);
 		return rc;
