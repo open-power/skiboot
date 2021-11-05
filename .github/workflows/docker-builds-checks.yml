@@ -1,19 +1,26 @@
 name: Docker builds and checks
-on: [push]
+
+on: [ push ]
 
 jobs:
   check_build:
+
     runs-on: ubuntu-latest
 
     strategy:
+
+      fail-fast: false
+
       matrix:
         os: [ ubuntu-18.04, ubuntu-20.04, ubuntu-rolling, centos7, centos8, fedora33, fedora34, fedora35, docs ]
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Create Docker image
         run: |
           docker build --pull -t ${{ matrix.os }} -f opal-ci/Dockerfile-${{ matrix.os }} .
-      - name: build skiboot and run checks
+
+      - name: Build skiboot and run checks
         run: |
-          docker run --security-opt seccomp=unconfined --volume `pwd`:/build --tmpfs /tmp/ --rm -t ${{ matrix.os }} bash -c "./opal-ci/build-${{ matrix.os }}.sh"
+          docker run --rm -t ${{ matrix.os }} bash -c "./opal-ci/build-${{ matrix.os }}.sh"
