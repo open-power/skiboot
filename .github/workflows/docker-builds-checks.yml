@@ -7,7 +7,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest, centos7, centos8, fedora33, fedora34, docs ]
+        os: [ ubuntu-18.04, ubuntu-20.04, ubuntu-rolling, centos7, centos8, fedora33, fedora34, fedora35, docs ]
+
     steps:
       - uses: actions/checkout@v2
       - name: Create Docker image
