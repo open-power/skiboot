@@ -17,11 +17,9 @@ make -j${MAKE_J} check
   CROSS_COMPILE=arm-linux-gnueabi-  make || { echo "ARM build failed"; exit 1; }
 )
 (cd external/pflash; make clean && make distclean && make)
-# GCOV build disabled for GCC 8.2
-# https://github.com/open-power/skiboot/issues/206
-# make clean
-# SKIBOOT_GCOV=1 make -j${MAKE_J}
-# SKIBOOT_GCOV=1 make -j${MAKE_J} check
+make clean
+SKIBOOT_GCOV=1 make -j${MAKE_J}
+SKIBOOT_GCOV=1 make -j${MAKE_J} check
 
 make clean
 rm -rf builddir
