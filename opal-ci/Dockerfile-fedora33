@@ -4,5 +4,6 @@ RUN dnf -y install --allowerasing wget curl xterm gcc git xz make diffutils find
 # for building documentation and the coverage report
 RUN dnf -y install python-pip lcov
 RUN if [ `arch` = "x86_64" ]; then dnf -y install http://public.dhe.ibm.com/software/server/powerfuncsim/p9/packages/v1.1-0/systemsim-p9-1.1-0.f22.x86_64.rpm; fi
+RUN if [ `arch` = "x86_64" ]; then dnf -y install http://public.dhe.ibm.com/software/server/powerfuncsim/p10/packages/v1.2-1/rhel8/systemsim-p10-1.2-1.x86_64.rpm; fi
 COPY . /build/
 WORKDIR /build
