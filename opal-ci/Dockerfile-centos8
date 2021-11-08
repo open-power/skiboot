@@ -9,5 +9,7 @@ RUN if [ `arch` = "ppc64le" ]; then wget https://mirrors.edge.kernel.org/pub/too
 RUN yum install -y flex bison
 RUN curl -L https://github.com/dgibson/dtc/archive/refs/tags/v1.6.1.tar.gz|tar xfz -
 RUN (cd dtc-1.6.1; make PREFIX=/usr/local install)
+RUN if [ `arch` = "x86_64" ]; then curl -L -O http://public.dhe.ibm.com/software/server/powerfuncsim/p8/packages/v1.0-2/systemsim-p8-1.0-2.el7.x86_64.rpm; yum install -y systemsim-p8-1.0-2.el7.x86_64.rpm; fi
+RUN if [ `arch` = "x86_64" ]; then dnf -y install http://public.dhe.ibm.com/software/server/powerfuncsim/p9/packages/v1.1-0/systemsim-p9-1.1-0.f22.x86_64.rpm; fi
 COPY . /build/
 WORKDIR /build
