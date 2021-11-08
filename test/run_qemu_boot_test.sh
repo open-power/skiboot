@@ -2,6 +2,10 @@
 
 QEMU_ARGS="-M powernv -nodefaults -device ipmi-bmc-sim,id=bmc0 -serial none"
 QEMU_ARGS+=" -device isa-serial,chardev=s1 -chardev stdio,id=s1,signal=off"
+QEMU_ARGS+=" -device pcie-pci-bridge,id=bridge1,bus=pcie.1,addr=0x0"
+QEMU_ARGS+=" -device ich9-ahci,id=sata0,bus=pcie.0,addr=0x0"
+QEMU_ARGS+=" -device e1000e,netdev=net0,bus=bridge1,addr=0x3 -netdev user,id=net0"
+QEMU_ARGS+=" -device nec-usb-xhci,bus=bridge1,addr=0x2"
 QEMU_ARGS+=" -nographic"
 
 if [ -z "$QEMU_BIN" ]; then
@@ -32,6 +36,20 @@ if [ ! -f "$SKIBOOT_ZIMAGE" ]; then
     exit 0;
 fi
 
+if [ -z "$DISK_IMAGE" ]; then
+    export DISK_IMAGE="$(pwd)/debian-11-generic-ppc64el.qcow2"
+fi
+
+WAIT_FOR="Welcome to Petitboot"
+
+if [ -f "$DISK_IMAGE" ]; then
+    QEMU_ARGS+=" -drive file=$DISK_IMAGE,if=none,id=drive0,format=qcow2,cache=none"
+    QEMU_ARGS+=" -device ide-hd,bus=sata0.0,unit=0,drive=drive0,id=ide,bootindex=1"
+
+    # TODO: Find a generic way to check that disk was read
+    WAIT_FOR="(*) Debian GNU/Linux"
+fi
+
 T=$(mktemp  --tmpdir skiboot_qemu_boot_test.XXXXXXXXXX)
 
 ( cat <<EOF | expect
@@ -43,7 +61,7 @@ eof { send_user "\nUnexpected EOF\n"; exit 1 }
 "Could not load OPAL firmware" { send_user "\nSkiboot is too large for this Qemu, skipping\n"; exit 4; }
 "Machine Check Stop" { exit 1; }
 "Trying to write privileged spr 338" { send_user "\nUpgrade Qemu: needs PCR register\n"; exit 3 }
-"Welcome to Petitboot"
+"$WAIT_FOR"
 }
 close
 wait
@@ -64,7 +82,7 @@ if [ $E -eq 3 ]; then
     exit 0;
 fi
 
-if [ -n "$V" ] ; then cat "$t" ; fi
+if [ -n "$V" ] ; then cat "$T" ; fi
 if [ $E -eq 0 ]; then
     rm $T
 else
