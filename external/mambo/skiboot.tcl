@@ -553,6 +553,11 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
 	mysim of addprop $cpu_node array64 "ibm,pa-features" reg
     }
 
+    if { $default_config == "P10" } {
+        mysim of addprop $cpu_node int "ibm,mmu-pid-bits" 20
+        mysim of addprop $cpu_node int "ibm,mmu-lpid-bits" 12
+    }
+
     set irqreg [list]
     for { set t 0 } { $t < $mconf(threads) } { incr t } {
 	mysim mcm 0 cpu $c thread $t set spr pc $mconf(boot_pc)
