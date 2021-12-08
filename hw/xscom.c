@@ -616,7 +616,7 @@ int64_t scom_register(struct scom_controller *new)
 		}
 
 		if (cur->part_id > new->part_id) {
-			list_add_before(&scom_list, &new->link, &cur->link);
+			list_add_before(&scom_list, &cur->link, &new->link);
 			return 0;
 		}
 	}

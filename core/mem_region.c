@@ -734,7 +734,7 @@ static bool maybe_split(struct mem_region *r, uint64_t split_at)
 		return false;
 
 	/* Tail add is important: we may need to split again! */
-	list_add_after(&regions, &tail->list, &r->list);
+	list_add_after(&regions, &r->list, &tail->list);
 	return true;
 }
 
@@ -771,7 +771,7 @@ static void add_region_to_regions(struct mem_region *region)
 		if (r->start < region->start)
 			continue;
 
-		list_add_before(&regions, &region->list, &r->list);
+		list_add_before(&regions, &r->list, &region->list);
 		return;
 	}
 	list_add_tail(&regions, &region->list);

@@ -120,7 +120,7 @@ bool dt_attach_root(struct dt_node *parent, struct dt_node *root)
 			break;
 	}
 
-	list_add_before(&parent->children, &root->list, &node->list);
+	list_add_before(&parent->children, &node->list, &root->list);
 	root->parent = parent;
 
 	return true;

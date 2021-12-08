@@ -121,7 +121,7 @@ static void __schedule_timer_at(struct timer *t, uint64_t when)
 		list_for_each(&timer_list, lt, link) {
 			if (when >= lt->target)
 				continue;
-			list_add_before(&timer_list, &t->link, &lt->link);
+			list_add_before(&timer_list, &lt->link, &t->link);
 			goto bail;
 		}
 		list_add_tail(&timer_list, &t->link);
