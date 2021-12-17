@@ -106,14 +106,6 @@ static void cpu_send_ipi(struct cpu_thread *cpu)
 	}
 }
 
-static void cpu_wake(struct cpu_thread *cpu)
-{
-	/* Is it idle ? If not, no need to wake */
-	sync();
-	if (cpu->in_idle)
-		cpu_send_ipi(cpu);
-}
-
 /*
  * If chip_id is >= 0, schedule the job on that node.
  * Otherwise schedule the job anywhere.
@@ -200,7 +192,10 @@ static void queue_job_on_cpu(struct cpu_thread *cpu, struct cpu_job *job)
 		cpu->job_count++;
 	unlock(&cpu->job_lock);
 
-	cpu_wake(cpu);
+	/* Is it idle waiting for jobs? If so, must send an IPI. */
+	sync();
+	if (cpu->in_job_sleep)
+		cpu_send_ipi(cpu);
 }
 
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
@@ -394,13 +389,21 @@ static unsigned int cpu_idle_p8(enum cpu_wake_cause wake_on)
 	/* Clean up ICP, be ready for IPIs */
 	icp_prep_for_pm();
 
+	/* Mark outselves sleeping so wake ups know to send an IPI */
+	cpu->in_sleep = true;
+
 	/* Synchronize with wakers */
 	if (wake_on == cpu_wake_on_job) {
-		/* Mark ourselves in idle so other CPUs know to send an IPI */
-		cpu->in_idle = true;
+		/* Mark ourselves in job sleep so queueing jobs send an IPI */
+		cpu->in_job_sleep = true;
+
+		/*
+		 * make stores to in_sleep and in_job_sleep visible before
+		 * checking jobs and testing reconfigure_idle
+		 */
 		sync();
 
-		/* Check for jobs again */
+		/* Check for jobs again, of if PM got disabled */
 		if (cpu_check_jobs(cpu) || reconfigure_idle)
 			goto skip_sleep;
 
@@ -409,10 +412,10 @@ static unsigned int cpu_idle_p8(enum cpu_wake_cause wake_on)
 		mtspr(SPR_LPCR, lpcr);
 
 	} else {
-		/* Mark outselves sleeping so cpu_set_pm_enable knows to
-		 * send an IPI
+		/*
+		 * make store to in_sleep visible before testing
+		 * reconfigure_idle
 		 */
-		cpu->in_sleep = true;
 		sync();
 
 		/* Check if PM got disabled */
@@ -431,8 +434,8 @@ static unsigned int cpu_idle_p8(enum cpu_wake_cause wake_on)
 skip_sleep:
 	/* Restore */
 	sync();
-	cpu->in_idle = false;
 	cpu->in_sleep = false;
+	cpu->in_job_sleep = false;
 	reset_cpu_icp();
 
 	return vec;
@@ -450,23 +453,31 @@ static unsigned int cpu_idle_p9(enum cpu_wake_cause wake_on)
 		return vec;
 	}
 
+	/* Mark outselves sleeping so wake ups know to send an IPI */
+	cpu->in_sleep = true;
+
 	/* Synchronize with wakers */
 	if (wake_on == cpu_wake_on_job) {
-		/* Mark ourselves in idle so other CPUs know to send an IPI */
-		cpu->in_idle = true;
+		/* Mark ourselves in job sleep so queueing jobs send an IPI */
+		cpu->in_job_sleep = true;
+
+		/*
+		 * make stores to in_sleep and in_job_sleep visible before
+		 * checking jobs and testing reconfigure_idle
+		 */
 		sync();
 
-		/* Check for jobs again */
+		/* Check for jobs again, of if PM got disabled */
 		if (cpu_check_jobs(cpu) || reconfigure_idle)
 			goto skip_sleep;
 
 		/* HV DBELL for IPI */
 		lpcr |= SPR_LPCR_P9_PECEL1;
 	} else {
-		/* Mark outselves sleeping so cpu_set_pm_enable knows to
-		 * send an IPI
+		/*
+		 * make store to in_sleep visible before testing
+		 * reconfigure_idle
 		 */
-		cpu->in_sleep = true;
 		sync();
 
 		/* Check if PM got disabled */
@@ -499,8 +510,8 @@ static unsigned int cpu_idle_p9(enum cpu_wake_cause wake_on)
  skip_sleep:
 	/* Restore */
 	sync();
-	cpu->in_idle = false;
 	cpu->in_sleep = false;
+	cpu->in_job_sleep = false;
 
 	return vec;
 }
@@ -549,10 +560,17 @@ static int nr_cpus_idle = 0;
 
 static void enter_idle(void)
 {
+	struct cpu_thread *cpu = this_cpu();
+
+	assert(!cpu->in_idle);
+	assert(!cpu->in_sleep);
+	assert(!cpu->in_job_sleep);
+
 	for (;;) {
 		lock(&idle_lock);
 		if (!reconfigure_idle) {
 			nr_cpus_idle++;
+			cpu->in_idle = true;
 			break;
 		}
 		unlock(&idle_lock);
@@ -569,9 +587,16 @@ static void enter_idle(void)
 
 static void exit_idle(void)
 {
+	struct cpu_thread *cpu = this_cpu();
+
+	assert(cpu->in_idle);
+	assert(!cpu->in_sleep);
+	assert(!cpu->in_job_sleep);
+
 	lock(&idle_lock);
 	assert(nr_cpus_idle > 0);
 	nr_cpus_idle--;
+	cpu->in_idle = false;
 	unlock(&idle_lock);
 }
 
@@ -606,12 +631,12 @@ static void reconfigure_idle_start(void)
 
 	/*
 	 * Order earlier store to reconfigure_idle=true vs load from
-	 * cpu->in_sleep and cpu->in_idle.
+	 * cpu->in_sleep.
 	 */
 	sync();
 
 	for_each_available_cpu(cpu) {
-		if (cpu->in_sleep || cpu->in_idle)
+		if (cpu->in_sleep)
 			cpu_send_ipi(cpu);
 	}
 

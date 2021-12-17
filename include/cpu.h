@@ -60,8 +60,9 @@ struct cpu_thread {
 	bool				in_poller;
 	bool				in_reinit;
 	bool				in_fast_sleep;
-	bool				in_sleep;
-	bool				in_idle;
+	bool				in_idle; /* any idle state, even busy wait */
+	bool				in_sleep; /* idle which requires IPI */
+	bool				in_job_sleep; /* requires IPI and cpu_wake_on_job */
 	uint32_t			hbrt_spec_wakeup; /* primary only */
 	uint64_t			save_l2_fir_action1;
 	uint64_t			current_token;
