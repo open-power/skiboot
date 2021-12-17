@@ -609,10 +609,8 @@ static void reconfigure_idle_start(void)
 
 	if (proc_gen == proc_gen_p8) {
 		for_each_available_cpu(cpu) {
-			while (cpu->in_sleep || cpu->in_idle) {
+			if (cpu->in_sleep || cpu->in_idle)
 				icp_kick_cpu(cpu);
-				cpu_relax();
-			}
 		}
 	} else if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10) {
 		for_each_available_cpu(cpu) {
