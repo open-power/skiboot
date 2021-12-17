@@ -1556,8 +1556,9 @@ void tfmr_cleanup_core_errors(uint64_t tfmr)
 	 * restored after the next rendez-vous
 	 */
 	if (!(tfmr & SPR_TFMR_TB_VALID)) {
+		mtspr(SPR_TBWL, 0);
 		mtspr(SPR_TBWU, 0);
-		mtspr(SPR_TBWU, 0);
+		mtspr(SPR_TBWL, 0);
 	}
 }
 
