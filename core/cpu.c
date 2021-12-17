@@ -378,64 +378,21 @@ enum cpu_wake_cause {
 static unsigned int cpu_idle_p8(enum cpu_wake_cause wake_on)
 {
 	uint64_t lpcr = mfspr(SPR_LPCR) & ~SPR_LPCR_P8_PECE;
-	struct cpu_thread *cpu = this_cpu();
-	unsigned int vec = 0;
-
-	if (!pm_enabled) {
-		prlog_once(PR_DEBUG, "cpu_idle_p8 called pm disabled\n");
-		return vec;
-	}
+	unsigned int vec;
 
 	/* Clean up ICP, be ready for IPIs */
 	icp_prep_for_pm();
 
-	/* Mark outselves sleeping so wake ups know to send an IPI */
-	cpu->in_sleep = true;
-
-	/* Synchronize with wakers */
-	if (wake_on == cpu_wake_on_job) {
-		/* Mark ourselves in job sleep so queueing jobs send an IPI */
-		cpu->in_job_sleep = true;
-
-		/*
-		 * make stores to in_sleep and in_job_sleep visible before
-		 * checking jobs and testing reconfigure_idle
-		 */
-		sync();
-
-		/* Check for jobs again, of if PM got disabled */
-		if (cpu_check_jobs(cpu) || reconfigure_idle)
-			goto skip_sleep;
-
-		/* Setup wakup cause in LPCR: EE (for IPI) */
-		lpcr |= SPR_LPCR_P8_PECE2;
-		mtspr(SPR_LPCR, lpcr);
-
-	} else {
-		/*
-		 * make store to in_sleep visible before testing
-		 * reconfigure_idle
-		 */
-		sync();
-
-		/* Check if PM got disabled */
-		if (reconfigure_idle)
-			goto skip_sleep;
-
-		/* EE and DEC */
-		lpcr |= SPR_LPCR_P8_PECE2 | SPR_LPCR_P8_PECE3;
-		mtspr(SPR_LPCR, lpcr);
-	}
+	/* Setup wakup cause in LPCR: EE (for IPI) */
+	lpcr |= SPR_LPCR_P8_PECE2;
+	if (wake_on == cpu_wake_on_dec)
+		lpcr |= SPR_LPCR_P8_PECE3; /* DEC */
+	mtspr(SPR_LPCR, lpcr);
 	isync();
 
 	/* Enter nap */
 	vec = enter_p8_pm_state(false);
 
-skip_sleep:
-	/* Restore */
-	sync();
-	cpu->in_sleep = false;
-	cpu->in_job_sleep = false;
 	reset_cpu_icp();
 
 	return vec;
@@ -445,49 +402,11 @@ static unsigned int cpu_idle_p9(enum cpu_wake_cause wake_on)
 {
 	uint64_t lpcr = mfspr(SPR_LPCR) & ~SPR_LPCR_P9_PECE;
 	uint64_t psscr;
-	struct cpu_thread *cpu = this_cpu();
-	unsigned int vec = 0;
+	unsigned int vec;
 
-	if (!pm_enabled) {
-		prlog(PR_DEBUG, "cpu_idle_p9 called on cpu 0x%04x with pm disabled\n", cpu->pir);
-		return vec;
-	}
-
-	/* Mark outselves sleeping so wake ups know to send an IPI */
-	cpu->in_sleep = true;
-
-	/* Synchronize with wakers */
-	if (wake_on == cpu_wake_on_job) {
-		/* Mark ourselves in job sleep so queueing jobs send an IPI */
-		cpu->in_job_sleep = true;
-
-		/*
-		 * make stores to in_sleep and in_job_sleep visible before
-		 * checking jobs and testing reconfigure_idle
-		 */
-		sync();
-
-		/* Check for jobs again, of if PM got disabled */
-		if (cpu_check_jobs(cpu) || reconfigure_idle)
-			goto skip_sleep;
-
-		/* HV DBELL for IPI */
-		lpcr |= SPR_LPCR_P9_PECEL1;
-	} else {
-		/*
-		 * make store to in_sleep visible before testing
-		 * reconfigure_idle
-		 */
-		sync();
-
-		/* Check if PM got disabled */
-		if (reconfigure_idle)
-			goto skip_sleep;
-
-		/* HV DBELL and DEC */
-		lpcr |= SPR_LPCR_P9_PECEL1 | SPR_LPCR_P9_PECEL3;
-	}
-
+	lpcr |= SPR_LPCR_P9_PECEL1; /* HV DBELL for IPI */
+	if (wake_on == cpu_wake_on_dec)
+		lpcr |= SPR_LPCR_P9_PECEL3; /* DEC */
 	mtspr(SPR_LPCR, lpcr);
 	isync();
 
@@ -502,39 +421,46 @@ static unsigned int cpu_idle_p9(enum cpu_wake_cause wake_on)
 		/* PSSCR SD=0 ESL=0 EC=0 PSSL=0 TR=3 MTL=0 RL=1 */
 		psscr = PPC_BITMASK(54, 55) | PPC_BIT(63);
 		enter_p9_pm_lite_state(psscr);
+		vec = 0;
 	}
 
 	/* Clear doorbell */
 	p9_dbell_receive();
-
- skip_sleep:
-	/* Restore */
-	sync();
-	cpu->in_sleep = false;
-	cpu->in_job_sleep = false;
 
 	return vec;
 }
 
 static void cpu_idle_pm(enum cpu_wake_cause wake_on)
 {
+	struct cpu_thread *cpu = this_cpu();
 	unsigned int vec;
 
-	switch(proc_gen) {
-	case proc_gen_p8:
-		vec = cpu_idle_p8(wake_on);
-		break;
-	case proc_gen_p9:
-		vec = cpu_idle_p9(wake_on);
-		break;
-	case proc_gen_p10:
-		vec = cpu_idle_p9(wake_on);
-		break;
-	default:
-		vec = 0;
-		prlog_once(PR_DEBUG, "cpu_idle_pm called with bad processor type\n");
-		break;
+	if (!pm_enabled) {
+		prlog_once(PR_DEBUG, "cpu_idle_pm called pm disabled\n");
+		return;
 	}
+
+	/*
+	 * Mark ourselves in sleep so other CPUs know to send an IPI,
+	 * then re-check the wake conditions. This is ordered against
+	 * queue_job_on_cpu() and reconfigure_idle_start() which first
+	 * set the wake conditions (either queue a job or set
+	 * reconfigure_idle = true), issue a sync(), then test if the
+	 * target is in_sleep / in_job_sleep.
+	 */
+	cpu->in_sleep = true;
+	if (wake_on == cpu_wake_on_job)
+		cpu->in_job_sleep = true;
+	sync();
+	if (reconfigure_idle)
+		goto skip_sleep;
+	if (wake_on == cpu_wake_on_job && cpu_check_jobs(cpu))
+		goto skip_sleep;
+
+	if (proc_gen == proc_gen_p8)
+		vec = cpu_idle_p8(wake_on);
+	else
+		vec = cpu_idle_p9(wake_on);
 
 	if (vec == 0x100) {
 		unsigned long srr1 = mfspr(SPR_SRR1);
@@ -553,6 +479,12 @@ static void cpu_idle_pm(enum cpu_wake_cause wake_on)
 		enable_machine_check();
 		mtmsrd(MSR_RI, 1);
 	}
+
+skip_sleep:
+	sync();
+	cpu->in_sleep = false;
+	if (wake_on == cpu_wake_on_job)
+		cpu->in_job_sleep = false;
 }
 
 static struct lock idle_lock = LOCK_UNLOCKED;
