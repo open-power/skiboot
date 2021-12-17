@@ -96,19 +96,22 @@ void __nomcount cpu_relax(void)
 	barrier();
 }
 
-static void cpu_wake(struct cpu_thread *cpu)
+static void cpu_send_ipi(struct cpu_thread *cpu)
 {
-	/* Is it idle ? If not, no need to wake */
-	sync();
-	if (!cpu->in_idle)
-		return;
-
 	if (proc_gen == proc_gen_p8) {
 		/* Poke IPI */
 		icp_kick_cpu(cpu);
 	} else if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10) {
 		p9_dbell_send(cpu->pir);
 	}
+}
+
+static void cpu_wake(struct cpu_thread *cpu)
+{
+	/* Is it idle ? If not, no need to wake */
+	sync();
+	if (cpu->in_idle)
+		cpu_send_ipi(cpu);
 }
 
 /*
@@ -195,8 +198,7 @@ static void queue_job_on_cpu(struct cpu_thread *cpu, struct cpu_job *job)
 		cpu->job_has_no_return = true;
 	else
 		cpu->job_count++;
-	if (pm_enabled)
-		cpu_wake(cpu);
+	cpu_wake(cpu);
 	unlock(&cpu->job_lock);
 }
 
@@ -607,16 +609,9 @@ static void reconfigure_idle_start(void)
 	 */
 	sync();
 
-	if (proc_gen == proc_gen_p8) {
-		for_each_available_cpu(cpu) {
-			if (cpu->in_sleep || cpu->in_idle)
-				icp_kick_cpu(cpu);
-		}
-	} else if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10) {
-		for_each_available_cpu(cpu) {
-			if (cpu->in_sleep || cpu->in_idle)
-				p9_dbell_send(cpu->pir);
-		}
+	for_each_available_cpu(cpu) {
+		if (cpu->in_sleep || cpu->in_idle)
+			cpu_send_ipi(cpu);
 	}
 
 	/*
