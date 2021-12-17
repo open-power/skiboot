@@ -198,8 +198,9 @@ static void queue_job_on_cpu(struct cpu_thread *cpu, struct cpu_job *job)
 		cpu->job_has_no_return = true;
 	else
 		cpu->job_count++;
-	cpu_wake(cpu);
 	unlock(&cpu->job_lock);
+
+	cpu_wake(cpu);
 }
 
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
