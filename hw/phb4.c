@@ -6368,7 +6368,7 @@ static void phb4_probe_pbcq(struct dt_node *pbcq)
 	}
 }
 
-void probe_phb4(void)
+static void probe_phb4(void)
 {
 	struct dt_node *np;
 	const char *s;
@@ -6404,3 +6404,5 @@ void probe_phb4(void)
 			phb4_create(np);
 	}
 }
+
+DEFINE_HWPROBE(phb4, probe_phb4);

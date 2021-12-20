@@ -2074,7 +2074,7 @@ static void pau_init(struct pau *pau)
 	pau_opencapi_init(pau);
 }
 
-void probe_pau(void)
+static void probe_pau(void)
 {
 	struct dt_node *dn;
 	struct pau *pau;
@@ -2093,3 +2093,4 @@ void probe_pau(void)
 		pau_init(pau);
 	}
 }
+DEFINE_HWPROBE_DEPS(pau, probe_pau, "phb4");

@@ -210,13 +210,8 @@ extern void copy_sreset_vector_fast_reboot(void);
 extern void patch_traps(bool enable);
 
 /* Various probe routines, to replace with an initcall system */
-extern void probe_phb3(void);
-extern void probe_phb4(void);
 extern int preload_capp_ucode(void);
 extern void preload_io_vpd(void);
-extern void probe_npu(void);
-extern void probe_npu2(void);
-extern void probe_pau(void);
 extern void uart_init(void);
 extern void mbox_init(void);
 extern void early_uart_init(void);

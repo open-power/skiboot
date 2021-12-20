@@ -1361,20 +1361,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* NX init */
 	nx_init();
 
-	/* Probe PHB3 on P8 */
-	probe_phb3();
-
-	/* Probe PHB4 on P9 and PHB5 on P10 */
-	probe_phb4();
-
-	/* Probe NPUs */
-	probe_npu();
-	probe_npu2();
-
-	/* Probe PAUs */
-	probe_pau();
-
-	/* Probe all HWPROBE hardware we have code linked for*/
+	/* Probe all HWPROBE hardware we have code linked for */
 	probe_hardware();
 
 	/* Initialize PCI */
