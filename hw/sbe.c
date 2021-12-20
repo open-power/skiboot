@@ -21,8 +21,10 @@ void sbe_update_timer_expiry(uint64_t target)
 	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
 		p9_sbe_update_timer_expiry(target);
 
+#ifdef CONFIG_P8
 	if (proc_gen == proc_gen_p8)
 		p8_sbe_update_timer_expiry(target);
+#endif
 }
 
 bool sbe_timer_ok(void)

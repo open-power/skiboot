@@ -32,19 +32,20 @@
 enum wakeup_engine_states wakeup_engine_state = WAKEUP_ENGINE_NOT_PRESENT;
 bool has_deep_states = false;
 
-DEFINE_LOG_ENTRY(OPAL_RC_SLW_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
-		 OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
-		 OPAL_NA);
-
 DEFINE_LOG_ENTRY(OPAL_RC_SLW_SET, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 		 OPAL_NA);
 
-DEFINE_LOG_ENTRY(OPAL_RC_SLW_GET, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
+DEFINE_LOG_ENTRY(OPAL_RC_SLW_REG, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 		 OPAL_NA);
 
-DEFINE_LOG_ENTRY(OPAL_RC_SLW_REG, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
+#ifdef CONFIG_P8
+DEFINE_LOG_ENTRY(OPAL_RC_SLW_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
+		 OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
+		 OPAL_NA);
+
+DEFINE_LOG_ENTRY(OPAL_RC_SLW_GET, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 		 OPAL_NA);
 
@@ -95,59 +96,6 @@ static bool slw_set_overrides(struct proc_chip *chip, struct cpu_thread *c)
 		return false;
 	}
 
-	return true;
-}
-
-static bool slw_set_overrides_p10(struct proc_chip *chip, struct cpu_thread *c)
-{
-	uint64_t tmp;
-	int rc;
-	uint32_t core = pir_to_core_id(c->pir);
-
-	/* Special wakeup bits that could hold power mgt */
-	rc = xscom_read(chip->id,
-			XSCOM_ADDR_P10_QME_CORE(core, P10_QME_SPWU_HYP),
-			&tmp);
-        if (rc) {
-          log_simple_error(&e_info(OPAL_RC_SLW_SET),
-                           "SLW: Failed to read P10_QME_SPWU_HYP\n");
-          return false;
-        }
-        if (tmp & P10_SPWU_REQ)
-		prlog(PR_WARNING,
-		        "SLW: core %d P10_QME_SPWU_HYP requested 0x%016llx\n",
-		      core, tmp);
-
-	return true;
-}
-
-
-static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
-{
-	uint64_t tmp;
-	int rc;
-	uint32_t core = pir_to_core_id(c->pir);
-
-	/* Special wakeup bits that could hold power mgt */
-	rc = xscom_read(chip->id,
-			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
-			&tmp);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-				 "SLW: Failed to read EC_PPM_SPECIAL_WKUP_HYP\n");
-		return false;
-	}
-	if (tmp)
-		prlog(PR_WARNING,
-			"SLW: core %d EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n",
-		     core, tmp);
-	rc = xscom_read(chip->id,
-			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_OTR),
-			&tmp);
-	if (tmp)
-		prlog(PR_WARNING,
-			"SLW: core %d EC_PPM_SPECIAL_WKUP_OTR read  0x%016llx\n",
-		      core, tmp);
 	return true;
 }
 
@@ -241,6 +189,60 @@ static bool idle_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
 
 	return true;
 
+}
+#endif
+
+static bool slw_set_overrides_p10(struct proc_chip *chip, struct cpu_thread *c)
+{
+	uint64_t tmp;
+	int rc;
+	uint32_t core = pir_to_core_id(c->pir);
+
+	/* Special wakeup bits that could hold power mgt */
+	rc = xscom_read(chip->id,
+			XSCOM_ADDR_P10_QME_CORE(core, P10_QME_SPWU_HYP),
+			&tmp);
+        if (rc) {
+          log_simple_error(&e_info(OPAL_RC_SLW_SET),
+                           "SLW: Failed to read P10_QME_SPWU_HYP\n");
+          return false;
+        }
+        if (tmp & P10_SPWU_REQ)
+		prlog(PR_WARNING,
+		        "SLW: core %d P10_QME_SPWU_HYP requested 0x%016llx\n",
+		      core, tmp);
+
+	return true;
+}
+
+
+static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
+{
+	uint64_t tmp;
+	int rc;
+	uint32_t core = pir_to_core_id(c->pir);
+
+	/* Special wakeup bits that could hold power mgt */
+	rc = xscom_read(chip->id,
+			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
+			&tmp);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_SLW_SET),
+				 "SLW: Failed to read EC_PPM_SPECIAL_WKUP_HYP\n");
+		return false;
+	}
+	if (tmp)
+		prlog(PR_WARNING,
+			"SLW: core %d EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n",
+		     core, tmp);
+	rc = xscom_read(chip->id,
+			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_OTR),
+			&tmp);
+	if (tmp)
+		prlog(PR_WARNING,
+			"SLW: core %d EC_PPM_SPECIAL_WKUP_OTR read  0x%016llx\n",
+		      core, tmp);
+	return true;
 }
 
 /* Define device-tree fields */
@@ -1069,31 +1071,6 @@ void add_cpu_idle_state_properties(void)
 	free(pm_ctrl_reg_mask_buf);
 }
 
-static void slw_patch_regs(struct proc_chip *chip)
-{
-	struct cpu_thread *c;
-	void *image = (void *)chip->slw_base;
-	int rc;
-
-	for_each_available_cpu(c) {
-		if (c->chip_id != chip->id)
-			continue;
-	
-		/* Clear HRMOR */
-		rc =  p8_pore_gen_cpureg_fixed(image, P8_SLW_MODEBUILD_SRAM,
-					       P8_SPR_HRMOR, 0,
-					       cpu_get_core_index(c),
-					       cpu_get_thread_index(c));
-		if (rc) {
-			log_simple_error(&e_info(OPAL_RC_SLW_REG),
-				"SLW: Failed to set HRMOR for CPU %x\n",
-				c->pir);
-		}
-
-		/* XXX Add HIDs etc... */
-	}
-}
-
 static void slw_init_chip_p9(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
@@ -1133,6 +1110,32 @@ static bool  slw_image_check_p9(struct proc_chip *chip)
 		return true;
 
 
+}
+
+#ifdef CONFIG_P8
+static void slw_patch_regs(struct proc_chip *chip)
+{
+	struct cpu_thread *c;
+	void *image = (void *)chip->slw_base;
+	int rc;
+
+	for_each_available_cpu(c) {
+		if (c->chip_id != chip->id)
+			continue;
+
+		/* Clear HRMOR */
+		rc =  p8_pore_gen_cpureg_fixed(image, P8_SLW_MODEBUILD_SRAM,
+					       P8_SPR_HRMOR, 0,
+					       cpu_get_core_index(c),
+					       cpu_get_thread_index(c));
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_SLW_REG),
+				"SLW: Failed to set HRMOR for CPU %x\n",
+				c->pir);
+		}
+
+		/* XXX Add HIDs etc... */
+	}
 }
 
 static bool  slw_image_check_p8(struct proc_chip *chip)
@@ -1284,6 +1287,7 @@ static int64_t opal_config_cpu_idle_state(uint64_t state, uint64_t enter)
 }
 
 opal_call(OPAL_CONFIG_CPU_IDLE_STATE, opal_config_cpu_idle_state, 2);
+#endif
 
 int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 {
@@ -1324,6 +1328,7 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 					 sprn, val, cpu_pir);
 		}
 
+#ifdef CONFIG_P8
 	} else if (proc_gen == proc_gen_p8) {
 		int spr_is_supported = 0;
 		void *image;
@@ -1347,6 +1352,7 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 					      sprn, val,
 					      cpu_get_core_index(c),
 					      cpu_get_thread_index(c));
+#endif
 	} else {
 		log_simple_error(&e_info(OPAL_RC_SLW_REG),
 		"SLW: proc_gen not supported\n");
@@ -1381,6 +1387,7 @@ void slw_init(void)
 	}
 
 	if (proc_gen == proc_gen_p8) {
+#ifdef CONFIG_P8
 		for_each_chip(chip) {
 			slw_init_chip_p8(chip);
 			if(slw_image_check_p8(chip))
@@ -1389,6 +1396,7 @@ void slw_init(void)
 				slw_late_init_p8(chip);
 		}
 		p8_sbe_init_timer();
+#endif
 	} else if (proc_gen == proc_gen_p9) {
 		for_each_chip(chip) {
 			slw_init_chip_p9(chip);

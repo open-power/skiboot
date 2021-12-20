@@ -272,6 +272,7 @@ static void cleanup_cpu_state(void)
 		/* XXX Update the SLW copies ! Also dbl check HIDs etc... */
 		init_shared_sprs();
 
+#ifdef CONFIG_P8
 		if (proc_gen == proc_gen_p8) {
 			/* If somebody was in fast_sleep, we may have a
 			 * workaround to undo
@@ -287,6 +288,7 @@ static void cleanup_cpu_state(void)
 			 */
 			cleanup_local_tlb();
 		}
+#endif
 
 		/* And we might have lost TB sync */
 		chiptod_wakeup_resync();
