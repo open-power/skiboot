@@ -15,8 +15,7 @@
 #include <fsp.h>
 #include <device.h>
 #include <opal.h>
-#include <sbe-p8.h>
-#include <sbe-p9.h>
+#include <sbe.h>
 
 #ifdef __TEST__
 #define this_cpu()	((void *)-1)
@@ -36,10 +35,8 @@ static uint64_t timer_poll_gen;
 
 static inline void update_timer_expiry(uint64_t target)
 {
-	if (proc_gen < proc_gen_p9)
-		p8_sbe_update_timer_expiry(target);
-	else
-		p9_sbe_update_timer_expiry(target);
+	if (sbe_timer_ok())
+		sbe_update_timer_expiry(target);
 }
 
 void init_timer(struct timer *t, timer_func_t expiry, void *data)
@@ -287,9 +284,7 @@ void late_init_timers(void)
 	 */
 	if (platform.heartbeat_time) {
 		heartbeat = platform.heartbeat_time();
-	} else if (p9_sbe_timer_ok()) {
-		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
-	} else if (p8_sbe_timer_ok()) {
+	} else if (sbe_timer_ok()) {
 		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
 	}
 

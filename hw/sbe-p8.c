@@ -6,13 +6,13 @@
  */
 
 #include <device.h>
+#include <sbe.h>
 #include <sbe-p8.h>
 #include <skiboot.h>
 #include <timebase.h>
 #include <xscom.h>
 
 /* SLW timer related stuff */
-static bool sbe_has_timer;
 static uint64_t sbe_timer_inc;
 static uint64_t sbe_timer_target;
 static uint32_t sbe_timer_chip;
@@ -65,7 +65,7 @@ void p8_sbe_update_timer_expiry(uint64_t new_target)
 	uint64_t count, gen, gen2, req, now;
 	int64_t rc;
 
-	if (!sbe_has_timer || new_target == sbe_timer_target)
+	if (new_target == sbe_timer_target)
 		return;
 
 	sbe_timer_target = new_target;
@@ -160,11 +160,6 @@ void p8_sbe_update_timer_expiry(uint64_t new_target)
 	}
 
 	prlog(PR_TRACE, "SLW: gen: %llx\n", gen);
-}
-
-bool p8_sbe_timer_ok(void)
-{
-	return sbe_has_timer;
 }
 
 void p8_sbe_init_timer(void)

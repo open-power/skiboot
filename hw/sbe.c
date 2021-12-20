@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+
+/*
+ * SBE communication driver (common code)
+ */
+
+#define pr_fmt(fmt) "SBE: " fmt
+
+#include <sbe.h>
+#include <sbe-p8.h>
+#include <sbe-p9.h>
+#include <skiboot.h>
+#include <stdbool.h>
+
+bool sbe_has_timer = false;
+
+void sbe_update_timer_expiry(uint64_t target)
+{
+	assert(sbe_timer_ok);
+
+	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
+		p9_sbe_update_timer_expiry(target);
+
+	if (proc_gen == proc_gen_p8)
+		p8_sbe_update_timer_expiry(target);
+}
+
+bool sbe_timer_ok(void)
+{
+	return sbe_has_timer;
+}

@@ -1,6 +1,6 @@
 # -*-Makefile-*-
 SUBDIRS += hw
-HW_OBJS  = xscom.o chiptod.o lpc.o lpc-uart.o psi.o
+HW_OBJS  = xscom.o chiptod.o lpc.o lpc-uart.o psi.o sbe.o
 HW_OBJS += homer.o slw.o occ.o fsi-master.o centaur.o imc.o
 HW_OBJS += nx.o nx-rng.o nx-crypto.o nx-compress.o nx-842.o nx-gzip.o
 HW_OBJS += sfc-ctrl.o fake-rtc.o bt.o p8-i2c.o prd.o

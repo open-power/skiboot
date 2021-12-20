@@ -41,6 +41,7 @@
 #include <lock.h>
 #include <opal.h>
 #include <opal-dump.h>
+#include <sbe.h>
 #include <sbe-p9.h>
 #include <skiboot.h>
 #include <timebase.h>
@@ -73,7 +74,6 @@ struct p9_sbe {
 static int sbe_default_chip_id = -1;
 
 /* Is SBE timer running? */
-static bool sbe_has_timer = false;
 static bool sbe_timer_in_progress = false;
 static bool has_new_target = false;
 
@@ -843,7 +843,7 @@ static void p9_sbe_timer_schedule(void)
  */
 void p9_sbe_update_timer_expiry(uint64_t new_target)
 {
-	if (!sbe_has_timer || new_target == sbe_timer_target)
+	if (new_target == sbe_timer_target)
 		return;
 
 	lock(&sbe_timer_lock);
@@ -872,11 +872,6 @@ static void p9_sbe_timer_init(void)
 	sbe_last_gen_stamp = ~0ull;
 	sbe_timer_def_tb = usecs_to_tb(SBE_TIMER_DEFAULT_US);
 	prlog(PR_INFO, "Timer facility on chip %x\n", sbe_default_chip_id);
-}
-
-bool p9_sbe_timer_ok(void)
-{
-	return sbe_has_timer;
 }
 
 static void p9_sbe_stash_chipop_resp(struct p9_sbe_msg *msg)
