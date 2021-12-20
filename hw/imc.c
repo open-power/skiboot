@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)  "IMC: " fmt
 #include <skiboot.h>
+#include <slw.h>
 #include <xscom.h>
 #include <imc.h>
 #include <chip.h>

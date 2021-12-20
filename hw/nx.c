@@ -6,6 +6,7 @@
  */
 
 #include <skiboot.h>
+#include <slw.h>
 #include <xscom.h>
 #include <io.h>
 #include <cpu.h>

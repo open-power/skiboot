@@ -6,6 +6,7 @@
  */
 
 #include <skiboot.h>
+#include <slw.h>
 #include <psi.h>
 #include <chiptod.h>
 #include <nx.h>

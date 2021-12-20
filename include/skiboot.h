@@ -216,7 +216,6 @@ extern void uart_init(void);
 extern void mbox_init(void);
 extern void early_uart_init(void);
 extern void homer_init(void);
-extern void slw_init(void);
 extern void add_cpu_idle_state_properties(void);
 extern void lpc_rtc_init(void);
 
@@ -303,18 +302,7 @@ extern int  prd_hbrt_fsp_msg_notify(void *data, u32 dsize);
 /* Flatten device-tree */
 extern void *create_dtb(const struct dt_node *root, bool exclusive);
 
-/* Track failure in Wakup engine */
-enum wakeup_engine_states {
-	WAKEUP_ENGINE_NOT_PRESENT,
-	WAKEUP_ENGINE_PRESENT,
-	WAKEUP_ENGINE_FAILED
-};
-extern enum wakeup_engine_states wakeup_engine_state;
-extern bool has_deep_states;
 extern void nx_p9_rng_late_init(void);
-
-/* Patch SPR in SLW image */
-extern int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val);
 
 extern void fast_sleep_exit(void);
 

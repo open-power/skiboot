@@ -9,6 +9,7 @@
 #define pr_fmt(fmt) "XIVE: " fmt
 
 #include <skiboot.h>
+#include <slw.h>
 #include <xscom.h>
 #include <chip.h>
 #include <io.h>
