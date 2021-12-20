@@ -1570,6 +1570,10 @@ void cpu_fast_reboot_complete(void)
 	/* and set HID0:RADIX */
 	if (proc_gen == proc_gen_p9)
 		current_radix_mode = true;
+
+	/* P8 clears TLBs in cleanup_cpu_state() */
+	if (proc_gen >= proc_gen_p9)
+		 cleanup_global_tlb();
 }
 
 static int64_t opal_reinit_cpus(uint64_t flags)
