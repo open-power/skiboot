@@ -96,7 +96,11 @@ CPPFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 endif
 
 CFLAGS := -fno-strict-aliasing -pie -fpie -fno-pic -m64 -fno-asynchronous-unwind-tables
+ifeq ($(CONFIG_P8),1)
 CFLAGS += -mcpu=power8
+else
+CFLAGS += -mcpu=power9
+endif
 CFLAGS += -Wl,--oformat,elf64-powerpc -ggdb
 # r13,r14,r15 are preserved for OS to use as fixed registers.
 # These could be saved and restored in and out of skiboot, but it's more
@@ -156,6 +160,10 @@ else
 CFLAGS += -fno-stack-protector
 endif
 
+# Add preprocessor defines for CONFIG_ options here
+ifeq ($(CONFIG_P8),1)
+CFLAGS += -DCONFIG_P8=1
+endif
 
 CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
 	  $(call try-cflag,$(CC),-Wsuggest-attribute=const) \
@@ -173,7 +181,12 @@ LDFLAGS := -m64 -static -nostdlib -pie
 LDFLAGS += -Wl,-pie
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
-LDFLAGS += -mcpu=power8 -Wl,--oformat,elf64-powerpc
+ifeq ($(CONFIG_P8),1)
+LDFLAGS += -mcpu=power8
+else
+LDFLAGS += -mcpu=power9
+endif
+LDFLAGS += -Wl,--oformat,elf64-powerpc
 LDFLAGS_FINAL = -m elf64lppc --no-multi-toc -N --build-id=none --whole-archive
 LDFLAGS_FINAL += -static -nostdlib -pie -Ttext-segment=$(LD_TEXT) --oformat=elf64-powerpc
 LDFLAGS_FINAL += --orphan-handling=warn

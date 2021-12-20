@@ -59,6 +59,8 @@ ELF_ABI_v2 ?= $(LITTLE_ENDIAN)
 DEAD_CODE_ELIMINATION ?= 0
 # Try to build without FSP code
 CONFIG_FSP?=1
+# Try to build without POWER8 support
+CONFIG_P8?=1
 
 #
 # Where is the source directory, must be a full path (no ~)

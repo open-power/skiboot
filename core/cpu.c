@@ -1066,9 +1066,16 @@ void init_boot_cpu(void)
 		cpu_thread_count = 1;
 	}
 
-	if (proc_gen == proc_gen_p8 && (PVR_VERS_MAJ(mfspr(SPR_PVR)) == 1)) {
-		prerror("CPU: POWER8 DD1 is not supported\n");
+	if (proc_gen == proc_gen_p8) {
+#ifdef CONFIG_P8
+		if (PVR_VERS_MAJ(mfspr(SPR_PVR)) == 1) {
+			prerror("CPU: POWER8 DD1 is not supported\n");
+			abort();
+		}
+#else
+		prerror("CPU: POWER8 detected but CONFIG_P8 not set\n");
 		abort();
+#endif
 	}
 
 	if (is_power9n(pvr) && (PVR_VERS_MAJ(pvr) == 1)) {
