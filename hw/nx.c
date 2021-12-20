@@ -137,3 +137,5 @@ void nx_init(void)
 	if (proc_gen >= proc_gen_p9)
 		darn_init();
 }
+
+DEFINE_HWPROBE_DEPS(nx, nx_init, "vas");

@@ -637,3 +637,5 @@ out:
 	vas_err("Disabled (failed initialization)\n");
 	return;
 }
+
+DEFINE_HWPROBE(vas, vas_init);

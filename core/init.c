@@ -1356,12 +1356,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Catalog decompression routine */
 	imc_decompress_catalog();
 
-	/* Virtual Accelerator Switchboard */
-	vas_init();
-
-	/* NX init */
-	nx_init();
-
 	/* Probe all HWPROBE hardware we have code linked for */
 	probe_hardware();
 
