@@ -166,6 +166,12 @@ SECTIONS
 		__platforms_end = .;
 	}
 
+	.hwprobes : {
+		__hwprobes_start = .;
+		KEEP(*(.hwprobes))
+		__hwprobes_end = .;
+	}
+
 	/* Relocations */
 	. = ALIGN(0x10);
 	.dynamic : {

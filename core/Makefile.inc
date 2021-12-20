@@ -13,6 +13,7 @@ CORE_OBJS += timer.o i2c.o rtc.o flash.o sensor.o ipmi-opal.o
 CORE_OBJS += flash-subpartition.o bitmap.o buddy.o pci-quirk.o powercap.o psr.o
 CORE_OBJS += pci-dt-slot.o direct-controls.o cpufeatures.o
 CORE_OBJS += flash-firmware-versions.o opal-dump.o
+CORE_OBJS += hwprobe.o
 
 ifeq ($(SKIBOOT_GCOV),1)
 CORE_OBJS += gcov-profiling.o

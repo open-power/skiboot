@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
-/* Copyright 2013-2019 IBM Corp. */
+/* Copyright 2013-2019 IBM Corp.
+ * Copyright 2021 Stewart Smith
+ */
 
 #ifndef __SKIBOOT_H
 #define __SKIBOOT_H
@@ -345,5 +347,40 @@ extern uint32_t reset_fast_reboot_patch_end;
 extern int fake_nvram_info(uint32_t *total_size);
 extern int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len);
 extern int fake_nvram_write(uint32_t offset, void *src, uint32_t size);
+
+/*
+ * A bunch of hardware needs to be probed, sometimes in a particular order.
+ * Very simple dependency graph, with a even simpler way to resolve it.
+ * But it means we can now at link time choose what hardware we support.
+ * This struct should not be defined directly but with the macros.
+ */
+struct hwprobe {
+	const char	*name;
+	void		(*probe)(void);
+
+	bool		probed;
+
+	/* NULL or NULL-terminated array of strings */
+	const char	**deps;
+};
+
+#define DEFINE_HWPROBE(__name, __probe)		\
+static const struct hwprobe __used __section(".hwprobes") hwprobe_##__name = { \
+	.name = #__name,				\
+	.probe = __probe,				\
+	.deps = NULL,					\
+}
+
+#define DEFINE_HWPROBE_DEPS(__name, __probe, ...)	\
+static const struct hwprobe __used __section(".hwprobes") hwprobe_##__name = { \
+	.name = #__name,				\
+	.probe = __probe,				\
+	.deps = (const char *[]){ __VA_ARGS__, NULL},	\
+}
+
+extern struct hwprobe __hwprobes_start;
+extern struct hwprobe __hwprobes_end;
+
+extern void probe_hardware(void);
 
 #endif /* __SKIBOOT_H */

@@ -1374,6 +1374,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Probe PAUs */
 	probe_pau();
 
+	/* Probe all HWPROBE hardware we have code linked for*/
+	probe_hardware();
+
 	/* Initialize PCI */
 	pci_init_slots();
 
