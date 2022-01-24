@@ -869,7 +869,11 @@ void copy_exception_vectors(void)
 	 * this is the boot flag used by CPUs still potentially entering
 	 * skiboot.
 	 */
-	memcpy((void *)0x100, (void *)(SKIBOOT_BASE + 0x100),
+	void *skiboot_constant_addr exception_vectors_start_addr = (void *)(SKIBOOT_BASE + 0x100);
+	void *skiboot_constant_addr dst = (void *)0x100;
+
+
+	memcpy(dst, exception_vectors_start_addr,
 			EXCEPTION_VECTORS_END - 0x100);
 	sync_icache();
 }

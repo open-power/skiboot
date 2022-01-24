@@ -150,7 +150,7 @@ struct spiras {
 	u8			reserved[0x180];
 } __packed __align(0x100);
 
-extern struct spiras *spiras;
+extern struct spiras *skiboot_constant_addr spiras;
 
 
 /* This macro can be used to check the validity of a pointer returned

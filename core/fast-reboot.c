@@ -307,6 +307,8 @@ void __noreturn fast_reboot_entry(void);
 void __noreturn fast_reboot_entry(void)
 {
 	struct cpu_thread *cpu = this_cpu();
+	void *skiboot_constant_addr kerneal_load_base_addr = KERNEL_LOAD_BASE;
+	void *skiboot_constant_addr initramfs_load_base_addr = INITRAMFS_LOAD_BASE;
 
 	if (proc_gen == proc_gen_p8) {
 		/* We reset our ICP first ! Otherwise we might get stray
@@ -425,8 +427,8 @@ void __noreturn fast_reboot_entry(void)
 		 * Mambo may have embedded payload here, so don't clear
 		 * it at all.
 		 */
-		memset(KERNEL_LOAD_BASE, 0, KERNEL_LOAD_SIZE);
-		memset(INITRAMFS_LOAD_BASE, 0, INITRAMFS_LOAD_SIZE);
+		memset(kerneal_load_base_addr, 0, KERNEL_LOAD_SIZE);
+		memset(initramfs_load_base_addr, 0, INITRAMFS_LOAD_SIZE);
 	}
 
 	/* Start preloading kernel and ramdisk */
