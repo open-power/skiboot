@@ -78,6 +78,7 @@ static void add_xics_icp(const void *pcia, u32 tcount, const char *compat)
 	dt_add_property_cells(icp, "ibm,interrupt-server-ranges",
 			      irange[0], irange[1]);
 	dt_add_property(icp, "interrupt-controller", NULL, 0);
+	dt_add_property_cells(icp, "#interrupt-cells", 1);
 	dt_add_property(icp, "reg", reg, rsize);
 	dt_add_property_cells(icp, "#address-cells", 0);
 	dt_add_property_string(icp, "device_type",
