@@ -466,8 +466,11 @@ add_feature_node $np "inst-l1d-flush-ori30,30,0" $mconf(inst_l1d_flush_ori30)
 
 # Init CPUs
 set pir 0
+set pirmax [expr $mconf(cpus) * $mconf(threads)]
+set pirbits [expr int(ceil(log($pirmax) / log (16)))]
 for { set c 0 } { $c < $mconf(cpus) } { incr c } {
-    set cpu_node [mysim of find_device "/cpus/PowerPC@$pir"]
+    set p [format "%0${pirbits}x" $pir]
+    set cpu_node [mysim of find_device "/cpus/PowerPC@$p"]
     mysim of addprop $cpu_node int "ibm,pir" $pir
     set reg  [list 0x0000001c00000028 0xffffffffffffffff]
     mysim of addprop $cpu_node array64 "ibm,processor-segment-sizes" reg
