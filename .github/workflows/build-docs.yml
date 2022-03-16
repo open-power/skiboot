@@ -15,11 +15,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install apt dependencies
-        run: |
-          sudo apt install -qq build-essential gcc-powerpc64le-linux-gnu git lcov \
-          device-tree-compiler libssl-dev libmbedtls-dev \
-          python3-sphinx python3-recommonmark
-
+        run: sudo apt-get update &&
+          sudo apt-get install -qq build-essential gcc-powerpc64le-linux-gnu git lcov
+          device-tree-compiler libssl-dev libmbedtls-dev python3-sphinx
+          python3-recommonmark
       - name: Generate docs and coverage report
         run: ./opal-ci/build-docs.sh
 
