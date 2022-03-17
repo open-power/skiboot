@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot-6.2.4 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot-6.2.4 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-6.2.3.html" title="skiboot-6.2.3"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.4</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -52,7 +53,7 @@
 due to the bug fixes it contains.</p>
 <p>Bug fixes included in this release are:</p>
 <ul>
-<li><p>core/flash: Retry requests as necessary in flash_load_resource()</p>
+<li><p class="first">core/flash: Retry requests as necessary in flash_load_resource()</p>
 <p>We would like to successfully boot if we have a dependency on the BMC
 for flash even if the BMC is not current ready to service flash
 requests. On the assumption that it will become ready, retry for several
@@ -89,7 +90,7 @@ CPU 0040 Backtrace:
 no delay for e.g. the host kernel, just for asynchronously loaded
 resources during boot.</p>
 </li>
-<li><p>pci/iov: Remove skiboot VF tracking</p>
+<li><p class="first">pci/iov: Remove skiboot VF tracking</p>
 <p>This feature was added a few years ago in response to a request to make
 the MaxPayloadSize (MPS) field of a Virtual Function match the MPS of the
 Physical Function that hosts it.</p>
@@ -105,13 +106,13 @@ enabled and then disabled prior to rebooting. This patch fixes the bug by
 removing the code entirely. This patch has no impact on SR-IOV support on
 the host operating system.</p>
 </li>
-<li><p>astbmc: Handle failure to initialise raw flash</p>
+<li><p class="first">astbmc: Handle failure to initialise raw flash</p>
 <p>Initialising raw flash lead to a dead assignment to rc. Check the return
 code and take the failure path as necessary. Both before and after the
 fix we see output along the lines of the following when flash_init()
 fails:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">53.283182881</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mf">0800..0</span><span class="n">ff7</span> <span class="n">ops</span> <span class="o">@</span><span class="mh">0x300d4b98</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
-<span class="p">[</span>   <span class="mf">53.283184335</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mi">0</span><span class="n">ff8</span><span class="o">.</span><span class="mf">.0</span><span class="n">fff</span> <span class="n">ops</span> <span class="o">@</span><span class="mh">0x300d4bc8</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">53.283182881</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mf">0800.</span><span class="o">.</span><span class="mi">0</span><span class="n">ff7</span> <span class="n">ops</span> <span class="nd">@0x300d4b98</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
+<span class="p">[</span>   <span class="mf">53.283184335</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mi">0</span><span class="n">ff8</span><span class="o">..</span><span class="mi">0</span><span class="n">fff</span> <span class="n">ops</span> <span class="nd">@0x300d4bc8</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
 <span class="p">[</span>   <span class="mf">53.283185513</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000: Initializing PHB...</span>
 <span class="p">[</span>   <span class="mf">53.288260827</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Can</span><span class="s1">&#39;t load resource id:0. No system flash found</span>
 <span class="p">[</span>   <span class="mf">53.288354442</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Can</span><span class="s1">&#39;t load resource id:1. No system flash found</span>
@@ -148,19 +149,19 @@ of executing from unexpected memory locations. As such the issue is
 reduced to down to a fix for poor error hygene in the original change
 and a resolution for a Coverity warning (famous last words etc).</p>
 </li>
-<li><p>hw/xscom: Enable sw xstop by default on p9</p>
+<li><p class="first">hw/xscom: Enable sw xstop by default on p9</p>
 <p>This was disabled at some point during bringup to make life easier for
 the lab folks trying to debug NVLink issues. This hack really should
 have never made it out into the wild though, so we now have the
 following situation occuring in the field:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><p>A bad happens</p></li>
-<li><p>The host kernel recieves an unrecoverable HMI and calls into OPAL to
-request a platform reboot.</p></li>
-<li><p>OPAL rejects the reboot attempt and returns to the kernel with
-OPAL_PARAMETER.</p></li>
-<li><p>Kernel panics and attempts to kexec into a kdump kernel.</p></li>
+<li>A bad happens</li>
+<li>The host kernel recieves an unrecoverable HMI and calls into OPAL to
+request a platform reboot.</li>
+<li>OPAL rejects the reboot attempt and returns to the kernel with
+OPAL_PARAMETER.</li>
+<li>Kernel panics and attempts to kexec into a kdump kernel.</li>
 </ol>
 </div></blockquote>
 <p>A side effect of the HMI seems to be CPUs becoming stuck which results
@@ -172,7 +173,7 @@ state as a side effect of the HMI.</p>
 default. If people still want to turn it off they can using the nvram
 override.</p>
 </li>
-<li><p>opal/hmi: Initialize the hmi event with old value of TFMR.</p>
+<li><p class="first">opal/hmi: Initialize the hmi event with old value of TFMR.</p>
 <p>Do this before we fix TFAC errors. Otherwise the event at host console
 shows no thread error reported in TFMR register.</p>
 <p>Without this patch the console event show TFMR with no thread error:
@@ -191,7 +192,7 @@ shows no thread error reported in TFMR register.</p>
 </pre></div>
 </div>
 </li>
-<li><p>libflash/ipmi-hiomap: Fix blocks count issue</p>
+<li><p class="first">libflash/ipmi-hiomap: Fix blocks count issue</p>
 <p>We convert data size to block count and pass block count to BMC.
 If data size is not block aligned then we endup sending block count
 less than actual data. BMC will write partial data to flash memory.</p>
@@ -206,7 +207,7 @@ less than actual data. BMC will write partial data to flash memory.</p>
 flush data to flash.</p>
 <p>Lets fix this issue by adjusting block count before sending it to BMC.</p>
 </li>
-<li><p>Fix hang in pnv_platform_error_reboot path due to TOD failure.</p>
+<li><p class="first">Fix hang in pnv_platform_error_reboot path due to TOD failure.</p>
 <p>On TOD failure, with TB stuck, when linux heads down to
 pnv_platform_error_reboot() path due to unrecoverable hmi event, the panic
 cpu gets stuck in OPAL inside ipmi_queue_msg_sync(). At this time, rest
@@ -257,15 +258,15 @@ returns immediately without calling pollers and hence we end up looping
 forever. This patch fixes this hang by calling opal_run_pollers() in TB
 failed state as well.</p>
 </li>
-<li><p>core/ipmi: Print correct netfn value</p></li>
-<li><p>libffs: Fix string truncation gcc warning.</p>
+<li><p class="first">core/ipmi: Print correct netfn value</p>
+</li>
+<li><p class="first">libffs: Fix string truncation gcc warning.</p>
 <p>Use memcpy as other libffs functions do.</p>
 </li>
 </ul>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -285,15 +286,17 @@ failed state as well.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -310,15 +313,14 @@ failed state as well.</p>
         <li class="right" >
           <a href="skiboot-6.2.3.html" title="skiboot-6.2.3"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.4</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

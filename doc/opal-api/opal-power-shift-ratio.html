@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL Power Shift Ratio &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL Power Shift Ratio &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-poll-events.html" title="OPAL_POLL_EVENTS"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Power Shift Ratio</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -60,43 +61,43 @@ device-tree.</p>
 for the completion.</p>
 <div class="section" id="parameters">
 <h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 30%" />
-<col style="width: 70%" />
+<col width="30%" />
+<col width="70%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>u32</p></td>
-<td><p>handle</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>u32</td>
+<td>handle</td>
 </tr>
-<tr class="row-odd"><td><p>int</p></td>
-<td><p>token</p></td>
+<tr class="row-odd"><td>int</td>
+<td>token</td>
 </tr>
-<tr class="row-even"><td><p>u32</p></td>
-<td><p>*ratio</p></td>
+<tr class="row-even"><td>u32</td>
+<td>*ratio</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="returns">
 <h3>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid ratio pointer</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>No support for reading psr</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>Unable to procced due to the current hardware state</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt><dd><p>Request was sent and an async completion message will be sent with
-token and status of the request.</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Success</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>Invalid ratio pointer</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
+<dd>No support for reading psr</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
+<dd>Unable to procced due to the current hardware state</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt>
+<dd>Request was sent and an async completion message will be sent with
+token and status of the request.</dd>
 </dl>
 </div>
 </div>
@@ -108,58 +109,57 @@ asynchronus where the token parameter is used to wait for the
 completion.</p>
 <div class="section" id="id3">
 <h3>Parameters<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 33%" />
-<col style="width: 67%" />
+<col width="33%" />
+<col width="67%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>u32</p></td>
-<td><p>handle</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>u32</td>
+<td>handle</td>
 </tr>
-<tr class="row-odd"><td><p>int</p></td>
-<td><p>token</p></td>
+<tr class="row-odd"><td>int</td>
+<td>token</td>
 </tr>
-<tr class="row-even"><td><p>u32</p></td>
-<td><p>ratio</p></td>
+<tr class="row-even"><td>u32</td>
+<td>ratio</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="id4">
 <h3>Returns<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid ratio requested</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>No support for changing the ratio</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-permission"><span class="std std-ref">OPAL_PERMISSION</span></a></dt><dd><p>Hardware cannot take the request</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt><dd><p>Request was sent and an async completion message will be sent with
-token and status of the request.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>Unable to procced due to the current hardware state</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt><dd><p>Previous request in progress</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Error in request response</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-timeout"><span class="std std-ref">OPAL_TIMEOUT</span></a></dt><dd><p>Timeout in request completion</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Success</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>Invalid ratio requested</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
+<dd>No support for changing the ratio</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-permission"><span class="std std-ref">OPAL_PERMISSION</span></a></dt>
+<dd>Hardware cannot take the request</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt>
+<dd>Request was sent and an async completion message will be sent with
+token and status of the request.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
+<dd>Unable to procced due to the current hardware state</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt>
+<dd>Previous request in progress</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
+<dd>Error in request response</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-timeout"><span class="std std-ref">OPAL_TIMEOUT</span></a></dt>
+<dd>Timeout in request completion</dd>
 </dl>
 </div>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -196,15 +196,17 @@ token and status of the request.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -221,15 +223,14 @@ token and status of the request.</p>
         <li class="right" >
           <a href="opal-poll-events.html" title="OPAL_POLL_EVENTS"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Power Shift Ratio</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

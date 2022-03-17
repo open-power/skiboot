@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot-5.2.1 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot-5.2.1 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-5.2.0-rc2.html" title="skiboot-5.2.0-rc2"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.2.1</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -59,22 +60,22 @@ stable rules - see <a class="reference internal" href="../process/stable-skiboot
 <div class="section" id="pflash">
 <h3>pflash<a class="headerlink" href="#pflash" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Allow building under yocto.
-Makefile fixes to enable building as part of an OpenBMC build.</p></li>
+<li>Allow building under yocto.
+Makefile fixes to enable building as part of an OpenBMC build.</li>
 </ul>
 </div>
 <div class="section" id="garrison-platform">
 <h3>Garrison platform<a class="headerlink" href="#garrison-platform" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Add PCIe and NPU slot location names</p></li>
-<li><p>hw/npu.c: Add ibm, npu-index property to npu device tree</p></li>
-<li><p>hmi: Add handling for NPU checkstops</p></li>
+<li>Add PCIe and NPU slot location names</li>
+<li>hw/npu.c: Add ibm, npu-index property to npu device tree</li>
+<li>hmi: Add handling for NPU checkstops</li>
 </ul>
 </div>
 <div class="section" id="phb3-all-power8-platforms">
 <h3>PHB3 (all POWER8 platforms)<a class="headerlink" href="#phb3-all-power8-platforms" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>hw/phb3: Ensure PQ bits are cleared in the IVC when masking IRQ
+<li><p class="first">hw/phb3: Ensure PQ bits are cleared in the IVC when masking IRQ
 When we mask an interrupt, we may race with another interrupt coming
 in from the hardware.  If this occurs, the P and/or Q bit may end up
 being set but we never EOI/clear them.  This could result in a lost
@@ -84,7 +85,7 @@ being presented.</p>
 interrupt masking at the same time as high interrupt load.  The fix is
 not specific to CAPI though.</p>
 </li>
-<li><p>hw/phb3: Fix potential race in EOI
+<li><p class="first">hw/phb3: Fix potential race in EOI
 When we EOI we need to clear the present (P) bit in the Interrupt
 Vector Cache (IVC).  We must clear P ensuring that any additional
 interrupts that come in aren’t lost while also maintaining coherency
@@ -102,14 +103,14 @@ successful.</p>
 <div class="section" id="fsp-platforms">
 <h3>FSP platforms<a class="headerlink" href="#fsp-platforms" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>OPAL:Handle mbox response with bad status:0x24 during FSP termination
-OPAL committed a predictive log with SRC BB822411 in some situations.</p></li>
+<li>OPAL:Handle mbox response with bad status:0x24 during FSP termination
+OPAL committed a predictive log with SRC BB822411 in some situations.</li>
 </ul>
 </div>
 <div class="section" id="generic">
 <h3>Generic<a class="headerlink" href="#generic" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>hmi: Fix a bug where partial hmi event was reported to host.
+<li><p class="first">hmi: Fix a bug where partial hmi event was reported to host.
 This bug fix ensures the CPU PIR is reported correctly:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="p">[</span>  <span class="mf">305.628283</span><span class="p">]</span> <span class="n">Fatal</span> <span class="n">Hypervisor</span> <span class="n">Maintenance</span> <span class="n">interrupt</span> <span class="p">[</span><span class="n">Not</span> <span class="n">recovered</span><span class="p">]</span>
   <span class="p">[</span>  <span class="mf">305.628341</span><span class="p">]</span>  <span class="n">Error</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Malfunction</span> <span class="n">Alert</span>
@@ -120,7 +121,8 @@ This bug fix ensures the CPU PIR is reported correctly:</p>
 </pre></div>
 </div>
 </li>
-<li><p>xscom: Return OPAL_WRONG_STATE on XSCOM ops if CPU is asleep</p></li>
+<li><p class="first">xscom: Return OPAL_WRONG_STATE on XSCOM ops if CPU is asleep</p>
+</li>
 </ul>
 </div>
 </div>
@@ -129,207 +131,207 @@ This bug fix ensures the CPU PIR is reported correctly:</p>
 <p>Processed 15 csets from 7 developers
 A total of 436 lines added, 59 removed (delta 377)</p>
 <p>Developers with the most changesets</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 74%" />
-<col style="width: 26%" />
+<col width="74%" />
+<col width="26%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Russell Currey</p></td>
-<td><p>7 (46.7%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Russell Currey</td>
+<td>7 (46.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alistair Popple</p></td>
-<td><p>2 (13.3%)</p></td>
+<tr class="row-odd"><td>Alistair Popple</td>
+<td>2 (13.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Michael Neuling</p></td>
-<td><p>2 (13.3%)</p></td>
+<tr class="row-even"><td>Michael Neuling</td>
+<td>2 (13.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Patrick Williams</p></td>
-<td><p>1 (6.7%)</p></td>
+<tr class="row-odd"><td>Patrick Williams</td>
+<td>1 (6.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>1 (6.7%)</p></td>
+<tr class="row-even"><td>Stewart Smith</td>
+<td>1 (6.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Mamatha</p></td>
-<td><p>1 (6.7%)</p></td>
+<tr class="row-odd"><td>Mamatha</td>
+<td>1 (6.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
-<td><p>1 (6.7%)</p></td>
+<tr class="row-even"><td>Mahesh Salgaonkar</td>
+<td>1 (6.7%)</td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most changed lines</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
+<col width="68%" />
+<col width="32%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Alistair Popple</p></td>
-<td><p>215 (48.3%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Alistair Popple</td>
+<td>215 (48.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Russell Currey</p></td>
-<td><p>140 (31.5%)</p></td>
+<tr class="row-odd"><td>Russell Currey</td>
+<td>140 (31.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Michael Neuling</p></td>
-<td><p>55 (12.4%)</p></td>
+<tr class="row-even"><td>Michael Neuling</td>
+<td>55 (12.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Mamatha</p></td>
-<td><p>15 (3.4%)</p></td>
+<tr class="row-odd"><td>Mamatha</td>
+<td>15 (3.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Patrick Williams</p></td>
-<td><p>9 (2.0%)</p></td>
+<tr class="row-even"><td>Patrick Williams</td>
+<td>9 (2.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Mahesh Salgaonkar</p></td>
-<td><p>8 (1.8%)</p></td>
+<tr class="row-odd"><td>Mahesh Salgaonkar</td>
+<td>8 (1.8%)</td>
 </tr>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>3 (0.7%)</p></td>
+<tr class="row-even"><td>Stewart Smith</td>
+<td>3 (0.7%)</td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most lines removed</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
+<col width="68%" />
+<col width="32%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Patrick Williams</p></td>
-<td><p>5 (8.5%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Patrick Williams</td>
+<td>5 (8.5%)</td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most signoffs (total 30)</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
+<col width="68%" />
+<col width="32%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>15 (50.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Stewart Smith</td>
+<td>15 (50.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Russell Currey</p></td>
-<td><p>7 (23.3%)</p></td>
+<tr class="row-odd"><td>Russell Currey</td>
+<td>7 (23.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Michael Neuling</p></td>
-<td><p>2 (6.7%)</p></td>
+<tr class="row-even"><td>Michael Neuling</td>
+<td>2 (6.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alistair Popple</p></td>
-<td><p>2 (6.7%)</p></td>
+<tr class="row-odd"><td>Alistair Popple</td>
+<td>2 (6.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Patrick Williams</p></td>
-<td><p>1 (3.3%)</p></td>
+<tr class="row-even"><td>Patrick Williams</td>
+<td>1 (3.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
-<td><p>1 (3.3%)</p></td>
+<tr class="row-odd"><td>Oliver O’Halloran</td>
+<td>1 (3.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
-<td><p>1 (3.3%)</p></td>
+<tr class="row-even"><td>Mahesh Salgaonkar</td>
+<td>1 (3.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Mamatha</p></td>
-<td><p>1 (3.3%)</p></td>
+<tr class="row-odd"><td>Mamatha</td>
+<td>1 (3.3%)</td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most reviews (total 11)</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
+<col width="68%" />
+<col width="32%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Alistair Popple</p></td>
-<td><p>5 (45.5%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Alistair Popple</td>
+<td>5 (45.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
-<td><p>3 (27.3%)</p></td>
+<tr class="row-odd"><td>Andrew Donnellan</td>
+<td>3 (27.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
-<td><p>2 (18.2%)</p></td>
+<tr class="row-even"><td>Mahesh Salgaonkar</td>
+<td>2 (18.2%)</td>
 </tr>
-<tr class="row-odd"><td><p>Joel Stanley</p></td>
-<td><p>1 (9.1%)</p></td>
+<tr class="row-odd"><td>Joel Stanley</td>
+<td>1 (9.1%)</td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most Acked-by (total 1)</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
+<col width="68%" />
+<col width="32%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Alistair Popple</p></td>
-<td><p>1 (100.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Alistair Popple</td>
+<td>1 (100.0%)</td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most test credits (total 3)</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
+<col width="68%" />
+<col width="32%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Andrew Donnellan</p></td>
-<td><p>2 (66.7%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Andrew Donnellan</td>
+<td>2 (66.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Vaibhav Jain</p></td>
-<td><p>1 (33.3%)</p></td>
+<tr class="row-odd"><td>Vaibhav Jain</td>
+<td>1 (33.3%)</td>
 </tr>
 </tbody>
 </table>
 <p>Developers who received the most tested-by credits (total 3)</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
+<col width="68%" />
+<col width="32%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"></th>
-<th class="head"></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Michael Neuling</p></td>
-<td><p>3 (100.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Michael Neuling</td>
+<td>3 (100.0%)</td>
 </tr>
 </tbody>
 </table>
@@ -337,7 +339,6 @@ A total of 436 lines added, 59 removed (delta 377)</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -373,15 +374,17 @@ A total of 436 lines added, 59 removed (delta 377)</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -398,15 +401,14 @@ A total of 436 lines added, 59 removed (delta 377)</p>
         <li class="right" >
           <a href="skiboot-5.2.0-rc2.html" title="skiboot-5.2.0-rc2"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.2.1</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

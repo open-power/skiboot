@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL &lt;–&gt; BMC interactions &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL &lt;–&gt; BMC interactions &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,9 +34,8 @@
         <li class="right" >
           <a href="error-logging.html" title="How to log errors on OPAL"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL &lt;–&gt; BMC interactions</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -53,8 +54,8 @@ that skiboot performs with the BMC.</p>
 are:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Boot Count [type 0xc3: OEM reserved]</p></li>
-<li><p>FW Boot progress [type 0x0f: System Firmware Progress]</p></li>
+<li>Boot Count [type 0xc3: OEM reserved]</li>
+<li>FW Boot progress [type 0x0f: System Firmware Progress]</li>
 </ul>
 </div></blockquote>
 <p>Boot Count: assertion type. When OPAL reaches a late stage of boot, it sets the
@@ -64,24 +65,27 @@ or aborted boot, for switching to a known-good firmware image.</p>
 to one of the IPMI-defined progress codes. The codes use by skiboot are:</p>
 <blockquote>
 <div><ul class="simple">
-<li><dl class="simple">
-<dt>PCI Resource configuration (0x01)</dt><dd><ul>
-<li><p>asserted as the PCI devices have been probed and resources allocated</p></li>
+<li><dl class="first docutils">
+<dt>PCI Resource configuration (0x01)</dt>
+<dd><ul class="first last">
+<li>asserted as the PCI devices have been probed and resources allocated</li>
 </ul>
 </dd>
 </dl>
 </li>
-<li><dl class="simple">
-<dt>Motherboard init (0x14)</dt><dd><ul>
-<li><p>asserted as the platform-specific components have been initialised</p></li>
+<li><dl class="first docutils">
+<dt>Motherboard init (0x14)</dt>
+<dd><ul class="first last">
+<li>asserted as the platform-specific components have been initialised</li>
 </ul>
 </dd>
 </dl>
 </li>
-<li><dl class="simple">
-<dt>OS boot (0x13)</dt><dd><ul>
-<li><p>asserted after skiboot has loaded the PAYLOAD image, and is about to
-boot it.</p></li>
+<li><dl class="first docutils">
+<dt>OS boot (0x13)</dt>
+<dd><ul class="first last">
+<li>asserted after skiboot has loaded the PAYLOAD image, and is about to
+boot it.</li>
 </ul>
 </dd>
 </dl>
@@ -138,7 +142,6 @@ the flag is not set and validation doesn’t occur.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -170,15 +173,17 @@ the flag is not set and validation doesn’t occur.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -195,14 +200,13 @@ the flag is not set and validation doesn’t occur.</p>
         <li class="right" >
           <a href="error-logging.html" title="How to log errors on OPAL"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL &lt;–&gt; BMC interactions</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

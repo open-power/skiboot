@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">90</td>
-            <td class="headerCovTableEntry">240</td>
-            <td class="headerCovTableEntryLo">37.5 %</td>
+            <td class="headerCovTableEntry">245</td>
+            <td class="headerCovTableEntryLo">36.7 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-13 12:18:09</td>
+            <td class="headerValue">2022-03-17 07:10:58</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">6</td>
@@ -368,7 +368,7 @@
 <a name="297"><span class="lineNum">     297 </span>                :            :                 }</a>
 <a name="298"><span class="lineNum">     298 </span>                :            : </a>
 <a name="299"><span class="lineNum">     299 </span>                :<span class="lineNoCov">          0 :                 dt_add_property_cells(sensor_node,</span></a>
-<a name="300"><span class="lineNum">     300 </span>                :            :                                       &quot;ibm,chip-id&quot;, be32_to_cpu(cinfo-&gt;xscom_id));</a>
+<a name="300"><span class="lineNum">     300 </span>                :            :                                       &quot;ibm,chip-id&quot;, get_xscom_id(cinfo));</a>
 <a name="301"><span class="lineNum">     301 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="302"><span class="lineNum">     302 </span>                :            :         }</a>
 <a name="303"><span class="lineNum">     303 </span>                :            : }</a>
@@ -426,201 +426,209 @@
 <a name="355"><span class="lineNum">     355 </span>                :<span class="lineNoCov">          0 : static void bmc_create_node(const struct HDIF_common_hdr *sp)</span></a>
 <a name="356"><span class="lineNum">     356 </span>                :            : {</a>
 <a name="357"><span class="lineNum">     357 </span>                :            :         struct dt_node *bmc_node;</a>
-<a name="358"><span class="lineNum">     358 </span>                :            :         u32 fw_bar, io_bar, mem_bar, internal_bar;</a>
+<a name="358"><span class="lineNum">     358 </span>                :            :         u32 fw_bar, io_bar, mem_bar, internal_bar, mctp_base;</a>
 <a name="359"><span class="lineNum">     359 </span>                :            :         const struct spss_iopath *iopath;</a>
 <a name="360"><span class="lineNum">     360 </span>                :            :         const struct spss_sp_impl *sp_impl;</a>
 <a name="361"><span class="lineNum">     361 </span>                :            :         struct dt_node *lpcm, *lpc, *n;</a>
 <a name="362"><span class="lineNum">     362 </span>                :            :         u64 lpcm_base, lpcm_end;</a>
 <a name="363"><span class="lineNum">     363 </span>                :            :         uint32_t chip_id;</a>
-<a name="364"><span class="lineNum">     364 </span>                :            :         int size;</a>
-<a name="365"><span class="lineNum">     365 </span>                :            : </a>
-<a name="366"><span class="lineNum">     366 </span>                :<span class="lineNoCov">          0 :         bmc_node = dt_new(dt_root, &quot;bmc&quot;);</span></a>
-<a name="367"><span class="lineNum">     367 </span>                :<span class="lineNoCov">          0 :         assert(bmc_node);</span></a>
-<a name="368"><span class="lineNum">     368 </span>                :            : </a>
-<a name="369"><span class="lineNum">     369 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(bmc_node, &quot;#address-cells&quot;, 1);</span></a>
-<a name="370"><span class="lineNum">     370 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(bmc_node, &quot;#size-cells&quot;, 0);</span></a>
-<a name="371"><span class="lineNum">     371 </span>                :            : </a>
-<a name="372"><span class="lineNum">     372 </span>                :            :         /* Add sensor info under /bmc */</a>
-<a name="373"><span class="lineNum">     373 </span>                :<span class="lineNoCov">          0 :         add_ipmi_sensors(bmc_node);</span></a>
-<a name="374"><span class="lineNum">     374 </span>                :            : </a>
-<a name="375"><span class="lineNum">     375 </span>                :<span class="lineNoCov">          0 :         sp_impl = HDIF_get_idata(sp, SPSS_IDATA_SP_IMPL, &amp;size);</span></a>
-<a name="376"><span class="lineNum">     376 </span>                :<span class="lineNoCov">          0 :         if (CHECK_SPPTR(sp_impl) &amp;&amp; (size &gt; 8)) {</span></a>
-<a name="377"><span class="lineNum">     377 </span>                :<span class="lineNoCov">          0 :                 dt_add_property_strings(bmc_node, &quot;compatible&quot;, sp_impl-&gt;sp_family);</span></a>
-<a name="378"><span class="lineNum">     378 </span>                :<span class="lineNoCov">          0 :                 prlog(PR_INFO, &quot;SP Family is %s\n&quot;, sp_impl-&gt;sp_family);</span></a>
-<a name="379"><span class="lineNum">     379 </span>                :            :         }</a>
-<a name="380"><span class="lineNum">     380 </span>                :            : </a>
-<a name="381"><span class="lineNum">     381 </span>                :<span class="lineNoCov">          0 :         iopath = HDIF_get_iarray_item(sp, SPSS_IDATA_SP_IOPATH, 0, NULL);</span></a>
+<a name="364"><span class="lineNum">     364 </span>                :            :         uint32_t topology_idx;</a>
+<a name="365"><span class="lineNum">     365 </span>                :            :         int size;</a>
+<a name="366"><span class="lineNum">     366 </span>                :            : </a>
+<a name="367"><span class="lineNum">     367 </span>                :<span class="lineNoCov">          0 :         bmc_node = dt_new(dt_root, &quot;bmc&quot;);</span></a>
+<a name="368"><span class="lineNum">     368 </span>                :<span class="lineNoCov">          0 :         assert(bmc_node);</span></a>
+<a name="369"><span class="lineNum">     369 </span>                :            : </a>
+<a name="370"><span class="lineNum">     370 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(bmc_node, &quot;#address-cells&quot;, 1);</span></a>
+<a name="371"><span class="lineNum">     371 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(bmc_node, &quot;#size-cells&quot;, 0);</span></a>
+<a name="372"><span class="lineNum">     372 </span>                :            : </a>
+<a name="373"><span class="lineNum">     373 </span>                :            :         /* Add sensor info under /bmc */</a>
+<a name="374"><span class="lineNum">     374 </span>                :<span class="lineNoCov">          0 :         if (proc_gen &lt; proc_gen_p10)</span></a>
+<a name="375"><span class="lineNum">     375 </span>                :<span class="lineNoCov">          0 :                 add_ipmi_sensors(bmc_node);</span></a>
+<a name="376"><span class="lineNum">     376 </span>                :            : </a>
+<a name="377"><span class="lineNum">     377 </span>                :<span class="lineNoCov">          0 :         sp_impl = HDIF_get_idata(sp, SPSS_IDATA_SP_IMPL, &amp;size);</span></a>
+<a name="378"><span class="lineNum">     378 </span>                :<span class="lineNoCov">          0 :         if (CHECK_SPPTR(sp_impl) &amp;&amp; (size &gt; 8)) {</span></a>
+<a name="379"><span class="lineNum">     379 </span>                :<span class="lineNoCov">          0 :                 dt_add_property_strings(bmc_node, &quot;compatible&quot;, sp_impl-&gt;sp_family);</span></a>
+<a name="380"><span class="lineNum">     380 </span>                :<span class="lineNoCov">          0 :                 prlog(PR_INFO, &quot;SP Family is %s\n&quot;, sp_impl-&gt;sp_family);</span></a>
+<a name="381"><span class="lineNum">     381 </span>                :            :         }</a>
 <a name="382"><span class="lineNum">     382 </span>                :            : </a>
-<a name="383"><span class="lineNum">     383 </span>                :<span class="lineNoCov">          0 :         if (be16_to_cpu(iopath-&gt;iopath_type) != SPSS_IOPATH_TYPE_LPC) {</span></a>
-<a name="384"><span class="lineNum">     384 </span>                :<span class="lineNoCov">          0 :                 prerror(&quot;BMC: Non-LPC IOPATH, this is probably broken\n&quot;);</span></a>
-<a name="385"><span class="lineNum">     385 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
-<a name="386"><span class="lineNum">     386 </span>                :            :         }</a>
-<a name="387"><span class="lineNum">     387 </span>                :            : </a>
-<a name="388"><span class="lineNum">     388 </span>                :            :         /*</a>
-<a name="389"><span class="lineNum">     389 </span>                :            :          * For now we only instantiate the LPC node for the LPC that is used</a>
-<a name="390"><span class="lineNum">     390 </span>                :            :          * for Host &lt;-&gt; BMC comms. The secondary LPCs can be skipped.</a>
-<a name="391"><span class="lineNum">     391 </span>                :            :          */</a>
-<a name="392"><span class="lineNum">     392 </span>                :<span class="lineNoCov">          0 :         if (be16_to_cpu(iopath-&gt;lpc.link_status) != LPC_STATUS_ACTIVE)</span></a>
-<a name="393"><span class="lineNum">     393 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
-<a name="394"><span class="lineNum">     394 </span>                :            : </a>
-<a name="395"><span class="lineNum">     395 </span>                :            : #define GB (1024ul * 1024ul * 1024ul)</a>
-<a name="396"><span class="lineNum">     396 </span>                :            :         /*</a>
-<a name="397"><span class="lineNum">     397 </span>                :            :          * convert the hdat chip ID the HW chip id so we get the right</a>
-<a name="398"><span class="lineNum">     398 </span>                :            :          * phys map offset</a>
-<a name="399"><span class="lineNum">     399 </span>                :            :          */</a>
-<a name="400"><span class="lineNum">     400 </span>                :<span class="lineNoCov">          0 :         chip_id = pcid_to_chip_id(be32_to_cpu(iopath-&gt;lpc.chip_id));</span></a>
-<a name="401"><span class="lineNum">     401 </span>                :            : </a>
-<a name="402"><span class="lineNum">     402 </span>                :<span class="lineNoCov">          0 :         phys_map_get(chip_id, LPC_BUS, 0, &amp;lpcm_base, NULL);</span></a>
-<a name="403"><span class="lineNum">     403 </span>                :<span class="lineNoCov">          0 :         lpcm = dt_new_addr(dt_root, &quot;lpcm-opb&quot;, lpcm_base);</span></a>
-<a name="404"><span class="lineNum">     404 </span>                :<span class="lineNoCov">          0 :         assert(lpcm);</span></a>
-<a name="405"><span class="lineNum">     405 </span>                :            : </a>
-<a name="406"><span class="lineNum">     406 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;#address-cells&quot;, 1);</span></a>
-<a name="407"><span class="lineNum">     407 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;#size-cells&quot;, 1);</span></a>
-<a name="408"><span class="lineNum">     408 </span>                :<span class="lineNoCov">          0 :         dt_add_property_strings(lpcm, &quot;compatible&quot;,</span></a>
-<a name="409"><span class="lineNum">     409 </span>                :            :                 &quot;ibm,power9-lpcm-opb&quot;, &quot;simple-bus&quot;);</a>
-<a name="410"><span class="lineNum">     410 </span>                :<span class="lineNoCov">          0 :         dt_add_property_u64s(lpcm, &quot;reg&quot;, lpcm_base, 0x100000000ul);</span></a>
-<a name="411"><span class="lineNum">     411 </span>                :            : </a>
-<a name="412"><span class="lineNum">     412 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;ibm,chip-id&quot;, chip_id);</span></a>
-<a name="413"><span class="lineNum">     413 </span>                :            : </a>
-<a name="414"><span class="lineNum">     414 </span>                :            :         /* Setup the ranges for the MMIO LPC */</a>
-<a name="415"><span class="lineNum">     415 </span>                :<span class="lineNoCov">          0 :         lpcm_end = lpcm_base + 2 * GB;</span></a>
-<a name="416"><span class="lineNum">     416 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;ranges&quot;,</span></a>
-<a name="417"><span class="lineNum">     417 </span>                :            :                 0x00000000, hi32(lpcm_base), lo32(lpcm_base), 2 * GB,</a>
-<a name="418"><span class="lineNum">     418 </span>                :            :                 0x80000000, hi32(lpcm_end),  lo32(lpcm_end),  2 * GB);</a>
-<a name="419"><span class="lineNum">     419 </span>                :            : </a>
-<a name="420"><span class="lineNum">     420 </span>                :            :         /*</a>
-<a name="421"><span class="lineNum">     421 </span>                :            :          * Despite the name the &quot;BAR&quot; values provided through the HDAT are</a>
-<a name="422"><span class="lineNum">     422 </span>                :            :          * the base addresses themselves rather than the BARs</a>
-<a name="423"><span class="lineNum">     423 </span>                :            :          */</a>
-<a name="424"><span class="lineNum">     424 </span>                :<span class="lineNoCov">          0 :         fw_bar = be32_to_cpu(iopath-&gt;lpc.firmware_bar);</span></a>
-<a name="425"><span class="lineNum">     425 </span>                :<span class="lineNoCov">          0 :         mem_bar = be32_to_cpu(iopath-&gt;lpc.memory_bar);</span></a>
-<a name="426"><span class="lineNum">     426 </span>                :<span class="lineNoCov">          0 :         io_bar = be32_to_cpu(iopath-&gt;lpc.io_bar);</span></a>
-<a name="427"><span class="lineNum">     427 </span>                :<span class="lineNoCov">          0 :         internal_bar = be32_to_cpu(iopath-&gt;lpc.internal_bar);</span></a>
-<a name="428"><span class="lineNum">     428 </span>                :            : </a>
-<a name="429"><span class="lineNum">     429 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: IOPATH chip id = %x\n&quot;, chip_id);</span></a>
-<a name="430"><span class="lineNum">     430 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: FW BAR       = %#x\n&quot;, fw_bar);</span></a>
-<a name="431"><span class="lineNum">     431 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: MEM BAR      = %#x\n&quot;, mem_bar);</span></a>
-<a name="432"><span class="lineNum">     432 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: IO BAR       = %#x\n&quot;, io_bar);</span></a>
-<a name="433"><span class="lineNum">     433 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: Internal BAR = %#x\n&quot;, internal_bar);</span></a>
-<a name="434"><span class="lineNum">     434 </span>                :            : </a>
-<a name="435"><span class="lineNum">     435 </span>                :            :         /*</a>
-<a name="436"><span class="lineNum">     436 </span>                :            :          * The internal address space BAR actually points to the LPC master</a>
-<a name="437"><span class="lineNum">     437 </span>                :            :          * registers. So we &quot;fix&quot; it by masking off the low bits.</a>
-<a name="438"><span class="lineNum">     438 </span>                :            :          *</a>
-<a name="439"><span class="lineNum">     439 </span>                :            :          * XXX: we probably need separate base addresses for all these things</a>
-<a name="440"><span class="lineNum">     440 </span>                :            :          */</a>
-<a name="441"><span class="lineNum">     441 </span>                :<span class="lineNoCov">          0 :         internal_bar &amp;= 0xf0000000;</span></a>
+<a name="383"><span class="lineNum">     383 </span>                :<span class="lineNoCov">          0 :         iopath = HDIF_get_iarray_item(sp, SPSS_IDATA_SP_IOPATH, 0, NULL);</span></a>
+<a name="384"><span class="lineNum">     384 </span>                :            : </a>
+<a name="385"><span class="lineNum">     385 </span>                :<span class="lineNoCov">          0 :         if (be16_to_cpu(iopath-&gt;iopath_type) != SPSS_IOPATH_TYPE_LPC) {</span></a>
+<a name="386"><span class="lineNum">     386 </span>                :<span class="lineNoCov">          0 :                 prerror(&quot;BMC: Non-LPC IOPATH, this is probably broken\n&quot;);</span></a>
+<a name="387"><span class="lineNum">     387 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
+<a name="388"><span class="lineNum">     388 </span>                :            :         }</a>
+<a name="389"><span class="lineNum">     389 </span>                :            : </a>
+<a name="390"><span class="lineNum">     390 </span>                :            :         /*</a>
+<a name="391"><span class="lineNum">     391 </span>                :            :          * For now we only instantiate the LPC node for the LPC that is used</a>
+<a name="392"><span class="lineNum">     392 </span>                :            :          * for Host &lt;-&gt; BMC comms. The secondary LPCs can be skipped.</a>
+<a name="393"><span class="lineNum">     393 </span>                :            :          */</a>
+<a name="394"><span class="lineNum">     394 </span>                :<span class="lineNoCov">          0 :         if (be16_to_cpu(iopath-&gt;lpc.link_status) != LPC_STATUS_ACTIVE)</span></a>
+<a name="395"><span class="lineNum">     395 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
+<a name="396"><span class="lineNum">     396 </span>                :            : </a>
+<a name="397"><span class="lineNum">     397 </span>                :            : #define GB (1024ul * 1024ul * 1024ul)</a>
+<a name="398"><span class="lineNum">     398 </span>                :            :         /*</a>
+<a name="399"><span class="lineNum">     399 </span>                :            :          * convert the hdat chip ID the HW chip id so we get the right</a>
+<a name="400"><span class="lineNum">     400 </span>                :            :          * phys map offset</a>
+<a name="401"><span class="lineNum">     401 </span>                :            :          */</a>
+<a name="402"><span class="lineNum">     402 </span>                :<span class="lineNoCov">          0 :         chip_id = pcid_to_chip_id(be32_to_cpu(iopath-&gt;lpc.chip_id));</span></a>
+<a name="403"><span class="lineNum">     403 </span>                :<span class="lineNoCov">          0 :         topology_idx = pcid_to_topology_idx(be32_to_cpu(iopath-&gt;lpc.chip_id));</span></a>
+<a name="404"><span class="lineNum">     404 </span>                :            : </a>
+<a name="405"><span class="lineNum">     405 </span>                :<span class="lineNoCov">          0 :         __phys_map_get(topology_idx, chip_id, LPC_BUS, 0, &amp;lpcm_base, NULL);</span></a>
+<a name="406"><span class="lineNum">     406 </span>                :<span class="lineNoCov">          0 :         lpcm = dt_new_addr(dt_root, &quot;lpcm-opb&quot;, lpcm_base);</span></a>
+<a name="407"><span class="lineNum">     407 </span>                :<span class="lineNoCov">          0 :         assert(lpcm);</span></a>
+<a name="408"><span class="lineNum">     408 </span>                :            : </a>
+<a name="409"><span class="lineNum">     409 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;#address-cells&quot;, 1);</span></a>
+<a name="410"><span class="lineNum">     410 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;#size-cells&quot;, 1);</span></a>
+<a name="411"><span class="lineNum">     411 </span>                :<span class="lineNoCov">          0 :         dt_add_property_strings(lpcm, &quot;compatible&quot;,</span></a>
+<a name="412"><span class="lineNum">     412 </span>                :            :                 &quot;ibm,power9-lpcm-opb&quot;, &quot;simple-bus&quot;);</a>
+<a name="413"><span class="lineNum">     413 </span>                :<span class="lineNoCov">          0 :         dt_add_property_u64s(lpcm, &quot;reg&quot;, lpcm_base, 0x100000000ul);</span></a>
+<a name="414"><span class="lineNum">     414 </span>                :            : </a>
+<a name="415"><span class="lineNum">     415 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;ibm,chip-id&quot;, chip_id);</span></a>
+<a name="416"><span class="lineNum">     416 </span>                :            : </a>
+<a name="417"><span class="lineNum">     417 </span>                :            :         /* Setup the ranges for the MMIO LPC */</a>
+<a name="418"><span class="lineNum">     418 </span>                :<span class="lineNoCov">          0 :         lpcm_end = lpcm_base + 2 * GB;</span></a>
+<a name="419"><span class="lineNum">     419 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpcm, &quot;ranges&quot;,</span></a>
+<a name="420"><span class="lineNum">     420 </span>                :            :                 0x00000000, hi32(lpcm_base), lo32(lpcm_base), 2 * GB,</a>
+<a name="421"><span class="lineNum">     421 </span>                :            :                 0x80000000, hi32(lpcm_end),  lo32(lpcm_end),  2 * GB);</a>
+<a name="422"><span class="lineNum">     422 </span>                :            : </a>
+<a name="423"><span class="lineNum">     423 </span>                :            :         /*</a>
+<a name="424"><span class="lineNum">     424 </span>                :            :          * Despite the name the &quot;BAR&quot; values provided through the HDAT are</a>
+<a name="425"><span class="lineNum">     425 </span>                :            :          * the base addresses themselves rather than the BARs</a>
+<a name="426"><span class="lineNum">     426 </span>                :            :          */</a>
+<a name="427"><span class="lineNum">     427 </span>                :<span class="lineNoCov">          0 :         fw_bar = be32_to_cpu(iopath-&gt;lpc.firmware_bar);</span></a>
+<a name="428"><span class="lineNum">     428 </span>                :<span class="lineNoCov">          0 :         mem_bar = be32_to_cpu(iopath-&gt;lpc.memory_bar);</span></a>
+<a name="429"><span class="lineNum">     429 </span>                :<span class="lineNoCov">          0 :         io_bar = be32_to_cpu(iopath-&gt;lpc.io_bar);</span></a>
+<a name="430"><span class="lineNum">     430 </span>                :<span class="lineNoCov">          0 :         internal_bar = be32_to_cpu(iopath-&gt;lpc.internal_bar);</span></a>
+<a name="431"><span class="lineNum">     431 </span>                :<span class="lineNoCov">          0 :         mctp_base = be32_to_cpu(iopath-&gt;lpc.mctp_base);</span></a>
+<a name="432"><span class="lineNum">     432 </span>                :            : </a>
+<a name="433"><span class="lineNum">     433 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: IOPATH chip id = %x\n&quot;, chip_id);</span></a>
+<a name="434"><span class="lineNum">     434 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: FW BAR       = %#x\n&quot;, fw_bar);</span></a>
+<a name="435"><span class="lineNum">     435 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: MEM BAR      = %#x\n&quot;, mem_bar);</span></a>
+<a name="436"><span class="lineNum">     436 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: IO BAR       = %#x\n&quot;, io_bar);</span></a>
+<a name="437"><span class="lineNum">     437 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: Internal BAR = %#x\n&quot;, internal_bar);</span></a>
+<a name="438"><span class="lineNum">     438 </span>                :<span class="lineNoCov">          0 :         if (proc_gen &gt;= proc_gen_p10) {</span></a>
+<a name="439"><span class="lineNum">     439 </span>                :            :                 /* MCTP is part of FW BAR */</a>
+<a name="440"><span class="lineNum">     440 </span>                :<span class="lineNoCov">          0 :                 prlog(PR_DEBUG, &quot;LPC: MCTP base    = %#x\n&quot;, mctp_base);</span></a>
+<a name="441"><span class="lineNum">     441 </span>                :            :         }</a>
 <a name="442"><span class="lineNum">     442 </span>                :            : </a>
-<a name="443"><span class="lineNum">     443 </span>                :            :         /* Add the various internal bus devices */</a>
-<a name="444"><span class="lineNum">     444 </span>                :<span class="lineNoCov">          0 :         n = dt_new_addr(lpcm, &quot;opb-master&quot;, internal_bar + 0x10000);</span></a>
-<a name="445"><span class="lineNum">     445 </span>                :<span class="lineNoCov">          0 :         dt_add_property_string(n, &quot;compatible&quot;, &quot;ibm,power9-lpcm-opb-master&quot;);</span></a>
-<a name="446"><span class="lineNum">     446 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(n, &quot;reg&quot;, internal_bar + 0x10000, 0x60);</span></a>
-<a name="447"><span class="lineNum">     447 </span>                :            : </a>
-<a name="448"><span class="lineNum">     448 </span>                :<span class="lineNoCov">          0 :         n = dt_new_addr(lpcm, &quot;opb-arbiter&quot;, internal_bar + 0x11000);</span></a>
-<a name="449"><span class="lineNum">     449 </span>                :<span class="lineNoCov">          0 :         dt_add_property_string(n, &quot;compatible&quot;, &quot;ibm,power9-lpcm-opb-arbiter&quot;);</span></a>
-<a name="450"><span class="lineNum">     450 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(n, &quot;reg&quot;, internal_bar + 0x11000, 0x8);</span></a>
-<a name="451"><span class="lineNum">     451 </span>                :            : </a>
-<a name="452"><span class="lineNum">     452 </span>                :<span class="lineNoCov">          0 :         n = dt_new_addr(lpcm, &quot;lpc-controller&quot;, internal_bar + 0x12000);</span></a>
-<a name="453"><span class="lineNum">     453 </span>                :<span class="lineNoCov">          0 :         dt_add_property_string(n, &quot;compatible&quot;, &quot;ibm,power9-lpc-controller&quot;);</span></a>
-<a name="454"><span class="lineNum">     454 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(n, &quot;reg&quot;, internal_bar + 0x12000, 0x100);</span></a>
+<a name="443"><span class="lineNum">     443 </span>                :            :         /*</a>
+<a name="444"><span class="lineNum">     444 </span>                :            :          * The internal address space BAR actually points to the LPC master</a>
+<a name="445"><span class="lineNum">     445 </span>                :            :          * registers. So we &quot;fix&quot; it by masking off the low bits.</a>
+<a name="446"><span class="lineNum">     446 </span>                :            :          *</a>
+<a name="447"><span class="lineNum">     447 </span>                :            :          * XXX: we probably need separate base addresses for all these things</a>
+<a name="448"><span class="lineNum">     448 </span>                :            :          */</a>
+<a name="449"><span class="lineNum">     449 </span>                :<span class="lineNoCov">          0 :         internal_bar &amp;= 0xf0000000;</span></a>
+<a name="450"><span class="lineNum">     450 </span>                :            : </a>
+<a name="451"><span class="lineNum">     451 </span>                :            :         /* Add the various internal bus devices */</a>
+<a name="452"><span class="lineNum">     452 </span>                :<span class="lineNoCov">          0 :         n = dt_new_addr(lpcm, &quot;opb-master&quot;, internal_bar + 0x10000);</span></a>
+<a name="453"><span class="lineNum">     453 </span>                :<span class="lineNoCov">          0 :         dt_add_property_string(n, &quot;compatible&quot;, &quot;ibm,power9-lpcm-opb-master&quot;);</span></a>
+<a name="454"><span class="lineNum">     454 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(n, &quot;reg&quot;, internal_bar + 0x10000, 0x60);</span></a>
 <a name="455"><span class="lineNum">     455 </span>                :            : </a>
-<a name="456"><span class="lineNum">     456 </span>                :            :         /*</a>
-<a name="457"><span class="lineNum">     457 </span>                :            :          * FIXME: lpc@0 might not be accurate, but i'm pretty sure</a>
-<a name="458"><span class="lineNum">     458 </span>                :            :          * lpc@f0000000 isn't right either.</a>
-<a name="459"><span class="lineNum">     459 </span>                :            :          */</a>
-<a name="460"><span class="lineNum">     460 </span>                :<span class="lineNoCov">          0 :         lpc = dt_new_addr(lpcm, &quot;lpc&quot;, 0x0);</span></a>
-<a name="461"><span class="lineNum">     461 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpc, &quot;#address-cells&quot;, 2);</span></a>
-<a name="462"><span class="lineNum">     462 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpc, &quot;#size-cells&quot;, 1);</span></a>
-<a name="463"><span class="lineNum">     463 </span>                :<span class="lineNoCov">          0 :         dt_add_property_strings(lpc, &quot;compatible&quot;,</span></a>
-<a name="464"><span class="lineNum">     464 </span>                :            :                                 &quot;ibm,power9-lpc&quot;, &quot;ibm,power8-lpc&quot;);</a>
-<a name="465"><span class="lineNum">     465 </span>                :            : </a>
-<a name="466"><span class="lineNum">     466 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpc, &quot;ranges&quot;,</span></a>
-<a name="467"><span class="lineNum">     467 </span>                :            :                 0, 0, mem_bar, 0x10000000, /* MEM space */</a>
-<a name="468"><span class="lineNum">     468 </span>                :            :                 1, 0, io_bar,  0x00010000, /* IO space  */</a>
-<a name="469"><span class="lineNum">     469 </span>                :            :                 /* we don't expose the internal space */</a>
-<a name="470"><span class="lineNum">     470 </span>                :            :                 3, 0, fw_bar,  0x10000000  /* FW space  */</a>
-<a name="471"><span class="lineNum">     471 </span>                :            :         );</a>
-<a name="472"><span class="lineNum">     472 </span>                :            : </a>
-<a name="473"><span class="lineNum">     473 </span>                :<span class="lineNoCov">          0 :         add_uart(iopath, lpc);</span></a>
-<a name="474"><span class="lineNum">     474 </span>                :            : </a>
-<a name="475"><span class="lineNum">     475 </span>                :            :         /* BT device info isn't currently populated */</a>
-<a name="476"><span class="lineNum">     476 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: BT [%#&quot;PRIx64&quot;, %#x] sms_int: %u, bmc_int: %u\n&quot;,</span></a>
-<a name="477"><span class="lineNum">     477 </span>                :            :                 iopath-&gt;lpc.bt_base, iopath-&gt;lpc.bt_size,</a>
-<a name="478"><span class="lineNum">     478 </span>                :            :                 iopath-&gt;lpc.bt_sms_int_num, iopath-&gt;lpc.bt_bmc_response_int_num</a>
+<a name="456"><span class="lineNum">     456 </span>                :<span class="lineNoCov">          0 :         n = dt_new_addr(lpcm, &quot;opb-arbiter&quot;, internal_bar + 0x11000);</span></a>
+<a name="457"><span class="lineNum">     457 </span>                :<span class="lineNoCov">          0 :         dt_add_property_string(n, &quot;compatible&quot;, &quot;ibm,power9-lpcm-opb-arbiter&quot;);</span></a>
+<a name="458"><span class="lineNum">     458 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(n, &quot;reg&quot;, internal_bar + 0x11000, 0x8);</span></a>
+<a name="459"><span class="lineNum">     459 </span>                :            : </a>
+<a name="460"><span class="lineNum">     460 </span>                :<span class="lineNoCov">          0 :         n = dt_new_addr(lpcm, &quot;lpc-controller&quot;, internal_bar + 0x12000);</span></a>
+<a name="461"><span class="lineNum">     461 </span>                :<span class="lineNoCov">          0 :         dt_add_property_string(n, &quot;compatible&quot;, &quot;ibm,power9-lpc-controller&quot;);</span></a>
+<a name="462"><span class="lineNum">     462 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(n, &quot;reg&quot;, internal_bar + 0x12000, 0x100);</span></a>
+<a name="463"><span class="lineNum">     463 </span>                :            : </a>
+<a name="464"><span class="lineNum">     464 </span>                :            :         /*</a>
+<a name="465"><span class="lineNum">     465 </span>                :            :          * FIXME: lpc@0 might not be accurate, but i'm pretty sure</a>
+<a name="466"><span class="lineNum">     466 </span>                :            :          * lpc@f0000000 isn't right either.</a>
+<a name="467"><span class="lineNum">     467 </span>                :            :          */</a>
+<a name="468"><span class="lineNum">     468 </span>                :<span class="lineNoCov">          0 :         lpc = dt_new_addr(lpcm, &quot;lpc&quot;, 0x0);</span></a>
+<a name="469"><span class="lineNum">     469 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpc, &quot;#address-cells&quot;, 2);</span></a>
+<a name="470"><span class="lineNum">     470 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpc, &quot;#size-cells&quot;, 1);</span></a>
+<a name="471"><span class="lineNum">     471 </span>                :<span class="lineNoCov">          0 :         dt_add_property_strings(lpc, &quot;compatible&quot;,</span></a>
+<a name="472"><span class="lineNum">     472 </span>                :            :                                 &quot;ibm,power9-lpc&quot;, &quot;ibm,power8-lpc&quot;);</a>
+<a name="473"><span class="lineNum">     473 </span>                :            : </a>
+<a name="474"><span class="lineNum">     474 </span>                :<span class="lineNoCov">          0 :         dt_add_property_cells(lpc, &quot;ranges&quot;,</span></a>
+<a name="475"><span class="lineNum">     475 </span>                :            :                 0, 0, mem_bar, 0x10000000, /* MEM space */</a>
+<a name="476"><span class="lineNum">     476 </span>                :            :                 1, 0, io_bar,  0x00010000, /* IO space  */</a>
+<a name="477"><span class="lineNum">     477 </span>                :            :                 /* we don't expose the internal space */</a>
+<a name="478"><span class="lineNum">     478 </span>                :            :                 3, 0, fw_bar,  0x10000000  /* FW space  */</a>
 <a name="479"><span class="lineNum">     479 </span>                :            :         );</a>
-<a name="480"><span class="lineNum">     480 </span>                :            : }</a>
-<a name="481"><span class="lineNum">     481 </span>                :            : </a>
-<a name="482"><span class="lineNum">     482 </span>                :            : /*</a>
-<a name="483"><span class="lineNum">     483 </span>                :            :  * Search for and instanciate BMC nodes. This is mostly the same as fsp_parse()</a>
-<a name="484"><span class="lineNum">     484 </span>                :            :  * below, but it can be called earlier since BMCs don't depend on the psihb</a>
-<a name="485"><span class="lineNum">     485 </span>                :            :  * nodes being added.</a>
-<a name="486"><span class="lineNum">     486 </span>                :            :  */</a>
-<a name="487"><span class="lineNum">     487 </span>                :<span class="lineCov">          2 : void bmc_parse(void)</span></a>
-<a name="488"><span class="lineNum">     488 </span>                :            : {</a>
-<a name="489"><span class="lineNum">     489 </span>                :<span class="lineCov">          2 :         bool found = false;</span></a>
-<a name="490"><span class="lineNum">     490 </span>                :            :         const void *sp;</a>
-<a name="491"><span class="lineNum">     491 </span>                :            :         int i;</a>
-<a name="492"><span class="lineNum">     492 </span>                :            : </a>
-<a name="493"><span class="lineNum">     493 </span>                :<span class="lineCov">          2 :         sp = get_hdif(&amp;spira.ntuples.sp_subsys, SPSS_HDIF_SIG);</span></a>
-<a name="494"><span class="lineNum">     494 </span>                :<span class="lineCov">          2 :         if (!sp)</span></a>
-<a name="495"><span class="lineNum">     495 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
-<a name="496"><span class="lineNum">     496 </span>                :            : </a>
-<a name="497"><span class="lineNum">     497 </span>                :<span class="lineCov">          4 :         for_each_ntuple_idx(&amp;spira.ntuples.sp_subsys, sp, i, SPSS_HDIF_SIG) {</span></a>
-<a name="498"><span class="lineNum">     498 </span>                :<span class="lineCov">          2 :                 if (find_service_proc_type(sp, i) == SP_BMC) {</span></a>
-<a name="499"><span class="lineNum">     499 </span>                :<span class="lineNoCov">          0 :                         bmc_create_node(sp);</span></a>
-<a name="500"><span class="lineNum">     500 </span>                :<span class="lineNoCov">          0 :                         found = true;</span></a>
-<a name="501"><span class="lineNum">     501 </span>                :            :                 }</a>
-<a name="502"><span class="lineNum">     502 </span>                :            :         }</a>
-<a name="503"><span class="lineNum">     503 </span>                :            : </a>
-<a name="504"><span class="lineNum">     504 </span>                :<span class="lineCov">          2 :         if (found)</span></a>
-<a name="505"><span class="lineNum">     505 </span>                :<span class="lineNoCov">          0 :                 early_uart_init();</span></a>
-<a name="506"><span class="lineNum">     506 </span>                :            : }</a>
-<a name="507"><span class="lineNum">     507 </span>                :            : </a>
-<a name="508"><span class="lineNum">     508 </span>                :<span class="lineCov">          2 : void fsp_parse(void)</span></a>
-<a name="509"><span class="lineNum">     509 </span>                :            : {</a>
-<a name="510"><span class="lineNum">     510 </span>                :<span class="lineCov">          2 :         struct dt_node *fsp_root = NULL, *fsp_node;</span></a>
-<a name="511"><span class="lineNum">     511 </span>                :            :         const void *sp;</a>
-<a name="512"><span class="lineNum">     512 </span>                :            :         int index;</a>
-<a name="513"><span class="lineNum">     513 </span>                :            : </a>
-<a name="514"><span class="lineNum">     514 </span>                :            :         /* Find SPSS tuple in SPIRA */</a>
-<a name="515"><span class="lineNum">     515 </span>                :<span class="lineCov">          2 :         sp = get_hdif(&amp;spira.ntuples.sp_subsys, SPSS_HDIF_SIG);</span></a>
-<a name="516"><span class="lineNum">     516 </span>                :<span class="lineCov">          2 :         if (!sp) {</span></a>
-<a name="517"><span class="lineNum">     517 </span>                :<span class="lineNoCov">          0 :                 prlog(PR_WARNING, &quot;HDAT: No FSP/BMC found!\n&quot;);</span></a>
-<a name="518"><span class="lineNum">     518 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
-<a name="519"><span class="lineNum">     519 </span>                :            :         }</a>
-<a name="520"><span class="lineNum">     520 </span>                :            : </a>
-<a name="521"><span class="lineNum">     521 </span>                :<span class="lineCov">          4 :         for_each_ntuple_idx(&amp;spira.ntuples.sp_subsys, sp, index, SPSS_HDIF_SIG) {</span></a>
-<a name="522"><span class="lineNum">     522 </span>                :<span class="lineCov">          2 :                 switch (find_service_proc_type(sp, index)) {</span></a>
-<a name="523"><span class="lineNum">     523 </span>                :<span class="lineCov">          2 :                 case SP_FSP:</span></a>
-<a name="524"><span class="lineNum">     524 </span>                :<span class="lineCov">          2 :                         if (!fsp_root) {</span></a>
-<a name="525"><span class="lineNum">     525 </span>                :<span class="lineCov">          2 :                                 fsp_root = dt_new(dt_root, &quot;fsps&quot;);</span></a>
-<a name="526"><span class="lineNum">     526 </span>                :<span class="lineCov">          2 :                                 assert(fsp_root);</span></a>
-<a name="527"><span class="lineNum">     527 </span>                :            : </a>
-<a name="528"><span class="lineNum">     528 </span>                :<span class="lineCov">          2 :                                 dt_add_property_cells(fsp_root,</span></a>
-<a name="529"><span class="lineNum">     529 </span>                :            :                                         &quot;#address-cells&quot;, 1);</a>
-<a name="530"><span class="lineNum">     530 </span>                :<span class="lineCov">          2 :                                 dt_add_property_cells(fsp_root,</span></a>
-<a name="531"><span class="lineNum">     531 </span>                :            :                                         &quot;#size-cells&quot;, 0);</a>
-<a name="532"><span class="lineNum">     532 </span>                :            :                         }</a>
-<a name="533"><span class="lineNum">     533 </span>                :            : </a>
-<a name="534"><span class="lineNum">     534 </span>                :<span class="lineCov">          2 :                         fsp_node = fsp_create_node(sp, index, fsp_root);</span></a>
-<a name="535"><span class="lineNum">     535 </span>                :<span class="lineCov">          2 :                         if (fsp_node)</span></a>
-<a name="536"><span class="lineNum">     536 </span>                :<span class="lineCov">          2 :                                 fsp_create_links(sp, index, fsp_node);</span></a>
-<a name="537"><span class="lineNum">     537 </span>                :            : </a>
-<a name="538"><span class="lineNum">     538 </span>                :<span class="lineCov">          2 :                         break;</span></a>
-<a name="539"><span class="lineNum">     539 </span>                :            : </a>
-<a name="540"><span class="lineNum">     540 </span>                :<span class="lineNoCov">          0 :                 case SP_BMC:</span></a>
-<a name="541"><span class="lineNum">     541 </span>                :            :                         /* Handled above */</a>
-<a name="542"><span class="lineNum">     542 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
-<a name="543"><span class="lineNum">     543 </span>                :            : </a>
-<a name="544"><span class="lineNum">     544 </span>                :<span class="lineNoCov">          0 :                 case SP_BAD:</span></a>
-<a name="545"><span class="lineNum">     545 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
-<a name="546"><span class="lineNum">     546 </span>                :            : </a>
-<a name="547"><span class="lineNum">     547 </span>                :<span class="lineNoCov">          0 :                 default:</span></a>
-<a name="548"><span class="lineNum">     548 </span>                :<span class="lineNoCov">          0 :                         prerror(&quot;SP #%d: This service processor is not supported\n&quot;, index);</span></a>
-<a name="549"><span class="lineNum">     549 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
-<a name="550"><span class="lineNum">     550 </span>                :            :                 }</a>
-<a name="551"><span class="lineNum">     551 </span>                :            :         }</a>
-<a name="552"><span class="lineNum">     552 </span>                :            : }</a>
+<a name="480"><span class="lineNum">     480 </span>                :            : </a>
+<a name="481"><span class="lineNum">     481 </span>                :<span class="lineNoCov">          0 :         add_uart(iopath, lpc);</span></a>
+<a name="482"><span class="lineNum">     482 </span>                :            : </a>
+<a name="483"><span class="lineNum">     483 </span>                :            :         /* BT device info isn't currently populated */</a>
+<a name="484"><span class="lineNum">     484 </span>                :<span class="lineNoCov">          0 :         prlog(PR_DEBUG, &quot;LPC: BT [%#&quot;PRIx64&quot;, %#x] sms_int: %u, bmc_int: %u\n&quot;,</span></a>
+<a name="485"><span class="lineNum">     485 </span>                :            :                 iopath-&gt;lpc.bt_base, iopath-&gt;lpc.bt_size,</a>
+<a name="486"><span class="lineNum">     486 </span>                :            :                 iopath-&gt;lpc.bt_sms_int_num, iopath-&gt;lpc.bt_bmc_response_int_num</a>
+<a name="487"><span class="lineNum">     487 </span>                :            :         );</a>
+<a name="488"><span class="lineNum">     488 </span>                :            : }</a>
+<a name="489"><span class="lineNum">     489 </span>                :            : </a>
+<a name="490"><span class="lineNum">     490 </span>                :            : /*</a>
+<a name="491"><span class="lineNum">     491 </span>                :            :  * Search for and instanciate BMC nodes. This is mostly the same as fsp_parse()</a>
+<a name="492"><span class="lineNum">     492 </span>                :            :  * below, but it can be called earlier since BMCs don't depend on the psihb</a>
+<a name="493"><span class="lineNum">     493 </span>                :            :  * nodes being added.</a>
+<a name="494"><span class="lineNum">     494 </span>                :            :  */</a>
+<a name="495"><span class="lineNum">     495 </span>                :<span class="lineCov">          2 : void bmc_parse(void)</span></a>
+<a name="496"><span class="lineNum">     496 </span>                :            : {</a>
+<a name="497"><span class="lineNum">     497 </span>                :<span class="lineCov">          2 :         bool found = false;</span></a>
+<a name="498"><span class="lineNum">     498 </span>                :            :         const void *sp;</a>
+<a name="499"><span class="lineNum">     499 </span>                :            :         int i;</a>
+<a name="500"><span class="lineNum">     500 </span>                :            : </a>
+<a name="501"><span class="lineNum">     501 </span>                :<span class="lineCov">          2 :         sp = get_hdif(&amp;spira.ntuples.sp_subsys, SPSS_HDIF_SIG);</span></a>
+<a name="502"><span class="lineNum">     502 </span>                :<span class="lineCov">          2 :         if (!sp)</span></a>
+<a name="503"><span class="lineNum">     503 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
+<a name="504"><span class="lineNum">     504 </span>                :            : </a>
+<a name="505"><span class="lineNum">     505 </span>                :<span class="lineCov">          4 :         for_each_ntuple_idx(&amp;spira.ntuples.sp_subsys, sp, i, SPSS_HDIF_SIG) {</span></a>
+<a name="506"><span class="lineNum">     506 </span>                :<span class="lineCov">          2 :                 if (find_service_proc_type(sp, i) == SP_BMC) {</span></a>
+<a name="507"><span class="lineNum">     507 </span>                :<span class="lineNoCov">          0 :                         bmc_create_node(sp);</span></a>
+<a name="508"><span class="lineNum">     508 </span>                :<span class="lineNoCov">          0 :                         found = true;</span></a>
+<a name="509"><span class="lineNum">     509 </span>                :            :                 }</a>
+<a name="510"><span class="lineNum">     510 </span>                :            :         }</a>
+<a name="511"><span class="lineNum">     511 </span>                :            : </a>
+<a name="512"><span class="lineNum">     512 </span>                :<span class="lineCov">          2 :         if (found)</span></a>
+<a name="513"><span class="lineNum">     513 </span>                :<span class="lineNoCov">          0 :                 early_uart_init();</span></a>
+<a name="514"><span class="lineNum">     514 </span>                :            : }</a>
+<a name="515"><span class="lineNum">     515 </span>                :            : </a>
+<a name="516"><span class="lineNum">     516 </span>                :<span class="lineCov">          2 : void fsp_parse(void)</span></a>
+<a name="517"><span class="lineNum">     517 </span>                :            : {</a>
+<a name="518"><span class="lineNum">     518 </span>                :<span class="lineCov">          2 :         struct dt_node *fsp_root = NULL, *fsp_node;</span></a>
+<a name="519"><span class="lineNum">     519 </span>                :            :         const void *sp;</a>
+<a name="520"><span class="lineNum">     520 </span>                :            :         int index;</a>
+<a name="521"><span class="lineNum">     521 </span>                :            : </a>
+<a name="522"><span class="lineNum">     522 </span>                :            :         /* Find SPSS tuple in SPIRA */</a>
+<a name="523"><span class="lineNum">     523 </span>                :<span class="lineCov">          2 :         sp = get_hdif(&amp;spira.ntuples.sp_subsys, SPSS_HDIF_SIG);</span></a>
+<a name="524"><span class="lineNum">     524 </span>                :<span class="lineCov">          2 :         if (!sp) {</span></a>
+<a name="525"><span class="lineNum">     525 </span>                :<span class="lineNoCov">          0 :                 prlog(PR_WARNING, &quot;HDAT: No FSP/BMC found!\n&quot;);</span></a>
+<a name="526"><span class="lineNum">     526 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
+<a name="527"><span class="lineNum">     527 </span>                :            :         }</a>
+<a name="528"><span class="lineNum">     528 </span>                :            : </a>
+<a name="529"><span class="lineNum">     529 </span>                :<span class="lineCov">          4 :         for_each_ntuple_idx(&amp;spira.ntuples.sp_subsys, sp, index, SPSS_HDIF_SIG) {</span></a>
+<a name="530"><span class="lineNum">     530 </span>                :<span class="lineCov">          2 :                 switch (find_service_proc_type(sp, index)) {</span></a>
+<a name="531"><span class="lineNum">     531 </span>                :<span class="lineCov">          2 :                 case SP_FSP:</span></a>
+<a name="532"><span class="lineNum">     532 </span>                :<span class="lineCov">          2 :                         if (!fsp_root) {</span></a>
+<a name="533"><span class="lineNum">     533 </span>                :<span class="lineCov">          2 :                                 fsp_root = dt_new(dt_root, &quot;fsps&quot;);</span></a>
+<a name="534"><span class="lineNum">     534 </span>                :<span class="lineCov">          2 :                                 assert(fsp_root);</span></a>
+<a name="535"><span class="lineNum">     535 </span>                :            : </a>
+<a name="536"><span class="lineNum">     536 </span>                :<span class="lineCov">          2 :                                 dt_add_property_cells(fsp_root,</span></a>
+<a name="537"><span class="lineNum">     537 </span>                :            :                                         &quot;#address-cells&quot;, 1);</a>
+<a name="538"><span class="lineNum">     538 </span>                :<span class="lineCov">          2 :                                 dt_add_property_cells(fsp_root,</span></a>
+<a name="539"><span class="lineNum">     539 </span>                :            :                                         &quot;#size-cells&quot;, 0);</a>
+<a name="540"><span class="lineNum">     540 </span>                :            :                         }</a>
+<a name="541"><span class="lineNum">     541 </span>                :            : </a>
+<a name="542"><span class="lineNum">     542 </span>                :<span class="lineCov">          2 :                         fsp_node = fsp_create_node(sp, index, fsp_root);</span></a>
+<a name="543"><span class="lineNum">     543 </span>                :<span class="lineCov">          2 :                         if (fsp_node)</span></a>
+<a name="544"><span class="lineNum">     544 </span>                :<span class="lineCov">          2 :                                 fsp_create_links(sp, index, fsp_node);</span></a>
+<a name="545"><span class="lineNum">     545 </span>                :            : </a>
+<a name="546"><span class="lineNum">     546 </span>                :<span class="lineCov">          2 :                         break;</span></a>
+<a name="547"><span class="lineNum">     547 </span>                :            : </a>
+<a name="548"><span class="lineNum">     548 </span>                :<span class="lineNoCov">          0 :                 case SP_BMC:</span></a>
+<a name="549"><span class="lineNum">     549 </span>                :            :                         /* Handled above */</a>
+<a name="550"><span class="lineNum">     550 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
+<a name="551"><span class="lineNum">     551 </span>                :            : </a>
+<a name="552"><span class="lineNum">     552 </span>                :<span class="lineNoCov">          0 :                 case SP_BAD:</span></a>
+<a name="553"><span class="lineNum">     553 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
+<a name="554"><span class="lineNum">     554 </span>                :            : </a>
+<a name="555"><span class="lineNum">     555 </span>                :<span class="lineNoCov">          0 :                 default:</span></a>
+<a name="556"><span class="lineNum">     556 </span>                :<span class="lineNoCov">          0 :                         prerror(&quot;SP #%d: This service processor is not supported\n&quot;, index);</span></a>
+<a name="557"><span class="lineNum">     557 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
+<a name="558"><span class="lineNum">     558 </span>                :            :                 }</a>
+<a name="559"><span class="lineNum">     559 </span>                :            :         }</a>
+<a name="560"><span class="lineNum">     560 </span>                :            : }</a>
 </pre>
       </td>
     </tr>

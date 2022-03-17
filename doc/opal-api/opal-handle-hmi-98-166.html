@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hypervisor Maintenance Interrupt (HMI) &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Hypervisor Maintenance Interrupt (HMI) &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-get-xive-20.html" title="OPAL_GET_XIVE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Hypervisor Maintenance Interrupt (HMI)</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -66,31 +67,31 @@ after handling the error.</p>
 <h1>List of errors that causes HMI<a class="headerlink" href="#list-of-errors-that-causes-hmi" title="Permalink to this headline">¶</a></h1>
 <blockquote>
 <div><ul>
-<li><p>CPU Errors</p>
+<li><p class="first">CPU Errors</p>
 <ul class="simple">
-<li><p>Processor Core checkstop</p></li>
-<li><p>Processor retry recovery</p></li>
-<li><p>NX/NPU/CAPP checkstop.</p></li>
+<li>Processor Core checkstop</li>
+<li>Processor retry recovery</li>
+<li>NX/NPU/CAPP checkstop.</li>
 </ul>
 </li>
-<li><p>Timer facility Errors</p>
+<li><p class="first">Timer facility Errors</p>
 <ul class="simple">
-<li><p>ChipTOD Errors</p></li>
+<li>ChipTOD Errors</li>
 </ul>
 <blockquote>
 <div><ul class="simple">
-<li><p>ChipTOD sync check and parity errors</p></li>
-<li><p>ChipTOD configuration register parity errors</p></li>
-<li><p>ChiTOD topology failover</p></li>
+<li>ChipTOD sync check and parity errors</li>
+<li>ChipTOD configuration register parity errors</li>
+<li>ChiTOD topology failover</li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Timebase (TB) errors</p>
+<li><p class="first">Timebase (TB) errors</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>TB parity/residue error</p></li>
-<li><p>TFMR parity and firmware control error</p></li>
-<li><p>DEC/HDEC/PURR/SPURR parity errors</p></li>
+<li>TB parity/residue error</li>
+<li>TFMR parity and firmware control error</li>
+<li>DEC/HDEC/PURR/SPURR parity errors</li>
 </ul>
 </div></blockquote>
 </li>
@@ -177,20 +178,19 @@ were lost, and whether an event was generated.</p>
 <span class="p">};</span>
 </pre></div>
 </div>
-<dl class="simple" id="opal-hmi-flags-tod-tb-fail">
-<dt>OPAL_HMI_FLAGS_TOD_TB_FAIL</dt><dd><p>The Time of Day (TOD) / Timebase facility has failed. This is probably fatal
+<dl class="docutils" id="opal-hmi-flags-tod-tb-fail">
+<dt>OPAL_HMI_FLAGS_TOD_TB_FAIL</dt>
+<dd>The Time of Day (TOD) / Timebase facility has failed. This is probably fatal
 for the OS, and requires the OS to be very careful to not call any function
 that may rely on it, usually as it heads down a <cite>panic()</cite> code path.
 This code path should be <a class="reference internal" href="opal-cec-reboot-6-116.html#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a> with the OPAL_REBOOT_PLATFORM_ERROR
 option. Details of the failure are likely delivered as part of HMI events if
-<cite>OPAL_HMI_FLAGS_NEW_EVENT</cite> is set.</p>
-</dd>
+<cite>OPAL_HMI_FLAGS_NEW_EVENT</cite> is set.</dd>
 </dl>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -222,15 +222,17 @@ option. Details of the failure are likely delivered as part of HMI events if
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -247,15 +249,14 @@ option. Details of the failure are likely delivered as part of HMI events if
         <li class="right" >
           <a href="opal-get-xive-20.html" title="OPAL_GET_XIVE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Hypervisor Maintenance Interrupt (HMI)</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>How to log errors on OPAL &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>How to log errors on OPAL &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,9 +34,8 @@
         <li class="right" >
           <a href="console-log.html" title="SkiBoot Console Log"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">How to log errors on OPAL</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -64,16 +65,15 @@ these interfaces relevant error information is collected and later converted
 to PEL format and then pushed to service processor.</p>
 <p>Step 1: To report an error, invoke <code class="docutils literal notranslate"><span class="pre">opal_elog_create()</span></code> with required argument.</p>
 <blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">errorlog</span> <span class="pre">*opal_elog_create(struct</span> <span class="pre">opal_err_info</span> <span class="pre">*e_info,</span> <span class="pre">uint32_t</span> <span class="pre">tag);</span></code></p>
-</div></blockquote>
+<div><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">errorlog</span> <span class="pre">*opal_elog_create(struct</span> <span class="pre">opal_err_info</span> <span class="pre">*e_info,</span> <span class="pre">uint32_t</span> <span class="pre">tag);</span></code></div></blockquote>
 <p>Parameters:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_err_info</span> <span class="pre">*e_info</span></code>
-Struct to hold information identifying error/event source.</p></li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">tag:</span></code> Unique value to identify the data.</dt><dd><p>Ideal to have ASCII value for 4-byte string.</p>
-</dd>
+<li><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_err_info</span> <span class="pre">*e_info</span></code>
+Struct to hold information identifying error/event source.</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">tag:</span></code> Unique value to identify the data.</dt>
+<dd>Ideal to have ASCII value for 4-byte string.</dd>
 </dl>
 </li>
 </ul>
@@ -166,31 +166,34 @@ listed in <code class="docutils literal notranslate"><span class="pre">include/e
 <span class="c1">#define OPAL_ABNORMAL_POWER_OFF                         0xE0</span>
 </pre></div>
 </div>
-<dl>
-<dt><code class="docutils literal notranslate"><span class="pre">uint8_t</span> <span class="pre">opal_srctype</span></code>: SRC type, value should be OPAL_SRC_TYPE_ERROR.</dt><dd><p>SRC refers to System Reference Code.
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">uint8_t</span> <span class="pre">opal_srctype</span></code>: SRC type, value should be OPAL_SRC_TYPE_ERROR.</dt>
+<dd><p class="first">SRC refers to System Reference Code.
 It is 4 byte hexa-decimal number that reflects the
 current system state.
 Eg: BB821010,</p>
 <ul class="simple">
-<li><p>1st byte -&gt; BB -&gt; SRC Type</p></li>
-<li><p>2nd byte -&gt; 82 -&gt; Subsystem</p></li>
-<li><p>3rd, 4th byte -&gt; Component ID and Reason Code</p></li>
+<li>1st byte -&gt; BB -&gt; SRC Type</li>
+<li>2nd byte -&gt; 82 -&gt; Subsystem</li>
+<li>3rd, 4th byte -&gt; Component ID and Reason Code</li>
 </ul>
-<p>SRC needs to be generated on the fly depending on the state
+<p class="last">SRC needs to be generated on the fly depending on the state
 of the system. All the parameters needed to generate a SRC
 should be provided during reporting of an event/error.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">reason_code</span></code>: Reason for failure as stated in <code class="docutils literal notranslate"><span class="pre">include/errorlog.h</span></code> for OPAL.</dt><dd><p>Eg: Reason code for code-update failures can be</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">OPAL_RC_CU_INIT</span></code>  -&gt; Initialisation failure</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">OPAL_RC_CU_FLASH</span></code> -&gt; Flash failure</p></li>
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">reason_code</span></code>: Reason for failure as stated in <code class="docutils literal notranslate"><span class="pre">include/errorlog.h</span></code> for OPAL.</dt>
+<dd><p class="first">Eg: Reason code for code-update failures can be</p>
+<ul class="last simple">
+<li><code class="docutils literal notranslate"><span class="pre">OPAL_RC_CU_INIT</span></code>  -&gt; Initialisation failure</li>
+<li><code class="docutils literal notranslate"><span class="pre">OPAL_RC_CU_FLASH</span></code> -&gt; Flash failure</li>
 </ul>
 </dd>
 </dl>
 </div></blockquote>
-<dl>
-<dt>Step 2: Data can be appended to the user data section using the either of</dt><dd><p>the below two interfaces:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">log_append_data</span><span class="p">(</span><span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">unsigned</span> <span class="n">char</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+<dl class="docutils">
+<dt>Step 2: Data can be appended to the user data section using the either of</dt>
+<dd><p class="first">the below two interfaces:</p>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">log_append_data</span><span class="p">(</span><span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">unsigned</span> <span class="n">char</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
                       <span class="n">uint16_t</span> <span class="n">size</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -218,15 +221,16 @@ user data section of the error log.</p>
 <p>Parameters:</p>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_errorlog</span> <span class="pre">*buf</span></code>: pointer returned by <code class="docutils literal notranslate"><span class="pre">opal_elog_create()</span></code> call.</p>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">tag</span></code>: Unique value to identify the data.</dt><dd><p>Ideal to have ASCII value for 4-byte string.</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">tag</span></code>: Unique value to identify the data.</dt>
+<dd>Ideal to have ASCII value for 4-byte string.</dd>
 </dl>
 </div></blockquote>
-<dl>
-<dt>Step 3: There is a platform hook for the OPAL error log to be committed on any</dt><dd><p>service processor(Currently used for FSP and BMC based machines).</p>
+<dl class="docutils">
+<dt>Step 3: There is a platform hook for the OPAL error log to be committed on any</dt>
+<dd><p class="first">service processor(Currently used for FSP and BMC based machines).</p>
 <p>Below is snippet of the code of how this hook is called.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">log_commit</span><span class="p">(</span><span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">elog</span><span class="p">)</span>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">log_commit</span><span class="p">(</span><span class="n">struct</span> <span class="n">errorlog</span> <span class="o">*</span><span class="n">elog</span><span class="p">)</span>
 <span class="p">{</span>
         <span class="o">....</span>
         <span class="o">....</span>
@@ -243,7 +247,8 @@ user data section of the error log.</p>
 </pre></div>
 </div>
 </dd>
-<dt>Step 3.1 FSP:</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">elog_commit</span>            <span class="o">=</span> <span class="n">elog_fsp_commit</span>
+<dt>Step 3.1 FSP:</dt>
+<dd><div class="first highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">elog_commit</span>            <span class="o">=</span> <span class="n">elog_fsp_commit</span>
 </pre></div>
 </div>
 <p>Once all the data for an error is logged in, the error needs to
@@ -252,11 +257,12 @@ be committed in FSP.</p>
 internally converted to PEL format and then pushed to the FSP.
 FSP then take cares of sending all logs including its own and
 OPAL’s one to the POWERNV.</p>
-<p>OPAL maintains timeout field for all error logs it is sending to
+<p class="last">OPAL maintains timeout field for all error logs it is sending to
 FSP. If it is not logged within allotted time period (e.g if FSP
 is down), in that case OPAL sends those logs to POWERNV.</p>
 </dd>
-<dt>Step 3.2 BMC:</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">elog_commit</span>            <span class="o">=</span> <span class="n">ipmi_elog_commit</span>
+<dt>Step 3.2 BMC:</dt>
+<dd><div class="first highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">elog_commit</span>            <span class="o">=</span> <span class="n">ipmi_elog_commit</span>
 </pre></div>
 </div>
 <p>In case of BMC machines, error logs are first converted to eSEL format.
@@ -279,7 +285,7 @@ i.e:</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>After filling up the SEL header fields, OPAL copies the error log
+<p class="last">After filling up the SEL header fields, OPAL copies the error log
 PEL data after the header section in the error log buffer. Then using
 IPMI interface, eSEL gets logged in BMC.</p>
 </dd>
@@ -306,10 +312,10 @@ is done with just one call.</p>
 <p>FSP sends error log notification to OPAL via mailbox protocol.</p>
 <p>OPAL maintains below lists:</p>
 <ul class="simple">
-<li><p>Free list      : List of free nodes.</p></li>
-<li><p>Pending list   : List of nodes which is yet to be read by the POWERNV.</p></li>
-<li><p>Processed list : List of nodes which has been read but still waiting for
-acknowledgement.</p></li>
+<li>Free list      : List of free nodes.</li>
+<li>Pending list   : List of nodes which is yet to be read by the POWERNV.</li>
+<li>Processed list : List of nodes which has been read but still waiting for
+acknowledgement.</li>
 </ul>
 <p>Below is the structure of the node:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">fsp_log_entry</span> <span class="p">{</span>
@@ -366,11 +372,11 @@ If it is run out of the buffers in the pool, it will log the message saying
 <div class="section" id="note">
 <h2>Note<a class="headerlink" href="#note" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>For more information regarding error logging and PEL format
-refer to PAPR doc and P7 PEL and SRC PLDD document.</p></li>
-<li><p>Refer to <code class="docutils literal notranslate"><span class="pre">include/errorlog.h</span></code> for all the error logging
+<li>For more information regarding error logging and PEL format
+refer to PAPR doc and P7 PEL and SRC PLDD document.</li>
+<li>Refer to <code class="docutils literal notranslate"><span class="pre">include/errorlog.h</span></code> for all the error logging
 interface parameters and <code class="docutils literal notranslate"><span class="pre">include/pel.h</span></code> for PEL
-structures.</p></li>
+structures.</li>
 </ul>
 </div>
 <div class="section" id="sample-error-logging">
@@ -560,7 +566,6 @@ structures.</p></li>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -595,15 +600,17 @@ structures.</p></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -620,14 +627,13 @@ structures.</p></li>
         <li class="right" >
           <a href="console-log.html" title="SkiBoot Console Log"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">How to log errors on OPAL</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL_NPU_SPA_SETUP &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL_NPU_SPA_SETUP &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-npu2-get-set-relaxed-order-168-169.html" title="OPAL_NPU_SET_RELAXED_ORDER"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_NPU_SPA_SETUP</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -59,26 +60,26 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 <span class="n">uint64_t</span> <span class="n">PE_mask</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>OPAL ID of PHB</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt><dd><p>Bus-Device-Function number of OpenCAPI AFU</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">addr</span></code></dt><dd><p>Address of Shared Process Area, or NULL to disable SPA. Must be 4K aligned.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">PE_mask</span></code></dt><dd><p>Process Element mask for PASID to PE handle conversion</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
+<dd>OPAL ID of PHB</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt>
+<dd>Bus-Device-Function number of OpenCAPI AFU</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">addr</span></code></dt>
+<dd>Address of Shared Process Area, or NULL to disable SPA. Must be 4K aligned.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">PE_mask</span></code></dt>
+<dd>Process Element mask for PASID to PE handle conversion</dd>
 </dl>
 </div>
 <div class="section" id="return-values">
 <h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>OPAL_SUCCESS</dt><dd><p>SPAP and PE mask were successfully set</p>
-</dd>
-<dt>OPAL_PARAMETER</dt><dd><p>A provided parameter was invalid</p>
-</dd>
-<dt>OPAL_BUSY</dt><dd><p>SPA is already enabled (or if addr is NULL, SPA is already disabled)</p>
-</dd>
+<dl class="docutils">
+<dt>OPAL_SUCCESS</dt>
+<dd>SPAP and PE mask were successfully set</dd>
+<dt>OPAL_PARAMETER</dt>
+<dd>A provided parameter was invalid</dd>
+<dt>OPAL_BUSY</dt>
+<dd>SPA is already enabled (or if addr is NULL, SPA is already disabled)</dd>
 </dl>
 </div>
 </div>
@@ -93,24 +94,24 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 <span class="n">uint64_t</span> <span class="n">PE_handle</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>OPAL ID of PHB</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt><dd><p>Bus-Device-Function number of OpenCAPI AFU</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">PE_handle</span></code></dt><dd><p>Handle of Process Element being cleared from SPA cache</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
+<dd>OPAL ID of PHB</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt>
+<dd>Bus-Device-Function number of OpenCAPI AFU</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">PE_handle</span></code></dt>
+<dd>Handle of Process Element being cleared from SPA cache</dd>
 </dl>
 </div>
 <div class="section" id="id4">
 <h2>Return Values<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>OPAL_SUCCESS</dt><dd><p>PE was successfully cleared from SPA cache</p>
-</dd>
-<dt>OPAL_PARAMETER</dt><dd><p>A provided parameter was invalid</p>
-</dd>
-<dt>OPAL_BUSY</dt><dd><p>XSLO is currently invalidating a previously requested entry</p>
-</dd>
+<dl class="docutils">
+<dt>OPAL_SUCCESS</dt>
+<dd>PE was successfully cleared from SPA cache</dd>
+<dt>OPAL_PARAMETER</dt>
+<dd>A provided parameter was invalid</dd>
+<dt>OPAL_BUSY</dt>
+<dd>XSLO is currently invalidating a previously requested entry</dd>
 </dl>
 </div>
 </div>
@@ -127,27 +128,27 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 <span class="nb">int</span> <span class="n">rate_sz</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>OPAL ID of PHB</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt><dd><p>Bus-Device-Function number of OpenCAPI AFU</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">capabilities</span></code></dt><dd><p>Bitmap of TL templates the device can receive</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">rate_phys</span></code></dt><dd><p>Physical address of rates buffer</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">rate_sz</span></code></dt><dd><p>Size of rates buffer (must be equal to 32)</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
+<dd>OPAL ID of PHB</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt>
+<dd>Bus-Device-Function number of OpenCAPI AFU</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">capabilities</span></code></dt>
+<dd>Bitmap of TL templates the device can receive</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rate_phys</span></code></dt>
+<dd>Physical address of rates buffer</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rate_sz</span></code></dt>
+<dd>Size of rates buffer (must be equal to 32)</dd>
 </dl>
 </div>
 <div class="section" id="id7">
 <h2>Return Values<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
-<dl>
-<dt>OPAL_SUCCESS</dt><dd><p>OTL configuration was successfully updated</p>
-</dd>
-<dt>OPAL_PARAMETER</dt><dd><blockquote>
-<div><p>A provided parameter was invalid</p>
-</div></blockquote>
+<dl class="docutils">
+<dt>OPAL_SUCCESS</dt>
+<dd>OTL configuration was successfully updated</dd>
+<dt>OPAL_PARAMETER</dt>
+<dd><blockquote class="first last">
+<div>A provided parameter was invalid</div></blockquote>
 </dd>
 </dl>
 </div>
@@ -166,26 +167,26 @@ can be allocated.</p>
 <span class="n">uint64_t</span> <span class="o">*</span><span class="n">bar</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>OPAL ID of PHB</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt><dd><p>Bus-Device-Function number of OpenCAPI AFU</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt><dd><p>Size of requested LPC memory area in bytes</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bar</span></code></dt><dd><p>Pointer to variable where base of LPC memory area will be returned</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
+<dd>OPAL ID of PHB</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt>
+<dd>Bus-Device-Function number of OpenCAPI AFU</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt>
+<dd>Size of requested LPC memory area in bytes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bar</span></code></dt>
+<dd>Pointer to variable where base of LPC memory area will be returned</dd>
 </dl>
 </div>
 <div class="section" id="id10">
 <h2>Return Values<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>OPAL_SUCCESS</dt><dd><p>BAR setup completed successfully</p>
-</dd>
-<dt>OPAL_PARAMETER</dt><dd><p>A provided parameter was invalid</p>
-</dd>
-<dt>OPAL_RESOURCE</dt><dd><p>The BAR could not be assigned due to limitations</p>
-</dd>
+<dl class="docutils">
+<dt>OPAL_SUCCESS</dt>
+<dd>BAR setup completed successfully</dd>
+<dt>OPAL_PARAMETER</dt>
+<dd>A provided parameter was invalid</dd>
+<dt>OPAL_RESOURCE</dt>
+<dd>The BAR could not be assigned due to limitations</dd>
 </dl>
 </div>
 </div>
@@ -199,27 +200,26 @@ can be allocated.</p>
 <span class="n">uint32_t</span> <span class="n">bdfn</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>OPAL ID of PHB</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt><dd><p>Bus-Device-Function number of OpenCAPI AFU</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
+<dd>OPAL ID of PHB</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt>
+<dd>Bus-Device-Function number of OpenCAPI AFU</dd>
 </dl>
 </div>
 <div class="section" id="id13">
 <h2>Return Values<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>OPAL_SUCCESS</dt><dd><p>BAR setup completed successfully</p>
-</dd>
-<dt>OPAL_PARAMETER</dt><dd><p>A provided parameter was invalid, or the specified device does not currently
-have LPC memory assigned</p>
-</dd>
+<dl class="docutils">
+<dt>OPAL_SUCCESS</dt>
+<dd>BAR setup completed successfully</dd>
+<dt>OPAL_PARAMETER</dt>
+<dd>A provided parameter was invalid, or the specified device does not currently
+have LPC memory assigned</dd>
 </dl>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -268,15 +268,17 @@ have LPC memory assigned</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -293,15 +295,14 @@ have LPC memory assigned</p>
         <li class="right" >
           <a href="opal-npu2-get-set-relaxed-order-168-169.html" title="OPAL_NPU_SET_RELAXED_ORDER"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_NPU_SPA_SETUP</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

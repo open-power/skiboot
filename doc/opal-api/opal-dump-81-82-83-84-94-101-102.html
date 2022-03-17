@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL Dumps &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL Dumps &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-console-read-write-1-2.html" title="OPAL Console calls"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Dumps</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -81,7 +82,7 @@ used by it.</p>
 
 <span class="kt">int64_t</span> <span class="nf">opal_dump_init</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">dump_type</span><span class="p">);</span>
 <span class="kt">int64_t</span> <span class="nf">opal_dump_info</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_size</span><span class="p">);</span>
-<span class="kt">int64_t</span> <span class="nf">opal_dump_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">opal_sg_list</span> <span class="o">*</span><span class="n">list</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_dump_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">,</span> <span class="k">struct</span> <span class="n">opal_sg_list</span> <span class="o">*</span><span class="n">list</span><span class="p">);</span>
 <span class="kt">int64_t</span> <span class="nf">opal_dump_ack</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">);</span>
 <span class="kt">int64_t</span> <span class="nf">opal_dump_resend_notification</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
 <span class="kt">int64_t</span> <span class="nf">opal_dump_info2</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_id</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_size</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">dump_type</span><span class="p">);</span>
@@ -102,9 +103,9 @@ memory into some kind of crash dump for further analysis.</p>
 <a class="reference internal" href="opal-check-token-80.html#opal-check-token"><span class="std std-ref">OPAL_CHECK_TOKEN</span></a> call to find out if <a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> is supported.</p>
 <p><a class="reference internal" href="#opal-register-dump-region"><span class="std std-ref">OPAL_REGISTER_DUMP_REGION</span></a> accepts 3 parameters:</p>
 <ul class="simple">
-<li><p>region ID</p></li>
-<li><p>address</p></li>
-<li><p>length</p></li>
+<li>region ID</li>
+<li>address</li>
+<li>length</li>
 </ul>
 <p>There is a range of region IDs that can be used by the host OS. A host OS should
 start from OPAL_DUMP_REGION_HOST_END and work down if it wants to add a not well
@@ -170,14 +171,14 @@ is supported.</p>
 ensure the call is valid.</p>
 <div class="section" id="returns">
 <h3>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Dump initiated</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Unsupported dump type. Currently only <code class="docutils literal notranslate"><span class="pre">DUMP_TYPE_FSP</span></code> is supported and
-only on FSP based platforms.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Failed to ask service processor to initiated dump.</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Dump initiated</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>Unsupported dump type. Currently only <code class="docutils literal notranslate"><span class="pre">DUMP_TYPE_FSP</span></code> is supported and
+only on FSP based platforms.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
+<dd>Failed to ask service processor to initiated dump.</dd>
 </dl>
 </div>
 </div>
@@ -197,25 +198,25 @@ trees did. <a class="reference internal" href="#opal-dump-info"><span class="std
 <span id="id7"></span><h2>OPAL_DUMP_READ<a class="headerlink" href="#opal-dump-read" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_DUMP_READ                               83</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_dump_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">opal_sg_list</span> <span class="o">*</span><span class="n">list</span><span class="p">);</span>
+<span class="kt">int64_t</span> <span class="nf">opal_dump_read</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">dump_id</span><span class="p">,</span> <span class="k">struct</span> <span class="n">opal_sg_list</span> <span class="o">*</span><span class="n">list</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Read <code class="docutils literal notranslate"><span class="pre">dump_id</span></code> dump from the service processor into memory.</p>
 <div class="section" id="id8">
 <h3>Returns<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Invalid Dump ID or internal error.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Insuffcient space to store dump.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt><dd><p>Fetching dump, call <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> to crank the state machine,
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
+<dd>Invalid Dump ID or internal error.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>Insuffcient space to store dump.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt>
+<dd>Fetching dump, call <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> to crank the state machine,
 and call <a class="reference internal" href="#opal-dump-read"><span class="std std-ref">OPAL_DUMP_READ</span></a> again until neither <a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a>
-nor <a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a> are returned.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-partial"><span class="std std-ref">OPAL_PARTIAL</span></a></dt><dd><p>Only part of the dump was read.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Dump successfully read.</p>
-</dd>
+nor <a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a> are returned.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-partial"><span class="std std-ref">OPAL_PARTIAL</span></a></dt>
+<dd>Only part of the dump was read.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Dump successfully read.</dd>
 </dl>
 </div>
 </div>
@@ -231,14 +232,14 @@ can re-claim the storage space used by the dump. Effectively, this is an
 <code class="docutils literal notranslate"><span class="pre">unlink</span></code> style operation.</p>
 <div class="section" id="id10">
 <h3>Returns<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Dump successfully acknowledged.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Failed to acknowledge the dump, e.g. could not communicate with service
-processor.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid dump ID.</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Dump successfully acknowledged.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
+<dd>Failed to acknowledge the dump, e.g. could not communicate with service
+processor.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>Invalid dump ID.</dd>
 </dl>
 </div>
 </div>
@@ -254,9 +255,9 @@ cause OPAL to check if a dump is available and set the
 <a class="reference internal" href="opal-poll-events.html#opal-event-dump-avail"><span class="std std-ref">OPAL_EVENT_DUMP_AVAIL = 0x400</span></a> bit in the next <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> call.</p>
 <div class="section" id="id12">
 <h3>Returns<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Successfully reset <a class="reference internal" href="opal-poll-events.html#opal-event-dump-avail"><span class="std std-ref">OPAL_EVENT_DUMP_AVAIL = 0x400</span></a> bit.</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Successfully reset <a class="reference internal" href="opal-poll-events.html#opal-event-dump-avail"><span class="std std-ref">OPAL_EVENT_DUMP_AVAIL = 0x400</span></a> bit.</dd>
 </dl>
 <p>In future, this may return other standard OPAL error codes.</p>
 </div>
@@ -280,18 +281,17 @@ available for retreiving.</p>
 <p>This call replaces <a class="reference internal" href="#opal-dump-info"><span class="std std-ref">OPAL_DUMP_INFO</span></a>.</p>
 <div class="section" id="id14">
 <h3>Returns<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Information retreived.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>No dump available or internal error.</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Information retreived.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
+<dd>No dump available or internal error.</dd>
 </dl>
 </div>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -347,15 +347,17 @@ available for retreiving.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -372,15 +374,14 @@ available for retreiving.</p>
         <li class="right" >
           <a href="opal-console-read-write-1-2.html" title="OPAL Console calls"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Dumps</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

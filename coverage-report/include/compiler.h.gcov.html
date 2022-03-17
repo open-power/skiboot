@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-13 12:18:09</td>
+            <td class="headerValue">2022-03-17 07:10:58</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">0</td>
@@ -109,7 +109,19 @@
 <a name="38"><span class="lineNum">      38 </span>                :            : #define __tostr(x)      #x</a>
 <a name="39"><span class="lineNum">      39 </span>                :            : #define tostr(x)        __tostr(x)</a>
 <a name="40"><span class="lineNum">      40 </span>                :            : </a>
-<a name="41"><span class="lineNum">      41 </span>                :            : #endif /* __COMPILER_H */</a>
+<a name="41"><span class="lineNum">      41 </span>                :            : </a>
+<a name="42"><span class="lineNum">      42 </span>                :            : #if __GNUC__ &gt;= 11</a>
+<a name="43"><span class="lineNum">      43 </span>                :            : /* Compiler workaround to avoid compiler optimization warnings</a>
+<a name="44"><span class="lineNum">      44 </span>                :            :  * when assigning constant address to pointer and using memory</a>
+<a name="45"><span class="lineNum">      45 </span>                :            :  * functions such as memcpy and  memset</a>
+<a name="46"><span class="lineNum">      46 </span>                :            :  */</a>
+<a name="47"><span class="lineNum">      47 </span>                :            : #define skiboot_constant_addr          volatile</a>
+<a name="48"><span class="lineNum">      48 </span>                :            : #else</a>
+<a name="49"><span class="lineNum">      49 </span>                :            : #define skiboot_constant_addr</a>
+<a name="50"><span class="lineNum">      50 </span>                :            : #endif</a>
+<a name="51"><span class="lineNum">      51 </span>                :            : </a>
+<a name="52"><span class="lineNum">      52 </span>                :            : </a>
+<a name="53"><span class="lineNum">      53 </span>                :            : #endif /* __COMPILER_H */</a>
 </pre>
       </td>
     </tr>

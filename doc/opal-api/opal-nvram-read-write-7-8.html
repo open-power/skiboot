@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL NVRAM &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL NVRAM &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-npu2-opencapi-159-160-161-171-172.html" title="OPAL_NPU_SPA_SETUP"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL NVRAM</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -55,7 +56,7 @@ neither does 8.4.1.2 “DASD Spin-up Control”. Not that the RTAS calls of
 <p>LoPAPR has a minimum requirement of 8KB of Non-Volatile Memory. While this
 requirement carries over, it’s important to note that historically all OPAL
 systems have had roughly 500kb of NVRAM.</p>
-<p>See <a class="reference internal" href="../device-tree/ibm%2Copal/nvram.html#device-tree-ibm-opal-nvram"><span class="std std-ref">nvram Device Tree Node</span></a> for details on how NVRAM is represented
+<p>See <a class="reference internal" href="../device-tree/ibm,opal/nvram.html#device-tree-ibm-opal-nvram"><span class="std std-ref">nvram Device Tree Node</span></a> for details on how NVRAM is represented
 in the device tree. It’s fairly simple, it looks like this:</p>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">nvram</span> <span class="p">{</span>
       <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-nvram&quot;</span><span class="p">;</span>
@@ -84,24 +85,24 @@ from storage.</p>
 <span class="n">uint64_t</span> <span class="n">offset</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">buffer</span></code></dt><dd><p>the data from nvram will be copied to <code class="docutils literal notranslate"><span class="pre">buffer</span></code></p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt><dd><p>the data of size <code class="docutils literal notranslate"><span class="pre">size</span></code> will be copied</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">offset</span></code></dt><dd><p>the data will be copied from address equal to base <code class="docutils literal notranslate"><span class="pre">nvram_image</span></code> plus <code class="docutils literal notranslate"><span class="pre">offset</span></code></p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">buffer</span></code></dt>
+<dd>the data from nvram will be copied to <code class="docutils literal notranslate"><span class="pre">buffer</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt>
+<dd>the data of size <code class="docutils literal notranslate"><span class="pre">size</span></code> will be copied</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">offset</span></code></dt>
+<dd>the data will be copied from address equal to base <code class="docutils literal notranslate"><span class="pre">nvram_image</span></code> plus <code class="docutils literal notranslate"><span class="pre">offset</span></code></dd>
 </dl>
 </div>
 <div class="section" id="return-values">
 <h3>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>data from nvram to memory <code class="docutils literal notranslate"><span class="pre">buffer</span></code> copied successfully</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>a parameter <code class="docutils literal notranslate"><span class="pre">offset</span></code> or <code class="docutils literal notranslate"><span class="pre">size</span></code> was incorrect</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>either nvram is not initialized or permanent error related to nvram hardware.</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>data from nvram to memory <code class="docutils literal notranslate"><span class="pre">buffer</span></code> copied successfully</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>a parameter <code class="docutils literal notranslate"><span class="pre">offset</span></code> or <code class="docutils literal notranslate"><span class="pre">size</span></code> was incorrect</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
+<dd>either nvram is not initialized or permanent error related to nvram hardware.</dd>
 </dl>
 </div>
 </div>
@@ -121,35 +122,34 @@ from memory <code class="docutils literal notranslate"><span class="pre">buffer<
 <span class="n">uint64_t</span> <span class="n">offset</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">buffer</span></code></dt><dd><p>data from <code class="docutils literal notranslate"><span class="pre">buffer</span></code> will be copied to nvram</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt><dd><p>the data of size <code class="docutils literal notranslate"><span class="pre">size</span></code> will be copied</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">offset</span></code></dt><dd><p>the data will be copied to address which is equal to base <code class="docutils literal notranslate"><span class="pre">nvram_image</span></code> plus <code class="docutils literal notranslate"><span class="pre">offset</span></code></p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">buffer</span></code></dt>
+<dd>data from <code class="docutils literal notranslate"><span class="pre">buffer</span></code> will be copied to nvram</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt>
+<dd>the data of size <code class="docutils literal notranslate"><span class="pre">size</span></code> will be copied</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">offset</span></code></dt>
+<dd>the data will be copied to address which is equal to base <code class="docutils literal notranslate"><span class="pre">nvram_image</span></code> plus <code class="docutils literal notranslate"><span class="pre">offset</span></code></dd>
 </dl>
 </div>
 <div class="section" id="id4">
 <h3>Return Values<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>data from memory <code class="docutils literal notranslate"><span class="pre">buffer</span></code> to actual nvram_image copied successfully</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>a parameter <code class="docutils literal notranslate"><span class="pre">offset</span></code> or <code class="docutils literal notranslate"><span class="pre">size</span></code> was incorrect</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>either nvram is not initialized or permanent error related to nvram hardware.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt><dd><p>OPAL is currently busy, retry the <a class="reference internal" href="#opal-write-nvram"><span class="std std-ref">OPAL_WRITE_NVRAM</span></a> call.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt><dd><p>OPAL is currently busy, call <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> and then retry <a class="reference internal" href="#opal-write-nvram"><span class="std std-ref">OPAL_WRITE_NVRAM</span></a></p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>data from memory <code class="docutils literal notranslate"><span class="pre">buffer</span></code> to actual nvram_image copied successfully</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>a parameter <code class="docutils literal notranslate"><span class="pre">offset</span></code> or <code class="docutils literal notranslate"><span class="pre">size</span></code> was incorrect</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
+<dd>either nvram is not initialized or permanent error related to nvram hardware.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt>
+<dd>OPAL is currently busy, retry the <a class="reference internal" href="#opal-write-nvram"><span class="std std-ref">OPAL_WRITE_NVRAM</span></a> call.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt>
+<dd>OPAL is currently busy, call <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> and then retry <a class="reference internal" href="#opal-write-nvram"><span class="std std-ref">OPAL_WRITE_NVRAM</span></a></dd>
 </dl>
 </div>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -186,15 +186,17 @@ from memory <code class="docutils literal notranslate"><span class="pre">buffer<
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -211,15 +213,14 @@ from memory <code class="docutils literal notranslate"><span class="pre">buffer<
         <li class="right" >
           <a href="opal-npu2-opencapi-159-160-161-171-172.html" title="OPAL_NPU_SPA_SETUP"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL NVRAM</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

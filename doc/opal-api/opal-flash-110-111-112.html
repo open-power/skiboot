@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL Flash calls &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL Flash calls &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-elog-71-72-73-74-75.html" title="OPAL_ELOG: Error logging"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Flash calls</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -54,7 +55,7 @@
 </div>
 <p>Multiple flash devices are supported by OPAL - each of these calls takes an id
 parameter, which must match an ID found in the corresponding <code class="docutils literal notranslate"><span class="pre">ibm,opal/flash&#64;n</span></code>
-device tree node. See <a class="reference internal" href="../device-tree/ibm%2Copal/flash.html#device-tree-ibm-opal-flash"><span class="std std-ref">ibm,opal/flash device tree entries</span></a> for details of
+device tree node. See <a class="reference internal" href="../device-tree/ibm,opal/flash.html#device-tree-ibm-opal-flash"><span class="std std-ref">ibm,opal/flash device tree entries</span></a> for details of
 the device tree bindings.</p>
 <p>All operations on the flash device must be aligned to the block size of the
 flash. This applies to both offset and size arguments.</p>
@@ -63,8 +64,8 @@ success, the calls will return <a class="reference internal" href="return-codes.
 opal_async_completion message will be sent (with the appropriate token
 argument) when the operation completes.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>These calls can have higher than normal latency, spending many
+<p class="first admonition-title">Note</p>
+<p class="last">These calls can have higher than normal latency, spending many
 <strong>milliseconds</strong> inside OPAL. This is due to the OPAL_FLASH_* calls
 typically being backed by flash on the other side of the LPC bus,
 which has a maximum transfer rate of 5MB/sec, or to/from flash attached
@@ -72,17 +73,17 @@ to the ast2400/ast2500 (the typical setup for OpenPOWER systems) of
 only 1.75MB/sec.</p>
 </div>
 <p>All calls share the same return values:</p>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt><dd><p>operation started, an async completion will be triggered with the <code class="docutils literal notranslate"><span class="pre">token</span></code> argument</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>invalid flash id</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>invalid size or offset (alignment, or access beyond end of device)</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt><dd><p>flash in use</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>error accessing flash device</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-async-completion"><span class="std std-ref">OPAL_ASYNC_COMPLETION</span></a></dt>
+<dd>operation started, an async completion will be triggered with the <code class="docutils literal notranslate"><span class="pre">token</span></code> argument</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>invalid flash id</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>invalid size or offset (alignment, or access beyond end of device)</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt>
+<dd>flash in use</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
+<dd>error accessing flash device</dd>
 </dl>
 <div class="section" id="opal-flash-read">
 <span id="id1"></span><h2>OPAL_FLASH_READ<a class="headerlink" href="#opal-flash-read" title="Permalink to this headline">¶</a></h2>
@@ -121,7 +122,6 @@ token when completed.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -151,15 +151,17 @@ token when completed.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -176,15 +178,14 @@ token when completed.</p>
         <li class="right" >
           <a href="opal-elog-71-72-73-74-75.html" title="OPAL_ELOG: Error logging"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Flash calls</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot-5.5.0-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot-5.5.0-rc1 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-5.5.0.html" title="skiboot-5.5.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0-rc1</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -64,15 +65,14 @@ and issues: <a class="reference external" href="https://github.com/open-power/sk
 <div class="section" id="new-platforms">
 <h2>New Platforms<a class="headerlink" href="#new-platforms" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>SuperMicro’s (SMC) P8DNU: An astbmc based POWER8 platform</p></li>
-<li><p>Add a generic platform to help with bringup of new systems.</p></li>
-<li><p>Four POWER9 based systems (NOTE: All POWER9 systems should be considered
-for bringup use only at this point):</p>
-<ul>
-<li><p>Romulus</p></li>
-<li><p>Witherspoon (a POWER9 system with NVLink2 attached GPUs)</p></li>
-<li><p>Zaius (OpenCompute platform, also known as “Barreleye 2”)</p></li>
-<li><p>ZZ (FSP based system)</p></li>
+<li>SuperMicro’s (SMC) P8DNU: An astbmc based POWER8 platform</li>
+<li>Add a generic platform to help with bringup of new systems.</li>
+<li>Four POWER9 based systems (NOTE: All POWER9 systems should be considered
+for bringup use only at this point):<ul>
+<li>Romulus</li>
+<li>Witherspoon (a POWER9 system with NVLink2 attached GPUs)</li>
+<li>Zaius (OpenCompute platform, also known as “Barreleye 2”)</li>
+<li>ZZ (FSP based system)</li>
 </ul>
 </li>
 </ul>
@@ -80,7 +80,7 @@ for bringup use only at this point):</p>
 <div class="section" id="new-features">
 <h2>New features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>System reset IPI facility and Mambo implementation
+<li><p class="first">System reset IPI facility and Mambo implementation
 Add an opal call <a class="reference internal" href="../opal-api/opal-signal-system-reset-145.html#opal-signal-system-reset"><span class="std std-ref">OPAL_SIGNAL_SYSTEM_RESET</span></a> which allows system reset
 exceptions to be raised on other CPUs and act as an NMI IPI. There
 is an initial simple Mambo implementation, but allowances are made
@@ -90,9 +90,10 @@ hardware (see <a class="reference external" href="https://patchwork.ozlabs.org/p
 makes it into a future release.</p>
 <p>This implements an in-band NMI equivalent.</p>
 </li>
-<li><p>add CONTRIBUTING.md, ensuring that people new to the project have a one-stop
-place to find out how to get started.</p></li>
-<li><p>interrupts: Add optional name for OPAL interrupts</p>
+<li><p class="first">add CONTRIBUTING.md, ensuring that people new to the project have a one-stop
+place to find out how to get started.</p>
+</li>
+<li><p class="first">interrupts: Add optional name for OPAL interrupts</p>
 <p>This adds the infrastructure for an interrupt source to provide
 a name for an interrupt directed toward OPAL. Those names will
 be put into an “opal-interrupts-names” property which is a
@@ -100,13 +101,13 @@ standard DT string list corresponding 1:1 with the “opal-interrupts”
 property. PSI interrupts get names, and this is visible in Linux
 through /proc/interrupts</p>
 </li>
-<li><p>platform: add OPAL_REBOOT_FULL_IPL reboot type</p>
+<li><p class="first">platform: add OPAL_REBOOT_FULL_IPL reboot type</p>
 <p>There may be circumstances in which a user wants to force a full IPL reboot
 rather than using fast reboot. Add a new reboot type, OPAL_REBOOT_FULL_IPL,
 that disables fast reboot. On platforms which don’t support fast reboot,
 this will be equivalent to a normal reboot.</p>
 </li>
-<li><p>phb3: Trick to allow control of the PCIe link width and speed</p>
+<li><p class="first">phb3: Trick to allow control of the PCIe link width and speed</p>
 <p>This implements a hook inside OPAL that catches 16 and 32 bit writes
 to the link status register of the PHB.</p>
 <p>It allows you to write a new speed or a new width, and OPAL will then
@@ -140,12 +141,12 @@ cause the PHB to renegociate.</p>
 </div>
 </div></blockquote>
 </li>
-<li><p>core/init: Add hdat-map property to OPAL node.</p>
+<li><p class="first">core/init: Add hdat-map property to OPAL node.</p>
 <p>Exports the HDAT heap to the OS. This allows the OS to view the HDAT heap
 directly.  This allows us to view the HDAT area without having to use
 getmemproc.</p>
 </li>
-<li><p>Add a generic platform: If /bmc in device tree, attempt to init one
+<li><p class="first">Add a generic platform: If /bmc in device tree, attempt to init one
 For the most part, this gets us somewhere on some OpenPOWER systems
 before there’s a platform file for that machine.</p>
 <p>Useful in bringup only, and marked as such with scary looking log
@@ -156,8 +157,9 @@ messages.</p>
 <div class="section" id="core">
 <h2>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>asm: Don’t try to set LPCR:LPES1 on P8 and P9, the bit doesn’t exist.</p></li>
-<li><p>pci: Add a framework for quirks</p>
+<li><p class="first">asm: Don’t try to set LPCR:LPES1 on P8 and P9, the bit doesn’t exist.</p>
+</li>
+<li><p class="first">pci: Add a framework for quirks</p>
 <p>In future we may want to be able to do fixups for specific PCI devices in
 skiboot, so add a small framework for doing this.</p>
 <p>This is not intended for the same purposes as quirks in the Linux kernel,
@@ -166,17 +168,22 @@ configured.  This is intended to enable having a custom path to make
 changes that don’t directly interact with the PCI device, for example
 adding device tree entries.</p>
 </li>
-<li><p>hw/slw: fix possible NULL dereference</p></li>
-<li><p>slw: Print enabled stop states on boot</p></li>
-<li><p>uart: Fix Linux pass-through policy, provide NVRAM override option</p></li>
-<li><p>libc/stdio/vsnprintf.c: add explicit fallthrough, this silences a recent
-(GCC 7.x) warning</p></li>
-<li><p>init: print the FDT blob size in decimal</p></li>
-<li><p>init: Print some more info before booting linux</p>
+<li><p class="first">hw/slw: fix possible NULL dereference</p>
+</li>
+<li><p class="first">slw: Print enabled stop states on boot</p>
+</li>
+<li><p class="first">uart: Fix Linux pass-through policy, provide NVRAM override option</p>
+</li>
+<li><p class="first">libc/stdio/vsnprintf.c: add explicit fallthrough, this silences a recent
+(GCC 7.x) warning</p>
+</li>
+<li><p class="first">init: print the FDT blob size in decimal</p>
+</li>
+<li><p class="first">init: Print some more info before booting linux</p>
 <p>The kernel command line from nvram and the stdout-path are
 useful to know when debugging console related problems.</p>
 </li>
-<li><p>Makefile: Disable stack protector due to gcc problems</p>
+<li><p class="first">Makefile: Disable stack protector due to gcc problems</p>
 <p>Depending on how it was built, gcc will use the canary from a global
 (works for us) or from the TLS (doesn’t work for us and accesses
 random stuff instead).</p>
@@ -184,68 +191,102 @@ random stuff instead).</p>
 to force use of globals, but in the meantime, disable the stack
 protector.</p>
 </li>
-<li><p>Stop using 3-operand cmp[l][i] for latest binutils
+<li><p class="first">Stop using 3-operand cmp[l][i] for latest binutils
 Since a5721ba270, binutils does not support 3-operand cmp[l][i].
-This adds (previously optional) parameter L.</p></li>
-<li><p>buddy: Add a simple generic buddy allocator</p></li>
-<li><p>stack: Don’t recurse into __stack_chk_fail</p></li>
-<li><p>Makefile: Use -ffixed-r13
-We use r13 for our own stuff, make sure it’s properly fixed</p></li>
-<li><p>Always set ibm,occ-functional-state correctly</p></li>
-<li><p>psi: fix the xive registers initialization on P8, which seems to be fine
-for real HW but causes a lof of pain under qemu</p></li>
-<li><p>slw: Set PSSCR value for idle states</p></li>
-<li><p>Limit number of “Poller recursion detected” errors to display</p>
+This adds (previously optional) parameter L.</p>
+</li>
+<li><p class="first">buddy: Add a simple generic buddy allocator</p>
+</li>
+<li><p class="first">stack: Don’t recurse into __stack_chk_fail</p>
+</li>
+<li><p class="first">Makefile: Use -ffixed-r13
+We use r13 for our own stuff, make sure it’s properly fixed</p>
+</li>
+<li><p class="first">Always set ibm,occ-functional-state correctly</p>
+</li>
+<li><p class="first">psi: fix the xive registers initialization on P8, which seems to be fine
+for real HW but causes a lof of pain under qemu</p>
+</li>
+<li><p class="first">slw: Set PSSCR value for idle states</p>
+</li>
+<li><p class="first">Limit number of “Poller recursion detected” errors to display</p>
 <p>In some error conditions, we could spiral out of control on this
 and spend all of our time printing the exact same backtrace.</p>
 <p>Limit it to 16 times, because 16 is a nice number.</p>
 </li>
-<li><p>slw: do SLW timer testing while holding xscom lock</p>
+<li><p class="first">slw: do SLW timer testing while holding xscom lock</p>
 <p>We add some routines that let a caller get the xscom lock once and
 then do a bunch of xscoms while holding it.
 In some situations without this, it could take long enough to get
 the xscom lock that the 1ms timeout would expire and we’d falsely
 think the SLW timer didn’t work when in fact it did.</p>
 </li>
-<li><p>wait_for_resource_loaded: don’t needlessly sleep for 5ms</p></li>
-<li><p>run pollers in cpu_process_local_jobs() if running job synchonously</p></li>
-<li><p>fsp: Don’t recurse pollers in ibm_fsp_terminate</p></li>
-<li><p>chiptod: More hardening against -1 chip ID</p></li>
-<li><p>interrupts: Rewrite/correct doc for opal_set/get_xive</p></li>
-<li><p>cpu: Don’t enable nap mode/PM mode on non-P8</p></li>
-<li><p>platform: Call generic platform probe and init UART there</p></li>
-<li><p>psi: Don’t register more interrupts than the HW supports</p></li>
-<li><p>psi: Add DT option to disable LPC interrupts</p></li>
+<li><p class="first">wait_for_resource_loaded: don’t needlessly sleep for 5ms</p>
+</li>
+<li><p class="first">run pollers in cpu_process_local_jobs() if running job synchonously</p>
+</li>
+<li><p class="first">fsp: Don’t recurse pollers in ibm_fsp_terminate</p>
+</li>
+<li><p class="first">chiptod: More hardening against -1 chip ID</p>
+</li>
+<li><p class="first">interrupts: Rewrite/correct doc for opal_set/get_xive</p>
+</li>
+<li><p class="first">cpu: Don’t enable nap mode/PM mode on non-P8</p>
+</li>
+<li><p class="first">platform: Call generic platform probe and init UART there</p>
+</li>
+<li><p class="first">psi: Don’t register more interrupts than the HW supports</p>
+</li>
+<li><p class="first">psi: Add DT option to disable LPC interrupts</p>
+</li>
 </ul>
 </div>
 <div class="section" id="i2c-and-tpm">
 <h2>I2C and TPM<a class="headerlink" href="#i2c-and-tpm" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>p8i2c: Use calculated poll_interval when booting OPAL
+<li><p class="first">p8i2c: Use calculated poll_interval when booting OPAL
 Otherwise we’d default to 2seconds (TIMER_POLL) during boot on
 chips with a functional i2c interrupt, leading to slow i2c
-during boot (or hitting timeouts instead).</p></li>
-<li><p>i2c: Add i2c_run_req() to crank the state machine for a request</p></li>
-<li><p>tpm_i2c_nuvoton: work out the polling time using mftb()</p></li>
-<li><p>tpm_i2c_nuvoton: handle errors after reading the tpm fifo</p></li>
-<li><p>tpm_i2c_nuvoton: cleanup variables in tpm_read_fifo()</p></li>
-<li><p>tpm_i2c_nuvoton: handle errors after writting the tpm fifo</p></li>
-<li><p>tpm_i2c_nuvoton: cleanup variables in tpm_write_fifo()</p></li>
-<li><p>tpm_i2c_nuvoton: handle errors after writing sts.commandReady in step 5</p></li>
-<li><p>tpm_i2c_nuvoton: handle errors after writing sts.go</p></li>
-<li><p>tpm_i2c_nuvoton: handle errors after checking the tpm fifo status</p></li>
-<li><p>tpm_i2c_nuvoton: return burst_count in tpm_read_burst_count()</p></li>
-<li><p>tpm_i2c_nuvoton: isolate the code that handles the TPM_TIMEOUT_D timeout</p></li>
-<li><p>tpm_i2c_nuvoton: handle errors after reading sts.commandReady</p></li>
-<li><p>tpm_i2c_nuvoton: add tpm_status_read_byte()</p></li>
-<li><p>tpm_i2c_nuvoton: add tpm_check_status()</p></li>
-<li><p>tpm_i2c_nuvoton: rename defines to shorter names</p></li>
-<li><p>tpm_i2c_interface: decouple rc from being done with i2c request</p></li>
-<li><p>tpm_i2c_interface: set timeout before each request</p></li>
-<li><p>i2c: Add nuvoton quirk, disallowing i2cdetect as it locks TPM</p>
+during boot (or hitting timeouts instead).</p>
+</li>
+<li><p class="first">i2c: Add i2c_run_req() to crank the state machine for a request</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: work out the polling time using mftb()</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: handle errors after reading the tpm fifo</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: cleanup variables in tpm_read_fifo()</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: handle errors after writting the tpm fifo</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: cleanup variables in tpm_write_fifo()</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: handle errors after writing sts.commandReady in step 5</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: handle errors after writing sts.go</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: handle errors after checking the tpm fifo status</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: return burst_count in tpm_read_burst_count()</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: isolate the code that handles the TPM_TIMEOUT_D timeout</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: handle errors after reading sts.commandReady</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: add tpm_status_read_byte()</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: add tpm_check_status()</p>
+</li>
+<li><p class="first">tpm_i2c_nuvoton: rename defines to shorter names</p>
+</li>
+<li><p class="first">tpm_i2c_interface: decouple rc from being done with i2c request</p>
+</li>
+<li><p class="first">tpm_i2c_interface: set timeout before each request</p>
+</li>
+<li><p class="first">i2c: Add nuvoton quirk, disallowing i2cdetect as it locks TPM</p>
 <p>p8-i2c reset things manually in some error conditions</p>
 </li>
-<li><p>stb: create-container and wrap skiboot in Secure/Trusted Boot container</p>
+<li><p class="first">stb: create-container and wrap skiboot in Secure/Trusted Boot container</p>
 <p>We produce <strong>UNSIGNED</strong> skiboot.lid.stb and skiboot.lid.xz.stb as build
 artifacts.</p>
 <p>These are suitable blobs for flashing onto Trusted Boot enabled op-build
@@ -258,7 +299,7 @@ make Hostboot behave.</p>
 <div class="section" id="pci">
 <h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>core/pci: Support SRIOV VFs</p>
+<li><p class="first">core/pci: Support SRIOV VFs</p>
 <p>Currently, skiboot can’t see SRIOV VFs. It introduces some troubles
 as I can see: The device initialization logic (phb-&gt;ops-&gt;device_init())
 isn’t applied to VFs, meaning we have to maintain same and duplicated
@@ -279,12 +320,12 @@ register PCI config register filter against PCICAP_EXP_DEVCTL. The
 filter’s handler caches what is written to MPS field and returns
 the cached value on read, to eliminate the gap mentioned as above.</p>
 </li>
-<li><p>core/pci: Avoid hreset after freset</p>
+<li><p class="first">core/pci: Avoid hreset after freset</p>
 <p>Commit 5ac71c9 (“pci: Avoid hot resets at boot time”) missed to
 avoid hot reset after fundamental reset for PCIe common slots.</p>
 <p>This fixes it.</p>
 </li>
-<li><p>core/pci: Enforce polling PCIe link in hot-add path</p>
+<li><p class="first">core/pci: Enforce polling PCIe link in hot-add path</p>
 <p>In surprise hot-add path, the power state isn’t changed on hardware.
 Instead, we set the cached power state (&#64;slot-&gt;power_state) and
 return OPAL_SUCCESS. The upper layer starts the PCI probing immediately
@@ -295,24 +336,28 @@ we do have PCI adpater connected to the slot.</p>
 upper layer to poll the PCIe link before probing the PCI devices
 behind the slot in surprise and managed hot-add paths.</p>
 </li>
-<li><dl>
-<dt>hw/phb3: fix error handling in complete reset</dt><dd><p>During a complete reset, when we get a timeout waiting for pending
+<li><dl class="first docutils">
+<dt>hw/phb3: fix error handling in complete reset</dt>
+<dd><p class="first">During a complete reset, when we get a timeout waiting for pending
 transaction in state PHB3_STATE_CRESET_WAIT_CQ, we mark the PHB as
 permanently broken.</p>
-<p>Set the state to PHB3_STATE_FENCED so that the kernel can retry the
+<p class="last">Set the state to PHB3_STATE_FENCED so that the kernel can retry the
 complete reset.</p>
 </dd>
 </dl>
 </li>
-<li><p>phb3: Lock the PHB on set_xive callbacks</p></li>
+<li><p class="first">phb3: Lock the PHB on set_xive callbacks</p>
+</li>
 </ul>
 </div>
 <div class="section" id="p8dnu-platform">
 <h2>p8dnu platform<a class="headerlink" href="#p8dnu-platform" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>astbmc/p8dnu: Enable PCI slot’s power supply on PEX9733 in hot-add path</p></li>
-<li><p>astbmc/p8dnu: Enable PCI slot’s power supply on PEX8718 in hot-add path</p></li>
-<li><p>core/pci: Mark broken PDC on slots without surprise hotplug capability</p>
+<li><p class="first">astbmc/p8dnu: Enable PCI slot’s power supply on PEX9733 in hot-add path</p>
+</li>
+<li><p class="first">astbmc/p8dnu: Enable PCI slot’s power supply on PEX8718 in hot-add path</p>
+</li>
+<li><p class="first">core/pci: Mark broken PDC on slots without surprise hotplug capability</p>
 <p>We has to support surprise hotplug on PCI slots that don’t support
 it on hardware. So we’re fully utilizing the PCIe link state change
 event to detect the events (hot-remove and hot-add). The PDC (Presence
@@ -322,7 +367,7 @@ PEX8718 on superMicro’s machines.</p>
 device-tree, to indicate the PDC isn’t reliable on those (software
 claimed) surprise pluggable slots.</p>
 </li>
-<li><p>core/pci: Fix PCIe slot’s presence</p>
+<li><p class="first">core/pci: Fix PCIe slot’s presence</p>
 <p>According to PCIe spec, the presence bit is hardcoded to 1 if PCIe
 switch downstream port doesn’t support slot capability. The register
 used for the check in pcie_slot_get_presence_state() is wrong. It
@@ -350,7 +395,7 @@ The issue is found on Supermicro’s p8dtu2u machine:</p>
 </pre></div>
 </div>
 </li>
-<li><p>core/pci: More reliable way to update PCI slot power state</p>
+<li><p class="first">core/pci: More reliable way to update PCI slot power state</p>
 <p>The power control bit (SLOT_CTL, offset: PCIe cap + 0x18) isn’t
 reliable enough to reflect the PCI slot’s power state. Instead,
 the power indication bits are more reliable comparatively. This
@@ -384,26 +429,28 @@ have this issue on the integrated PLX 8718 switch.</p>
 <div class="section" id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>opal-prd: Direct systemd to always restart opal-prd
-Always restart the opal-prd daemon, irrespective of why it stopped.</p></li>
-<li><p>external/ffspart: Simple C program to be able to make an FFS partition</p></li>
-<li><p>getscom: Add chip info for P9.</p></li>
-<li><p>gard: Fix make dist target</p></li>
-<li><p>pflash/libflash: arch_flash_arm: Don’t assume mtd labels are short</p></li>
+<li>opal-prd: Direct systemd to always restart opal-prd
+Always restart the opal-prd daemon, irrespective of why it stopped.</li>
+<li>external/ffspart: Simple C program to be able to make an FFS partition</li>
+<li>getscom: Add chip info for P9.</li>
+<li>gard: Fix make dist target</li>
+<li>pflash/libflash: arch_flash_arm: Don’t assume mtd labels are short</li>
 </ul>
 </div>
 <div class="section" id="libffs">
 <h2>libffs<a class="headerlink" href="#libffs" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>libffs: Understand how to create FFS partition TOCs and entries.</p></li>
+<li>libffs: Understand how to create FFS partition TOCs and entries.</li>
 </ul>
 </div>
 <div class="section" id="bmc-based-systems">
 <h2>BMC Based systems<a class="headerlink" href="#bmc-based-systems" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>platforms/astbmc: Support PCI slots for palmetto</p></li>
-<li><p>habanero/slottable: Remove Network Mezz(2, 0) from PHB1.</p></li>
-<li><p>BMC/PCI: Check slot tables against detected devices
+<li><p class="first">platforms/astbmc: Support PCI slots for palmetto</p>
+</li>
+<li><p class="first">habanero/slottable: Remove Network Mezz(2, 0) from PHB1.</p>
+</li>
+<li><p class="first">BMC/PCI: Check slot tables against detected devices
 On BMC machines, we have slot tables of built in PHBs, slots and devices
 that are physically present in the system (such as the BMC itself). We
 can use these tables to check what we <em>detected</em> against what <em>should</em>
@@ -414,7 +461,7 @@ patch helps in that we get a skiboot error message, and at some point
 in the future when we pump them up to the OS we could get a big friendly
 error message telling you you’re having a bad day.</p>
 </li>
-<li><p>pci/quirk: Populate device tree for AST2400 VGA</p>
+<li><p class="first">pci/quirk: Populate device tree for AST2400 VGA</p>
 <p>Adding these properties enables the kernel to function in the same way
 that it would if it could no longer access BMC configuration registers
 through a backdoor, which may become the default in future.</p>
@@ -424,78 +471,101 @@ support this.  Isolating the BMC and the host from each other is
 important if they are owned by different parties; for example, a cloud
 provider renting machines “bare metal”.</p>
 </li>
-<li><p>astbmc/pnor: Use mbox-flash for flash accesses</p>
+<li><p class="first">astbmc/pnor: Use mbox-flash for flash accesses</p>
 <p>If the BMC is MBOX protocol aware, request flash reads/writes over the
 MBOX regs. This inits the blocklevel for pnor access with mbox-flash.</p>
 </li>
-<li><p>ast: Account for differences between 2400 vs 2500</p></li>
-<li><p>platform: set default bmc_platform
+<li><p class="first">ast: Account for differences between 2400 vs 2500</p>
+</li>
+<li><p class="first">platform: set default bmc_platform
 The bmc_platform pointer is set to NULL by default and on non-AMI BMC
 platforms. As a result a few places in hw/ipmi/ipmi-sel.c will blindly
-dereference a NULL pointer.</p></li>
+dereference a NULL pointer.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="power9">
 <h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>external: Update xscom utils for type 1 indirect accesses</p></li>
-<li><p>xscom: Harden indirect writes</p></li>
-<li><p>xscom: Add POWER9 scom reset</p></li>
-<li><p>homer : Enable HOMER region reservation for POWER9</p></li>
-<li><p>slw: Define stop idle states for P9 DD1</p></li>
-<li><p>slw: Fix parsing of supported STOP states</p></li>
-<li><p>slw: only enable supported STOP states</p></li>
-<li><p>dts: add support for p9 cores</p></li>
-<li><p>asm: Add POWER9 case to init_shared_sprs</p>
+<li><p class="first">external: Update xscom utils for type 1 indirect accesses</p>
+</li>
+<li><p class="first">xscom: Harden indirect writes</p>
+</li>
+<li><p class="first">xscom: Add POWER9 scom reset</p>
+</li>
+<li><p class="first">homer : Enable HOMER region reservation for POWER9</p>
+</li>
+<li><p class="first">slw: Define stop idle states for P9 DD1</p>
+</li>
+<li><p class="first">slw: Fix parsing of supported STOP states</p>
+</li>
+<li><p class="first">slw: only enable supported STOP states</p>
+</li>
+<li><p class="first">dts: add support for p9 cores</p>
+</li>
+<li><p class="first">asm: Add POWER9 case to init_shared_sprs</p>
 <p>For now, setup the HID and HMEER. We’ll add more as we get
 good default values from HW.</p>
 </li>
-<li><p>xive/psi/lpc: Handle proper clearing of LPC SerIRQ latch on POWER9 DD1</p></li>
-<li><p>lpc: Mark the power9 LPC bus as compatible with power8</p></li>
-<li><p>Fix typo in PIR mask for POWER9. Fixes booting multi-chip.</p></li>
-<li><p>vpd: add vpd_valid() to check keyword VPD blobs</p>
+<li><p class="first">xive/psi/lpc: Handle proper clearing of LPC SerIRQ latch on POWER9 DD1</p>
+</li>
+<li><p class="first">lpc: Mark the power9 LPC bus as compatible with power8</p>
+</li>
+<li><p class="first">Fix typo in PIR mask for POWER9. Fixes booting multi-chip.</p>
+</li>
+<li><p class="first">vpd: add vpd_valid() to check keyword VPD blobs</p>
 <p>Adds a function to check whether a blob is a valid IBM ASCII keyword
 VPD blob. This allows us to recognise when we do and do not have a VPD
 blob and act accordingly.</p>
 </li>
-<li><p>core/cpu.c: Use a device-tree node to detect nest mmu presence
+<li><p class="first">core/cpu.c: Use a device-tree node to detect nest mmu presence
 The nest mmu address scom was hardcoded which could lead to boot
 failure on POWER9 systems without a nest mmu. For example Mambo
 doesn’t model the nest mmu which results in  failure when
-calling opal_nmmu_set_ptcr() during kernel load.</p></li>
-<li><p>psi: Fix P9 BAR setup on multi-chips</p></li>
+calling opal_nmmu_set_ptcr() during kernel load.</p>
+</li>
+<li><p class="first">psi: Fix P9 BAR setup on multi-chips</p>
+</li>
 </ul>
 <p>PHB4:</p>
 <blockquote>
 <div><ul>
-<li><p>phb4: Fix TVE encoding for start address</p></li>
-<li><p>phb4: Always assign powerbus BARs</p>
+<li><p class="first">phb4: Fix TVE encoding for start address</p>
+</li>
+<li><p class="first">phb4: Always assign powerbus BARs</p>
 <p>HostBoot configure them with weird values that confuse us, instead
 let’s just own the assignment. This is temporary, I will centralize
 memory map management next but this gets us going.</p>
 </li>
-<li><p>phb4: Fix endian issue with link control2/status2 registers
-Fixes training at larger than PCIe Gen1 speeds.</p></li>
-<li><p>phb4: Add ability to log config space access
-Useful for debugging</p></li>
-<li><p>phb4: Change debug prints
+<li><p class="first">phb4: Fix endian issue with link control2/status2 registers
+Fixes training at larger than PCIe Gen1 speeds.</p>
+</li>
+<li><p class="first">phb4: Add ability to log config space access
+Useful for debugging</p>
+</li>
+<li><p class="first">phb4: Change debug prints
 Currently we print “PHB4” and mean either “PHB version 4” or “PHB
-number 4” which can be quite confusing.</p></li>
-<li><p>phb4: Fix config space enable bits on DD1</p></li>
-<li><p>phb4: Fix location of EEH enable bits</p></li>
-<li><p>phb4: Fix setting of max link speed</p></li>
-<li><p>phb4: Updated inits as of PHB4 spec 0.52</p></li>
+number 4” which can be quite confusing.</p>
+</li>
+<li><p class="first">phb4: Fix config space enable bits on DD1</p>
+</li>
+<li><p class="first">phb4: Fix location of EEH enable bits</p>
+</li>
+<li><p class="first">phb4: Fix setting of max link speed</p>
+</li>
+<li><p class="first">phb4: Updated inits as of PHB4 spec 0.52</p>
+</li>
 </ul>
 </div></blockquote>
 <p>HDAT fixes:</p>
 <blockquote>
 <div><ul>
-<li><p>hdat: Parse BMC nodes much earlier</p>
+<li><p class="first">hdat: Parse BMC nodes much earlier</p>
 <p>This moves the parsing of the BMC and LPC details to the start of the
 HDAT parsing. This allows us to enable the Skiboot log console earlier
 so we can get debug output while parsing the rest of the HDAT.</p>
 </li>
-<li><p>astbmc: Don’t do P8 PSI or DT fixups on P9</p>
+<li><p class="first">astbmc: Don’t do P8 PSI or DT fixups on P9</p>
 <p>Previously the HDAT format was only ever used with IBM hardware so it
 would store vital product data (VPD) blobs in the IBM ASCII Keyword VPD
 format. With P9 HDAT is used on OpenPower machines which use Industry
@@ -506,7 +576,7 @@ under the “spd” property rather than the “ibm,vpd” property. This patch
 adds support for recognising these blobs and placing them in the
 appropriate DT property.</p>
 </li>
-<li><p>hdat: Add __packed to all HDAT structures and workaround HB reserve</p>
+<li><p class="first">hdat: Add __packed to all HDAT structures and workaround HB reserve</p>
 <p>Some HDAT structures aren’t properly aligned. We were using __packed
 on some but not others and got at least one wrong (HB reserve). This
 adds it everywhere to avoid such problems.</p>
@@ -516,39 +586,63 @@ assertion failure later on in mem_regions.c.</p>
 <p>So also add a test to skip any region starting at 0 until we can
 undertand that better and have it fixed one way or another.</p>
 </li>
-<li><p>hdat: Ignore broken memory reserves</p>
+<li><p class="first">hdat: Ignore broken memory reserves</p>
 <p>Ignore HDAT memory reserves &gt; 512MB.  These are considered bogus and
 workaround known HDAT bugs.</p>
 </li>
-<li><p>hdat: Add BMC device-tree node for P9 OpenPOWER systems</p></li>
-<li><p>hdat: Fix interrupt &amp; device_type of UART node</p>
+<li><p class="first">hdat: Add BMC device-tree node for P9 OpenPOWER systems</p>
+</li>
+<li><p class="first">hdat: Fix interrupt &amp; device_type of UART node</p>
 <p>The interrupt should use a standard “interrupts” property. The UART
 node also need a device_type=”serial” property for historical reasons
 otherwise Linux won’t pick it up.</p>
 </li>
-<li><p>parse and export STOP levels</p></li>
-<li><p>add new sppcrd_chip_info fields</p></li>
-<li><p>add radix-AP-encodings</p></li>
-<li><p>stop using proc_int_line in favor of pir</p></li>
-<li><p>rename add_icp() to add_xics_icp()</p></li>
-<li><p>Add support for PHB4</p></li>
-<li><p>create XIVE nodes under each xscom node</p></li>
-<li><p>Add P9 compatible property</p></li>
-<li><p>Parse hostboot memory reservations from HDAT</p></li>
-<li><p>Add new fields to IPL params structure and update sys family for p9.</p></li>
-<li><p>Fix ibm,pa-features for all CPU types</p></li>
-<li><p>Fix XSCOM nodes for P9</p></li>
-<li><p>Remove deprecated ‘ibm, mem-interleave-scope’ from DT on POWER9</p></li>
-<li><p>Grab system model name from HDAT when available</p></li>
-<li><p>Grab vendor information from HDAT when available</p></li>
-<li><p>SPIRA-H/S changes for P9</p></li>
-<li><p>Add BMC and LPC IOPATH support</p></li>
-<li><p>handle ISDIMM SPD blobs</p></li>
-<li><p>make HDIF_child() print more useful errors</p></li>
-<li><p>Add PSI HB xscom details</p></li>
-<li><p>Add new fields to proc_init_data structure</p></li>
-<li><p>Add processor version check for hs service ntuple</p></li>
-<li><p>add_iplparams_serial - Validate HDIF_get_iarray_size() return value</p></li>
+<li><p class="first">parse and export STOP levels</p>
+</li>
+<li><p class="first">add new sppcrd_chip_info fields</p>
+</li>
+<li><p class="first">add radix-AP-encodings</p>
+</li>
+<li><p class="first">stop using proc_int_line in favor of pir</p>
+</li>
+<li><p class="first">rename add_icp() to add_xics_icp()</p>
+</li>
+<li><p class="first">Add support for PHB4</p>
+</li>
+<li><p class="first">create XIVE nodes under each xscom node</p>
+</li>
+<li><p class="first">Add P9 compatible property</p>
+</li>
+<li><p class="first">Parse hostboot memory reservations from HDAT</p>
+</li>
+<li><p class="first">Add new fields to IPL params structure and update sys family for p9.</p>
+</li>
+<li><p class="first">Fix ibm,pa-features for all CPU types</p>
+</li>
+<li><p class="first">Fix XSCOM nodes for P9</p>
+</li>
+<li><p class="first">Remove deprecated ‘ibm, mem-interleave-scope’ from DT on POWER9</p>
+</li>
+<li><p class="first">Grab system model name from HDAT when available</p>
+</li>
+<li><p class="first">Grab vendor information from HDAT when available</p>
+</li>
+<li><p class="first">SPIRA-H/S changes for P9</p>
+</li>
+<li><p class="first">Add BMC and LPC IOPATH support</p>
+</li>
+<li><p class="first">handle ISDIMM SPD blobs</p>
+</li>
+<li><p class="first">make HDIF_child() print more useful errors</p>
+</li>
+<li><p class="first">Add PSI HB xscom details</p>
+</li>
+<li><p class="first">Add new fields to proc_init_data structure</p>
+</li>
+<li><p class="first">Add processor version check for hs service ntuple</p>
+</li>
+<li><p class="first">add_iplparams_serial - Validate HDIF_get_iarray_size() return value</p>
+</li>
 </ul>
 </div></blockquote>
 <p>XIVE:</p>
@@ -557,124 +651,131 @@ the changes that have gone into skiboot 5.5.0-rc1 for the new XIVE hardware
 that is present in POWER9:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>xive: Enable backlog on queues</p></li>
-<li><p>xive: Use for_each_present_cpu() for setting up XIVE</p></li>
-<li><p>xive: Fix logic in opal_xive_get_xirr()</p></li>
-<li><p>xive: Properly initialize new VP and EQ structures</p></li>
-<li><p>xive: Improve/fix EOI of LSIs</p></li>
-<li><p>xive: Add FIXME comments about mask/umask races</p></li>
-<li><p>xive: Fix memory barrier in opal_xive_get_xirr()</p></li>
-<li><p>xive: Don’t try to find a target EQ for prio 0xff</p></li>
-<li><p>xive: Bump table sizes in direct mode</p></li>
-<li><p>xive: Properly register escalation interrupts</p></li>
-<li><p>xive: Split the OPAL irq flags from the internal ones</p></li>
-<li><p>xive: Don’t touch ESB masks unless masking/unmasking</p></li>
-<li><p>xive: Fix xive_get_ir_targetting()</p></li>
-<li><p>xive: Cleanup escalation PQ on queue change</p></li>
-<li><p>xive: Add <em>any chip</em> for allocating interrupts</p></li>
-<li><p>xive: Add chip_id to get_vp_info</p></li>
-<li><p>xive: Add opal_xive_get/set_vp_info</p></li>
-<li><p>xive: Add VP alloc/free OPAL functions</p></li>
-<li><p>xive: Workaround for bad DD1 checker</p></li>
-<li><p>xive: Add more checks for exploitation mode</p></li>
-<li><p>xive: Add support for EOIs via OPAL</p></li>
-<li><p>xive/phb4: Work around broken LSI control on P9 DD1</p></li>
-<li><p>xive: Forward interrupt names callback</p></li>
-<li><p>xive: Export opal_xive_reset() arguments in OPAL API</p></li>
-<li><p>xive: Add interrupt allocator</p></li>
-<li><p>xive: Implement xive_reset</p></li>
-<li><p>xive: Don’t assert if xive_get_vp() fails</p></li>
-<li><p>xive: Expose exploitation mode DT properties</p></li>
-<li><p>xive: Use a constant for max# of chips</p></li>
-<li><p>xive: Keep track of which interrupts were ever enabled
-In order to speed up xive reset</p></li>
-<li><p>xive: Implement internal VP allocator</p></li>
-<li><p>xive: Add xive_get/set_queue_info</p></li>
-<li><p>xive: Add helpers to encode and decode VP numbers</p></li>
-<li><p>xive: Add API to donate pages in indirect mode</p></li>
-<li><p>xive: Add asynchronous cache updates and update irq targetting</p></li>
-<li><p>xive: Split xive_provision_cpu() and use cache watch for VP</p></li>
-<li><p>xive: Add cache scrub to push watch updates to memory</p></li>
-<li><p>xive: Mark XIVE owned EQs with a specific flag</p></li>
-<li><p>xive: Use an allocator for EQDs</p></li>
-<li><p>xive: Break assumption that block ID == chip ID</p></li>
-<li><p>xive/phb4: Handle bad ESB offsets in PHB4 DD1</p></li>
-<li><p>xive: Implement get/set_irq_config APIs</p></li>
-<li><p>xive: Rework xive_set_eq_info() to store all info even when masking</p></li>
-<li><p>xive: Implement cache watch and use it for EQs</p></li>
-<li><p>xive: Add locking to some API calls</p></li>
-<li><p>xive: Add opal_xive_get_irq_info()</p></li>
-<li><p>xive: Add CPU node “interrupts” properties representing the IPIs</p></li>
-<li><p>xive: Add basic opal_xive_reset() call and exploitation mode</p></li>
-<li><p>xive: Add support for escalation interrupts</p></li>
-<li><p>xive: OPAL API update</p></li>
-<li><p>xive: Add some dump facility for debugging</p></li>
-<li><p>xive: Document exploitation mode
-(Pretty much work in progress)</p></li>
-<li><p>xive: Indirect table entries must have top bits “type” set</p></li>
-<li><p>xive: Remove unused field and clarify comment</p></li>
-<li><p>xive: Provide a way to override some IPI sources</p></li>
-<li><p>xive: Add helper to retrieve an IPI trigger port</p></li>
-<li><p>xive: Fix IPI EOI logic in opal_xive_eoi()</p></li>
-<li><p>xive: Don’t try to EOI a masked source</p></li>
-<li><p>xive: Fix comments in xive_source_set_xive()</p></li>
-<li><p>xive: Fix comments in xive_get_ive()</p></li>
-<li><p>xive: Configure forwarding ports</p></li>
-<li><p>xive: Fix mangling of interrupt server# in opal_get/set_xive()</p></li>
-<li><p>xive: Fix interrupt number mangling</p></li>
+<li>xive: Enable backlog on queues</li>
+<li>xive: Use for_each_present_cpu() for setting up XIVE</li>
+<li>xive: Fix logic in opal_xive_get_xirr()</li>
+<li>xive: Properly initialize new VP and EQ structures</li>
+<li>xive: Improve/fix EOI of LSIs</li>
+<li>xive: Add FIXME comments about mask/umask races</li>
+<li>xive: Fix memory barrier in opal_xive_get_xirr()</li>
+<li>xive: Don’t try to find a target EQ for prio 0xff</li>
+<li>xive: Bump table sizes in direct mode</li>
+<li>xive: Properly register escalation interrupts</li>
+<li>xive: Split the OPAL irq flags from the internal ones</li>
+<li>xive: Don’t touch ESB masks unless masking/unmasking</li>
+<li>xive: Fix xive_get_ir_targetting()</li>
+<li>xive: Cleanup escalation PQ on queue change</li>
+<li>xive: Add <em>any chip</em> for allocating interrupts</li>
+<li>xive: Add chip_id to get_vp_info</li>
+<li>xive: Add opal_xive_get/set_vp_info</li>
+<li>xive: Add VP alloc/free OPAL functions</li>
+<li>xive: Workaround for bad DD1 checker</li>
+<li>xive: Add more checks for exploitation mode</li>
+<li>xive: Add support for EOIs via OPAL</li>
+<li>xive/phb4: Work around broken LSI control on P9 DD1</li>
+<li>xive: Forward interrupt names callback</li>
+<li>xive: Export opal_xive_reset() arguments in OPAL API</li>
+<li>xive: Add interrupt allocator</li>
+<li>xive: Implement xive_reset</li>
+<li>xive: Don’t assert if xive_get_vp() fails</li>
+<li>xive: Expose exploitation mode DT properties</li>
+<li>xive: Use a constant for max# of chips</li>
+<li>xive: Keep track of which interrupts were ever enabled
+In order to speed up xive reset</li>
+<li>xive: Implement internal VP allocator</li>
+<li>xive: Add xive_get/set_queue_info</li>
+<li>xive: Add helpers to encode and decode VP numbers</li>
+<li>xive: Add API to donate pages in indirect mode</li>
+<li>xive: Add asynchronous cache updates and update irq targetting</li>
+<li>xive: Split xive_provision_cpu() and use cache watch for VP</li>
+<li>xive: Add cache scrub to push watch updates to memory</li>
+<li>xive: Mark XIVE owned EQs with a specific flag</li>
+<li>xive: Use an allocator for EQDs</li>
+<li>xive: Break assumption that block ID == chip ID</li>
+<li>xive/phb4: Handle bad ESB offsets in PHB4 DD1</li>
+<li>xive: Implement get/set_irq_config APIs</li>
+<li>xive: Rework xive_set_eq_info() to store all info even when masking</li>
+<li>xive: Implement cache watch and use it for EQs</li>
+<li>xive: Add locking to some API calls</li>
+<li>xive: Add opal_xive_get_irq_info()</li>
+<li>xive: Add CPU node “interrupts” properties representing the IPIs</li>
+<li>xive: Add basic opal_xive_reset() call and exploitation mode</li>
+<li>xive: Add support for escalation interrupts</li>
+<li>xive: OPAL API update</li>
+<li>xive: Add some dump facility for debugging</li>
+<li>xive: Document exploitation mode
+(Pretty much work in progress)</li>
+<li>xive: Indirect table entries must have top bits “type” set</li>
+<li>xive: Remove unused field and clarify comment</li>
+<li>xive: Provide a way to override some IPI sources</li>
+<li>xive: Add helper to retrieve an IPI trigger port</li>
+<li>xive: Fix IPI EOI logic in opal_xive_eoi()</li>
+<li>xive: Don’t try to EOI a masked source</li>
+<li>xive: Fix comments in xive_source_set_xive()</li>
+<li>xive: Fix comments in xive_get_ive()</li>
+<li>xive: Configure forwarding ports</li>
+<li>xive: Fix mangling of interrupt server# in opal_get/set_xive()</li>
+<li>xive: Fix interrupt number mangling</li>
 </ul>
 </div></blockquote>
 </div>
 <div class="section" id="fast-reboot">
 <h2>Fast-reboot<a class="headerlink" href="#fast-reboot" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>fast-reboot: creset PHBs on fast reboot
+<li>fast-reboot: creset PHBs on fast reboot
 On fast reboot, perform a creset of all PHBs. This ensures that any PHBs
-that are fenced will be working after the reboot.</p></li>
-<li><p>fast-reboot: Enable fast reboot with CAPI adapters in CAPI mode
-CAPI mode is disabled as part of OPAL_SYNC_HOST_REBOOT.</p></li>
-<li><p>opal/fast-reboot: set fw_progress sensor status with IPMI_FW_PCI_INIT.</p></li>
+that are fenced will be working after the reboot.</li>
+<li>fast-reboot: Enable fast reboot with CAPI adapters in CAPI mode
+CAPI mode is disabled as part of OPAL_SYNC_HOST_REBOOT.</li>
+<li>opal/fast-reboot: set fw_progress sensor status with IPMI_FW_PCI_INIT.</li>
 </ul>
 </div>
 <div class="section" id="capi">
 <h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>hmi: Print CAPP FIR information when handling CAPP malfunction alerts</p></li>
+<li>hmi: Print CAPP FIR information when handling CAPP malfunction alerts</li>
 </ul>
 </div>
 <div class="section" id="fsp-based-systems">
 <h2>FSP based systems<a class="headerlink" href="#fsp-based-systems" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>hw/fsp: Do not queue SP and SPCN class messages during reset/reload
+<li>hw/fsp: Do not queue SP and SPCN class messages during reset/reload
 This could cause soft lockups if FSP reset reload was done while in OPAL
 During FSP R/R, the FSP is inaccessible and will lose state. Messages to the
-FSP are generally queued for sending later.</p></li>
+FSP are generally queued for sending later.</li>
 </ul>
 </div>
 <div class="section" id="tests">
 <h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><dl class="simple">
-<dt>core/test/run-trace: Reduce number of samples when running under valgrind</dt><dd><p>This reduces ‘make check’ run time by ~10 seconds on my laptop,
+<li><dl class="first docutils">
+<dt>core/test/run-trace: Reduce number of samples when running under valgrind</dt>
+<dd><p class="first last">This reduces ‘make check’ run time by ~10 seconds on my laptop,
 and just the run-trace test itself takes 15 seconds less (under valgrind).</p>
 </dd>
 </dl>
 </li>
-<li><p>test/sreset_world: Kind of like Hello World, but from the SRESET vector.
-A regression test for the mambo implementation of OPAL_SIGNAL_SYSTEM_RESET.</p></li>
-<li><dl>
-<dt>nvram-format: Fix endian issues</dt><dd><p>NVRAM formats are always BE, so let’s use the sparse annotation to catch
+<li><p class="first">test/sreset_world: Kind of like Hello World, but from the SRESET vector.
+A regression test for the mambo implementation of OPAL_SIGNAL_SYSTEM_RESET.</p>
+</li>
+<li><dl class="first docutils">
+<dt>nvram-format: Fix endian issues</dt>
+<dd><p class="first">NVRAM formats are always BE, so let’s use the sparse annotation to catch
 any issues (and correct said issues).</p>
-<p>On LE platforms, the test was erroneously passing as with building the
+<p class="last">On LE platforms, the test was erroneously passing as with building the
 nvram-format code on LE we were produces an incorrect NVRAM image.</p>
 </dd>
 </dl>
 </li>
-<li><p>test/hello_world: use P9MAMBO to differentiate from P8</p></li>
-<li><p>hdata_to_dt: Specify PVR on command line</p></li>
-<li><p>hdata/test: Add DTS output for the test cases</p></li>
-<li><p>hdata/test: strip blobs from the DT output</p></li>
-<li><p>mambo: add mprintf()</p>
+<li><p class="first">test/hello_world: use P9MAMBO to differentiate from P8</p>
+</li>
+<li><p class="first">hdata_to_dt: Specify PVR on command line</p>
+</li>
+<li><p class="first">hdata/test: Add DTS output for the test cases</p>
+</li>
+<li><p class="first">hdata/test: strip blobs from the DT output</p>
+</li>
+<li><p class="first">mambo: add mprintf()</p>
 <blockquote>
 <div><p>mprintf() is printf(), but it goes straight to the mambo console. This
 allows it to be independent of Skiboot’s actual console infrastructure
@@ -682,18 +783,25 @@ so it can be used for debugging the console drivers and for debugging
 code that runs before the console is setup.</p>
 </div></blockquote>
 </li>
-<li><p>generate-fwts-olog: add support for parsing prerror()</p></li>
-<li><dl class="simple">
-<dt>Add bitmap test</dt><dd><p>The worst test suite ever</p>
+<li><p class="first">generate-fwts-olog: add support for parsing prerror()</p>
+</li>
+<li><dl class="first docutils">
+<dt>Add bitmap test</dt>
+<dd><p class="first last">The worst test suite ever</p>
 </dd>
 </dl>
 </li>
-<li><p>mambo_utils: add ascii output to hexdump</p></li>
-<li><p>mambo_utils: add p_str &lt;addr&gt; [limit]</p></li>
-<li><p>mambo_utils: make p return a value</p></li>
-<li><p>hello_world: print out full path of missing MAMBO_BINARY</p></li>
-<li><p>print-stb-container: Fix build on centos7</p></li>
-<li><p>Travis-ci improvements:
+<li><p class="first">mambo_utils: add ascii output to hexdump</p>
+</li>
+<li><p class="first">mambo_utils: add p_str &lt;addr&gt; [limit]</p>
+</li>
+<li><p class="first">mambo_utils: make p return a value</p>
+</li>
+<li><p class="first">hello_world: print out full path of missing MAMBO_BINARY</p>
+</li>
+<li><p class="first">print-stb-container: Fix build on centos7</p>
+</li>
+<li><p class="first">Travis-ci improvements:
 - install expect on ubuntu 12.04, disable qemu on 16.04/latest
 - build and test more on centos7
 - hello_world: run p9 mambo tests
@@ -702,22 +810,28 @@ code that runs before the console is setup.</p>
 - install systemsim-p9
 - enable fedora25
 - always pull new docker image
-- add fedora rawhide</p></li>
-<li><p>Add fwts annotation for duplicate DT node entries.</p>
+- add fedora rawhide</p>
+</li>
+<li><p class="first">Add fwts annotation for duplicate DT node entries.</p>
 <blockquote>
 <div><p>Reference bug: <a class="reference external" href="https://github.com/open-power/op-build/issues/751">https://github.com/open-power/op-build/issues/751</a></p>
 </div></blockquote>
 </li>
-<li><p>external/fwts: Add ‘last-tag’ to FWTS olog output
+<li><p class="first">external/fwts: Add ‘last-tag’ to FWTS olog output
 This isn’t so useful at the moment, but this will make cleaning out
-crufty old error definitions much easier.</p></li>
-<li><p>external/fwts: Add FWTS olog merge script
+crufty old error definitions much easier.</p>
+</li>
+<li><p class="first">external/fwts: Add FWTS olog merge script
 A script to merge olog error definitions from multiple skiboot versions
 into a single olog JSON file. Will prompt when conflicting patterns are
-found to update the pattern, or add both.</p></li>
-<li><p>mambo: fake NVRAM support</p></li>
-<li><p>mambo: Add Fake NVRAM driver</p></li>
-<li><p>external/mambo: add shortcut to print all GPRs</p></li>
+found to update the pattern, or add both.</p>
+</li>
+<li><p class="first">mambo: fake NVRAM support</p>
+</li>
+<li><p class="first">mambo: Add Fake NVRAM driver</p>
+</li>
+<li><p class="first">external/mambo: add shortcut to print all GPRs</p>
+</li>
 </ul>
 </div>
 <div class="section" id="contributors">
@@ -726,298 +840,298 @@ found to update the pattern, or add both.</p></li>
 A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <div class="section" id="developers-with-the-most-changesets">
 <h3>Developers with the most changesets<a class="headerlink" href="#developers-with-the-most-changesets" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
+<col width="72%" />
+<col width="8%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
-<td><p>138</p></td>
-<td><p>(38.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Benjamin Herrenschmidt</td>
+<td>138</td>
+<td>(38.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Stewart Smith</p></td>
-<td><p>56</p></td>
-<td><p>(15.4%)</p></td>
+<tr class="row-odd"><td>Stewart Smith</td>
+<td>56</td>
+<td>(15.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
-<td><p>47</p></td>
-<td><p>(12.9%)</p></td>
+<tr class="row-even"><td>Oliver O’Halloran</td>
+<td>47</td>
+<td>(12.9%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>18</p></td>
-<td><p>(5.0%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>18</td>
+<td>(5.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Gavin Shan</p></td>
-<td><p>15</p></td>
-<td><p>(4.1%)</p></td>
+<tr class="row-even"><td>Gavin Shan</td>
+<td>15</td>
+<td>(4.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
-<td><p>14</p></td>
-<td><p>(3.9%)</p></td>
+<tr class="row-odd"><td>Claudio Carvalho</td>
+<td>14</td>
+<td>(3.9%)</td>
 </tr>
-<tr class="row-even"><td><p>Vasant Hegde</p></td>
-<td><p>11</p></td>
-<td><p>(3.0%)</p></td>
+<tr class="row-even"><td>Vasant Hegde</td>
+<td>11</td>
+<td>(3.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Cyril Bur</p></td>
-<td><p>11</p></td>
-<td><p>(3.0%)</p></td>
+<tr class="row-odd"><td>Cyril Bur</td>
+<td>11</td>
+<td>(3.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Andrew Donnellan</p></td>
-<td><p>11</p></td>
-<td><p>(3.0%)</p></td>
+<tr class="row-even"><td>Andrew Donnellan</td>
+<td>11</td>
+<td>(3.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
-<td><p>5</p></td>
-<td><p>(1.4%)</p></td>
+<tr class="row-odd"><td>Ananth N Mavinakayanahalli</td>
+<td>5</td>
+<td>(1.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Cédric Le Goater</p></td>
-<td><p>5</p></td>
-<td><p>(1.4%)</p></td>
+<tr class="row-even"><td>Cédric Le Goater</td>
+<td>5</td>
+<td>(1.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Pridhiviraj Paidipeddi</p></td>
-<td><p>5</p></td>
-<td><p>(1.4%)</p></td>
+<tr class="row-odd"><td>Pridhiviraj Paidipeddi</td>
+<td>5</td>
+<td>(1.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
-<td><p>4</p></td>
-<td><p>(1.1%)</p></td>
+<tr class="row-even"><td>Shilpasri G Bhat</td>
+<td>4</td>
+<td>(1.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Nicholas Piggin</p></td>
-<td><p>4</p></td>
-<td><p>(1.1%)</p></td>
+<tr class="row-odd"><td>Nicholas Piggin</td>
+<td>4</td>
+<td>(1.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Russell Currey</p></td>
-<td><p>3</p></td>
-<td><p>(0.8%)</p></td>
+<tr class="row-even"><td>Russell Currey</td>
+<td>3</td>
+<td>(0.8%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alistair Popple</p></td>
-<td><p>2</p></td>
-<td><p>(0.6%)</p></td>
+<tr class="row-odd"><td>Alistair Popple</td>
+<td>2</td>
+<td>(0.6%)</td>
 </tr>
-<tr class="row-even"><td><p>Jack Miller</p></td>
-<td><p>2</p></td>
-<td><p>(0.6%)</p></td>
+<tr class="row-even"><td>Jack Miller</td>
+<td>2</td>
+<td>(0.6%)</td>
 </tr>
-<tr class="row-odd"><td><p>Chris Smart</p></td>
-<td><p>2</p></td>
-<td><p>(0.6%)</p></td>
+<tr class="row-odd"><td>Chris Smart</td>
+<td>2</td>
+<td>(0.6%)</td>
 </tr>
-<tr class="row-even"><td><p>Matt Brown</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Matt Brown</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Ellerman</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Michael Ellerman</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Frederic Barrat</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Frederic Barrat</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Hank Chang</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Hank Chang</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Willie Liauw</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Willie Liauw</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Werner Fischer</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Werner Fischer</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Jeremy Kerr</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Jeremy Kerr</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Patrick Williams</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Patrick Williams</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Joel Stanley</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Joel Stanley</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alexey Kardashevskiy</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Alexey Kardashevskiy</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-changed-lines">
 <h3>Developers with the most changed lines<a class="headerlink" href="#developers-with-the-most-changed-lines" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 69%" />
-<col style="width: 13%" />
-<col style="width: 18%" />
+<col width="69%" />
+<col width="13%" />
+<col width="18%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
-<td><p>17961</p></td>
-<td><p>(56.7%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Oliver O’Halloran</td>
+<td>17961</td>
+<td>(56.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
-<td><p>5509</p></td>
-<td><p>(17.4%)</p></td>
+<tr class="row-odd"><td>Benjamin Herrenschmidt</td>
+<td>5509</td>
+<td>(17.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Cyril Bur</p></td>
-<td><p>2801</p></td>
-<td><p>(8.8%)</p></td>
+<tr class="row-even"><td>Cyril Bur</td>
+<td>2801</td>
+<td>(8.8%)</td>
 </tr>
-<tr class="row-odd"><td><p>Stewart Smith</p></td>
-<td><p>1649</p></td>
-<td><p>(5.2%)</p></td>
+<tr class="row-odd"><td>Stewart Smith</td>
+<td>1649</td>
+<td>(5.2%)</td>
 </tr>
-<tr class="row-even"><td><p>Gavin Shan</p></td>
-<td><p>653</p></td>
-<td><p>(2.1%)</p></td>
+<tr class="row-even"><td>Gavin Shan</td>
+<td>653</td>
+<td>(2.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
-<td><p>489</p></td>
-<td><p>(1.5%)</p></td>
+<tr class="row-odd"><td>Claudio Carvalho</td>
+<td>489</td>
+<td>(1.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Willie Liauw</p></td>
-<td><p>361</p></td>
-<td><p>(1.1%)</p></td>
+<tr class="row-even"><td>Willie Liauw</td>
+<td>361</td>
+<td>(1.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
-<td><p>340</p></td>
-<td><p>(1.1%)</p></td>
+<tr class="row-odd"><td>Ananth N Mavinakayanahalli</td>
+<td>340</td>
+<td>(1.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Andrew Donnellan</p></td>
-<td><p>315</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-even"><td>Andrew Donnellan</td>
+<td>315</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>240</p></td>
-<td><p>(0.8%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>240</td>
+<td>(0.8%)</td>
 </tr>
-<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
-<td><p>228</p></td>
-<td><p>(0.7%)</p></td>
+<tr class="row-even"><td>Shilpasri G Bhat</td>
+<td>228</td>
+<td>(0.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Nicholas Piggin</p></td>
-<td><p>219</p></td>
-<td><p>(0.7%)</p></td>
+<tr class="row-odd"><td>Nicholas Piggin</td>
+<td>219</td>
+<td>(0.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Vasant Hegde</p></td>
-<td><p>207</p></td>
-<td><p>(0.7%)</p></td>
+<tr class="row-even"><td>Vasant Hegde</td>
+<td>207</td>
+<td>(0.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Russell Currey</p></td>
-<td><p>158</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Russell Currey</td>
+<td>158</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Jack Miller</p></td>
-<td><p>127</p></td>
-<td><p>(0.4%)</p></td>
+<tr class="row-even"><td>Jack Miller</td>
+<td>127</td>
+<td>(0.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
-<td><p>126</p></td>
-<td><p>(0.4%)</p></td>
+<tr class="row-odd"><td>Cédric Le Goater</td>
+<td>126</td>
+<td>(0.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Chris Smart</p></td>
-<td><p>95</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Chris Smart</td>
+<td>95</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Hank Chang</p></td>
-<td><p>56</p></td>
-<td><p>(0.2%)</p></td>
+<tr class="row-odd"><td>Hank Chang</td>
+<td>56</td>
+<td>(0.2%)</td>
 </tr>
-<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
-<td><p>47</p></td>
-<td><p>(0.1%)</p></td>
+<tr class="row-even"><td>Pridhiviraj Paidipeddi</td>
+<td>47</td>
+<td>(0.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alistair Popple</p></td>
-<td><p>39</p></td>
-<td><p>(0.1%)</p></td>
+<tr class="row-odd"><td>Alistair Popple</td>
+<td>39</td>
+<td>(0.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Matt Brown</p></td>
-<td><p>29</p></td>
-<td><p>(0.1%)</p></td>
+<tr class="row-even"><td>Matt Brown</td>
+<td>29</td>
+<td>(0.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Ellerman</p></td>
-<td><p>3</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Michael Ellerman</td>
+<td>3</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Alexey Kardashevskiy</p></td>
-<td><p>2</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>Alexey Kardashevskiy</td>
+<td>2</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Frederic Barrat</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Frederic Barrat</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Werner Fischer</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>Werner Fischer</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Jeremy Kerr</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Jeremy Kerr</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Patrick Williams</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>Patrick Williams</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Joel Stanley</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Joel Stanley</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-lines-removed">
 <h3>Developers with the most lines removed<a class="headerlink" href="#developers-with-the-most-lines-removed" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 69%" />
-<col style="width: 13%" />
-<col style="width: 18%" />
+<col width="69%" />
+<col width="13%" />
+<col width="18%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
-<td><p>8810</p></td>
-<td><p>(53.4%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Oliver O’Halloran</td>
+<td>8810</td>
+<td>(53.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
-<td><p>98</p></td>
-<td><p>(0.6%)</p></td>
+<tr class="row-odd"><td>Ananth N Mavinakayanahalli</td>
+<td>98</td>
+<td>(0.6%)</td>
 </tr>
-<tr class="row-even"><td><p>Alistair Popple</p></td>
-<td><p>9</p></td>
-<td><p>(0.1%)</p></td>
+<tr class="row-even"><td>Alistair Popple</td>
+<td>9</td>
+<td>(0.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Ellerman</p></td>
-<td><p>3</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Michael Ellerman</td>
+<td>3</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Werner Fischer</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>Werner Fischer</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
 </tbody>
 </table>
@@ -1025,50 +1139,50 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <div class="section" id="developers-with-the-most-signoffs">
 <h3>Developers with the most signoffs<a class="headerlink" href="#developers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
 <p>Total 322</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 67%" />
-<col style="width: 14%" />
-<col style="width: 19%" />
+<col width="67%" />
+<col width="14%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>307</p></td>
-<td><p>(95.3%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Stewart Smith</td>
+<td>307</td>
+<td>(95.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>6</p></td>
-<td><p>(1.9%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>6</td>
+<td>(1.9%)</td>
 </tr>
-<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
-<td><p>3</p></td>
-<td><p>(0.9%)</p></td>
+<tr class="row-even"><td>Oliver O’Halloran</td>
+<td>3</td>
+<td>(0.9%)</td>
 </tr>
-<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
-<td><p>2</p></td>
-<td><p>(0.6%)</p></td>
+<tr class="row-odd"><td>Benjamin Herrenschmidt</td>
+<td>2</td>
+<td>(0.6%)</td>
 </tr>
-<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Vaidyanathan Srinivasan</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Hank Chang</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Hank Chang</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Jack Miller</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Jack Miller</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Gavin Shan</p></td>
-<td><p>1</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Gavin Shan</td>
+<td>1</td>
+<td>(0.3%)</td>
 </tr>
 </tbody>
 </table>
@@ -1076,62 +1190,62 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <div class="section" id="developers-with-the-most-reviews">
 <h3>Developers with the most reviews<a class="headerlink" href="#developers-with-the-most-reviews" title="Permalink to this headline">¶</a></h3>
 <p>Total: 45</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 67%" />
-<col style="width: 14%" />
-<col style="width: 19%" />
+<col width="67%" />
+<col width="14%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Vasant Hegde</p></td>
-<td><p>10</p></td>
-<td><p>(22.2%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Vasant Hegde</td>
+<td>10</td>
+<td>(22.2%)</td>
 </tr>
-<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
-<td><p>9</p></td>
-<td><p>(20.0%)</p></td>
+<tr class="row-odd"><td>Andrew Donnellan</td>
+<td>9</td>
+<td>(20.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Russell Currey</p></td>
-<td><p>6</p></td>
-<td><p>(13.3%)</p></td>
+<tr class="row-even"><td>Russell Currey</td>
+<td>6</td>
+<td>(13.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
-<td><p>5</p></td>
-<td><p>(11.1%)</p></td>
+<tr class="row-odd"><td>Cédric Le Goater</td>
+<td>5</td>
+<td>(11.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
-<td><p>4</p></td>
-<td><p>(8.9%)</p></td>
+<tr class="row-even"><td>Oliver O’Halloran</td>
+<td>4</td>
+<td>(8.9%)</td>
 </tr>
-<tr class="row-odd"><td><p>Gavin Shan</p></td>
-<td><p>3</p></td>
-<td><p>(6.7%)</p></td>
+<tr class="row-odd"><td>Gavin Shan</td>
+<td>3</td>
+<td>(6.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
-<td><p>2</p></td>
-<td><p>(4.4%)</p></td>
+<tr class="row-even"><td>Vaidyanathan Srinivasan</td>
+<td>2</td>
+<td>(4.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alistair Popple</p></td>
-<td><p>2</p></td>
-<td><p>(4.4%)</p></td>
+<tr class="row-odd"><td>Alistair Popple</td>
+<td>2</td>
+<td>(4.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Frederic Barrat</p></td>
-<td><p>2</p></td>
-<td><p>(4.4%)</p></td>
+<tr class="row-even"><td>Frederic Barrat</td>
+<td>2</td>
+<td>(4.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Mahesh Salgaonkar</p></td>
-<td><p>1</p></td>
-<td><p>(2.2%)</p></td>
+<tr class="row-odd"><td>Mahesh Salgaonkar</td>
+<td>1</td>
+<td>(2.2%)</td>
 </tr>
-<tr class="row-even"><td><p>Cyril Bur</p></td>
-<td><p>1</p></td>
-<td><p>(2.2%)</p></td>
+<tr class="row-even"><td>Cyril Bur</td>
+<td>1</td>
+<td>(2.2%)</td>
 </tr>
 </tbody>
 </table>
@@ -1139,42 +1253,42 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <div class="section" id="developers-with-the-most-test-credits">
 <h3>Developers with the most test credits<a class="headerlink" href="#developers-with-the-most-test-credits" title="Permalink to this headline">¶</a></h3>
 <p>Total 11</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 67%" />
-<col style="width: 14%" />
-<col style="width: 19%" />
+<col width="67%" />
+<col width="14%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Willie Liauw</p></td>
-<td><p>4</p></td>
-<td><p>(36.4%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Willie Liauw</td>
+<td>4</td>
+<td>(36.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
-<td><p>3</p></td>
-<td><p>(27.3%)</p></td>
+<tr class="row-odd"><td>Claudio Carvalho</td>
+<td>3</td>
+<td>(27.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Gavin Shan</p></td>
-<td><p>1</p></td>
-<td><p>(9.1%)</p></td>
+<tr class="row-even"><td>Gavin Shan</td>
+<td>1</td>
+<td>(9.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>1</p></td>
-<td><p>(9.1%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>1</td>
+<td>(9.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
-<td><p>1</p></td>
-<td><p>(9.1%)</p></td>
+<tr class="row-even"><td>Pridhiviraj Paidipeddi</td>
+<td>1</td>
+<td>(9.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Chris Smart</p></td>
-<td><p>1</p></td>
-<td><p>(9.1%)</p></td>
+<tr class="row-odd"><td>Chris Smart</td>
+<td>1</td>
+<td>(9.1%)</td>
 </tr>
 </tbody>
 </table>
@@ -1182,38 +1296,38 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <div class="section" id="developers-who-gave-the-most-tested-by-credits">
 <h3>Developers who gave the most tested-by credits<a class="headerlink" href="#developers-who-gave-the-most-tested-by-credits" title="Permalink to this headline">¶</a></h3>
 <p>Total 11</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 68%" />
-<col style="width: 13%" />
-<col style="width: 18%" />
+<col width="68%" />
+<col width="13%" />
+<col width="18%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Gavin Shan</p></td>
-<td><p>4</p></td>
-<td><p>(36.4%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Gavin Shan</td>
+<td>4</td>
+<td>(36.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Stewart Smith</p></td>
-<td><p>4</p></td>
-<td><p>(36.4%)</p></td>
+<tr class="row-odd"><td>Stewart Smith</td>
+<td>4</td>
+<td>(36.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Chris Smart</p></td>
-<td><p>1</p></td>
-<td><p>(9.1%)</p></td>
+<tr class="row-even"><td>Chris Smart</td>
+<td>1</td>
+<td>(9.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
-<td><p>1</p></td>
-<td><p>(9.1%)</p></td>
+<tr class="row-odd"><td>Oliver O’Halloran</td>
+<td>1</td>
+<td>(9.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Ananth N Mavinakayanahalli</p></td>
-<td><p>1</p></td>
-<td><p>(9.1%)</p></td>
+<tr class="row-even"><td>Ananth N Mavinakayanahalli</td>
+<td>1</td>
+<td>(9.1%)</td>
 </tr>
 </tbody>
 </table>
@@ -1221,34 +1335,34 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <div class="section" id="developers-with-the-most-report-credits">
 <h3>Developers with the most report credits<a class="headerlink" href="#developers-with-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
 <p>Total 7</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
+<col width="72%" />
+<col width="8%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Hank Chang</p></td>
-<td><p>4</p></td>
-<td><p>(57.1%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Hank Chang</td>
+<td>4</td>
+<td>(57.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>Guilherme G. Piccoli</p></td>
-<td><p>1</p></td>
-<td><p>(14.3%)</p></td>
+<tr class="row-odd"><td>Guilherme G. Piccoli</td>
+<td>1</td>
+<td>(14.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Colin Ian King</p></td>
-<td><p>1</p></td>
-<td><p>(14.3%)</p></td>
+<tr class="row-even"><td>Colin Ian King</td>
+<td>1</td>
+<td>(14.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Pradipta Ghosh</p></td>
-<td><p>1</p></td>
-<td><p>(14.3%)</p></td>
+<tr class="row-odd"><td>Pradipta Ghosh</td>
+<td>1</td>
+<td>(14.3%)</td>
 </tr>
 </tbody>
 </table>
@@ -1256,30 +1370,30 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <div class="section" id="developers-who-gave-the-most-report-credits">
 <h3>Developers who gave the most report credits<a class="headerlink" href="#developers-who-gave-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
 <p>Total 7</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
+<col width="72%" />
+<col width="8%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Gavin Shan</p></td>
-<td><p>5</p></td>
-<td><p>(71.4%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Gavin Shan</td>
+<td>5</td>
+<td>(71.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
-<td><p>1</p></td>
-<td><p>(14.3%)</p></td>
+<tr class="row-odd"><td>Andrew Donnellan</td>
+<td>1</td>
+<td>(14.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Jeremy Kerr</p></td>
-<td><p>1</p></td>
-<td><p>(14.3%)</p></td>
+<tr class="row-even"><td>Jeremy Kerr</td>
+<td>1</td>
+<td>(14.3%)</td>
 </tr>
 </tbody>
 </table>
@@ -1288,7 +1402,6 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -1341,15 +1454,17 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1366,15 +1481,14 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
         <li class="right" >
           <a href="skiboot-5.5.0.html" title="skiboot-5.5.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0-rc1</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

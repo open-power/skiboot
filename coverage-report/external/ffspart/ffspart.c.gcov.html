@@ -31,18 +31,18 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">134</td>
-            <td class="headerCovTableEntry">296</td>
-            <td class="headerCovTableEntryLo">45.3 %</td>
+            <td class="headerCovTableEntry">135</td>
+            <td class="headerCovTableEntry">295</td>
+            <td class="headerCovTableEntryLo">45.8 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-13 12:18:09</td>
+            <td class="headerValue">2022-03-17 07:10:58</td>
             <td></td>
             <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
             <td class="headerCovTableEntry">4</td>
-            <td class="headerCovTableEntry">6</td>
-            <td class="headerCovTableEntryLo">66.7 %</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
           </tr>
           <tr>
             <td></td>
@@ -123,16 +123,16 @@
 <a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">         56 : static int read_u32(const char *input, uint32_t *val)</span></a>
 <a name="53"><span class="lineNum">      53 </span>                :            : {</a>
 <a name="54"><span class="lineNum">      54 </span>                :<span class="lineCov">         56 :         char *endptr;</span></a>
-<a name="55"><span class="lineNum">      55 </span>                :<span class="lineCov">         56 :         *val = strtoul(input, &amp;endptr, 0);</span></a>
+<a name="55"><span class="lineNum">      55 </span>                :<span class="lineCov">        112 :         *val = strtoul(input, &amp;endptr, 0);</span></a>
 <a name="56"><span class="lineNum">      56 </span>                :<span class="lineCov">         56 :         return (*endptr == SEPARATOR) ? 0 : 1;</span></a>
 <a name="57"><span class="lineNum">      57 </span>                :            : }</a>
 <a name="58"><span class="lineNum">      58 </span>                :            : </a>
-<a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">        168 : static const char *advance_line(const char *input)</span></a>
+<a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">        196 : static const char *advance_line(const char *input)</span></a>
 <a name="60"><span class="lineNum">      60 </span>                :            : {</a>
-<a name="61"><span class="lineNum">      61 </span>                :<span class="lineCov">        168 :         char *pos = strchr(input, SEPARATOR);</span></a>
-<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        168 :         if (!pos)</span></a>
+<a name="61"><span class="lineNum">      61 </span>                :<span class="lineCov">        196 :         char *pos = strchr(input, SEPARATOR);</span></a>
+<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        196 :         if (!pos)</span></a>
 <a name="63"><span class="lineNum">      63 </span>                :            :                 return NULL;</a>
-<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        168 :         return pos + 1;</span></a>
+<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">         28 :         return pos + 1;</span></a>
 <a name="65"><span class="lineNum">      65 </span>                :            : }</a>
 <a name="66"><span class="lineNum">      66 </span>                :            : </a>
 <a name="67"><span class="lineNum">      67 </span>                :<span class="lineNoCov">          0 : static struct ffs_hdr *parse_toc(const char *line, uint32_t block_size,</span></a>
@@ -449,7 +449,7 @@
 <a name="378"><span class="lineNum">     378 </span>                :<span class="lineCov">         30 :         int line_number, rc, i;</span></a>
 <a name="379"><span class="lineNum">     379 </span>                :<span class="lineCov">         30 :         FILE *in_file;</span></a>
 <a name="380"><span class="lineNum">     380 </span>                :            : </a>
-<a name="381"><span class="lineNum">     381 </span>                :<span class="lineCov">         24 :         while(1) {</span></a>
+<a name="381"><span class="lineNum">     381 </span>                :<span class="lineCov">         54 :         while(1) {</span></a>
 <a name="382"><span class="lineNum">     382 </span>                :<span class="lineCov">         30 :                 struct option long_opts[] = {</span></a>
 <a name="383"><span class="lineNum">     383 </span>                :            :                         {&quot;allow_empty&quot;, no_argument,          NULL,   'e'},</a>
 <a name="384"><span class="lineNum">     384 </span>                :            :                         {&quot;block_count&quot;,       required_argument,      NULL,   'c'},</a>
@@ -484,7 +484,7 @@
 <a name="413"><span class="lineNum">     413 </span>                :<span class="lineCov">          6 :                         free(pnor);</span></a>
 <a name="414"><span class="lineNum">     414 </span>                :<span class="lineCov">          6 :                         pnor = strdup(optarg);</span></a>
 <a name="415"><span class="lineNum">     415 </span>                :<span class="lineCov">          6 :                         if (!pnor)</span></a>
-<a name="416"><span class="lineNum">     416 </span>                :<span class="lineNoCov">          0 :                                 fprintf(stderr, &quot;Out of memory!\n&quot;);</span></a>
+<a name="416"><span class="lineNum">     416 </span>                :<span class="lineCov">         24 :                                 fprintf(stderr, &quot;Out of memory!\n&quot;);</span></a>
 <a name="417"><span class="lineNum">     417 </span>                :            :                         break;</a>
 <a name="418"><span class="lineNum">     418 </span>                :<span class="lineCov">          6 :                 case 's':</span></a>
 <a name="419"><span class="lineNum">     419 </span>                :<span class="lineCov">          6 :                         block_size = strtoul(optarg, NULL, 0);</span></a>
@@ -600,7 +600,7 @@
 <a name="529"><span class="lineNum">     529 </span>                :<span class="lineCov">          6 :                         if (rc) {</span></a>
 <a name="530"><span class="lineNum">     530 </span>                :<span class="lineNoCov">          0 :                                 rc = 7;</span></a>
 <a name="531"><span class="lineNum">     531 </span>                :<span class="lineNoCov">          0 :                                 fprintf(stderr, &quot;Failed to write out TOC values\n&quot;);</span></a>
-<a name="532"><span class="lineNum">     532 </span>                :<span class="lineNoCov">          0 :                                 break;</span></a>
+<a name="532"><span class="lineNum">     532 </span>                :            :                                 break;</a>
 <a name="533"><span class="lineNum">     533 </span>                :            :                         }</a>
 <a name="534"><span class="lineNum">     534 </span>                :            :                 }</a>
 <a name="535"><span class="lineNum">     535 </span>                :            :         }</a>

@@ -32,17 +32,17 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">195</td>
-            <td class="headerCovTableEntry">196</td>
-            <td class="headerCovTableEntryHi">99.5 %</td>
+            <td class="headerCovTableEntry">198</td>
+            <td class="headerCovTableEntryHi">98.5 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-13 12:18:09</td>
+            <td class="headerValue">2022-03-17 07:10:58</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">11</td>
-            <td class="headerCovTableEntry">11</td>
-            <td class="headerCovTableEntryHi">100.0 %</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryHi">91.7 %</td>
           </tr>
           <tr>
             <td></td>
@@ -95,10 +95,10 @@
 <a name="24"><span class="lineNum">      24 </span>                :            : </a>
 <a name="25"><span class="lineNum">      25 </span>                :            : #if defined(__i386__) || defined(__x86_64__)</a>
 <a name="26"><span class="lineNum">      26 </span>                :            : /* This is more than a lwsync, but it'll work */</a>
-<a name="27"><span class="lineNum">      27 </span>                :<span class="lineCov">   10850485 : static void full_barrier(void)</span></a>
+<a name="27"><span class="lineNum">      27 </span>                :<span class="lineCov">   10850500 : static void full_barrier(void)</span></a>
 <a name="28"><span class="lineNum">      28 </span>                :            : {</a>
-<a name="29"><span class="lineNum">      29 </span>                :<span class="lineCov">   10850485 :         asm volatile(&quot;mfence&quot; : : : &quot;memory&quot;);</span></a>
-<a name="30"><span class="lineNum">      30 </span>                :<span class="lineCov">   10850485 : }</span></a>
+<a name="29"><span class="lineNum">      29 </span>                :<span class="lineCov">   10850500 :         asm volatile(&quot;mfence&quot; : : : &quot;memory&quot;);</span></a>
+<a name="30"><span class="lineNum">      30 </span>                :<span class="lineCov">   10850500 : }</span></a>
 <a name="31"><span class="lineNum">      31 </span>                :            : #define lwsync full_barrier</a>
 <a name="32"><span class="lineNum">      32 </span>                :            : #elif defined(__powerpc__) || defined(__powerpc64__)</a>
 <a name="33"><span class="lineNum">      33 </span>                :            : static inline void lwsync(void)</a>
@@ -141,9 +141,9 @@
 <a name="70"><span class="lineNum">      70 </span>                :            :         for (cpu = first_cpu(); cpu; cpu = next_cpu(cpu))</a>
 <a name="71"><span class="lineNum">      71 </span>                :            : </a>
 <a name="72"><span class="lineNum">      72 </span>                :            : static unsigned long timestamp;</a>
-<a name="73"><span class="lineNum">      73 </span>                :<span class="lineCov">    6418116 : static unsigned long mftb(void)</span></a>
+<a name="73"><span class="lineNum">      73 </span>                :<span class="lineCov">    6418120 : static unsigned long mftb(void)</span></a>
 <a name="74"><span class="lineNum">      74 </span>                :            : {</a>
-<a name="75"><span class="lineNum">      75 </span>                :<span class="lineCov">    6418116 :         return timestamp;</span></a>
+<a name="75"><span class="lineNum">      75 </span>                :<span class="lineCov">    6418120 :         return timestamp;</span></a>
 <a name="76"><span class="lineNum">      76 </span>                :            : }</a>
 <a name="77"><span class="lineNum">      77 </span>                :            : </a>
 <a name="78"><span class="lineNum">      78 </span>                :<span class="lineCov">          2 : static void *local_alloc(unsigned int chip_id,</span></a>
@@ -173,294 +173,299 @@
 <a name="102"><span class="lineNum">     102 </span>                :            :         .trace_mask = -1</a>
 <a name="103"><span class="lineNum">     103 </span>                :            : };</a>
 <a name="104"><span class="lineNum">     104 </span>                :            : </a>
-<a name="105"><span class="lineNum">     105 </span>                :<span class="lineCov">    6418116 : void lock_caller(struct lock *l, const char *caller)</span></a>
+<a name="105"><span class="lineNum">     105 </span>                :<span class="lineNoCov">          0 : const char *nvram_query_safe(const char *key __unused)</span></a>
 <a name="106"><span class="lineNum">     106 </span>                :            : {</a>
-<a name="107"><span class="lineNum">     107 </span>                :            :         (void)caller;</a>
-<a name="108"><span class="lineNum">     108 </span>                :<span class="lineCov">    6418116 :         assert(!l-&gt;lock_val);</span></a>
-<a name="109"><span class="lineNum">     109 </span>                :<span class="lineCov">    6418116 :         l-&gt;lock_val = 1;</span></a>
-<a name="110"><span class="lineNum">     110 </span>                :<span class="lineCov">    6418116 : }</span></a>
-<a name="111"><span class="lineNum">     111 </span>                :            : </a>
-<a name="112"><span class="lineNum">     112 </span>                :<span class="lineCov">    6418116 : void unlock(struct lock *l)</span></a>
-<a name="113"><span class="lineNum">     113 </span>                :            : {</a>
-<a name="114"><span class="lineNum">     114 </span>                :<span class="lineCov">    6418116 :         assert(l-&gt;lock_val);</span></a>
-<a name="115"><span class="lineNum">     115 </span>                :<span class="lineCov">    6418116 :         l-&gt;lock_val = 0;</span></a>
-<a name="116"><span class="lineNum">     116 </span>                :<span class="lineCov">    6418116 : }</span></a>
-<a name="117"><span class="lineNum">     117 </span>                :            : </a>
-<a name="118"><span class="lineNum">     118 </span>                :            : struct cpu_thread *my_fake_cpu;</a>
-<a name="119"><span class="lineNum">     119 </span>                :<span class="lineCov">   12836233 : static struct cpu_thread *this_cpu(void)</span></a>
-<a name="120"><span class="lineNum">     120 </span>                :            : {</a>
-<a name="121"><span class="lineNum">     121 </span>                :<span class="lineCov">   12836233 :         return my_fake_cpu;</span></a>
-<a name="122"><span class="lineNum">     122 </span>                :            : }</a>
-<a name="123"><span class="lineNum">     123 </span>                :            : </a>
-<a name="124"><span class="lineNum">     124 </span>                :            : #include &lt;sys/mman.h&gt;</a>
-<a name="125"><span class="lineNum">     125 </span>                :            : #define PER_CHILD_TRACES ((RUNNING_ON_VALGRIND) ? (1024*16) : (1024*1024))</a>
-<a name="126"><span class="lineNum">     126 </span>                :            : </a>
-<a name="127"><span class="lineNum">     127 </span>                :<span class="lineCov">          4 : static void write_trace_entries(int id)</span></a>
-<a name="128"><span class="lineNum">     128 </span>                :            : {</a>
-<a name="129"><span class="lineNum">     129 </span>                :            :         void exit(int);</a>
-<a name="130"><span class="lineNum">     130 </span>                :            :         unsigned int i;</a>
-<a name="131"><span class="lineNum">     131 </span>                :            :         union trace trace;</a>
-<a name="132"><span class="lineNum">     132 </span>                :            : </a>
-<a name="133"><span class="lineNum">     133 </span>                :<span class="lineCov">          4 :         timestamp = id;</span></a>
-<a name="134"><span class="lineNum">     134 </span>                :<span class="lineCov">    4194308 :         for (i = 0; i &lt; PER_CHILD_TRACES; i++) {</span></a>
-<a name="135"><span class="lineNum">     135 </span>                :<span class="lineCov">    4194304 :                 timestamp = i * CPUS + id;</span></a>
-<a name="136"><span class="lineNum">     136 </span>                :            :                 assert(sizeof(trace.hdr) % 8 == 0);</a>
-<a name="137"><span class="lineNum">     137 </span>                :            :                 /* First child never repeats, second repeats once, etc. */</a>
-<a name="138"><span class="lineNum">     138 </span>                :<span class="lineCov">    4194304 :                 trace_add(&amp;trace, 3 + ((i / (id + 1)) % 0x40),</span></a>
-<a name="139"><span class="lineNum">     139 </span>                :            :                           sizeof(trace.hdr));</a>
-<a name="140"><span class="lineNum">     140 </span>                :            :         }</a>
-<a name="141"><span class="lineNum">     141 </span>                :            : </a>
-<a name="142"><span class="lineNum">     142 </span>                :            :         /* Final entry has special type, so parent knows it's over. */</a>
-<a name="143"><span class="lineNum">     143 </span>                :<span class="lineCov">          4 :         trace_add(&amp;trace, 0x70, sizeof(trace.hdr));</span></a>
-<a name="144"><span class="lineNum">     144 </span>                :<span class="lineCov">          4 :         exit(0);</span></a>
-<a name="145"><span class="lineNum">     145 </span>                :            : }</a>
+<a name="107"><span class="lineNum">     107 </span>                :<span class="lineNoCov">          0 :         return NULL;</span></a>
+<a name="108"><span class="lineNum">     108 </span>                :            : }</a>
+<a name="109"><span class="lineNum">     109 </span>                :            : </a>
+<a name="110"><span class="lineNum">     110 </span>                :<span class="lineCov">    6418120 : void lock_caller(struct lock *l, const char *caller)</span></a>
+<a name="111"><span class="lineNum">     111 </span>                :            : {</a>
+<a name="112"><span class="lineNum">     112 </span>                :            :         (void)caller;</a>
+<a name="113"><span class="lineNum">     113 </span>                :<span class="lineCov">    6418120 :         assert(!l-&gt;lock_val);</span></a>
+<a name="114"><span class="lineNum">     114 </span>                :<span class="lineCov">    6418120 :         l-&gt;lock_val = 1;</span></a>
+<a name="115"><span class="lineNum">     115 </span>                :<span class="lineCov">    6418120 : }</span></a>
+<a name="116"><span class="lineNum">     116 </span>                :            : </a>
+<a name="117"><span class="lineNum">     117 </span>                :<span class="lineCov">    6418120 : void unlock(struct lock *l)</span></a>
+<a name="118"><span class="lineNum">     118 </span>                :            : {</a>
+<a name="119"><span class="lineNum">     119 </span>                :<span class="lineCov">    6418120 :         assert(l-&gt;lock_val);</span></a>
+<a name="120"><span class="lineNum">     120 </span>                :<span class="lineCov">    6418120 :         l-&gt;lock_val = 0;</span></a>
+<a name="121"><span class="lineNum">     121 </span>                :<span class="lineCov">    6418120 : }</span></a>
+<a name="122"><span class="lineNum">     122 </span>                :            : </a>
+<a name="123"><span class="lineNum">     123 </span>                :            : struct cpu_thread *my_fake_cpu;</a>
+<a name="124"><span class="lineNum">     124 </span>                :<span class="lineCov">   12836200 : static struct cpu_thread *this_cpu(void)</span></a>
+<a name="125"><span class="lineNum">     125 </span>                :            : {</a>
+<a name="126"><span class="lineNum">     126 </span>                :<span class="lineCov">   12836200 :         return my_fake_cpu;</span></a>
+<a name="127"><span class="lineNum">     127 </span>                :            : }</a>
+<a name="128"><span class="lineNum">     128 </span>                :            : </a>
+<a name="129"><span class="lineNum">     129 </span>                :            : #include &lt;sys/mman.h&gt;</a>
+<a name="130"><span class="lineNum">     130 </span>                :            : #define PER_CHILD_TRACES ((RUNNING_ON_VALGRIND) ? (1024*16) : (1024*1024))</a>
+<a name="131"><span class="lineNum">     131 </span>                :            : </a>
+<a name="132"><span class="lineNum">     132 </span>                :<span class="lineCov">          4 : static void write_trace_entries(int id)</span></a>
+<a name="133"><span class="lineNum">     133 </span>                :            : {</a>
+<a name="134"><span class="lineNum">     134 </span>                :            :         void exit(int);</a>
+<a name="135"><span class="lineNum">     135 </span>                :            :         unsigned int i;</a>
+<a name="136"><span class="lineNum">     136 </span>                :            :         union trace trace;</a>
+<a name="137"><span class="lineNum">     137 </span>                :            : </a>
+<a name="138"><span class="lineNum">     138 </span>                :<span class="lineCov">          4 :         timestamp = id;</span></a>
+<a name="139"><span class="lineNum">     139 </span>                :<span class="lineCov">    4194310 :         for (i = 0; i &lt; PER_CHILD_TRACES; i++) {</span></a>
+<a name="140"><span class="lineNum">     140 </span>                :<span class="lineCov">    4194300 :                 timestamp = i * CPUS + id;</span></a>
+<a name="141"><span class="lineNum">     141 </span>                :            :                 assert(sizeof(trace.hdr) % 8 == 0);</a>
+<a name="142"><span class="lineNum">     142 </span>                :            :                 /* First child never repeats, second repeats once, etc. */</a>
+<a name="143"><span class="lineNum">     143 </span>                :<span class="lineCov">    4194300 :                 trace_add(&amp;trace, 3 + ((i / (id + 1)) % 0x40),</span></a>
+<a name="144"><span class="lineNum">     144 </span>                :            :                           sizeof(trace.hdr));</a>
+<a name="145"><span class="lineNum">     145 </span>                :            :         }</a>
 <a name="146"><span class="lineNum">     146 </span>                :            : </a>
-<a name="147"><span class="lineNum">     147 </span>                :<span class="lineCov">    1870638 : static bool all_done(const bool done[])</span></a>
-<a name="148"><span class="lineNum">     148 </span>                :            : {</a>
-<a name="149"><span class="lineNum">     149 </span>                :            :         unsigned int i;</a>
-<a name="150"><span class="lineNum">     150 </span>                :            : </a>
-<a name="151"><span class="lineNum">     151 </span>                :<span class="lineCov">    2135583 :         for (i = 0; i &lt; CPUS; i++)</span></a>
-<a name="152"><span class="lineNum">     152 </span>                :<span class="lineCov">    2135582 :                 if (!done[i])</span></a>
-<a name="153"><span class="lineNum">     153 </span>                :<span class="lineCov">    1870637 :                         return false;</span></a>
-<a name="154"><span class="lineNum">     154 </span>                :<span class="lineCov">          1 :         return true;</span></a>
-<a name="155"><span class="lineNum">     155 </span>                :            : }</a>
-<a name="156"><span class="lineNum">     156 </span>                :            : </a>
-<a name="157"><span class="lineNum">     157 </span>                :<span class="lineCov">          1 : static void test_parallel(void)</span></a>
-<a name="158"><span class="lineNum">     158 </span>                :            : {</a>
-<a name="159"><span class="lineNum">     159 </span>                :            :         void *p;</a>
-<a name="160"><span class="lineNum">     160 </span>                :            :         unsigned int cpu;</a>
-<a name="161"><span class="lineNum">     161 </span>                :<span class="lineCov">          1 :         unsigned int i, counts[CPUS] = { 0 }, overflows[CPUS] = { 0 };</span></a>
-<a name="162"><span class="lineNum">     162 </span>                :<span class="lineCov">          1 :         unsigned int repeats[CPUS] = { 0 }, num_overflows[CPUS] = { 0 };</span></a>
-<a name="163"><span class="lineNum">     163 </span>                :<span class="lineCov">          1 :         bool done[CPUS] = { false };</span></a>
-<a name="164"><span class="lineNum">     164 </span>                :<span class="lineCov">          1 :         size_t len = sizeof(struct trace_info) + TBUF_SZ + sizeof(union trace);</span></a>
-<a name="165"><span class="lineNum">     165 </span>                :<span class="lineCov">          1 :         int last = 0;</span></a>
-<a name="166"><span class="lineNum">     166 </span>                :            : </a>
-<a name="167"><span class="lineNum">     167 </span>                :            :         /* Use a shared mmap to test actual parallel buffers. */</a>
-<a name="168"><span class="lineNum">     168 </span>                :<span class="lineCov">          1 :         i = (CPUS*len + getpagesize()-1)&amp;~(getpagesize()-1);</span></a>
-<a name="169"><span class="lineNum">     169 </span>                :<span class="lineCov">          1 :         p = mmap(NULL, i, PROT_READ|PROT_WRITE,</span></a>
-<a name="170"><span class="lineNum">     170 </span>                :            :                  MAP_ANONYMOUS|MAP_SHARED, -1, 0);</a>
+<a name="147"><span class="lineNum">     147 </span>                :            :         /* Final entry has special type, so parent knows it's over. */</a>
+<a name="148"><span class="lineNum">     148 </span>                :<span class="lineCov">          4 :         trace_add(&amp;trace, 0x70, sizeof(trace.hdr));</span></a>
+<a name="149"><span class="lineNum">     149 </span>                :<span class="lineCov">          4 :         exit(0);</span></a>
+<a name="150"><span class="lineNum">     150 </span>                :            : }</a>
+<a name="151"><span class="lineNum">     151 </span>                :            : </a>
+<a name="152"><span class="lineNum">     152 </span>                :<span class="lineCov">    1896250 : static bool all_done(const bool done[])</span></a>
+<a name="153"><span class="lineNum">     153 </span>                :            : {</a>
+<a name="154"><span class="lineNum">     154 </span>                :            :         unsigned int i;</a>
+<a name="155"><span class="lineNum">     155 </span>                :            : </a>
+<a name="156"><span class="lineNum">     156 </span>                :<span class="lineCov">    2030970 :         for (i = 0; i &lt; CPUS; i++)</span></a>
+<a name="157"><span class="lineNum">     157 </span>                :<span class="lineCov">    2030970 :                 if (!done[i])</span></a>
+<a name="158"><span class="lineNum">     158 </span>                :<span class="lineCov">    1896250 :                         return false;</span></a>
+<a name="159"><span class="lineNum">     159 </span>                :<span class="lineCov">          1 :         return true;</span></a>
+<a name="160"><span class="lineNum">     160 </span>                :            : }</a>
+<a name="161"><span class="lineNum">     161 </span>                :            : </a>
+<a name="162"><span class="lineNum">     162 </span>                :<span class="lineCov">          1 : static void test_parallel(void)</span></a>
+<a name="163"><span class="lineNum">     163 </span>                :            : {</a>
+<a name="164"><span class="lineNum">     164 </span>                :            :         void *p;</a>
+<a name="165"><span class="lineNum">     165 </span>                :            :         unsigned int cpu;</a>
+<a name="166"><span class="lineNum">     166 </span>                :<span class="lineCov">          1 :         unsigned int i, counts[CPUS] = { 0 }, overflows[CPUS] = { 0 };</span></a>
+<a name="167"><span class="lineNum">     167 </span>                :<span class="lineCov">          1 :         unsigned int repeats[CPUS] = { 0 }, num_overflows[CPUS] = { 0 };</span></a>
+<a name="168"><span class="lineNum">     168 </span>                :<span class="lineCov">          1 :         bool done[CPUS] = { false };</span></a>
+<a name="169"><span class="lineNum">     169 </span>                :<span class="lineCov">          1 :         size_t len = sizeof(struct trace_info) + TBUF_SZ + sizeof(union trace);</span></a>
+<a name="170"><span class="lineNum">     170 </span>                :<span class="lineCov">          1 :         int last = 0;</span></a>
 <a name="171"><span class="lineNum">     171 </span>                :            : </a>
-<a name="172"><span class="lineNum">     172 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
-<a name="173"><span class="lineNum">     173 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].trace = p + i * len;</span></a>
-<a name="174"><span class="lineNum">     174 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].trace-&gt;tb.buf_size = cpu_to_be64(TBUF_SZ);</span></a>
-<a name="175"><span class="lineNum">     175 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].trace-&gt;tb.max_size = cpu_to_be32(sizeof(union trace));</span></a>
-<a name="176"><span class="lineNum">     176 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].is_secondary = false;</span></a>
-<a name="177"><span class="lineNum">     177 </span>                :<span class="lineCov">          4 :                 memset(&amp;trace_readers[i], 0, sizeof(struct trace_reader));</span></a>
-<a name="178"><span class="lineNum">     178 </span>                :<span class="lineCov">          4 :                 trace_readers[i].tb = &amp;fake_cpus[i].trace-&gt;tb;</span></a>
-<a name="179"><span class="lineNum">     179 </span>                :            :         }</a>
-<a name="180"><span class="lineNum">     180 </span>                :            : </a>
-<a name="181"><span class="lineNum">     181 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
-<a name="182"><span class="lineNum">     182 </span>                :<span class="lineCov">          4 :                 if (!fork()) {</span></a>
-<a name="183"><span class="lineNum">     183 </span>                :            :                         /* Child. */</a>
-<a name="184"><span class="lineNum">     184 </span>                :<span class="lineCov">          4 :                         my_fake_cpu = &amp;fake_cpus[i];</span></a>
-<a name="185"><span class="lineNum">     185 </span>                :<span class="lineCov">          4 :                         write_trace_entries(i);</span></a>
-<a name="186"><span class="lineNum">     186 </span>                :            :                 }</a>
-<a name="187"><span class="lineNum">     187 </span>                :            :         }</a>
-<a name="188"><span class="lineNum">     188 </span>                :            : </a>
-<a name="189"><span class="lineNum">     189 </span>                :<span class="lineCov">    1870638 :         while (!all_done(done)) {</span></a>
-<a name="190"><span class="lineNum">     190 </span>                :            :                 union trace t;</a>
-<a name="191"><span class="lineNum">     191 </span>                :            : </a>
-<a name="192"><span class="lineNum">     192 </span>                :<span class="lineCov">    1877218 :                 for (i = 0; i &lt; CPUS; i++) {</span></a>
-<a name="193"><span class="lineNum">     193 </span>                :<span class="lineCov">    1875579 :                         if (trace_get(&amp;t, &amp;trace_readers[(i+last) % CPUS]))</span></a>
-<a name="194"><span class="lineNum">     194 </span>                :<span class="lineCov">    1868998 :                                 break;</span></a>
-<a name="195"><span class="lineNum">     195 </span>                :            :                 }</a>
+<a name="172"><span class="lineNum">     172 </span>                :            :         /* Use a shared mmap to test actual parallel buffers. */</a>
+<a name="173"><span class="lineNum">     173 </span>                :<span class="lineCov">          1 :         i = (CPUS*len + getpagesize()-1)&amp;~(getpagesize()-1);</span></a>
+<a name="174"><span class="lineNum">     174 </span>                :<span class="lineCov">          1 :         p = mmap(NULL, i, PROT_READ|PROT_WRITE,</span></a>
+<a name="175"><span class="lineNum">     175 </span>                :            :                  MAP_ANONYMOUS|MAP_SHARED, -1, 0);</a>
+<a name="176"><span class="lineNum">     176 </span>                :            : </a>
+<a name="177"><span class="lineNum">     177 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
+<a name="178"><span class="lineNum">     178 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].trace = p + i * len;</span></a>
+<a name="179"><span class="lineNum">     179 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].trace-&gt;tb.buf_size = cpu_to_be64(TBUF_SZ);</span></a>
+<a name="180"><span class="lineNum">     180 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].trace-&gt;tb.max_size = cpu_to_be32(sizeof(union trace));</span></a>
+<a name="181"><span class="lineNum">     181 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].is_secondary = false;</span></a>
+<a name="182"><span class="lineNum">     182 </span>                :<span class="lineCov">          4 :                 memset(&amp;trace_readers[i], 0, sizeof(struct trace_reader));</span></a>
+<a name="183"><span class="lineNum">     183 </span>                :<span class="lineCov">          4 :                 trace_readers[i].tb = &amp;fake_cpus[i].trace-&gt;tb;</span></a>
+<a name="184"><span class="lineNum">     184 </span>                :            :         }</a>
+<a name="185"><span class="lineNum">     185 </span>                :            : </a>
+<a name="186"><span class="lineNum">     186 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
+<a name="187"><span class="lineNum">     187 </span>                :<span class="lineCov">          4 :                 if (!fork()) {</span></a>
+<a name="188"><span class="lineNum">     188 </span>                :            :                         /* Child. */</a>
+<a name="189"><span class="lineNum">     189 </span>                :<span class="lineCov">          4 :                         my_fake_cpu = &amp;fake_cpus[i];</span></a>
+<a name="190"><span class="lineNum">     190 </span>                :<span class="lineCov">          4 :                         write_trace_entries(i);</span></a>
+<a name="191"><span class="lineNum">     191 </span>                :            :                 }</a>
+<a name="192"><span class="lineNum">     192 </span>                :            :         }</a>
+<a name="193"><span class="lineNum">     193 </span>                :            : </a>
+<a name="194"><span class="lineNum">     194 </span>                :<span class="lineCov">    1896250 :         while (!all_done(done)) {</span></a>
+<a name="195"><span class="lineNum">     195 </span>                :            :                 union trace t;</a>
 <a name="196"><span class="lineNum">     196 </span>                :            : </a>
-<a name="197"><span class="lineNum">     197 </span>                :<span class="lineCov">    1870637 :                 if (i == CPUS) {</span></a>
-<a name="198"><span class="lineNum">     198 </span>                :<span class="lineCov">       1639 :                         sched_yield();</span></a>
-<a name="199"><span class="lineNum">     199 </span>                :<span class="lineCov">       1682 :                         continue;</span></a>
+<a name="197"><span class="lineNum">     197 </span>                :<span class="lineCov">    1908780 :                 for (i = 0; i &lt; CPUS; i++) {</span></a>
+<a name="198"><span class="lineNum">     198 </span>                :<span class="lineCov">    1905660 :                         if (trace_get(&amp;t, &amp;trace_readers[(i+last) % CPUS]))</span></a>
+<a name="199"><span class="lineNum">     199 </span>                :<span class="lineCov">    1893120 :                                 break;</span></a>
 <a name="200"><span class="lineNum">     200 </span>                :            :                 }</a>
-<a name="201"><span class="lineNum">     201 </span>                :<span class="lineCov">    1868998 :                 i = (i + last) % CPUS;</span></a>
-<a name="202"><span class="lineNum">     202 </span>                :<span class="lineCov">    1868998 :                 last = i;</span></a>
-<a name="203"><span class="lineNum">     203 </span>                :            : </a>
-<a name="204"><span class="lineNum">     204 </span>                :<span class="lineCov">    1868998 :                 if (t.hdr.type == TRACE_OVERFLOW) {</span></a>
-<a name="205"><span class="lineNum">     205 </span>                :            :                         /* Conveniently, each record is 16 bytes here. */</a>
-<a name="206"><span class="lineNum">     206 </span>                :<span class="lineCov">         43 :                         assert(be64_to_cpu(t.overflow.bytes_missed) % 16 == 0);</span></a>
-<a name="207"><span class="lineNum">     207 </span>                :<span class="lineCov">         43 :                         overflows[i] += be64_to_cpu(t.overflow.bytes_missed) / 16;</span></a>
-<a name="208"><span class="lineNum">     208 </span>                :<span class="lineCov">         43 :                         num_overflows[i]++;</span></a>
-<a name="209"><span class="lineNum">     209 </span>                :<span class="lineCov">         43 :                         continue;</span></a>
-<a name="210"><span class="lineNum">     210 </span>                :            :                 }</a>
-<a name="211"><span class="lineNum">     211 </span>                :            : </a>
-<a name="212"><span class="lineNum">     212 </span>                :<span class="lineCov">    1868955 :                 assert(be16_to_cpu(t.hdr.cpu) &lt; CPUS);</span></a>
-<a name="213"><span class="lineNum">     213 </span>                :<span class="lineCov">    1868955 :                 assert(!done[be16_to_cpu(t.hdr.cpu)]);</span></a>
-<a name="214"><span class="lineNum">     214 </span>                :<span class="lineCov">    1868955 :                 assert(be64_to_cpu(t.hdr.timestamp) % CPUS == be16_to_cpu(t.hdr.cpu));</span></a>
-<a name="215"><span class="lineNum">     215 </span>                :<span class="lineCov">    1868955 :                 if (t.hdr.type == TRACE_REPEAT) {</span></a>
-<a name="216"><span class="lineNum">     216 </span>                :<span class="lineCov">     723945 :                         assert(t.hdr.len_div_8 * 8 == sizeof(t.repeat));</span></a>
-<a name="217"><span class="lineNum">     217 </span>                :<span class="lineCov">     723945 :                         assert(be16_to_cpu(t.repeat.num) != 0);</span></a>
-<a name="218"><span class="lineNum">     218 </span>                :<span class="lineCov">     723945 :                         assert(be16_to_cpu(t.repeat.num) &lt;= be16_to_cpu(t.hdr.cpu));</span></a>
-<a name="219"><span class="lineNum">     219 </span>                :<span class="lineCov">     723945 :                         repeats[be16_to_cpu(t.hdr.cpu)] += be16_to_cpu(t.repeat.num);</span></a>
-<a name="220"><span class="lineNum">     220 </span>                :<span class="lineCov">    1145010 :                 } else if (t.hdr.type == 0x70) {</span></a>
-<a name="221"><span class="lineNum">     221 </span>                :<span class="lineCov">          4 :                         cpu = be16_to_cpu(t.hdr.cpu);</span></a>
-<a name="222"><span class="lineNum">     222 </span>                :<span class="lineCov">          4 :                         assert(cpu &lt; CPUS);</span></a>
-<a name="223"><span class="lineNum">     223 </span>                :<span class="lineCov">          4 :                         done[cpu] = true;</span></a>
-<a name="224"><span class="lineNum">     224 </span>                :            :                 } else {</a>
-<a name="225"><span class="lineNum">     225 </span>                :<span class="lineCov">    1145006 :                         cpu = be16_to_cpu(t.hdr.cpu);</span></a>
-<a name="226"><span class="lineNum">     226 </span>                :<span class="lineCov">    1145006 :                         assert(cpu &lt; CPUS);</span></a>
-<a name="227"><span class="lineNum">     227 </span>                :<span class="lineCov">    1145006 :                         counts[cpu]++;</span></a>
-<a name="228"><span class="lineNum">     228 </span>                :            :                 }</a>
-<a name="229"><span class="lineNum">     229 </span>                :            :         }</a>
-<a name="230"><span class="lineNum">     230 </span>                :            : </a>
-<a name="231"><span class="lineNum">     231 </span>                :            :         /* Gather children. */</a>
-<a name="232"><span class="lineNum">     232 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
-<a name="233"><span class="lineNum">     233 </span>                :            :                 int status;</a>
-<a name="234"><span class="lineNum">     234 </span>                :<span class="lineCov">          4 :                 wait(&amp;status);</span></a>
-<a name="235"><span class="lineNum">     235 </span>                :            :         }</a>
-<a name="236"><span class="lineNum">     236 </span>                :            : </a>
+<a name="201"><span class="lineNum">     201 </span>                :            : </a>
+<a name="202"><span class="lineNum">     202 </span>                :<span class="lineCov">    1896250 :                 if (i == CPUS) {</span></a>
+<a name="203"><span class="lineNum">     203 </span>                :<span class="lineCov">       3127 :                         sched_yield();</span></a>
+<a name="204"><span class="lineNum">     204 </span>                :<span class="lineCov">       3155 :                         continue;</span></a>
+<a name="205"><span class="lineNum">     205 </span>                :            :                 }</a>
+<a name="206"><span class="lineNum">     206 </span>                :<span class="lineCov">    1893120 :                 i = (i + last) % CPUS;</span></a>
+<a name="207"><span class="lineNum">     207 </span>                :<span class="lineCov">    1893120 :                 last = i;</span></a>
+<a name="208"><span class="lineNum">     208 </span>                :            : </a>
+<a name="209"><span class="lineNum">     209 </span>                :<span class="lineCov">    1893120 :                 if (t.hdr.type == TRACE_OVERFLOW) {</span></a>
+<a name="210"><span class="lineNum">     210 </span>                :            :                         /* Conveniently, each record is 16 bytes here. */</a>
+<a name="211"><span class="lineNum">     211 </span>                :<span class="lineCov">         28 :                         assert(be64_to_cpu(t.overflow.bytes_missed) % 16 == 0);</span></a>
+<a name="212"><span class="lineNum">     212 </span>                :<span class="lineCov">         28 :                         overflows[i] += be64_to_cpu(t.overflow.bytes_missed) / 16;</span></a>
+<a name="213"><span class="lineNum">     213 </span>                :<span class="lineCov">         28 :                         num_overflows[i]++;</span></a>
+<a name="214"><span class="lineNum">     214 </span>                :<span class="lineCov">         28 :                         continue;</span></a>
+<a name="215"><span class="lineNum">     215 </span>                :            :                 }</a>
+<a name="216"><span class="lineNum">     216 </span>                :            : </a>
+<a name="217"><span class="lineNum">     217 </span>                :<span class="lineCov">    1893090 :                 assert(be16_to_cpu(t.hdr.cpu) &lt; CPUS);</span></a>
+<a name="218"><span class="lineNum">     218 </span>                :<span class="lineCov">    1893090 :                 assert(!done[be16_to_cpu(t.hdr.cpu)]);</span></a>
+<a name="219"><span class="lineNum">     219 </span>                :<span class="lineCov">    1893090 :                 assert(be64_to_cpu(t.hdr.timestamp) % CPUS == be16_to_cpu(t.hdr.cpu));</span></a>
+<a name="220"><span class="lineNum">     220 </span>                :<span class="lineCov">    1893090 :                 if (t.hdr.type == TRACE_REPEAT) {</span></a>
+<a name="221"><span class="lineNum">     221 </span>                :<span class="lineCov">     713768 :                         assert(t.hdr.len_div_8 * 8 == sizeof(t.repeat));</span></a>
+<a name="222"><span class="lineNum">     222 </span>                :<span class="lineCov">     713768 :                         assert(be16_to_cpu(t.repeat.num) != 0);</span></a>
+<a name="223"><span class="lineNum">     223 </span>                :<span class="lineCov">     713768 :                         assert(be16_to_cpu(t.repeat.num) &lt;= be16_to_cpu(t.hdr.cpu));</span></a>
+<a name="224"><span class="lineNum">     224 </span>                :<span class="lineCov">     713768 :                         repeats[be16_to_cpu(t.hdr.cpu)] += be16_to_cpu(t.repeat.num);</span></a>
+<a name="225"><span class="lineNum">     225 </span>                :<span class="lineCov">    1179330 :                 } else if (t.hdr.type == 0x70) {</span></a>
+<a name="226"><span class="lineNum">     226 </span>                :<span class="lineCov">          4 :                         cpu = be16_to_cpu(t.hdr.cpu);</span></a>
+<a name="227"><span class="lineNum">     227 </span>                :<span class="lineCov">          4 :                         assert(cpu &lt; CPUS);</span></a>
+<a name="228"><span class="lineNum">     228 </span>                :<span class="lineCov">          4 :                         done[cpu] = true;</span></a>
+<a name="229"><span class="lineNum">     229 </span>                :            :                 } else {</a>
+<a name="230"><span class="lineNum">     230 </span>                :<span class="lineCov">    1179320 :                         cpu = be16_to_cpu(t.hdr.cpu);</span></a>
+<a name="231"><span class="lineNum">     231 </span>                :<span class="lineCov">    1179320 :                         assert(cpu &lt; CPUS);</span></a>
+<a name="232"><span class="lineNum">     232 </span>                :<span class="lineCov">    1179320 :                         counts[cpu]++;</span></a>
+<a name="233"><span class="lineNum">     233 </span>                :            :                 }</a>
+<a name="234"><span class="lineNum">     234 </span>                :            :         }</a>
+<a name="235"><span class="lineNum">     235 </span>                :            : </a>
+<a name="236"><span class="lineNum">     236 </span>                :            :         /* Gather children. */</a>
 <a name="237"><span class="lineNum">     237 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
-<a name="238"><span class="lineNum">     238 </span>                :<span class="lineCov">          4 :                 printf(&quot;Child %i: %u produced, %u overflows, %llu total\n&quot;, i,</span></a>
-<a name="239"><span class="lineNum">     239 </span>                :            :                        counts[i], overflows[i],</a>
-<a name="240"><span class="lineNum">     240 </span>                :<span class="lineCov">          4 :                        (long long)be64_to_cpu(fake_cpus[i].trace-&gt;tb.end));</span></a>
-<a name="241"><span class="lineNum">     241 </span>                :<span class="lineCov">          4 :                 assert(counts[i] + repeats[i] &lt;= PER_CHILD_TRACES);</span></a>
-<a name="242"><span class="lineNum">     242 </span>                :            :         }</a>
-<a name="243"><span class="lineNum">     243 </span>                :            :         /* Child 0 never repeats. */</a>
-<a name="244"><span class="lineNum">     244 </span>                :<span class="lineCov">          1 :         assert(repeats[0] == 0);</span></a>
-<a name="245"><span class="lineNum">     245 </span>                :<span class="lineCov">          1 :         assert(counts[0] + overflows[0] == PER_CHILD_TRACES);</span></a>
-<a name="246"><span class="lineNum">     246 </span>                :            : </a>
-<a name="247"><span class="lineNum">     247 </span>                :            :         /*</a>
-<a name="248"><span class="lineNum">     248 </span>                :            :          * FIXME: Other children have some fuzz, since overflows may</a>
-<a name="249"><span class="lineNum">     249 </span>                :            :          * include repeat record we already read.  And odd-numbered</a>
-<a name="250"><span class="lineNum">     250 </span>                :            :          * overflows may include more repeat records than normal</a>
-<a name="251"><span class="lineNum">     251 </span>                :            :          * records (they alternate).</a>
-<a name="252"><span class="lineNum">     252 </span>                :            :          */</a>
-<a name="253"><span class="lineNum">     253 </span>                :<span class="lineCov">          1 : }</span></a>
-<a name="254"><span class="lineNum">     254 </span>                :            : </a>
-<a name="255"><span class="lineNum">     255 </span>                :<span class="lineCov">          1 : int main(void)</span></a>
-<a name="256"><span class="lineNum">     256 </span>                :            : {</a>
-<a name="257"><span class="lineNum">     257 </span>                :            :         union trace minimal;</a>
-<a name="258"><span class="lineNum">     258 </span>                :            :         union trace large;</a>
-<a name="259"><span class="lineNum">     259 </span>                :            :         union trace trace;</a>
-<a name="260"><span class="lineNum">     260 </span>                :            :         unsigned int i, j;</a>
-<a name="261"><span class="lineNum">     261 </span>                :            : </a>
-<a name="262"><span class="lineNum">     262 </span>                :<span class="lineCov">          1 :         opal_node = dt_new_root(&quot;opal&quot;);</span></a>
-<a name="263"><span class="lineNum">     263 </span>                :<span class="lineCov">          1 :         dt_new(dt_new(opal_node, &quot;firmware&quot;), &quot;exports&quot;);</span></a>
-<a name="264"><span class="lineNum">     264 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
-<a name="265"><span class="lineNum">     265 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].server_no = i;</span></a>
-<a name="266"><span class="lineNum">     266 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].pir = i;</span></a>
-<a name="267"><span class="lineNum">     267 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].is_secondary = (i &amp; 0x1);</span></a>
-<a name="268"><span class="lineNum">     268 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].primary = &amp;fake_cpus[i &amp; ~0x1];</span></a>
-<a name="269"><span class="lineNum">     269 </span>                :            :         }</a>
-<a name="270"><span class="lineNum">     270 </span>                :<span class="lineCov">          1 :         my_fake_cpu = &amp;fake_cpus[0];</span></a>
-<a name="271"><span class="lineNum">     271 </span>                :<span class="lineCov">          1 :         my_trace_reader = &amp;trace_readers[0];</span></a>
-<a name="272"><span class="lineNum">     272 </span>                :<span class="lineCov">          1 :         init_trace_buffers();</span></a>
-<a name="273"><span class="lineNum">     273 </span>                :            : </a>
-<a name="274"><span class="lineNum">     274 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
-<a name="275"><span class="lineNum">     275 </span>                :<span class="lineCov">          4 :                 trace_readers[i].tb = &amp;fake_cpus[i].trace-&gt;tb;</span></a>
-<a name="276"><span class="lineNum">     276 </span>                :<span class="lineCov">          4 :                 assert(trace_empty(&amp;trace_readers[i]));</span></a>
-<a name="277"><span class="lineNum">     277 </span>                :<span class="lineCov">          4 :                 assert(!trace_get(&amp;trace, &amp;trace_readers[i]));</span></a>
-<a name="278"><span class="lineNum">     278 </span>                :            :         }</a>
-<a name="279"><span class="lineNum">     279 </span>                :            : </a>
-<a name="280"><span class="lineNum">     280 </span>                :            :         assert(sizeof(trace.hdr) % 8 == 0);</a>
-<a name="281"><span class="lineNum">     281 </span>                :<span class="lineCov">          1 :         timestamp = 1;</span></a>
-<a name="282"><span class="lineNum">     282 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
-<a name="283"><span class="lineNum">     283 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="284"><span class="lineNum">     284 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
-<a name="285"><span class="lineNum">     285 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == timestamp);</span></a>
-<a name="286"><span class="lineNum">     286 </span>                :            : </a>
-<a name="287"><span class="lineNum">     287 </span>                :            :         /* Make it wrap once. */</a>
-<a name="288"><span class="lineNum">     288 </span>                :<span class="lineCov">      65404 :         for (i = 0; i &lt; TBUF_SZ / (minimal.hdr.len_div_8 * 8) + 1; i++) {</span></a>
-<a name="289"><span class="lineNum">     289 </span>                :<span class="lineCov">      65403 :                 timestamp = i;</span></a>
-<a name="290"><span class="lineNum">     290 </span>                :<span class="lineCov">      65403 :                 trace_add(&amp;minimal, 99 + (i%2), sizeof(trace.hdr));</span></a>
-<a name="291"><span class="lineNum">     291 </span>                :            :         }</a>
-<a name="292"><span class="lineNum">     292 </span>                :            : </a>
-<a name="293"><span class="lineNum">     293 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="294"><span class="lineNum">     294 </span>                :            :         /* First one must be overflow marker. */</a>
-<a name="295"><span class="lineNum">     295 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_OVERFLOW);</span></a>
-<a name="296"><span class="lineNum">     296 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.overflow));</span></a>
-<a name="297"><span class="lineNum">     297 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.overflow.bytes_missed) == minimal.hdr.len_div_8 * 8);</span></a>
-<a name="298"><span class="lineNum">     298 </span>                :            : </a>
-<a name="299"><span class="lineNum">     299 </span>                :<span class="lineCov">      65403 :         for (i = 0; i &lt; TBUF_SZ / (minimal.hdr.len_div_8 * 8); i++) {</span></a>
-<a name="300"><span class="lineNum">     300 </span>                :<span class="lineCov">      65402 :                 assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="301"><span class="lineNum">     301 </span>                :<span class="lineCov">      65402 :                 assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
-<a name="302"><span class="lineNum">     302 </span>                :<span class="lineCov">      65402 :                 assert(be64_to_cpu(trace.hdr.timestamp) == i+1);</span></a>
-<a name="303"><span class="lineNum">     303 </span>                :<span class="lineCov">      65402 :                 assert(trace.hdr.type == 99 + ((i+1)%2));</span></a>
-<a name="304"><span class="lineNum">     304 </span>                :            :         }</a>
-<a name="305"><span class="lineNum">     305 </span>                :<span class="lineCov">          1 :         assert(!trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="306"><span class="lineNum">     306 </span>                :            : </a>
-<a name="307"><span class="lineNum">     307 </span>                :            :         /* Now put in some weird-length ones, to test overlap.</a>
-<a name="308"><span class="lineNum">     308 </span>                :            :          * Last power of 2, minus 8. */</a>
-<a name="309"><span class="lineNum">     309 </span>                :<span class="lineCov">          8 :         for (j = 0; (1 &lt;&lt; j) &lt; sizeof(large); j++);</span></a>
-<a name="310"><span class="lineNum">     310 </span>                :<span class="lineCov">    1046433 :         for (i = 0; i &lt; TBUF_SZ; i++) {</span></a>
-<a name="311"><span class="lineNum">     311 </span>                :<span class="lineCov">    1046432 :                 timestamp = i;</span></a>
-<a name="312"><span class="lineNum">     312 </span>                :<span class="lineCov">    1046432 :                 trace_add(&amp;large, 100 + (i%2), (1 &lt;&lt; (j-1)));</span></a>
-<a name="313"><span class="lineNum">     313 </span>                :            :         }</a>
-<a name="314"><span class="lineNum">     314 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="315"><span class="lineNum">     315 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_OVERFLOW);</span></a>
-<a name="316"><span class="lineNum">     316 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="317"><span class="lineNum">     317 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == large.hdr.len_div_8);</span></a>
-<a name="318"><span class="lineNum">     318 </span>                :<span class="lineCov">          1 :         i = be64_to_cpu(trace.hdr.timestamp);</span></a>
-<a name="319"><span class="lineNum">     319 </span>                :<span class="lineCov">      16350 :         while (trace_get(&amp;trace, my_trace_reader))</span></a>
-<a name="320"><span class="lineNum">     320 </span>                :<span class="lineCov">      16349 :                 assert(be64_to_cpu(trace.hdr.timestamp) == ++i);</span></a>
-<a name="321"><span class="lineNum">     321 </span>                :            : </a>
-<a name="322"><span class="lineNum">     322 </span>                :            :         /* Test repeats. */</a>
-<a name="323"><span class="lineNum">     323 </span>                :<span class="lineCov">      65539 :         for (i = 0; i &lt; 65538; i++) {</span></a>
-<a name="324"><span class="lineNum">     324 </span>                :<span class="lineCov">      65538 :                 timestamp = i;</span></a>
-<a name="325"><span class="lineNum">     325 </span>                :<span class="lineCov">      65538 :                 trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
-<a name="326"><span class="lineNum">     326 </span>                :            :         }</a>
-<a name="327"><span class="lineNum">     327 </span>                :<span class="lineCov">          1 :         timestamp = i;</span></a>
-<a name="328"><span class="lineNum">     328 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 101, sizeof(trace.hdr));</span></a>
-<a name="329"><span class="lineNum">     329 </span>                :<span class="lineCov">          1 :         timestamp = i+1;</span></a>
-<a name="330"><span class="lineNum">     330 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 101, sizeof(trace.hdr));</span></a>
-<a name="331"><span class="lineNum">     331 </span>                :            : </a>
-<a name="332"><span class="lineNum">     332 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="333"><span class="lineNum">     333 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.timestamp == 0);</span></a>
-<a name="334"><span class="lineNum">     334 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
-<a name="335"><span class="lineNum">     335 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 100);</span></a>
-<a name="336"><span class="lineNum">     336 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="337"><span class="lineNum">     337 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
-<a name="338"><span class="lineNum">     338 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
-<a name="339"><span class="lineNum">     339 </span>                :<span class="lineCov">          1 :         assert(be16_to_cpu(trace.repeat.num) == 65535);</span></a>
-<a name="340"><span class="lineNum">     340 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.repeat.timestamp) == 65535);</span></a>
+<a name="238"><span class="lineNum">     238 </span>                :            :                 int status;</a>
+<a name="239"><span class="lineNum">     239 </span>                :<span class="lineCov">          4 :                 wait(&amp;status);</span></a>
+<a name="240"><span class="lineNum">     240 </span>                :            :         }</a>
+<a name="241"><span class="lineNum">     241 </span>                :            : </a>
+<a name="242"><span class="lineNum">     242 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
+<a name="243"><span class="lineNum">     243 </span>                :<span class="lineCov">          4 :                 printf(&quot;Child %i: %u produced, %u overflows, %llu total\n&quot;, i,</span></a>
+<a name="244"><span class="lineNum">     244 </span>                :            :                        counts[i], overflows[i],</a>
+<a name="245"><span class="lineNum">     245 </span>                :<span class="lineCov">          4 :                        (long long)be64_to_cpu(fake_cpus[i].trace-&gt;tb.end));</span></a>
+<a name="246"><span class="lineNum">     246 </span>                :<span class="lineCov">          4 :                 assert(counts[i] + repeats[i] &lt;= PER_CHILD_TRACES);</span></a>
+<a name="247"><span class="lineNum">     247 </span>                :            :         }</a>
+<a name="248"><span class="lineNum">     248 </span>                :            :         /* Child 0 never repeats. */</a>
+<a name="249"><span class="lineNum">     249 </span>                :<span class="lineCov">          1 :         assert(repeats[0] == 0);</span></a>
+<a name="250"><span class="lineNum">     250 </span>                :<span class="lineCov">          1 :         assert(counts[0] + overflows[0] == PER_CHILD_TRACES);</span></a>
+<a name="251"><span class="lineNum">     251 </span>                :            : </a>
+<a name="252"><span class="lineNum">     252 </span>                :            :         /*</a>
+<a name="253"><span class="lineNum">     253 </span>                :            :          * FIXME: Other children have some fuzz, since overflows may</a>
+<a name="254"><span class="lineNum">     254 </span>                :            :          * include repeat record we already read.  And odd-numbered</a>
+<a name="255"><span class="lineNum">     255 </span>                :            :          * overflows may include more repeat records than normal</a>
+<a name="256"><span class="lineNum">     256 </span>                :            :          * records (they alternate).</a>
+<a name="257"><span class="lineNum">     257 </span>                :            :          */</a>
+<a name="258"><span class="lineNum">     258 </span>                :<span class="lineCov">          1 : }</span></a>
+<a name="259"><span class="lineNum">     259 </span>                :            : </a>
+<a name="260"><span class="lineNum">     260 </span>                :<span class="lineCov">          1 : int main(void)</span></a>
+<a name="261"><span class="lineNum">     261 </span>                :            : {</a>
+<a name="262"><span class="lineNum">     262 </span>                :            :         union trace minimal;</a>
+<a name="263"><span class="lineNum">     263 </span>                :            :         union trace large;</a>
+<a name="264"><span class="lineNum">     264 </span>                :            :         union trace trace;</a>
+<a name="265"><span class="lineNum">     265 </span>                :            :         unsigned int i, j;</a>
+<a name="266"><span class="lineNum">     266 </span>                :            : </a>
+<a name="267"><span class="lineNum">     267 </span>                :<span class="lineCov">          1 :         opal_node = dt_new_root(&quot;opal&quot;);</span></a>
+<a name="268"><span class="lineNum">     268 </span>                :<span class="lineCov">          1 :         dt_new(dt_new(opal_node, &quot;firmware&quot;), &quot;exports&quot;);</span></a>
+<a name="269"><span class="lineNum">     269 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
+<a name="270"><span class="lineNum">     270 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].server_no = i;</span></a>
+<a name="271"><span class="lineNum">     271 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].pir = i;</span></a>
+<a name="272"><span class="lineNum">     272 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].is_secondary = (i &amp; 0x1);</span></a>
+<a name="273"><span class="lineNum">     273 </span>                :<span class="lineCov">          4 :                 fake_cpus[i].primary = &amp;fake_cpus[i &amp; ~0x1];</span></a>
+<a name="274"><span class="lineNum">     274 </span>                :            :         }</a>
+<a name="275"><span class="lineNum">     275 </span>                :<span class="lineCov">          1 :         my_fake_cpu = &amp;fake_cpus[0];</span></a>
+<a name="276"><span class="lineNum">     276 </span>                :<span class="lineCov">          1 :         my_trace_reader = &amp;trace_readers[0];</span></a>
+<a name="277"><span class="lineNum">     277 </span>                :<span class="lineCov">          1 :         init_trace_buffers();</span></a>
+<a name="278"><span class="lineNum">     278 </span>                :            : </a>
+<a name="279"><span class="lineNum">     279 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++) {</span></a>
+<a name="280"><span class="lineNum">     280 </span>                :<span class="lineCov">          4 :                 trace_readers[i].tb = &amp;fake_cpus[i].trace-&gt;tb;</span></a>
+<a name="281"><span class="lineNum">     281 </span>                :<span class="lineCov">          4 :                 assert(trace_empty(&amp;trace_readers[i]));</span></a>
+<a name="282"><span class="lineNum">     282 </span>                :<span class="lineCov">          4 :                 assert(!trace_get(&amp;trace, &amp;trace_readers[i]));</span></a>
+<a name="283"><span class="lineNum">     283 </span>                :            :         }</a>
+<a name="284"><span class="lineNum">     284 </span>                :            : </a>
+<a name="285"><span class="lineNum">     285 </span>                :            :         assert(sizeof(trace.hdr) % 8 == 0);</a>
+<a name="286"><span class="lineNum">     286 </span>                :<span class="lineCov">          1 :         timestamp = 1;</span></a>
+<a name="287"><span class="lineNum">     287 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
+<a name="288"><span class="lineNum">     288 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="289"><span class="lineNum">     289 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
+<a name="290"><span class="lineNum">     290 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == timestamp);</span></a>
+<a name="291"><span class="lineNum">     291 </span>                :            : </a>
+<a name="292"><span class="lineNum">     292 </span>                :            :         /* Make it wrap once. */</a>
+<a name="293"><span class="lineNum">     293 </span>                :<span class="lineCov">      65404 :         for (i = 0; i &lt; TBUF_SZ / (minimal.hdr.len_div_8 * 8) + 1; i++) {</span></a>
+<a name="294"><span class="lineNum">     294 </span>                :<span class="lineCov">      65403 :                 timestamp = i;</span></a>
+<a name="295"><span class="lineNum">     295 </span>                :<span class="lineCov">      65403 :                 trace_add(&amp;minimal, 99 + (i%2), sizeof(trace.hdr));</span></a>
+<a name="296"><span class="lineNum">     296 </span>                :            :         }</a>
+<a name="297"><span class="lineNum">     297 </span>                :            : </a>
+<a name="298"><span class="lineNum">     298 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="299"><span class="lineNum">     299 </span>                :            :         /* First one must be overflow marker. */</a>
+<a name="300"><span class="lineNum">     300 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_OVERFLOW);</span></a>
+<a name="301"><span class="lineNum">     301 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.overflow));</span></a>
+<a name="302"><span class="lineNum">     302 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.overflow.bytes_missed) == minimal.hdr.len_div_8 * 8);</span></a>
+<a name="303"><span class="lineNum">     303 </span>                :            : </a>
+<a name="304"><span class="lineNum">     304 </span>                :<span class="lineCov">      65403 :         for (i = 0; i &lt; TBUF_SZ / (minimal.hdr.len_div_8 * 8); i++) {</span></a>
+<a name="305"><span class="lineNum">     305 </span>                :<span class="lineCov">      65402 :                 assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="306"><span class="lineNum">     306 </span>                :<span class="lineCov">      65402 :                 assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
+<a name="307"><span class="lineNum">     307 </span>                :<span class="lineCov">      65402 :                 assert(be64_to_cpu(trace.hdr.timestamp) == i+1);</span></a>
+<a name="308"><span class="lineNum">     308 </span>                :<span class="lineCov">      65402 :                 assert(trace.hdr.type == 99 + ((i+1)%2));</span></a>
+<a name="309"><span class="lineNum">     309 </span>                :            :         }</a>
+<a name="310"><span class="lineNum">     310 </span>                :<span class="lineCov">          1 :         assert(!trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="311"><span class="lineNum">     311 </span>                :            : </a>
+<a name="312"><span class="lineNum">     312 </span>                :            :         /* Now put in some weird-length ones, to test overlap.</a>
+<a name="313"><span class="lineNum">     313 </span>                :            :          * Last power of 2, minus 8. */</a>
+<a name="314"><span class="lineNum">     314 </span>                :<span class="lineCov">          8 :         for (j = 0; (1 &lt;&lt; j) &lt; sizeof(large); j++);</span></a>
+<a name="315"><span class="lineNum">     315 </span>                :<span class="lineCov">    1046430 :         for (i = 0; i &lt; TBUF_SZ; i++) {</span></a>
+<a name="316"><span class="lineNum">     316 </span>                :<span class="lineCov">    1046430 :                 timestamp = i;</span></a>
+<a name="317"><span class="lineNum">     317 </span>                :<span class="lineCov">    1046430 :                 trace_add(&amp;large, 100 + (i%2), (1 &lt;&lt; (j-1)));</span></a>
+<a name="318"><span class="lineNum">     318 </span>                :            :         }</a>
+<a name="319"><span class="lineNum">     319 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="320"><span class="lineNum">     320 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_OVERFLOW);</span></a>
+<a name="321"><span class="lineNum">     321 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="322"><span class="lineNum">     322 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == large.hdr.len_div_8);</span></a>
+<a name="323"><span class="lineNum">     323 </span>                :<span class="lineCov">          1 :         i = be64_to_cpu(trace.hdr.timestamp);</span></a>
+<a name="324"><span class="lineNum">     324 </span>                :<span class="lineCov">      16350 :         while (trace_get(&amp;trace, my_trace_reader))</span></a>
+<a name="325"><span class="lineNum">     325 </span>                :<span class="lineCov">      16349 :                 assert(be64_to_cpu(trace.hdr.timestamp) == ++i);</span></a>
+<a name="326"><span class="lineNum">     326 </span>                :            : </a>
+<a name="327"><span class="lineNum">     327 </span>                :            :         /* Test repeats. */</a>
+<a name="328"><span class="lineNum">     328 </span>                :<span class="lineCov">      65539 :         for (i = 0; i &lt; 65538; i++) {</span></a>
+<a name="329"><span class="lineNum">     329 </span>                :<span class="lineCov">      65538 :                 timestamp = i;</span></a>
+<a name="330"><span class="lineNum">     330 </span>                :<span class="lineCov">      65538 :                 trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
+<a name="331"><span class="lineNum">     331 </span>                :            :         }</a>
+<a name="332"><span class="lineNum">     332 </span>                :<span class="lineCov">          1 :         timestamp = i;</span></a>
+<a name="333"><span class="lineNum">     333 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 101, sizeof(trace.hdr));</span></a>
+<a name="334"><span class="lineNum">     334 </span>                :<span class="lineCov">          1 :         timestamp = i+1;</span></a>
+<a name="335"><span class="lineNum">     335 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 101, sizeof(trace.hdr));</span></a>
+<a name="336"><span class="lineNum">     336 </span>                :            : </a>
+<a name="337"><span class="lineNum">     337 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="338"><span class="lineNum">     338 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.timestamp == 0);</span></a>
+<a name="339"><span class="lineNum">     339 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
+<a name="340"><span class="lineNum">     340 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 100);</span></a>
 <a name="341"><span class="lineNum">     341 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="342"><span class="lineNum">     342 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == 65536);</span></a>
-<a name="343"><span class="lineNum">     343 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
-<a name="344"><span class="lineNum">     344 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 100);</span></a>
-<a name="345"><span class="lineNum">     345 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="346"><span class="lineNum">     346 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
-<a name="347"><span class="lineNum">     347 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
-<a name="348"><span class="lineNum">     348 </span>                :<span class="lineCov">          1 :         assert(be16_to_cpu(trace.repeat.num) == 1);</span></a>
-<a name="349"><span class="lineNum">     349 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.repeat.timestamp) == 65537);</span></a>
-<a name="350"><span class="lineNum">     350 </span>                :            : </a>
-<a name="351"><span class="lineNum">     351 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="352"><span class="lineNum">     352 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == 65538);</span></a>
-<a name="353"><span class="lineNum">     353 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
-<a name="354"><span class="lineNum">     354 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 101);</span></a>
-<a name="355"><span class="lineNum">     355 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="356"><span class="lineNum">     356 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
-<a name="357"><span class="lineNum">     357 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
-<a name="358"><span class="lineNum">     358 </span>                :<span class="lineCov">          1 :         assert(be16_to_cpu(trace.repeat.num) == 1);</span></a>
-<a name="359"><span class="lineNum">     359 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.repeat.timestamp) == 65539);</span></a>
-<a name="360"><span class="lineNum">     360 </span>                :            : </a>
-<a name="361"><span class="lineNum">     361 </span>                :            :         /* Now, test adding repeat while we're reading... */</a>
-<a name="362"><span class="lineNum">     362 </span>                :<span class="lineCov">          1 :         timestamp = 0;</span></a>
-<a name="363"><span class="lineNum">     363 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
-<a name="364"><span class="lineNum">     364 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="365"><span class="lineNum">     365 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == 0);</span></a>
-<a name="366"><span class="lineNum">     366 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
-<a name="367"><span class="lineNum">     367 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 100);</span></a>
-<a name="368"><span class="lineNum">     368 </span>                :            : </a>
-<a name="369"><span class="lineNum">     369 </span>                :<span class="lineCov">    1046432 :         for (i = 1; i &lt; TBUF_SZ; i++) {</span></a>
-<a name="370"><span class="lineNum">     370 </span>                :<span class="lineCov">    1046431 :                 timestamp = i;</span></a>
-<a name="371"><span class="lineNum">     371 </span>                :<span class="lineCov">    1046431 :                 trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
-<a name="372"><span class="lineNum">     372 </span>                :<span class="lineCov">    1046431 :                 assert(trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="373"><span class="lineNum">     373 </span>                :<span class="lineCov">    1046431 :                 if (i % 65536 == 0) {</span></a>
-<a name="374"><span class="lineNum">     374 </span>                :<span class="lineCov">         15 :                         assert(trace.hdr.type == 100);</span></a>
-<a name="375"><span class="lineNum">     375 </span>                :<span class="lineCov">         15 :                         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
-<a name="376"><span class="lineNum">     376 </span>                :            :                 } else {</a>
-<a name="377"><span class="lineNum">     377 </span>                :<span class="lineCov">    1046416 :                         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
-<a name="378"><span class="lineNum">     378 </span>                :<span class="lineCov">    1046416 :                         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
-<a name="379"><span class="lineNum">     379 </span>                :<span class="lineCov">    1046416 :                         assert(be16_to_cpu(trace.repeat.num) == 1);</span></a>
-<a name="380"><span class="lineNum">     380 </span>                :            :                 }</a>
-<a name="381"><span class="lineNum">     381 </span>                :<span class="lineCov">    1046431 :                 assert(be64_to_cpu(trace.repeat.timestamp) == i);</span></a>
-<a name="382"><span class="lineNum">     382 </span>                :<span class="lineCov">    1046431 :                 assert(!trace_get(&amp;trace, my_trace_reader));</span></a>
-<a name="383"><span class="lineNum">     383 </span>                :            :         }</a>
-<a name="384"><span class="lineNum">     384 </span>                :            : </a>
-<a name="385"><span class="lineNum">     385 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++)</span></a>
-<a name="386"><span class="lineNum">     386 </span>                :<span class="lineCov">          4 :                 if (!fake_cpus[i].is_secondary)</span></a>
-<a name="387"><span class="lineNum">     387 </span>                :<span class="lineCov">          2 :                         free(fake_cpus[i].trace);</span></a>
-<a name="388"><span class="lineNum">     388 </span>                :            : </a>
-<a name="389"><span class="lineNum">     389 </span>                :<span class="lineCov">          1 :         test_parallel();</span></a>
-<a name="390"><span class="lineNum">     390 </span>                :            : </a>
-<a name="391"><span class="lineNum">     391 </span>                :<span class="lineCov">          1 :         return 0;</span></a>
-<a name="392"><span class="lineNum">     392 </span>                :            : }</a>
+<a name="342"><span class="lineNum">     342 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
+<a name="343"><span class="lineNum">     343 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
+<a name="344"><span class="lineNum">     344 </span>                :<span class="lineCov">          1 :         assert(be16_to_cpu(trace.repeat.num) == 65535);</span></a>
+<a name="345"><span class="lineNum">     345 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.repeat.timestamp) == 65535);</span></a>
+<a name="346"><span class="lineNum">     346 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="347"><span class="lineNum">     347 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == 65536);</span></a>
+<a name="348"><span class="lineNum">     348 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
+<a name="349"><span class="lineNum">     349 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 100);</span></a>
+<a name="350"><span class="lineNum">     350 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="351"><span class="lineNum">     351 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
+<a name="352"><span class="lineNum">     352 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
+<a name="353"><span class="lineNum">     353 </span>                :<span class="lineCov">          1 :         assert(be16_to_cpu(trace.repeat.num) == 1);</span></a>
+<a name="354"><span class="lineNum">     354 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.repeat.timestamp) == 65537);</span></a>
+<a name="355"><span class="lineNum">     355 </span>                :            : </a>
+<a name="356"><span class="lineNum">     356 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="357"><span class="lineNum">     357 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == 65538);</span></a>
+<a name="358"><span class="lineNum">     358 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
+<a name="359"><span class="lineNum">     359 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 101);</span></a>
+<a name="360"><span class="lineNum">     360 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="361"><span class="lineNum">     361 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
+<a name="362"><span class="lineNum">     362 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
+<a name="363"><span class="lineNum">     363 </span>                :<span class="lineCov">          1 :         assert(be16_to_cpu(trace.repeat.num) == 1);</span></a>
+<a name="364"><span class="lineNum">     364 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.repeat.timestamp) == 65539);</span></a>
+<a name="365"><span class="lineNum">     365 </span>                :            : </a>
+<a name="366"><span class="lineNum">     366 </span>                :            :         /* Now, test adding repeat while we're reading... */</a>
+<a name="367"><span class="lineNum">     367 </span>                :<span class="lineCov">          1 :         timestamp = 0;</span></a>
+<a name="368"><span class="lineNum">     368 </span>                :<span class="lineCov">          1 :         trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
+<a name="369"><span class="lineNum">     369 </span>                :<span class="lineCov">          1 :         assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="370"><span class="lineNum">     370 </span>                :<span class="lineCov">          1 :         assert(be64_to_cpu(trace.hdr.timestamp) == 0);</span></a>
+<a name="371"><span class="lineNum">     371 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
+<a name="372"><span class="lineNum">     372 </span>                :<span class="lineCov">          1 :         assert(trace.hdr.type == 100);</span></a>
+<a name="373"><span class="lineNum">     373 </span>                :            : </a>
+<a name="374"><span class="lineNum">     374 </span>                :<span class="lineCov">    1046430 :         for (i = 1; i &lt; TBUF_SZ; i++) {</span></a>
+<a name="375"><span class="lineNum">     375 </span>                :<span class="lineCov">    1046430 :                 timestamp = i;</span></a>
+<a name="376"><span class="lineNum">     376 </span>                :<span class="lineCov">    1046430 :                 trace_add(&amp;minimal, 100, sizeof(trace.hdr));</span></a>
+<a name="377"><span class="lineNum">     377 </span>                :<span class="lineCov">    1046430 :                 assert(trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="378"><span class="lineNum">     378 </span>                :<span class="lineCov">    1046430 :                 if (i % 65536 == 0) {</span></a>
+<a name="379"><span class="lineNum">     379 </span>                :<span class="lineCov">         15 :                         assert(trace.hdr.type == 100);</span></a>
+<a name="380"><span class="lineNum">     380 </span>                :<span class="lineCov">         15 :                         assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);</span></a>
+<a name="381"><span class="lineNum">     381 </span>                :            :                 } else {</a>
+<a name="382"><span class="lineNum">     382 </span>                :<span class="lineCov">    1046420 :                         assert(trace.hdr.type == TRACE_REPEAT);</span></a>
+<a name="383"><span class="lineNum">     383 </span>                :<span class="lineCov">    1046420 :                         assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));</span></a>
+<a name="384"><span class="lineNum">     384 </span>                :<span class="lineCov">    1046420 :                         assert(be16_to_cpu(trace.repeat.num) == 1);</span></a>
+<a name="385"><span class="lineNum">     385 </span>                :            :                 }</a>
+<a name="386"><span class="lineNum">     386 </span>                :<span class="lineCov">    1046430 :                 assert(be64_to_cpu(trace.repeat.timestamp) == i);</span></a>
+<a name="387"><span class="lineNum">     387 </span>                :<span class="lineCov">    1046430 :                 assert(!trace_get(&amp;trace, my_trace_reader));</span></a>
+<a name="388"><span class="lineNum">     388 </span>                :            :         }</a>
+<a name="389"><span class="lineNum">     389 </span>                :            : </a>
+<a name="390"><span class="lineNum">     390 </span>                :<span class="lineCov">          5 :         for (i = 0; i &lt; CPUS; i++)</span></a>
+<a name="391"><span class="lineNum">     391 </span>                :<span class="lineCov">          4 :                 if (!fake_cpus[i].is_secondary)</span></a>
+<a name="392"><span class="lineNum">     392 </span>                :<span class="lineCov">          2 :                         free(fake_cpus[i].trace);</span></a>
+<a name="393"><span class="lineNum">     393 </span>                :            : </a>
+<a name="394"><span class="lineNum">     394 </span>                :<span class="lineCov">          1 :         test_parallel();</span></a>
+<a name="395"><span class="lineNum">     395 </span>                :            : </a>
+<a name="396"><span class="lineNum">     396 </span>                :<span class="lineCov">          1 :         return 0;</span></a>
+<a name="397"><span class="lineNum">     397 </span>                :            : }</a>
 </pre>
       </td>
     </tr>

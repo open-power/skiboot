@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-cec-power-down-5.html" title="OPAL_CEC_POWER_DOWN"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -51,19 +52,19 @@
 </pre></div>
 </div>
 <p>There are two opal calls to invoke system reboot.</p>
-<dl class="simple">
-<dt><a class="reference internal" href="#opal-cec-reboot"><span class="std std-ref">OPAL_CEC_REBOOT</span></a></dt><dd><p>Original reboot call for a normal reboot.
+<dl class="docutils">
+<dt><a class="reference internal" href="#opal-cec-reboot"><span class="std std-ref">OPAL_CEC_REBOOT</span></a></dt>
+<dd>Original reboot call for a normal reboot.
 It is recommended to first try <a class="reference internal" href="#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a>
 (use <a class="reference internal" href="opal-check-token-80.html#opal-check-token"><span class="std std-ref">OPAL_CHECK_TOKEN</span></a> first), and then, if not available,
 fall back to <a class="reference internal" href="#opal-cec-reboot"><span class="std std-ref">OPAL_CEC_REBOOT</span></a>.
 All POWER9 systems shipped with support for <a class="reference internal" href="#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a>,
 so it is safe to exclusively call the new call if an OS only targets POWER9
-and above.</p>
-</dd>
-<dt><a class="reference internal" href="#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a></dt><dd><p>Newer call for rebooting a system, supporting different types of reboots.
+and above.</dd>
+<dt><a class="reference internal" href="#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a></dt>
+<dd>Newer call for rebooting a system, supporting different types of reboots.
 For example, the OS may request a reboot due to a platform or OS error,
-which may trigger host or BMC firmware to save debugging information.</p>
-</dd>
+which may trigger host or BMC firmware to save debugging information.</dd>
 </dl>
 <div class="section" id="opal-cec-reboot">
 <span id="id1"></span><h2>OPAL_CEC_REBOOT<a class="headerlink" href="#opal-cec-reboot" title="Permalink to this headline">¶</a></h2>
@@ -111,56 +112,59 @@ of reboot, and falling back to a normal reboot if that type is not supported.</p
 </div>
 <div class="section" id="input-parameters">
 <h3>Input parameters<a class="headerlink" href="#input-parameters" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">reboot_type</span></code></dt><dd><p>Type of reboot. (see below)</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">diag</span></code></dt><dd><p>Null-terminated string.</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">reboot_type</span></code></dt>
+<dd>Type of reboot. (see below)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">diag</span></code></dt>
+<dd>Null-terminated string.</dd>
 </dl>
 <p>Depending on reboot type, this call will carry out additional steps
 before triggering a reboot.</p>
 </div>
 <div class="section" id="return-codes">
 <h3>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>The system will soon reboot. The OS should loop on <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a>
-in case there’s any work for OPAL to do.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a> or <a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt><dd><p>OPAL is currently busy and can’t issue a reboot, call
-<a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> and retry reboot call.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Unsupported reboot type (applicable to <a class="reference internal" href="#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a> only), retry
-with other reboot type.</p>
-</dd>
-<dt>Other error codes</dt><dd><p>Keep calling reboot and hope for the best? In theory this should never happen.</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>The system will soon reboot. The OS should loop on <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a>
+in case there’s any work for OPAL to do.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a> or <a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt>
+<dd>OPAL is currently busy and can’t issue a reboot, call
+<a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> and retry reboot call.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
+<dd>Unsupported reboot type (applicable to <a class="reference internal" href="#opal-cec-reboot2"><span class="std std-ref">OPAL_CEC_REBOOT2</span></a> only), retry
+with other reboot type.</dd>
+<dt>Other error codes</dt>
+<dd>Keep calling reboot and hope for the best? In theory this should never happen.</dd>
 </dl>
 </div>
 </div>
 <div class="section" id="supported-reboot-types">
 <h2>Supported reboot types:<a class="headerlink" href="#supported-reboot-types" title="Permalink to this headline">¶</a></h2>
-<dl>
-<dt>OPAL_REBOOT_NORMAL = 0</dt><dd><p>Behavior is as similar to that of opal_cec_reboot()</p>
-</dd>
-<dt>OPAL_REBOOT_PLATFORM_ERROR = 1</dt><dd><p>Log an error to the BMC and then trigger a system checkstop, using
+<dl class="docutils">
+<dt>OPAL_REBOOT_NORMAL = 0</dt>
+<dd>Behavior is as similar to that of opal_cec_reboot()</dd>
+<dt>OPAL_REBOOT_PLATFORM_ERROR = 1</dt>
+<dd><p class="first">Log an error to the BMC and then trigger a system checkstop, using
 the information provided by ‘ibm,sw-checkstop-fir’ property in the
 device-tree. Post the checkstop trigger, OCC/BMC will collect
 relevant data for error analysis and trigger a reboot.</p>
-<p>In absence of ‘ibm,sw-checkstop-fir’ device property, this function
+<p class="last">In absence of ‘ibm,sw-checkstop-fir’ device property, this function
 will return with OPAL_UNSUPPORTED and no reboot will be triggered.</p>
 </dd>
-<dt>OPAL_REBOOT_FULL_IPL = 2</dt><dd><p>Force a full IPL reboot rather than using fast reboot.</p>
-<p>On platforms that don’t support fast reboot, this is equivalent to a
+<dt>OPAL_REBOOT_FULL_IPL = 2</dt>
+<dd><p class="first">Force a full IPL reboot rather than using fast reboot.</p>
+<p class="last">On platforms that don’t support fast reboot, this is equivalent to a
 normal reboot.</p>
 </dd>
-<dt>OPAL_REBOOT_MPIPL = 3</dt><dd><p>Request for MPIPL reboot. Firmware will reboot the system and collect
+<dt>OPAL_REBOOT_MPIPL = 3</dt>
+<dd><p class="first">Request for MPIPL reboot. Firmware will reboot the system and collect
 dump.</p>
-<p>On platforms that don’t support MPIPL, this is equivalent to a
+<p class="last">On platforms that don’t support MPIPL, this is equivalent to a
 normal assert.</p>
 </dd>
-<dt>Unsupported Reboot type</dt><dd><p>For unsupported reboot type, this function will return with
-OPAL_UNSUPPORTED and no reboot will be triggered.</p>
-</dd>
+<dt>Unsupported Reboot type</dt>
+<dd>For unsupported reboot type, this function will return with
+OPAL_UNSUPPORTED and no reboot will be triggered.</dd>
 </dl>
 <div class="section" id="debugging">
 <h3>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h3>
@@ -176,7 +180,6 @@ variable:</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -213,15 +216,17 @@ variable:</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -238,15 +243,14 @@ variable:</p>
         <li class="right" >
           <a href="opal-cec-power-down-5.html" title="OPAL_CEC_POWER_DOWN"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

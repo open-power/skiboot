@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL Specification &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL Specification &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,9 +34,8 @@
         <li class="right" >
           <a href="overview.html" title="Skiboot overview"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Specification</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -58,13 +59,13 @@ implementation. It is not recommended that you do this though.</p>
 </div>
 <div class="section" id="definitions">
 <h2>Definitions<a class="headerlink" href="#definitions" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>Host processor</dt><dd><p>the main POWER CPU (e.g. the POWER8 CPU)</p>
-</dd>
-<dt>Host OS</dt><dd><p>the operating system running on the host processor.</p>
-</dd>
-<dt>OPAL</dt><dd><p>OpenPOWER Abstraction Layer.</p>
-</dd>
+<dl class="docutils">
+<dt>Host processor</dt>
+<dd>the main POWER CPU (e.g. the POWER8 CPU)</dd>
+<dt>Host OS</dt>
+<dd>the operating system running on the host processor.</dd>
+<dt>OPAL</dt>
+<dd>OpenPOWER Abstraction Layer.</dd>
 </dl>
 </div>
 <div class="section" id="what-is-opal">
@@ -74,36 +75,31 @@ POWER systems. There are several components to what makes up a firmware
 image for OpenPower machines.</p>
 <p>For example, there may be:</p>
 <ul class="simple">
-<li><p>BMC firmware</p>
-<ul>
-<li><p>Firmware that runs purely on the BMC.</p></li>
-<li><p>On IBM systems that have an FSP rather than a BMC, there is FSP firmware</p></li>
-<li><p>While essential to having the machine function, this firmware is not
-part of the OPAL Specification.</p></li>
+<li>BMC firmware<ul>
+<li>Firmware that runs purely on the BMC.</li>
+<li>On IBM systems that have an FSP rather than a BMC, there is FSP firmware</li>
+<li>While essential to having the machine function, this firmware is not
+part of the OPAL Specification.</li>
 </ul>
 </li>
-<li><p>HostBoot</p>
-<ul>
-<li><p>HostBoot ( <a class="reference external" href="https://github.com/open-power/hostboot">https://github.com/open-power/hostboot</a> ) performs all
-processor, bus and memory initialization within IBM POWER based systems.</p></li>
+<li>HostBoot<ul>
+<li>HostBoot ( <a class="reference external" href="https://github.com/open-power/hostboot">https://github.com/open-power/hostboot</a> ) performs all
+processor, bus and memory initialization within IBM POWER based systems.</li>
 </ul>
 </li>
-<li><p>OCC Firmware</p>
-<ul>
-<li><p>On Chip Controller ( Firmware for OCC - a PPC405 core inside the IBM
-POWER8 in charge of keeping the system thermally and power safe ).</p></li>
+<li>OCC Firmware<ul>
+<li>On Chip Controller ( Firmware for OCC - a PPC405 core inside the IBM
+POWER8 in charge of keeping the system thermally and power safe ).</li>
 </ul>
 </li>
-<li><p>SkiBoot</p>
-<ul>
-<li><p>Boot and runtime services.</p></li>
+<li>SkiBoot<ul>
+<li>Boot and runtime services.</li>
 </ul>
 </li>
-<li><p>A linux kernel and initramfs incorporating petitboot</p>
-<ul>
-<li><p>The bootloader. This is where a user chooses what OS to boot, and
+<li>A linux kernel and initramfs incorporating petitboot<ul>
+<li>The bootloader. This is where a user chooses what OS to boot, and
 petitboot will use kexec to switch to the host Operating System
-(for example, PowerKVM).</p></li>
+(for example, PowerKVM).</li>
 </ul>
 </li>
 </ul>
@@ -119,18 +115,18 @@ Operating System. It does not dictate that any specific pieces of firmware
 code be used, although re-inventing the wheel is strongly discouraged.</p>
 <p>The OPAL Specification explicitly allows for:</p>
 <ul class="simple">
-<li><p>A conforming implementation to not use any of the reference implementation
-code.</p></li>
-<li><p>A conforming implementation to use any 64bit POWER ISA conforming processor,
-and not be limited to the IBM POWER8.</p></li>
-<li><p>A conforming implementation to be a simulator, emulator or virtual environment</p></li>
-<li><p>A host OS other than Linux</p></li>
+<li>A conforming implementation to not use any of the reference implementation
+code.</li>
+<li>A conforming implementation to use any 64bit POWER ISA conforming processor,
+and not be limited to the IBM POWER8.</li>
+<li>A conforming implementation to be a simulator, emulator or virtual environment</li>
+<li>A host OS other than Linux</li>
 </ul>
 <p>Explicitly not covered in this specification:</p>
 <ul class="simple">
-<li><p>A 32bit OPAL Specification
+<li>A 32bit OPAL Specification
 There is no reason this couldn’t exist but the current specification is for
-64bit POWER systems only.</p></li>
+64bit POWER systems only.</li>
 </ul>
 </div>
 <div class="section" id="boot-services">
@@ -151,39 +147,39 @@ know how to call OPAL runtime services.
 [<strong>TODO</strong>: expand on this. ]</p>
 <p>Explicitly not covered by the OPAL Specification:</p>
 <ul class="simple">
-<li><p>Kernel module ABI for skiroot kernel</p></li>
-<li><p>Userspace environment of skiroot</p></li>
-<li><p>That skiroot is Linux.</p></li>
+<li>Kernel module ABI for skiroot kernel</li>
+<li>Userspace environment of skiroot</li>
+<li>That skiroot is Linux.</li>
 </ul>
 <p>Explicitly allowed:</p>
 <ul class="simple">
-<li><p>Replacing the payload with something of equal/similar functionality
+<li>Replacing the payload with something of equal/similar functionality
 (whether replacing skiroot with an implementation of Zork would be compliant
-is left as an exercise for the reader)</p></li>
+is left as an exercise for the reader)</li>
 </ul>
 </div>
 <div class="section" id="payload-environment">
 <h2>Payload Environment<a class="headerlink" href="#payload-environment" title="Permalink to this headline">¶</a></h2>
 <p>The payload is started with:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 17%" />
-<col style="width: 83%" />
+<col width="17%" />
+<col width="83%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Register</p></th>
-<th class="head"><p>Value</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Register</th>
+<th class="head">Value</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>r3</p></td>
-<td><p>address of flattened device-tree (fdt)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>r3</td>
+<td>address of flattened device-tree (fdt)</td>
 </tr>
-<tr class="row-odd"><td><p>r8</p></td>
-<td><p>OPAL base</p></td>
+<tr class="row-odd"><td>r8</td>
+<td>OPAL base</td>
 </tr>
-<tr class="row-even"><td><p>r9</p></td>
-<td><p>OPAL entry</p></td>
+<tr class="row-even"><td>r9</td>
+<td>OPAL entry</td>
 </tr>
 </tbody>
 </table>
@@ -192,11 +188,12 @@ is left as an exercise for the reader)</p></li>
 <h2>Runtime Services<a class="headerlink" href="#runtime-services" title="Permalink to this headline">¶</a></h2>
 <p>An OPAL Specification compliant system provides runtime services to the host
 Operating System via a standard interface.</p>
-<dl class="simple">
-<dt>An OPAL call is made by calling opal_entry with:</dt><dd><ul class="simple">
-<li><p>r0: OPAL Token</p></li>
-<li><p>r2: OPAL Base</p></li>
-<li><p>r3..r10: Args (up to 8)</p></li>
+<dl class="docutils">
+<dt>An OPAL call is made by calling opal_entry with:</dt>
+<dd><ul class="first last simple">
+<li>r0: OPAL Token</li>
+<li>r2: OPAL Base</li>
+<li>r3..r10: Args (up to 8)</li>
 </ul>
 </dd>
 </dl>
@@ -210,12 +207,12 @@ OPAL_CHECK_TOKEN to test for optional functionality.</p>
 appropriately convert parameters before passing them to OPAL.</p>
 <p>Machine state across OPAL calls:</p>
 <ul class="simple">
-<li><p>r1 is preserved</p></li>
-<li><p>r12 is scratch</p></li>
-<li><p>r13 - 31 preserved</p></li>
-<li><p>64bit HV real mode</p></li>
-<li><p>big endian</p></li>
-<li><p>external interrupts disabled</p></li>
+<li>r1 is preserved</li>
+<li>r12 is scratch</li>
+<li>r13 - 31 preserved</li>
+<li>64bit HV real mode</li>
+<li>big endian</li>
+<li>external interrupts disabled</li>
 </ul>
 </div>
 <div class="section" id="detecting-opal-support">
@@ -273,7 +270,6 @@ while more messages go to the in memory buffer.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -308,15 +304,17 @@ while more messages go to the in memory buffer.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -333,14 +331,13 @@ while more messages go to the in memory buffer.</p>
         <li class="right" >
           <a href="overview.html" title="Skiboot overview"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Specification</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

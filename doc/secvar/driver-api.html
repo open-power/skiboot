@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Secvar Drivers &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Secvar Drivers &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -24,9 +26,8 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Secvar Drivers</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -53,21 +54,22 @@ compatible.</p>
 </div>
 <div class="section" id="storage-driver-api">
 <h2>Storage Driver API<a class="headerlink" href="#storage-driver-api" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>The storage driver is expected to:</dt><dd><ul class="simple">
-<li><p>persist secure variables in a tamper-resistant manner</p></li>
-<li><p>handle two logical types of variable lists (referred to as “banks”)
+<dl class="docutils">
+<dt>The storage driver is expected to:</dt>
+<dd><ul class="first last simple">
+<li>persist secure variables in a tamper-resistant manner</li>
+<li>handle two logical types of variable lists (referred to as “banks”)
 * the “variable bank” stores the active list of variables
-* the “update bank” stores proposed updates to the variable bank</p></li>
-<li><p>handle variables using a specific secvar flag in a sensible manner</p></li>
+* the “update bank” stores proposed updates to the variable bank</li>
+<li>handle variables using a specific secvar flag in a sensible manner</li>
 </ul>
 </dd>
 </dl>
 <p>Storage drivers must implement the following hooks for secvar to properly
 utilize:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="nc">secvar_storage_driver</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">load_bank</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">bank</span><span class="p">,</span> <span class="kt">int</span> <span class="n">section</span><span class="p">);</span>
-    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">write_bank</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">bank</span><span class="p">,</span> <span class="kt">int</span> <span class="n">section</span><span class="p">);</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">secvar_storage_driver</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">load_bank</span><span class="p">)(</span><span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">bank</span><span class="p">,</span> <span class="kt">int</span> <span class="n">section</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">write_bank</span><span class="p">)(</span><span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">bank</span><span class="p">,</span> <span class="kt">int</span> <span class="n">section</span><span class="p">);</span>
     <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">store_init</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
     <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">lock</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
     <span class="kt">uint64_t</span> <span class="n">max_var_size</span><span class="p">;</span>
@@ -95,10 +97,11 @@ or raise an error.</p>
 in-memory linked lists, for the rest of secvar to operate on.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">bank</span></code> parameter should be an initialized linked list. This list may not
 be empty, and this hook should only append variables to the list.</p>
-<dl class="simple">
-<dt>The variables this hook loads should depend on the <code class="docutils literal notranslate"><span class="pre">section</span></code> flag:</dt><dd><ul class="simple">
-<li><p>if <code class="docutils literal notranslate"><span class="pre">SECVAR_VARIABLE_BANK</span></code>, load the active variables</p></li>
-<li><p>if <code class="docutils literal notranslate"><span class="pre">SECVAR_UPDATE_BANK</span></code>, load the proposed updates</p></li>
+<dl class="docutils">
+<dt>The variables this hook loads should depend on the <code class="docutils literal notranslate"><span class="pre">section</span></code> flag:</dt>
+<dd><ul class="first last simple">
+<li>if <code class="docutils literal notranslate"><span class="pre">SECVAR_VARIABLE_BANK</span></code>, load the active variables</li>
+<li>if <code class="docutils literal notranslate"><span class="pre">SECVAR_UPDATE_BANK</span></code>, load the proposed updates</li>
 </ul>
 </dd>
 </dl>
@@ -168,14 +171,14 @@ state in TPM NV rather than PNOR on p9).</p>
 <h2>Backend Driver API<a class="headerlink" href="#backend-driver-api" title="Permalink to this headline">¶</a></h2>
 <p>The backend driver at the core defines how secure variables are defined and
 processed, and by extension, also how operate the platform’s secure boot modes.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="nc">secvar_backend_driver</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">pre_process</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">variable_bank</span>
-                       <span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">update_bank</span><span class="p">);</span>
-    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">process</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">variable_bank</span>
-                   <span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">update_bank</span><span class="p">);</span>
-    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">post_process</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">variable_bank</span>
-                        <span class="k">struct</span> <span class="nc">list_head</span> <span class="o">*</span><span class="n">update_bank</span><span class="p">);</span>
-    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">validate</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">secvar</span> <span class="o">*</span><span class="n">var</span><span class="p">);</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">secvar_backend_driver</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">pre_process</span><span class="p">)(</span><span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">variable_bank</span>
+                       <span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">update_bank</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">process</span><span class="p">)(</span><span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">variable_bank</span>
+                   <span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">update_bank</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">post_process</span><span class="p">)(</span><span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">variable_bank</span>
+                        <span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">update_bank</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">validate</span><span class="p">)(</span><span class="k">struct</span> <span class="n">secvar</span> <span class="o">*</span><span class="n">var</span><span class="p">);</span>
     <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">compatible</span><span class="p">;</span>
 <span class="p">};</span>
 </pre></div>
@@ -192,10 +195,11 @@ but just before <code class="docutils literal notranslate"><span class="pre">pro
 early initialization logic as necessary.</p>
 <p>Any error code returned by this hook will be treated as a failure, and halt
 secure variable initialization.</p>
-<dl class="simple">
-<dt>Example usage:</dt><dd><ul class="simple">
-<li><p>initialize empty variables that were not loaded from storage</p></li>
-<li><p>allocate any internal structures that may be needed for processing</p></li>
+<dl class="docutils">
+<dt>Example usage:</dt>
+<dd><ul class="first last simple">
+<li>initialize empty variables that were not loaded from storage</li>
+<li>allocate any internal structures that may be needed for processing</li>
 </ul>
 </dd>
 </dl>
@@ -228,35 +232,35 @@ for emptying the update bank prior to exiting with an error, if the bank is to
 be cleared.</p>
 <div class="section" id="status-codes">
 <h4>Status codes<a class="headerlink" href="#status-codes" title="Permalink to this headline">¶</a></h4>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 27%" />
-<col style="width: 73%" />
+<col width="27%" />
+<col width="73%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p>update-status</p></td>
-<td><p>Generic Reason</p></td>
+<tbody valign="top">
+<tr class="row-odd"><td>update-status</td>
+<td>Generic Reason</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_SUCCESS</p></td>
-<td><p>Updates were found and processed successfully</p></td>
+<tr class="row-even"><td>OPAL_SUCCESS</td>
+<td>Updates were found and processed successfully</td>
 </tr>
-<tr class="row-odd"><td><p>OPAL_EMPTY</p></td>
-<td><p>No updates were found, none processed</p></td>
+<tr class="row-odd"><td>OPAL_EMPTY</td>
+<td>No updates were found, none processed</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_PARAMETER</p></td>
-<td><p>Malformed, or unexpected update data blob</p></td>
+<tr class="row-even"><td>OPAL_PARAMETER</td>
+<td>Malformed, or unexpected update data blob</td>
 </tr>
-<tr class="row-odd"><td><p>OPAL_PERMISSION</p></td>
-<td><p>Update failed to apply, possible auth failure</p></td>
+<tr class="row-odd"><td>OPAL_PERMISSION</td>
+<td>Update failed to apply, possible auth failure</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_HARDWARE</p></td>
-<td><p>Misc. storage-related error</p></td>
+<tr class="row-even"><td>OPAL_HARDWARE</td>
+<td>Misc. storage-related error</td>
 </tr>
-<tr class="row-odd"><td><p>OPAL_RESOURCE</p></td>
-<td><p>Out of space (reported by storage)</p></td>
+<tr class="row-odd"><td>OPAL_RESOURCE</td>
+<td>Out of space (reported by storage)</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_NO_MEM</p></td>
-<td><p>Out of memory</p></td>
+<tr class="row-even"><td>OPAL_NO_MEM</td>
+<td>Out of memory</td>
 </tr>
 </tbody>
 </table>
@@ -273,11 +277,12 @@ the persistant storage. Any changes to the variable bank list in this hook will
 NOT be persisted to storage.</p>
 <p>Any error code returned by this hook will be treated as a failure, and halt
 secure variable initialization.</p>
-<dl class="simple">
-<dt>Example usage:</dt><dd><ul class="simple">
-<li><p>determine secure boot state (and set <code class="docutils literal notranslate"><span class="pre">os-secure-enforcing</span></code>)</p></li>
-<li><p>remove any variables from the variable bank that do not need to be exposed</p></li>
-<li><p>append any additional volatile variables</p></li>
+<dl class="docutils">
+<dt>Example usage:</dt>
+<dd><ul class="first last simple">
+<li>determine secure boot state (and set <code class="docutils literal notranslate"><span class="pre">os-secure-enforcing</span></code>)</li>
+<li>remove any variables from the variable bank that do not need to be exposed</li>
+<li>append any additional volatile variables</li>
 </ul>
 </dd>
 </dl>
@@ -293,12 +298,13 @@ on proposed variable validity.</p>
 <p>This hook should return <code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code> if the validity check passes. Any
 other return code is treated as a failure, and will be passed through the
 <code class="docutils literal notranslate"><span class="pre">enqueue_update</span></code> call.</p>
-<dl class="simple">
-<dt>Example usage:</dt><dd><ul class="simple">
-<li><p>check for valid payload data structure</p></li>
-<li><p>check for valid signature format</p></li>
-<li><p>validate the signature against current variables</p></li>
-<li><p>implement a variable white/blacklist</p></li>
+<dl class="docutils">
+<dt>Example usage:</dt>
+<dd><ul class="first last simple">
+<li>check for valid payload data structure</li>
+<li>check for valid signature format</li>
+<li>validate the signature against current variables</li>
+<li>implement a variable white/blacklist</li>
 </ul>
 </dd>
 </dl>
@@ -314,7 +320,6 @@ determine how to interact with the secure variables.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -356,15 +361,17 @@ determine how to interact with the secure variables.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -375,14 +382,13 @@ determine how to interact with the secure variables.</p>
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Secvar Drivers</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

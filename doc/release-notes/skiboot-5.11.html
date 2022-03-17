@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot-5.11 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot-5.11 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-5.10.6.html" title="skiboot-5.10.6"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.11</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -63,7 +64,7 @@ may be more 5.10.x stable releases, it will depend on demand.</p>
 <div class="section" id="new-platforms">
 <h2>New Platforms<a class="headerlink" href="#new-platforms" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>Add VESNIN platform support</p>
+<li><p class="first">Add VESNIN platform support</p>
 <p>The Vesnin platform from YADRO is a 4 socked POWER8 system with up to 8TB
 of memory with 460GB/s of memory bandwidth in only 2U. Many kudos to the
 team from Yadro for submitting their code upstream!</p>
@@ -73,14 +74,14 @@ team from Yadro for submitting their code upstream!</p>
 <div class="section" id="new-features">
 <h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>fast-reboot: enable by default for POWER9</p>
+<li><p class="first">fast-reboot: enable by default for POWER9</p>
 <ul class="simple">
-<li><p>Fast reboot is disabled if NPU2 is present or CAPI2/OpenCAPI is used</p></li>
+<li>Fast reboot is disabled if NPU2 is present or CAPI2/OpenCAPI is used</li>
 </ul>
 </li>
-<li><p>PCI tunneled operations on PHB4</p>
+<li><p class="first">PCI tunneled operations on PHB4</p>
 <ul>
-<li><p>phb4: set PBCQ Tunnel BAR for tunneled operations</p>
+<li><p class="first">phb4: set PBCQ Tunnel BAR for tunneled operations</p>
 <p>P9 supports PCI tunneled operations (atomics and as_notify) that are
 initiated by devices.</p>
 <p>A subset of the tunneled operations require a response, that must be
@@ -101,7 +102,7 @@ BAR Response register.</p>
 all the devices connected to the same PHB, only one of these devices
 will be able to use tunneled operations, at any time.</p>
 </li>
-<li><p>phb4: set PHB CMPM registers for tunneled operations</p>
+<li><p class="first">phb4: set PHB CMPM registers for tunneled operations</p>
 <p>P9 supports PCI tunneled operations (atomics and as_notify) that require
 setting the PHB ASN Compare/Mask register with a 16-bit indication.</p>
 <p>This register is currently initialized by enable_capi_mode(). But, as
@@ -114,7 +115,7 @@ in PCI mode.</p>
 </li>
 </ul>
 </li>
-<li><p>Tie tm-suspend fw-feature and opal_reinit_cpus() together</p>
+<li><p class="first">Tie tm-suspend fw-feature and opal_reinit_cpus() together</p>
 <p>Currently opal_reinit_cpus(OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED)
 always returns OPAL_UNSUPPORTED.</p>
 <p>This ties the tm suspend fw-feature to the
@@ -134,7 +135,7 @@ dynamically after boot. That is not the case currently though.</p>
 <div class="section" id="power-management">
 <h2>Power Management<a class="headerlink" href="#power-management" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>SLW: Increase stop4-5 residency by 10x</p>
+<li><p class="first">SLW: Increase stop4-5 residency by 10x</p>
 <p>Using DGEMM benchmark we observed there was a drop of 5-9% throughput with
 and without stop4/5. In this benchmark the GPU waits on the cpu to wakeup
 and provide the subsequent data block to compute. The wakup latency
@@ -142,7 +143,7 @@ accumulates over the run and shows up as a performance drop.</p>
 <p>Linux enters stop4/5 more aggressively for its wakeup latency. Increasing
 the residency from 1ms to 10ms makes the performance drop &lt;1%</p>
 </li>
-<li><p>occ: Set up OCC messaging even if we fail to setup pstates</p>
+<li><p class="first">occ: Set up OCC messaging even if we fail to setup pstates</p>
 <p>This means that we no longer hit this bug if we fail to get valid pstates
 from the OCC.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[console-pexpect]#echo 1 &gt; //sys/firmware/opal/sensor_groups//occ-csm0/clear
@@ -170,7 +171,7 @@ echo 1 &gt; //sys/firmware/opal/sensor_groups//occ-csm0/clear
 OpenPOWER systems, most OpenBMC based systems) there have been some hardening
 efforts in the event of the BMC being poorly behaved.</p>
 <ul>
-<li><p>mbox: Reduce default BMC timeouts</p>
+<li><p class="first">mbox: Reduce default BMC timeouts</p>
 <p>Rebooting a BMC can take 70 seconds. Skiboot cannot possibly spin for
 70 seconds waiting for a BMC to come back. This also makes the current
 default of 30 seconds a bit pointless, is it far too short to be a
@@ -180,7 +181,7 @@ and wrecking havoc inside host linux.</p>
 that, reads and writes will fail but at least the host stays up.</p>
 <p>Also refactored the waiting loop just a bit so that it’s easier to read.</p>
 </li>
-<li><p>mbox: Harden against BMC daemon errors</p>
+<li><p class="first">mbox: Harden against BMC daemon errors</p>
 <p>Bugs present in the BMC daemon mean that skiboot gets presented with
 mbox windows of size zero. These windows cannot be valid and skiboot
 already detects these conditions.</p>
@@ -207,7 +208,7 @@ continuously spitting it out.</p>
 <p>Around fast-reboot we have made several improvements to harden the fast
 reboot code paths and resort to a full IPL if something doesn’t look right.</p>
 <ul>
-<li><p>core/fast-reboot: zero memory after fast reboot</p>
+<li><p class="first">core/fast-reboot: zero memory after fast reboot</p>
 <p>This improves the security and predictability of the fast reboot
 environment.</p>
 <p>There can not be a secure fence between fast reboots, because a
@@ -219,7 +220,7 @@ just before the new kernel is loaded and booted into. This allows
 image preloading to run concurrently, and will allow parallelisation
 of the clearing in future.</p>
 </li>
-<li><p>core/fast-reboot: verify mem regions before fast reboot</p>
+<li><p class="first">core/fast-reboot: verify mem regions before fast reboot</p>
 <p>Run the mem_region sanity checkers before proceeding with fast
 reboot.</p>
 <p>This is the beginning of proactive sanity checks on opal data
@@ -227,19 +228,20 @@ for fast reboot (with complements the reactive disable_fast_reboot
 cases). This is encouraged to re-use and share any kind of debug
 code and unit test code.</p>
 </li>
-<li><p>fast-reboot: occ: Only delete /ibm, opal/power-mgt nodes if they exist</p></li>
-<li><p>core/fast-reboot: disable fast reboot upon fundamental entry/exit/locking errors</p>
+<li><p class="first">fast-reboot: occ: Only delete /ibm, opal/power-mgt nodes if they exist</p>
+</li>
+<li><p class="first">core/fast-reboot: disable fast reboot upon fundamental entry/exit/locking errors</p>
 <p>This disables fast reboot in several more cases where serious errors
 like lock corruption or call re-entrancy are detected.</p>
 </li>
-<li><p>capp: Disable fast-reboot whenever enable_capi_mode() is called</p>
+<li><p class="first">capp: Disable fast-reboot whenever enable_capi_mode() is called</p>
 <p>This patch updates phb4_set_capi_mode() to disable fast-reboot
 whenever enable_capi_mode() is called, irrespective to its return
 value. This should prevent against a possibility of not disabling
 fast-reboot when some changes to enable_capi_mode() causing return of
 an error and leaving CAPP in enabled mode.</p>
 </li>
-<li><p>fast-reboot: occ: Delete OCC child nodes in /ibm, opal/power-mgt</p>
+<li><p class="first">fast-reboot: occ: Delete OCC child nodes in /ibm, opal/power-mgt</p>
 <p>Fast-reboot in P8 fails to re-init OCC data as there are chipwise OCC
 nodes which are already present in the /ibm,opal/power-mgt node. These
 per-chip nodes hold the voltage IDs for each pstate and these can be
@@ -252,7 +254,7 @@ the re-init code to re-parse and populate the pstate data.</p>
 <h2>Debugging/SRESET improvemens<a class="headerlink" href="#debugging-sreset-improvemens" title="Permalink to this headline">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-5.11-rc1.html#skiboot-5-11-rc1"><span class="std std-ref">skiboot-5.11-rc1</span></a>:</p>
 <ul>
-<li><p>core/cpu: Prevent clobbering of stack guard for boot-cpu</p>
+<li><p class="first">core/cpu: Prevent clobbering of stack guard for boot-cpu</p>
 <p>Commit 90d53934c2da (“core/cpu: discover stack region size before
 initialising memory regions”) introduced memzero for struct cpu_thread
 in init_cpu_thread(). This has an unintended side effect of clobbering
@@ -277,7 +279,7 @@ CPU 0004 Backtrace:
 <p>So the patch provides a fix by tweaking the memset() call in
 init_cpu_thread() to skip over the stack-guard cannery.</p>
 </li>
-<li><p>core/lock.c: ensure valid start value for lock spin duration warning</p>
+<li><p class="first">core/lock.c: ensure valid start value for lock spin duration warning</p>
 <p>The previous fix in a8e6cc3f4 only addressed half of the problem, as
 we could also get an invalid value for start, causing us to fail
 in a weird way.</p>
@@ -298,7 +300,7 @@ and only checks the lock timeout if we got a valid start value.</p>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.10.html#skiboot-5-10"><span class="std std-ref">skiboot-5.10</span></a>:</p>
 <ul>
-<li><p>core/opal: allow some re-entrant calls</p>
+<li><p class="first">core/opal: allow some re-entrant calls</p>
 <p>This allows a small number of OPAL calls to succeed despite re-entering
 the firmware, and rejects others rather than aborting.</p>
 <p>This allows a system reset interrupt that interrupts OPAL to do something
@@ -307,11 +309,11 @@ stack traces to be printed, reboot the system.</p>
 <p>Use OPAL_INTERNAL_ERROR when rejecting, rather than OPAL_BUSY, which is
 used for many other things that does not mean a serious permanent error.</p>
 </li>
-<li><p>core/opal: abort in case of re-entrant OPAL call</p>
+<li><p class="first">core/opal: abort in case of re-entrant OPAL call</p>
 <p>The stack is already destroyed by the time we get here, so there
 is not much point continuing.</p>
 </li>
-<li><p>core/lock: Add lock timeout warnings</p>
+<li><p class="first">core/lock: Add lock timeout warnings</p>
 <p>There are currently no timeout warnings for locks in skiboot. We assume
 that the lock will eventually become free, which may not always be the
 case.</p>
@@ -320,7 +322,7 @@ than 5 seconds will throw a warning and stacktrace for that thread. This is
 useful for debugging siturations where a lock which hang, waiting for the
 lock to be freed.</p>
 </li>
-<li><p>core/lock: Add deadlock detection</p>
+<li><p class="first">core/lock: Add deadlock detection</p>
 <p>This adds simple deadlock detection. The detection looks for circular
 dependencies in the lock requests. It will abort and display a stack trace
 when a deadlock occurs.
@@ -328,7 +330,7 @@ The detection is enabled by DEBUG_LOCKS (enabled by default).
 While the detection may have a slight performance overhead, as there are
 not a huge number of locks in skiboot this overhead isn’t significant.</p>
 </li>
-<li><p>core/hmi: report processor recovery reason from core FIR bits on P9</p>
+<li><p class="first">core/hmi: report processor recovery reason from core FIR bits on P9</p>
 <p>When an error is encountered that causes processor recovery, HMI is
 generated if the recovery was successful. The reason is recorded in
 the core FIR, which gets copied into the WOF.</p>
@@ -343,7 +345,7 @@ msglog.</p>
 <p>This patch would have been useful because it tells us exactly that
 the problem is in the d-side ERAT:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>  <span class="mf">414.489690798</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Received</span> <span class="n">HMI</span> <span class="n">interrupt</span><span class="p">:</span> <span class="n">HMER</span> <span class="o">=</span> <span class="mh">0x2040000000000000</span>
-<span class="p">[</span>  <span class="mf">414.489693339</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">UOPWR</span><span class="mf">.0000000</span><span class="o">-</span><span class="n">Node0</span><span class="o">-</span><span class="n">Proc0</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">0</span> <span class="n">C</span><span class="p">:</span><span class="mi">1</span> <span class="n">T</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span> <span class="n">Processor</span> <span class="n">recovery</span> <span class="n">occurred</span><span class="o">.</span>
+<span class="p">[</span>  <span class="mf">414.489693339</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="p">[</span><span class="n">Loc</span><span class="p">:</span> <span class="n">UOPWR</span><span class="o">.</span><span class="mi">0000000</span><span class="o">-</span><span class="n">Node0</span><span class="o">-</span><span class="n">Proc0</span><span class="p">]:</span> <span class="n">P</span><span class="p">:</span><span class="mi">0</span> <span class="n">C</span><span class="p">:</span><span class="mi">1</span> <span class="n">T</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span> <span class="n">Processor</span> <span class="n">recovery</span> <span class="n">occurred</span><span class="o">.</span>
 <span class="p">[</span>  <span class="mf">414.489699837</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">Core</span> <span class="n">WOF</span> <span class="o">=</span> <span class="mh">0x0000000410000000</span> <span class="n">recovered</span> <span class="n">error</span><span class="p">:</span>
 <span class="p">[</span>  <span class="mf">414.489701543</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">LSU</span> <span class="o">-</span> <span class="n">SRAM</span> <span class="p">(</span><span class="n">DCACHE</span> <span class="n">parity</span><span class="p">,</span> <span class="n">etc</span><span class="p">)</span>
 <span class="p">[</span>  <span class="mf">414.489702341</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">HMI</span><span class="p">:</span> <span class="n">LSU</span> <span class="o">-</span> <span class="n">ERAT</span> <span class="n">multi</span> <span class="n">hit</span>
@@ -357,7 +359,7 @@ print something more useful. Until then, this gives some good data.</p>
 <div class="section" id="npu2-nvlink2-fixes">
 <h2>NPU2/NVLink2 Fixes<a class="headerlink" href="#npu2-nvlink2-fixes" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>npu2: Add performance tuning SCOM inits</p>
+<li><p class="first">npu2: Add performance tuning SCOM inits</p>
 <p>Peer-to-peer GPU bandwidth latency testing has produced some tunable
 values that improve performance. Add them to our device initialization.</p>
 <p>File these under things that need to be cleaned up with nice #defines
@@ -366,27 +368,27 @@ for the register names and bitfields when we get time.</p>
 topology, so introduce a helper to determine how many links go to a
 single GPU.</p>
 </li>
-<li><p>hw/npu2: Assign a unique LPARSHORTID per GPU</p>
+<li><p class="first">hw/npu2: Assign a unique LPARSHORTID per GPU</p>
 <p>This gets used elsewhere to index items in the XTS tables.</p>
 </li>
-<li><p>NPU2: dump NPU2 registers on npu2 HMI</p>
+<li><p class="first">NPU2: dump NPU2 registers on npu2 HMI</p>
 <p>Due to the nature of debugging npu2 issues, folk are wanting the
 full list of NPU2 registers dumped when there’s a problem.</p>
 </li>
-<li><p>npu2: Remove DD1 support</p>
+<li><p class="first">npu2: Remove DD1 support</p>
 <p>Major changes in the NPU between DD1 and DD2 necessitated a fair bit of
 revision-specific code.</p>
 <p>Now that all our lab machines are DD2, we no longer test anything on DD1
 and it’s time to get rid of it.</p>
 <p>Remove DD1-specific code and abort probe if we’re running on a DD1 machine.</p>
 </li>
-<li><p>npu2: Disable fast reboot</p>
+<li><p class="first">npu2: Disable fast reboot</p>
 <p>Fast reboot does not yet work right with the NPU. It’s been disabled on
 NVLink and OpenCAPI machines. Do the same for NVLink2.</p>
 <p>This amounts to a port of 3e4577939bbf (“npu: Fix broken fast reset”)
 from the npu code to npu2.</p>
 </li>
-<li><p>npu2: Use unfiltered mode in XTS tables</p>
+<li><p class="first">npu2: Use unfiltered mode in XTS tables</p>
 <p>The XTS_PID context table is limited to 256 possible pids/contexts. To
 relieve this limitation, make use of “unfiltered mode” instead.</p>
 <p>If an entry in the XTS_BDF table has the bit for unfiltered mode set, we
@@ -408,7 +410,7 @@ refcount, but keep things simple for now.</p>
 <h2>CAPI/OpenCAPI<a class="headerlink" href="#capi-opencapi" title="Permalink to this headline">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-5.11-rc1.html#skiboot-5-11-rc1"><span class="std std-ref">skiboot-5.11-rc1</span></a>:</p>
 <ul>
-<li><p>capi: Poll Err/Status register during CAPP recovery</p>
+<li><p class="first">capi: Poll Err/Status register during CAPP recovery</p>
 <p>This patch updates do_capp_recovery_scoms() to poll the CAPP
 Err/Status control register, check for CAPP-Recovery to complete/fail
 based on indications of BITS-1,5,9 and then proceed with the
@@ -425,20 +427,20 @@ max time to failure for CAPP-Recovery.</p>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.10.html#skiboot-5-10"><span class="std std-ref">skiboot-5.10</span></a>:</p>
 <ul>
-<li><p>npu2-opencapi: Add OpenCAPI OPAL API calls</p>
+<li><p class="first">npu2-opencapi: Add OpenCAPI OPAL API calls</p>
 <p>Add three OPAL API calls that are required by the ocxl driver.</p>
 <ul>
-<li><p>OPAL_NPU_SPA_SETUP</p>
+<li><p class="first">OPAL_NPU_SPA_SETUP</p>
 <p>The Shared Process Area (SPA) is a table containing one entry (a
 “Process Element”) per memory context which can be accessed by the
 OpenCAPI device.</p>
 </li>
-<li><p>OPAL_NPU_SPA_CLEAR_CACHE</p>
+<li><p class="first">OPAL_NPU_SPA_CLEAR_CACHE</p>
 <p>The NPU keeps a cache of recently accessed memory contexts. When a
 Process Element is removed from the SPA, the cache for the link must be
 cleared.</p>
 </li>
-<li><p>OPAL_NPU_TL_SET</p>
+<li><p class="first">OPAL_NPU_TL_SET</p>
 <p>The Transaction Layer specification defines several templates for
 messages to be exchanged on the link. During link setup, the host and
 device must negotiate what templates are supported on both sides and at
@@ -446,7 +448,7 @@ what rates those messages can be sent.</p>
 </li>
 </ul>
 </li>
-<li><p>npu2-opencapi: Train OpenCAPI links and setup devices</p>
+<li><p class="first">npu2-opencapi: Train OpenCAPI links and setup devices</p>
 <p>Scan the OpenCAPI links under the NPU, and for each link, reset the card,
 set up a device, train the link and register a PHB.</p>
 <p>Implement the necessary operations for the OpenCAPI PHB type.</p>
@@ -462,7 +464,7 @@ completely or to use the prbs31 test pattern.</p>
 </pre></div>
 </div>
 </li>
-<li><p>npu2-hw-procedures: Add support for OpenCAPI PHY link training</p>
+<li><p class="first">npu2-hw-procedures: Add support for OpenCAPI PHY link training</p>
 <p>Unlike NVLink, which uses the pci-virt framework to fake a PCI
 configuration space for NVLink devices, the OpenCAPI device model presents
 us with a real configuration space handled by the device over the OpenCAPI
@@ -471,11 +473,11 @@ link.</p>
 probing, so that config space can be accessed, rather than having link
 training being triggered by the Linux driver.</p>
 </li>
-<li><p>npu2-opencapi: Configure NPU for OpenCAPI</p>
+<li><p class="first">npu2-opencapi: Configure NPU for OpenCAPI</p>
 <p>Scan the device tree for NPUs with OpenCAPI links and configure the NPU per
 the initialisation sequence in the NPU OpenCAPI workbook.</p>
 </li>
-<li><p>capp: Make error in capp timebase sync a non-fatal error</p>
+<li><p class="first">capp: Make error in capp timebase sync a non-fatal error</p>
 <p>Presently when we encounter an error while synchronizing capp timebase
 with chip-tod at the end of enable_capi_mode() we return an
 error. This has an to unintended consequences. First this will prevent
@@ -491,7 +493,7 @@ make the current implementation align with the one in kernel ‘cxl’
 driver which also assumes the PSL timebase sync errors as non-fatal
 init error.</p>
 </li>
-<li><p>npu2-opencapi: Fix assert on link reset during init</p>
+<li><p class="first">npu2-opencapi: Fix assert on link reset during init</p>
 <p>We don’t support resetting an opencapi link yet.</p>
 <p>Commit fe6d86b9 (“pci: Make fast reboot creset PHBs in parallel”)
 tries resetting any PHB whose slot defines a ‘run_sm’ callback. It
@@ -502,18 +504,19 @@ the ‘freset’ callback, which is not yet defined for opencapi.</p>
 log because the PHB cannot be reset, which is correct. It will all go
 away when we add support for resetting an opencapi link.</p>
 </li>
-<li><p>capp: Add lid definition for P9 DD-2.2</p>
+<li><p class="first">capp: Add lid definition for P9 DD-2.2</p>
 <p>Update fsp_lid_map to include CAPP ucode lid for phb4-chipid ==
 0x202d1 that corresponds to P9 DD-2.2 chip.</p>
 </li>
-<li><p>capp: Disable fast-reboot when capp is enabled</p></li>
+<li><p class="first">capp: Disable fast-reboot when capp is enabled</p>
+</li>
 </ul>
 </div>
 <div class="section" id="pci">
 <h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-5.11-rc1.html#skiboot-5-11-rc1"><span class="std std-ref">skiboot-5.11-rc1</span></a>:</p>
 <ul>
-<li><p>phb4: Reset FIR/NFIR registers before PHB4 probe</p>
+<li><p class="first">phb4: Reset FIR/NFIR registers before PHB4 probe</p>
 <p>The function phb4_probe_stack() resets “ETU Reset Register” to
 unfreeze the PHB before it performs mmio access on the PHB. However in
 case the FIR/NFIR registers are set while entering this function,
@@ -543,7 +546,7 @@ ETU reset to enable mmio access to the PHB.</p>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.10.html#skiboot-5-10"><span class="std std-ref">skiboot-5.10</span></a>:</p>
 <ul>
-<li><p>pci: Reduce log level of error message</p>
+<li><p class="first">pci: Reduce log level of error message</p>
 <p>If a link doesn’t train, we can end up with error messages like this:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">63.027261959</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0032[8:2]: LINK: Timeout waiting for electrical link</span>
 <span class="p">[</span>   <span class="mf">63.027265573</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0032:00:00.0 Error -6 resetting</span>
@@ -554,7 +557,7 @@ the core PCI code and is confusing to print to the console.</p>
 <p>This reduces the second print to debug level so it’s not seen by the
 console by default.</p>
 </li>
-<li><p>Revert “platforms/astbmc/slots.c: Allow comparison of bus numbers when matching slots”</p>
+<li><p class="first">Revert “platforms/astbmc/slots.c: Allow comparison of bus numbers when matching slots”</p>
 <p>This reverts commit bda7cc4d0354eb3f66629d410b2afc08c79f795f.</p>
 <p>Ben says:
 It’s on purpose that we do NOT compare the bus numbers,
@@ -564,7 +567,7 @@ devfn’s along the way bcs the bus numbering isn’t fixed
 this breaks all slot naming etc… stuff on anything using
 the “skiboot” slot tables (P8 opp typically)</p>
 </li>
-<li><p>core/pci-dt-slot: Fix booting with no slot map</p>
+<li><p class="first">core/pci-dt-slot: Fix booting with no slot map</p>
 <p>Currently if you don’t have a slot map in the device tree in
 /ibm,pcie-slots, you can crash with a back trace like this:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CPU</span> <span class="mi">0034</span> <span class="n">Backtrace</span><span class="p">:</span>
@@ -618,7 +621,7 @@ entry point (ie. no HDAT).</p>
 <h2>Bugs Fixed<a class="headerlink" href="#bugs-fixed" title="Permalink to this headline">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-5.11-rc1.html#skiboot-5-11-rc1"><span class="std std-ref">skiboot-5.11-rc1</span></a>:</p>
 <ul>
-<li><p>cpufeatures: Fix setting DARN and SCV HWCAP feature bits</p>
+<li><p class="first">cpufeatures: Fix setting DARN and SCV HWCAP feature bits</p>
 <p>DARN and SCV has been assigned AT_HWCAP2 (32-63) bits:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define PPC_FEATURE2_DARN               0x00200000 /* darn random number insn */</span>
 <span class="c1">#define PPC_FEATURE2_SCV                0x00100000 /* scv syscall */</span>
@@ -627,7 +630,7 @@ entry point (ie. no HDAT).</p>
 <p>A cpufeatures-aware OS will not advertise these to userspace without
 this patch.</p>
 </li>
-<li><p>xive: disable store EOI support</p>
+<li><p class="first">xive: disable store EOI support</p>
 <p>Hardware has limitations which would require to put a sync after each
 store EOI to make sure the MMIO operations that change the ESB state
 are ordered. This is a killer for performance and the PHBs do not
@@ -636,33 +639,39 @@ hardware is improved.</p>
 <p>Also, while we are at changing the XIVE source flags, let’s fix the
 settings for the PHB4s which should follow these rules :</p>
 <ul class="simple">
-<li><p>SHIFT_BUG    for DD10</p></li>
-<li><p>STORE_EOI    for DD20 and if enabled</p></li>
-<li><p>TRIGGER_PAGE for DDx0 and if not STORE_EOI</p></li>
+<li>SHIFT_BUG    for DD10</li>
+<li>STORE_EOI    for DD20 and if enabled</li>
+<li>TRIGGER_PAGE for DDx0 and if not STORE_EOI</li>
 </ul>
 </li>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.10.html#skiboot-5-10"><span class="std std-ref">skiboot-5.10</span></a>:</p>
 <ul>
-<li><p>xive: fix opal_xive_set_vp_info() error path</p>
+<li><p class="first">xive: fix opal_xive_set_vp_info() error path</p>
 <p>In case of error, opal_xive_set_vp_info() will return without
 unlocking the xive object. This is most certainly a typo.</p>
 </li>
-<li><p>hw/imc: don’t access homer memory if it was not initialised</p>
+<li><p class="first">hw/imc: don’t access homer memory if it was not initialised</p>
 <p>This can happen under mambo, at least.</p>
 </li>
-<li><p>nvram: run nvram_validate() after nvram_reformat()</p>
+<li><p class="first">nvram: run nvram_validate() after nvram_reformat()</p>
 <p>nvram_reformat() sets nvram_valid = true, but it does not set
 skiboot_part_hdr. Call nvram_validate() instead, which sets
 everything up properly.</p>
 </li>
-<li><p>dts: Zero struct to avoid using uninitialised value</p></li>
-<li><p>hw/imc: Don’t dereference possible NULL</p></li>
-<li><p>libstb/create-container: munmap() signature file address</p></li>
-<li><p>npu2-opencapi: Fix memory leak</p></li>
-<li><p>npu2: Fix possible NULL dereference</p></li>
-<li><p>occ-sensors: Remove NULL checks after dereference</p></li>
-<li><p>core/ipmi-opal: Add interrupt-parent property for ipmi node on P9 and above.</p>
+<li><p class="first">dts: Zero struct to avoid using uninitialised value</p>
+</li>
+<li><p class="first">hw/imc: Don’t dereference possible NULL</p>
+</li>
+<li><p class="first">libstb/create-container: munmap() signature file address</p>
+</li>
+<li><p class="first">npu2-opencapi: Fix memory leak</p>
+</li>
+<li><p class="first">npu2: Fix possible NULL dereference</p>
+</li>
+<li><p class="first">occ-sensors: Remove NULL checks after dereference</p>
+</li>
+<li><p class="first">core/ipmi-opal: Add interrupt-parent property for ipmi node on P9 and above.</p>
 <p>dtc complains below warning with newer 4.2+ kernels.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dts</span><span class="p">:</span> <span class="ne">Warning</span> <span class="p">(</span><span class="n">interrupts_property</span><span class="p">):</span> <span class="n">Missing</span> <span class="n">interrupt</span><span class="o">-</span><span class="n">parent</span> <span class="k">for</span> <span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">opal</span><span class="o">/</span><span class="n">ipmi</span>
 </pre></div>
@@ -675,7 +684,7 @@ and above, which allows ipmi-opal to properly use the OPAL irqchip.</p>
 <div class="section" id="other-fixes-and-improvements">
 <h2>Other fixes and improvements<a class="headerlink" href="#other-fixes-and-improvements" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>core/cpu: discover stack region size before initialising memory regions</p>
+<li><p class="first">core/cpu: discover stack region size before initialising memory regions</p>
 <p>Stack allocation first allocates a memory region sized to hold stacks
 for all possible CPUs up to the maximum PIR of the architecture, zeros
 the region, then initialises all stacks. Max PIR is 32768 on POWER9,
@@ -683,17 +692,17 @@ which is 512MB for stacks.</p>
 <p>The stack region is then shrunk after CPUs are discovered, but this is
 a bit of a hack, and it leaves a hole in the memory allocation regions
 as it’s done after mem regions are initialised.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mh">0x000000000000</span><span class="o">.</span><span class="mf">.00002</span><span class="n">fffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">os</span><span class="o">-</span><span class="n">reserve</span> <span class="o">-</span> <span class="n">OS</span>
-<span class="mh">0x000030000000</span><span class="o">.</span><span class="mf">.0000303</span><span class="n">fffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">code</span> <span class="o">-</span> <span class="n">OPAL</span>
-<span class="mh">0x000030400000</span><span class="o">.</span><span class="mf">.000030</span><span class="n">ffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">heap</span> <span class="o">-</span> <span class="n">OPAL</span>
-<span class="mh">0x000031000000</span><span class="o">.</span><span class="mf">.000031</span><span class="n">bfffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">data</span> <span class="o">-</span> <span class="n">OPAL</span>
-<span class="mh">0x000031c00000</span><span class="o">.</span><span class="mf">.000031</span><span class="n">c0ffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">stacks</span> <span class="o">-</span> <span class="n">OPAL</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mh">0x000000000000</span><span class="o">..</span><span class="mi">00002</span><span class="n">fffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">os</span><span class="o">-</span><span class="n">reserve</span> <span class="o">-</span> <span class="n">OS</span>
+<span class="mh">0x000030000000</span><span class="o">..</span><span class="mi">0000303</span><span class="n">fffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">code</span> <span class="o">-</span> <span class="n">OPAL</span>
+<span class="mh">0x000030400000</span><span class="o">..</span><span class="mi">000030</span><span class="n">ffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">heap</span> <span class="o">-</span> <span class="n">OPAL</span>
+<span class="mh">0x000031000000</span><span class="o">..</span><span class="mi">000031</span><span class="n">bfffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">data</span> <span class="o">-</span> <span class="n">OPAL</span>
+<span class="mh">0x000031c00000</span><span class="o">..</span><span class="mi">000031</span><span class="n">c0ffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">stacks</span> <span class="o">-</span> <span class="n">OPAL</span>
 <span class="o">***</span> <span class="n">gap</span> <span class="o">***</span>
-<span class="mh">0x000051c00000</span><span class="o">.</span><span class="mf">.000051</span><span class="n">d01fff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">allocs</span><span class="o">-</span><span class="n">memory</span><span class="o">@</span><span class="mi">0</span> <span class="o">-</span> <span class="n">OPAL</span>
-<span class="mh">0x000051d02000</span><span class="o">.</span><span class="mf">.00007</span><span class="n">fffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">allocs</span><span class="o">-</span><span class="n">memory</span><span class="o">@</span><span class="mi">0</span> <span class="o">-</span> <span class="n">OS</span>
-<span class="mh">0x000080000000</span><span class="o">.</span><span class="mf">.000080</span><span class="n">b3cdff</span> <span class="p">:</span> <span class="n">initramfs</span> <span class="o">-</span> <span class="n">OPAL</span>
-<span class="mh">0x000080b3ce00</span><span class="o">.</span><span class="mf">.000080</span><span class="n">b7cdff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">fake</span><span class="o">-</span><span class="n">nvram</span> <span class="o">-</span> <span class="n">OPAL</span>
-<span class="mh">0x000080b7ce00</span><span class="o">.</span><span class="mf">.0000</span><span class="n">ffffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">allocs</span><span class="o">-</span><span class="n">memory</span><span class="o">@</span><span class="mi">0</span> <span class="o">-</span> <span class="n">OS</span>
+<span class="mh">0x000051c00000</span><span class="o">..</span><span class="mi">000051</span><span class="n">d01fff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">allocs</span><span class="o">-</span><span class="n">memory</span><span class="nd">@0</span> <span class="o">-</span> <span class="n">OPAL</span>
+<span class="mh">0x000051d02000</span><span class="o">..</span><span class="mi">00007</span><span class="n">fffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">allocs</span><span class="o">-</span><span class="n">memory</span><span class="nd">@0</span> <span class="o">-</span> <span class="n">OS</span>
+<span class="mh">0x000080000000</span><span class="o">..</span><span class="mi">000080</span><span class="n">b3cdff</span> <span class="p">:</span> <span class="n">initramfs</span> <span class="o">-</span> <span class="n">OPAL</span>
+<span class="mh">0x000080b3ce00</span><span class="o">..</span><span class="mi">000080</span><span class="n">b7cdff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">fake</span><span class="o">-</span><span class="n">nvram</span> <span class="o">-</span> <span class="n">OPAL</span>
+<span class="mh">0x000080b7ce00</span><span class="o">..</span><span class="mi">0000</span><span class="n">ffffffff</span> <span class="p">:</span> <span class="n">ibm</span><span class="p">,</span><span class="n">firmware</span><span class="o">-</span><span class="n">allocs</span><span class="o">-</span><span class="n">memory</span><span class="nd">@0</span> <span class="o">-</span> <span class="n">OS</span>
 </pre></div>
 </div>
 <p>This change moves zeroing into the per-cpu stack setup. The boot CPU
@@ -703,20 +712,21 @@ device tree, before mem regions are intialised.</p>
 <p>This results in all memory being accounted within memory regions,
 and less memory fragmentation of OPAL allocations.</p>
 </li>
-<li><p>Make gard display show that a record is cleared</p>
+<li><p class="first">Make gard display show that a record is cleared</p>
 <p>When clearing gard records, Hostboot only modifies the record_id
 portion to be 0xFFFFFFFF.  The remainder of the entry remains.
 Without this change it can be confusing to users to know that
 the record they are looking at is no longer valid.</p>
 </li>
-<li><p>Reserve OPAL API number for opal_handle_hmi2 function.</p></li>
-<li><p>dts: spl_wakeup: Remove all workarounds in the spl wakeup logic</p>
+<li><p class="first">Reserve OPAL API number for opal_handle_hmi2 function.</p>
+</li>
+<li><p class="first">dts: spl_wakeup: Remove all workarounds in the spl wakeup logic</p>
 <p>We coded few workarounds in special wakeup logic to handle the
 buggy firmware. Now that is fixed remove them as they break the
 special wakeup protocol. As per the spec we should not de-assert
 beofre assert is complete. So follow this protocol.</p>
 </li>
-<li><p>build: use thin archives rather than incremental linking</p>
+<li><p class="first">build: use thin archives rather than incremental linking</p>
 <p>This changes to build system to use thin archives rather than
 incremental linking for built-in.o, similar to recent change to Linux.
 built-in.o is renamed to built-in.a, and is created as a thin archive
@@ -730,7 +740,7 @@ time optimisation in toolchains which might be interesting for skiboot
 particularly for size reductions.</p>
 <p>Size of build tree before this patch is 34.4MB, afterwards 23.1MB.</p>
 </li>
-<li><p>core/init: Assert when kernel not found</p>
+<li><p class="first">core/init: Assert when kernel not found</p>
 <p>If the kernel doesn’t load out of flash or there is nothing at
 KERNEL_LOAD_BASE, we end up with an esoteric message as we try to
 branch to out of skiboot into nothing</p>
@@ -755,7 +765,7 @@ branch to out of skiboot into nothing</p>
 </pre></div>
 </div>
 </li>
-<li><p>core: Fix ‘opal-runtime-size’ property</p>
+<li><p class="first">core: Fix ‘opal-runtime-size’ property</p>
 <p>We are populating ‘opal-runtime-size’ before calculating actual stack size.
 Hence we endup having wrong runtime size (ex: on P9 it shows ~540MB while
 actual size is around ~40MB). Note that only device tree property is shows
@@ -763,7 +773,7 @@ wrong value, but reserved-memory reflects correct size.</p>
 <p>init_all_cpus() calculates and updates actual stack size. Hence move this
 function call before add_opal_node().</p>
 </li>
-<li><p>mambo: Add fw-feature flags for security related settings</p>
+<li><p class="first">mambo: Add fw-feature flags for security related settings</p>
 <p>Newer firmwares report some feature flags related to security
 settings via HDAT. On real hardware skiboot translates these into
 device tree properties. For testing purposes just create the
@@ -776,14 +786,15 @@ in src/usr/hdat/hdatiplparms.H.</p>
 <p>Also add an environment variable for easily toggling the top-level
 “security on” setting.</p>
 </li>
-<li><p>direct-controls: mambo fix for multiple chips</p></li>
-<li><p>libflash/blocklevel: Correct miscalculation in blocklevel_smart_erase()</p>
+<li><p class="first">direct-controls: mambo fix for multiple chips</p>
+</li>
+<li><p class="first">libflash/blocklevel: Correct miscalculation in blocklevel_smart_erase()</p>
 <p>If blocklevel_smart_erase() detects that the smart erase fits entire in
 one erase block, it has an early bail path. In this path it miscaculates
 where in the buffer the backend needs to read from to perform the final
 write.</p>
 </li>
-<li><p>libstb/secureboot: Fix logging of secure verify messages.</p>
+<li><p class="first">libstb/secureboot: Fix logging of secure verify messages.</p>
 <p>Currently we are logging secure verify/enforce messages in PR_EMERG
 level even when there is no secureboot mode enabled. So reduce the
 log level to PR_ERR when secureboot mode is OFF.</p>
@@ -796,16 +807,17 @@ log level to PR_ERR when secureboot mode is OFF.</p>
 as easily exporting the area of memory you need to dump to feed to
 <cite>extract-gcov</cite>.</p>
 <ul>
-<li><p>cpu_idle_job: relax a bit</p>
+<li><p class="first">cpu_idle_job: relax a bit</p>
 <p>This <em>dramatically</em> improves kernel boot time with GCOV builds</p>
 <p>from ~3minutes between loading kernel and switching the HILE
 bit down to around 10 seconds.</p>
 </li>
-<li><p>gcov: Another GCC, another gcov tweak</p></li>
-<li><p>Keep constructors with priorities</p>
+<li><p class="first">gcov: Another GCC, another gcov tweak</p>
+</li>
+<li><p class="first">Keep constructors with priorities</p>
 <p>Fixes GCOV builds with gcc7, which uses this.</p>
 </li>
-<li><p>gcov: Add gcov data struct to sysfs</p>
+<li><p class="first">gcov: Add gcov data struct to sysfs</p>
 <p>Extracting the skiboot gcov data is currently a tedious process which
 involves taking a mem dump of skiboot and searching for the gcov_info
 struct.
@@ -817,7 +829,6 @@ data to be copied directly into userspace and processed.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -858,15 +869,17 @@ data to be copied directly into userspace and processed.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -883,15 +896,14 @@ data to be copied directly into userspace and processed.</p>
         <li class="right" >
           <a href="skiboot-5.10.6.html" title="skiboot-5.10.6"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.11</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Secvar Binding &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Secvar Binding &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -32,11 +34,10 @@
         <li class="right" >
           <a href="power-mgt/psr.html" title="power-mgt/psr"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" accesskey="U">ibm,opal</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Secvar Binding</a></li> 
+          <li class="nav-item nav-item-2"><a href="../ibm,opal.html" accesskey="U">ibm,opal</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -60,11 +61,13 @@ system.</p>
 variables. It will not be created if the system does not.</p>
 <p>Properties:</p>
 <ul>
-<li><p>compatible</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">compatible</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>string</p>
+<dt>Value type:</dt>
+<dd><p class="first last">string</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -82,11 +85,13 @@ which defines the basic-level compatibility of the secvar implementation.
 This includes the basic behavior of the API (excluding the data format),
 and the expected device tree properties contained in this node.</p>
 </li>
-<li><p>format</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">format</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>string</p>
+<dt>Value type:</dt>
+<dd><p class="first last">string</p>
 </dd>
 </dl>
 <p>This property defines the format of data passed in and out of the secvar
@@ -95,11 +100,13 @@ string in compatible.</p>
 <p>The format defined by this string should be documented by the corresponding
 backend.</p>
 </li>
-<li><p>status</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">status</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>string</p>
+<dt>Value type:</dt>
+<dd><p class="first last">string</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -113,11 +120,13 @@ are inaccessible for some reason.</p>
 <p>Failures are NOT caused by malformed data loaded or processed in either
 storage or backend drivers, as these are faults correctable by a user.</p>
 </li>
-<li><p>update-status</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">update-status</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u64&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u64&gt;</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -129,11 +138,13 @@ intended.</p>
 Any additional error states that may be specific to a backend should
 be stored in the backend node.</p>
 </li>
-<li><p>max-var-size</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">max-var-size</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u64&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u64&gt;</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -144,11 +155,13 @@ reject loading variables larger than this value.</p>
 value is determined by the storage driver, and may differ across
 platforms.</p>
 </li>
-<li><p>max-var-key-len</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">max-var-key-len</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u64&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u64&gt;</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -176,35 +189,35 @@ changed in code.</p>
 that best fits its error condition. The following table defines the
 general intent of each error code, check backend specific documentation
 for more detail.</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 27%" />
-<col style="width: 73%" />
+<col width="27%" />
+<col width="73%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p>update-status</p></td>
-<td><p>Generic Reason</p></td>
+<tbody valign="top">
+<tr class="row-odd"><td>update-status</td>
+<td>Generic Reason</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_SUCCESS</p></td>
-<td><p>Updates were found and processed successfully</p></td>
+<tr class="row-even"><td>OPAL_SUCCESS</td>
+<td>Updates were found and processed successfully</td>
 </tr>
-<tr class="row-odd"><td><p>OPAL_EMPTY</p></td>
-<td><p>No updates were found, none processed</p></td>
+<tr class="row-odd"><td>OPAL_EMPTY</td>
+<td>No updates were found, none processed</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_PARAMETER</p></td>
-<td><p>Malformed, or unexpected update data blob</p></td>
+<tr class="row-even"><td>OPAL_PARAMETER</td>
+<td>Malformed, or unexpected update data blob</td>
 </tr>
-<tr class="row-odd"><td><p>OPAL_PERMISSION</p></td>
-<td><p>Update failed to apply, possible auth failure</p></td>
+<tr class="row-odd"><td>OPAL_PERMISSION</td>
+<td>Update failed to apply, possible auth failure</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_HARDWARE</p></td>
-<td><p>Misc. storage-related error</p></td>
+<tr class="row-even"><td>OPAL_HARDWARE</td>
+<td>Misc. storage-related error</td>
 </tr>
-<tr class="row-odd"><td><p>OPAL_RESOURCE</p></td>
-<td><p>Out of space (reported by storage</p></td>
+<tr class="row-odd"><td>OPAL_RESOURCE</td>
+<td>Out of space (reported by storage</td>
 </tr>
-<tr class="row-even"><td><p>OPAL_NO_MEM</p></td>
-<td><p>Out of memory</p></td>
+<tr class="row-even"><td>OPAL_NO_MEM</td>
+<td>Out of memory</td>
 </tr>
 </tbody>
 </table>
@@ -225,7 +238,6 @@ PK, the system will be in “secure mode” until the PK is deleted.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -256,15 +268,17 @@ PK, the system will be in “secure mode” until the PK is deleted.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -281,16 +295,15 @@ PK, the system will be in “secure mode” until the PK is deleted.</p>
         <li class="right" >
           <a href="power-mgt/psr.html" title="power-mgt/psr"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Secvar Binding</a></li> 
+          <li class="nav-item nav-item-2"><a href="../ibm,opal.html" >ibm,opal</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

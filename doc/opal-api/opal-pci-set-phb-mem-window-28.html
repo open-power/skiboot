@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL_PCI_SET_PHB_MEM_WINDOW &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL_PCI_SET_PHB_MEM_WINDOW &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-pci-set-phb-capi-mode-93.html" title="OPAL_PCI_SET_PHB_CAPI_MODE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PHB_MEM_WINDOW</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -57,8 +58,8 @@
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Appears to be POWER7 p7ioc specific. Likely to be removed soon.</p>
+<p class="first admonition-title">Note</p>
+<p class="last">Appears to be POWER7 p7ioc specific. Likely to be removed soon.</p>
 </div>
 <p><strong>WARNING:</strong> following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -68,27 +69,29 @@ PHBs. OPAL sets IO space for P7IOC and KVM cannot relocate this. KVM should
 changes these windows only while all devices below the PHB are disabled for
 PCI memory ops, and with the target window in disabled state (where supported
 by PHB hardware).</p>
-<dl>
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">window_type</span></code></dt><dd><p>specifies 32-bit or 64-bit PCI memory</p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
+<dd>is the value from the PHB node ibm,opal-phbid property.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">window_type</span></code></dt>
+<dd><p class="first">specifies 32-bit or 64-bit PCI memory</p>
 <p>‘0’ selects IO space, and is not supported for relocation. OPAL
 returns OPAL_UNSUPPORTED for this value.</p>
 <p>‘1’ selects 32-bit PCI memory space</p>
-<p>‘2’ selects 64 bit PCI memory space</p>
+<p class="last">‘2’ selects 64 bit PCI memory space</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">window_num</span></code></dt><dd><p>is the MMIO window number within the specified PCI memory space</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">starting_real_address</span></code></dt><dd><p>specifies the location within sytsem (processor)real
+<dt><code class="docutils literal notranslate"><span class="pre">window_num</span></code></dt>
+<dd>is the MMIO window number within the specified PCI memory space</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">starting_real_address</span></code></dt>
+<dd>specifies the location within sytsem (processor)real
 address space this MMIO window starts. This must be a location within the
-IO Hub or PHB node ibm,opal-mmio-real property.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">starting_pci_address</span></code></dt><dd><p>specifies the location within PCI 32 or 64-bit
+IO Hub or PHB node ibm,opal-mmio-real property.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">starting_pci_address</span></code></dt>
+<dd>specifies the location within PCI 32 or 64-bit
 address space that this MMIO window starts. For 64-bit PCI memory, this
 must be within the low order 60 bit (1 Exabyte) region of PCI memory.
-Addresses above 1EB are reserved to IODA definitions.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">segment_size</span></code></dt><dd><p>defines the segment size of this window, in the same format
+Addresses above 1EB are reserved to IODA definitions.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">segment_size</span></code></dt>
+<dd>defines the segment size of this window, in the same format
 as and a matching value from the ibm,opal-memwin32/64 &lt;segment_size&gt;
 property. The window total size, in bytes, is the segment_size times the
 ibm,opal-memwin32/64 &lt;num_segments&gt; property and must not extend beyond
@@ -98,8 +101,7 @@ supported for the specifice window. The host must assure that the
 cumulative address space for all enabled windows does not exceed the total
 PHB 32-bit or 64-bit real address window space, or extend outside these
 address ranges, and that no windows overlap each other in real or PCI
-address space. OPAL does not validate those conditions.</p>
-</dd>
+address space. OPAL does not validate those conditions.</dd>
 </dl>
 <p>A segment size of ‘0’ indicates to disable this MMIO window. If the PHB
 hardware does not support disabling a window, OPAL returns OPAL_UNSUPPORTED
@@ -118,7 +120,6 @@ ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -138,15 +139,17 @@ ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -163,15 +166,14 @@ ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.</p>
         <li class="right" >
           <a href="opal-pci-set-phb-capi-mode-93.html" title="OPAL_PCI_SET_PHB_CAPI_MODE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PHB_MEM_WINDOW</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

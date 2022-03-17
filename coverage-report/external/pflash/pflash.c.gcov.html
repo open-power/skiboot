@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">450</td>
-            <td class="headerCovTableEntry">761</td>
-            <td class="headerCovTableEntryLo">59.1 %</td>
+            <td class="headerCovTableEntry">760</td>
+            <td class="headerCovTableEntryLo">59.2 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-13 12:18:09</td>
+            <td class="headerValue">2022-03-17 07:10:58</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">12</td>
@@ -133,7 +133,7 @@
 <a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">         12 :         if (!must_confirm)</span></a>
 <a name="63"><span class="lineNum">      63 </span>                :            :                 return true;</a>
 <a name="64"><span class="lineNum">      64 </span>                :            : </a>
-<a name="65"><span class="lineNum">      65 </span>                :<span class="lineCov">          8 :         printf(&quot;WARNING ! This will modify your %s flash chip content !\n&quot;,</span></a>
+<a name="65"><span class="lineNum">      65 </span>                :<span class="lineCov">         16 :         printf(&quot;WARNING ! This will modify your %s flash chip content !\n&quot;,</span></a>
 <a name="66"><span class="lineNum">      66 </span>                :<span class="lineCov">          8 :                bmc_flash ? &quot;BMC&quot; : &quot;HOST&quot;);</span></a>
 <a name="67"><span class="lineNum">      67 </span>                :<span class="lineCov">          8 :         printf(&quot;Enter \&quot;yes\&quot; to confirm:&quot;);</span></a>
 <a name="68"><span class="lineNum">      68 </span>                :<span class="lineCov">          8 :         memset(yes, 0, sizeof(yes));</span></a>
@@ -229,9 +229,9 @@
 <a name="158"><span class="lineNum">     158 </span>                :<span class="lineCov">          2 :         printf(&quot;Flash info:\n&quot;);</span></a>
 <a name="159"><span class="lineNum">     159 </span>                :<span class="lineCov">          2 :         printf(&quot;-----------\n&quot;);</span></a>
 <a name="160"><span class="lineNum">     160 </span>                :<span class="lineCov">          2 :         printf(&quot;Name          = %s\n&quot;, flash-&gt;name);</span></a>
-<a name="161"><span class="lineNum">     161 </span>                :<span class="lineCov">          2 :         printf(&quot;Total size    = %&quot; PRIu64 &quot;MB\t Flags E:ECC, P:PRESERVED, R:READONLY, &quot;</span></a>
+<a name="161"><span class="lineNum">     161 </span>                :<span class="lineCov">          4 :         printf(&quot;Total size    = %&quot; PRIu64 &quot;MB\t Flags E:ECC, P:PRESERVED, R:READONLY, &quot;</span></a>
 <a name="162"><span class="lineNum">     162 </span>                :<span class="lineCov">          2 :                         &quot;B:BACKUP\n&quot;, flash-&gt;total_size &gt;&gt; 20);</span></a>
-<a name="163"><span class="lineNum">     163 </span>                :<span class="lineCov">          2 :         printf(&quot;Erase granule = %2d%-13sF:REPROVISION, V:VOLATILE, C:CLEARECC\n&quot;,</span></a>
+<a name="163"><span class="lineNum">     163 </span>                :<span class="lineCov">          4 :         printf(&quot;Erase granule = %2d%-13sF:REPROVISION, V:VOLATILE, C:CLEARECC\n&quot;,</span></a>
 <a name="164"><span class="lineNum">     164 </span>                :<span class="lineCov">          2 :                         flash-&gt;erase_granule &gt;&gt; 10, &quot;KB&quot;);</span></a>
 <a name="165"><span class="lineNum">     165 </span>                :            : </a>
 <a name="166"><span class="lineNum">     166 </span>                :<span class="lineCov">          2 :         if (bmc_flash)</span></a>
@@ -587,7 +587,7 @@
 <a name="516"><span class="lineNum">     516 </span>                :<span class="lineNoCov">          0 :                 if (rc) {</span></a>
 <a name="517"><span class="lineNum">     517 </span>                :<span class="lineNoCov">          0 :                         fprintf(stderr, &quot;Flash read error %d for&quot;</span></a>
 <a name="518"><span class="lineNum">     518 </span>                :            :                                 &quot; chunk at 0x%08x\n&quot;, rc, start);</a>
-<a name="519"><span class="lineNum">     519 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
+<a name="519"><span class="lineNum">     519 </span>                :            :                         break;</a>
 <a name="520"><span class="lineNum">     520 </span>                :            :                 }</a>
 <a name="521"><span class="lineNum">     521 </span>                :<span class="lineNoCov">          0 :                 rc = write(fd, file_buf, len);</span></a>
 <a name="522"><span class="lineNum">     522 </span>                :            :                 /*</a>
@@ -676,7 +676,7 @@
 <a name="605"><span class="lineNum">     605 </span>                :            : </a>
 <a name="606"><span class="lineNum">     606 </span>                :<span class="lineCov">         12 :         printf(&quot;Flags:\n&quot;);</span></a>
 <a name="607"><span class="lineNum">     607 </span>                :            : </a>
-<a name="608"><span class="lineNum">     608 </span>                :<span class="lineCov">         94 :         l = asprintf(&amp;flags, &quot;%s%s%s%s%s%s%s&quot;, has_ecc(ent) ? &quot;ECC [E]\n&quot; : &quot;&quot;,</span></a>
+<a name="608"><span class="lineNum">     608 </span>                :<span class="lineCov">         82 :         l = asprintf(&amp;flags, &quot;%s%s%s%s%s%s%s&quot;, has_ecc(ent) ? &quot;ECC [E]\n&quot; : &quot;&quot;,</span></a>
 <a name="609"><span class="lineNum">     609 </span>                :<span class="lineCov">         12 :                         has_flag(ent, FFS_MISCFLAGS_PRESERVED) ? &quot;PRESERVED [P]\n&quot; : &quot;&quot;,</span></a>
 <a name="610"><span class="lineNum">     610 </span>                :<span class="lineCov">         12 :                         has_flag(ent, FFS_MISCFLAGS_READONLY) ? &quot;READONLY [R]\n&quot; : &quot;&quot;,</span></a>
 <a name="611"><span class="lineNum">     611 </span>                :<span class="lineCov">         12 :                         has_flag(ent, FFS_MISCFLAGS_BACKUP) ? &quot;BACKUP [B]\n&quot; : &quot;&quot;,</span></a>

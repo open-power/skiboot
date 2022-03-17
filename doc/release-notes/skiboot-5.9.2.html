@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot-5.9.2 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot-5.9.2 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-5.9.1.html" title="skiboot-5.9.1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.2</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -52,13 +53,13 @@
 POWER9 platforms to avoid conflicting with the OCC use and an important
 NPU2 (NVLink2) fix.</p>
 <ul>
-<li><p>phb4: Fix lane equalisation setting</p>
+<li><p class="first">phb4: Fix lane equalisation setting</p>
 <p>Fix cut and paste from phb3. The sizes have changes now we have GEN4,
 so the check here needs to change also</p>
 <p>Without this we end up with the default settings (all ‘7’) rather
 than what’s in HDAT.</p>
 </li>
-<li><p>phb4: Fix PE mapping of M32 BAR</p>
+<li><p class="first">phb4: Fix PE mapping of M32 BAR</p>
 <p>The M32 BAR is the PHB4 region used to map all the non-prefetchable
 or 32-bit device BARs. It’s supposed to have its segments remapped
 via the MDT and Linux relies on that to assign them individual PE#.</p>
@@ -66,25 +67,25 @@ via the MDT and Linux relies on that to assign them individual PE#.</p>
 mode where PE# == segment#, thus causing EEH to freeze the wrong
 device or PE#.</p>
 </li>
-<li><p>phb4: Fix lost bit in PE number on config accesses</p>
+<li><p class="first">phb4: Fix lost bit in PE number on config accesses</p>
 <p>A PE number can be up to 9 bits, using a uint8_t won’t fly..</p>
 <p>That was causing error on config accesses to freeze the
 wrong PE.</p>
 </li>
-<li><p>phb4: Update inits</p>
+<li><p class="first">phb4: Update inits</p>
 <p>New init value from HW folks for the fence enable register.</p>
 <p>This clears bit 17 (CFG Write Error CA or UR response) and bit 22 (MMIO Write
 DAT_ERR Indication) and sets bit 21 (MMIO CFG Pending Error)</p>
 </li>
-<li><p>npu2: Move to new GPU memory map</p>
+<li><p class="first">npu2: Move to new GPU memory map</p>
 <p>There are three different ways we configure the MCD and memory map.</p>
 <ol class="arabic simple">
-<li><p>Old way (current way)
-Skiboot configures the MCD and puts GPUs at 4TB and below</p></li>
-<li><p>New way with MCD
-Hostboot configures the MCD and skiboot puts GPU at 4TB and above</p></li>
-<li><p>New way without MCD
-No one configures the MCD and skiboot puts GPU at 4TB and below</p></li>
+<li>Old way (current way)
+Skiboot configures the MCD and puts GPUs at 4TB and below</li>
+<li>New way with MCD
+Hostboot configures the MCD and skiboot puts GPU at 4TB and above</li>
+<li>New way without MCD
+No one configures the MCD and skiboot puts GPU at 4TB and below</li>
 </ol>
 <p>The change keeps option 1 and adds options 2 and 3.</p>
 <p>The different configurations are detected using certain scoms (see
@@ -96,14 +97,14 @@ support existing hostboot.</p>
 <p>Option 3 supports 6 GPUs and 4TB of memory but may have some
 performance impact.</p>
 </li>
-<li><p>p8-i2c: Don’t write the watermark register at init</p>
+<li><p class="first">p8-i2c: Don’t write the watermark register at init</p>
 <p>On P9 the I2C master is shared with the OCC. Currently the watermark
 values are set once at init time which is bad for two reasons:</p>
 <ol class="loweralpha simple">
-<li><p>We don’t take the OCC master lock before setting it. Which
-may cause issues if the OCC is currently using the master.</p></li>
-<li><p>The OCC might change the watermark levels and we need to reset
-them.</p></li>
+<li>We don’t take the OCC master lock before setting it. Which
+may cause issues if the OCC is currently using the master.</li>
+<li>The OCC might change the watermark levels and we need to reset
+them.</li>
 </ol>
 <p>Change this so that we set the watermark value when a new transaction
 is started rather than at init time.</p>
@@ -112,7 +113,6 @@ is started rather than at init time.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -132,15 +132,17 @@ is started rather than at init time.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -157,15 +159,14 @@ is started rather than at init time.</p>
         <li class="right" >
           <a href="skiboot-5.9.1.html" title="skiboot-5.9.1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.9.2</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

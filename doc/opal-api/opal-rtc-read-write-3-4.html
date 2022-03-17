@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL Real Time Clock (RTC) APIs &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL Real Time Clock (RTC) APIs &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-resync-timebase-79.html" title="OPAL_RESYNC_TIMEBASE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Real Time Clock (RTC) APIs</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -51,21 +52,23 @@
 <p>Read the Real Time Clock.</p>
 <div class="section" id="parameters">
 <h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">uint32_t*</span> <span class="pre">year_month_day</span></code></dt><dd><p>the year, month and day formatted as follows:</p>
-<ul class="simple">
-<li><p>bits  0-15 is bcd formatted year (0100-9999)</p></li>
-<li><p>bits 16-23 is bcd formatted month (01-12)</p></li>
-<li><p>bits 24-31 is bcd formatted day (01-31)</p></li>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t*</span> <span class="pre">year_month_day</span></code></dt>
+<dd><p class="first">the year, month and day formatted as follows:</p>
+<ul class="last simple">
+<li>bits  0-15 is bcd formatted year (0100-9999)</li>
+<li>bits 16-23 is bcd formatted month (01-12)</li>
+<li>bits 24-31 is bcd formatted day (01-31)</li>
 </ul>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">uint64_t*</span> <span class="pre">hour_minute_second_millisecond</span></code></dt><dd><p>the hour, minute, second and millisecond formatted as follows:</p>
-<ul class="simple">
-<li><p>bits  0-16 is reserved</p></li>
-<li><p>bits 17-24 is bcd formatted hour (00-23)</p></li>
-<li><p>bits 25-31 is bcd formatted minute (00-59)</p></li>
-<li><p>bits 32-39 is bcd formatted second (00-60)</p></li>
-<li><p>bits 40-63 is bcd formatted milliseconds (000000-999999)</p></li>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t*</span> <span class="pre">hour_minute_second_millisecond</span></code></dt>
+<dd><p class="first">the hour, minute, second and millisecond formatted as follows:</p>
+<ul class="last simple">
+<li>bits  0-16 is reserved</li>
+<li>bits 17-24 is bcd formatted hour (00-23)</li>
+<li>bits 25-31 is bcd formatted minute (00-59)</li>
+<li>bits 32-39 is bcd formatted second (00-60)</li>
+<li>bits 40-63 is bcd formatted milliseconds (000000-999999)</li>
 </ul>
 </dd>
 </dl>
@@ -95,21 +98,21 @@ return the retreived value rather than <a class="reference internal" href="retur
 </div>
 <div class="section" id="return-codes">
 <h3>Return codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h3>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>parameters now contain the current time, or one read from cache.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>error in retrieving the time. May be transient error,
-may be permanent.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>year_month_day or hour_minute_second_millisecond parameters are NULL</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>something went wrong, Possibly reported in error log.
-This can be a transient error</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt><dd><p>request is in flight</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt><dd><p>request may be in flight</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>parameters now contain the current time, or one read from cache.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
+<dd>error in retrieving the time. May be transient error,
+may be permanent.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>year_month_day or hour_minute_second_millisecond parameters are NULL</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
+<dd>something went wrong, Possibly reported in error log.
+This can be a transient error</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt>
+<dd>request is in flight</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt>
+<dd>request may be in flight</dd>
 </dl>
 </div>
 </div>
@@ -123,7 +126,6 @@ writes are ignored. There can only be one write in flight at any one time.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -157,15 +159,17 @@ writes are ignored. There can only be one write in flight at any one time.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -182,15 +186,14 @@ writes are ignored. There can only be one write in flight at any one time.</p>
         <li class="right" >
           <a href="opal-resync-timebase-79.html" title="OPAL_RESYNC_TIMEBASE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL Real Time Clock (RTC) APIs</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

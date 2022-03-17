@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Skiboot overview &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Skiboot overview &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,9 +34,8 @@
         <li class="right" >
           <a href="index.html" title="SkiBoot Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Skiboot overview</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -51,78 +52,79 @@ Along with loading the bootloader, it provides some runtime
 services to the OS (typically Linux).</p>
 <div class="section" id="source-layout">
 <h2>Source layout<a class="headerlink" href="#source-layout" title="Permalink to this headline">¶</a></h2>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 16%" />
-<col style="width: 84%" />
+<col width="16%" />
+<col width="84%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Directory</p></th>
-<th class="head"><p>Content</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Directory</th>
+<th class="head">Content</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>asm/</p></td>
-<td><p>small amount, mainly entry points</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>asm/</td>
+<td>small amount, mainly entry points</td>
 </tr>
-<tr class="row-odd"><td><p>ccan/</p></td>
-<td><p>bits from <a class="reference external" href="https://ccodearchive.net/">CCAN</a></p></td>
+<tr class="row-odd"><td>ccan/</td>
+<td>bits from <a class="reference external" href="https://ccodearchive.net/">CCAN</a></td>
 </tr>
-<tr class="row-even"><td><p>core/</p></td>
-<td><p>common code among machines.</p></td>
+<tr class="row-even"><td>core/</td>
+<td>common code among machines.</td>
 </tr>
-<tr class="row-odd"><td><p>doc/</p></td>
-<td><p>not enough here</p></td>
+<tr class="row-odd"><td>doc/</td>
+<td>not enough here</td>
 </tr>
-<tr class="row-even"><td><p>external/</p></td>
-<td><p>tools and userspace components</p></td>
+<tr class="row-even"><td>external/</td>
+<td>tools and userspace components</td>
 </tr>
-<tr class="row-odd"><td><p>hdata/</p></td>
-<td><p>Parses HDAT from Hostboot/FSP into Device Tree</p></td>
+<tr class="row-odd"><td>hdata/</td>
+<td>Parses HDAT from Hostboot/FSP into Device Tree</td>
 </tr>
-<tr class="row-even"><td><p>hw/</p></td>
-<td><p>drivers for things &amp; fsp things.</p></td>
+<tr class="row-even"><td>hw/</td>
+<td>drivers for things &amp; fsp things.</td>
 </tr>
-<tr class="row-odd"><td><p>include/</p></td>
-<td><p>headers!</p></td>
+<tr class="row-odd"><td>include/</td>
+<td>headers!</td>
 </tr>
-<tr class="row-even"><td><p>libc/</p></td>
-<td><p>tiny libc, originally from <a class="reference external" href="https://github.com/aik/SLOF/">SLOF</a></p></td>
+<tr class="row-even"><td>libc/</td>
+<td>tiny libc, originally from <a class="reference external" href="https://github.com/aik/SLOF/">SLOF</a></td>
 </tr>
-<tr class="row-odd"><td><p>libfdt/</p></td>
-<td><p>Manipulate flattened device trees</p></td>
+<tr class="row-odd"><td>libfdt/</td>
+<td>Manipulate flattened device trees</td>
 </tr>
-<tr class="row-even"><td><p>libflash/</p></td>
-<td><p>Lib for talking to flash and parsing FFS structs</p></td>
+<tr class="row-even"><td>libflash/</td>
+<td>Lib for talking to flash and parsing FFS structs</td>
 </tr>
-<tr class="row-odd"><td><p>libpore/</p></td>
-<td><p>to manipulate PORE <a class="footnote-reference brackets" href="#id2" id="id1">1</a> engine.</p></td>
+<tr class="row-odd"><td>libpore/</td>
+<td>to manipulate PORE <a class="footnote-reference" href="#id2" id="id1">[1]</a> engine.</td>
 </tr>
-<tr class="row-even"><td><p>libstb/</p></td>
-<td><p>See <a class="reference internal" href="stb.html#stb-overview"><span class="std std-ref">Secure and Trusted Boot Library (LibSTB) Documentation</span></a></p></td>
+<tr class="row-even"><td>libstb/</td>
+<td>See <a class="reference internal" href="stb.html#stb-overview"><span class="std std-ref">Secure and Trusted Boot Library (LibSTB) Documentation</span></a></td>
 </tr>
-<tr class="row-odd"><td><p>libxz/</p></td>
-<td><p>The <a class="reference external" href="https://tukaani.org/xz/embedded.html">xz_embedded</a> library</p></td>
+<tr class="row-odd"><td>libxz/</td>
+<td>The <a class="reference external" href="https://tukaani.org/xz/embedded.html">xz_embedded</a> library</td>
 </tr>
-<tr class="row-even"><td><p>opal-ci/</p></td>
-<td><p>Some scripts to help Continuous Integration testing</p></td>
+<tr class="row-even"><td>opal-ci/</td>
+<td>Some scripts to help Continuous Integration testing</td>
 </tr>
-<tr class="row-odd"><td><p>platforms/</p></td>
-<td><p>Platform (machine/BMC) specific code</p></td>
+<tr class="row-odd"><td>platforms/</td>
+<td>Platform (machine/BMC) specific code</td>
 </tr>
-<tr class="row-even"><td><p>test/</p></td>
-<td><p>Test scripts and binaries</p></td>
+<tr class="row-even"><td>test/</td>
+<td>Test scripts and binaries</td>
 </tr>
 </tbody>
 </table>
-<dl class="footnote brackets">
-<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>Power On Reset Engine. Used to bring cores out of deep sleep states.
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Power On Reset Engine. Used to bring cores out of deep sleep states.
 For POWER9, this also includes the <cite>p9_stop_api</cite> which manipulates
 the low level microcode to-reinit certain SPRs on transition out of
-a state losing STOP state.</p>
-</dd>
-</dl>
+a state losing STOP state.</td></tr>
+</tbody>
+</table>
 <p>We have a spinlock implementation in <a class="reference external" href="https://github.com/open-power/skiboot/blob/v5.8/asm/lock.S">asm/lock.S</a>
 Entry points are detailed in <a class="reference external" href="https://github.com/open-power/skiboot/blob/v5.8/asm/head.S">asm/head.S</a>
 The main C entry point is in <a class="reference external" href="https://github.com/open-power/skiboot/blob/v5.8/core/init.c">core/init.c</a>: <a class="reference external" href="https://github.com/open-power/skiboot/blob/v5.8/core/init.c#L785">main_cpu_entry()</a></p>
@@ -130,54 +132,61 @@ The main C entry point is in <a class="reference external" href="https://github.
 <div class="section" id="binaries">
 <h2>Binaries<a class="headerlink" href="#binaries" title="Permalink to this headline">¶</a></h2>
 <p>The following binaries are built:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 29%" />
-<col style="width: 71%" />
+<col width="29%" />
+<col width="71%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>File</p></th>
-<th class="head"><p>Purpose</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">File</th>
+<th class="head">Purpose</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>skiboot.lid</p></td>
-<td><p>Binary for flashing onto systems <a class="footnote-reference brackets" href="#id10" id="id7">2</a></p></td>
+<tbody valign="top">
+<tr class="row-even"><td>skiboot.lid</td>
+<td>Binary for flashing onto systems <a class="footnote-reference" href="#id10" id="id7">[2]</a></td>
 </tr>
-<tr class="row-odd"><td><p>skiboot.lid.stb</p></td>
-<td><p>Secure and Trusted Boot container wrapped skiboot</p></td>
+<tr class="row-odd"><td>skiboot.lid.stb</td>
+<td>Secure and Trusted Boot container wrapped skiboot</td>
 </tr>
-<tr class="row-even"><td><p><em>skiboot.lid.xz</em></p></td>
-<td><p>XZ compressed binary <a class="footnote-reference brackets" href="#id11" id="id8">3</a></p></td>
+<tr class="row-even"><td><em>skiboot.lid.xz</em></td>
+<td>XZ compressed binary <a class="footnote-reference" href="#id11" id="id8">[3]</a></td>
 </tr>
-<tr class="row-odd"><td><p><em>skiboot.lid.xz.stb</em></p></td>
-<td><p>STB container wrapped XZ compressed skiboot <a class="footnote-reference brackets" href="#id12" id="id9">4</a></p></td>
+<tr class="row-odd"><td><em>skiboot.lid.xz.stb</em></td>
+<td>STB container wrapped XZ compressed skiboot <a class="footnote-reference" href="#id12" id="id9">[4]</a></td>
 </tr>
-<tr class="row-even"><td><p>skiboot.elf</p></td>
-<td><p>is the elf binary of it, lid comes from this</p></td>
+<tr class="row-even"><td>skiboot.elf</td>
+<td>is the elf binary of it, lid comes from this</td>
 </tr>
-<tr class="row-odd"><td><p>skiboot.map</p></td>
-<td><p>plain map of symbols</p></td>
+<tr class="row-odd"><td>skiboot.map</td>
+<td>plain map of symbols</td>
 </tr>
 </tbody>
 </table>
-<dl class="footnote brackets">
-<dt class="label" id="id10"><span class="brackets"><a class="fn-backref" href="#id7">2</a></span></dt>
-<dd><p>Practically speaking, this is just IBM FSP based systems now. Since
+<table class="docutils footnote" frame="void" id="id10" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[2]</a></td><td>Practically speaking, this is just IBM FSP based systems now. Since
 the <cite>skiboot.lid</cite> size is now greater than 1MB, which is the size of
 the default <cite>PAYLOAD</cite> PNOR partition size on OpenPOWER systems, you
-will want the <cite>skiboot.lid.xz</cite> or <cite>skiboot.lid.xz.stb</cite> instead.</p>
-</dd>
-<dt class="label" id="id11"><span class="brackets"><a class="fn-backref" href="#id8">3</a></span></dt>
-<dd><p>On OpenPOWER systems, hostboot will read and decompress XZ
+will want the <cite>skiboot.lid.xz</cite> or <cite>skiboot.lid.xz.stb</cite> instead.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id11" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id8">[3]</a></td><td>On OpenPOWER systems, hostboot will read and decompress XZ
 compressed payloads. This shortens boot time (less data to read),
 adds a checksum over the <cite>PAYLOAD</cite> and saves valuable PNOR space.
-If in doubt, use this payload.</p>
-</dd>
-<dt class="label" id="id12"><span class="brackets"><a class="fn-backref" href="#id9">4</a></span></dt>
-<dd><p>If a secure boot system, use this payload.</p>
-</dd>
-</dl>
+If in doubt, use this payload.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id12" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[4]</a></td><td>If a secure boot system, use this payload.</td></tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="booting">
 <h2>Booting<a class="headerlink" href="#booting" title="Permalink to this headline">¶</a></h2>
@@ -232,22 +241,22 @@ OPAL is what we name the interface from skiboot to OS (Linux).</p>
 <p>Each CPU gets a 16k stack, which is probably more than enough. Stack
 should be used sparingly though.</p>
 <p>Important memory locations:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 18%" />
-<col style="width: 82%" />
+<col width="18%" />
+<col width="82%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Location</p></th>
-<th class="head"><p>What’s there</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Location</th>
+<th class="head">What’s there</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>SKIBOOT_BASE</p></td>
-<td><p>where skiboot lives, of SKIBOOT_SIZE</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>SKIBOOT_BASE</td>
+<td>where skiboot lives, of SKIBOOT_SIZE</td>
 </tr>
-<tr class="row-odd"><td><p>HEAP_BASE</p></td>
-<td><p>Where skiboot heap starts, of HEAP_SIZE</p></td>
+<tr class="row-odd"><td>HEAP_BASE</td>
+<td>Where skiboot heap starts, of HEAP_SIZE</td>
 </tr>
 </tbody>
 </table>
@@ -263,7 +272,6 @@ file /sys/firmware/opal/msglog.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -297,15 +305,17 @@ file /sys/firmware/opal/msglog.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -322,14 +332,13 @@ file /sys/firmware/opal/msglog.</p>
         <li class="right" >
           <a href="index.html" title="SkiBoot Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Skiboot overview</a></li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

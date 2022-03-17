@@ -31,18 +31,18 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">25</td>
             <td class="headerCovTableEntry">27</td>
-            <td class="headerCovTableEntryHi">92.6 %</td>
+            <td class="headerCovTableEntry">27</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-13 12:18:09</td>
+            <td class="headerValue">2022-03-17 07:10:58</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">6</td>
             <td class="headerCovTableEntry">7</td>
-            <td class="headerCovTableEntryMed">85.7 %</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td></td>
@@ -87,7 +87,7 @@
 <a name="16"><span class="lineNum">      16 </span>                :            : #define smt_lowest()</a>
 <a name="17"><span class="lineNum">      17 </span>                :            : #define smt_medium()</a>
 <a name="18"><span class="lineNum">      18 </span>                :            : </a>
-<a name="19"><span class="lineNum">      19 </span>                :            : enum proc_gen proc_gen = proc_gen_p9;</a>
+<a name="19"><span class="lineNum">      19 </span>                :            : enum proc_gen proc_gen = proc_gen_unknown;</a>
 <a name="20"><span class="lineNum">      20 </span>                :            : </a>
 <a name="21"><span class="lineNum">      21 </span>                :            : static uint64_t stamp, last;</a>
 <a name="22"><span class="lineNum">      22 </span>                :            : struct lock;</a>
@@ -126,16 +126,16 @@
 <a name="55"><span class="lineNum">      55 </span>                :<span class="lineCov">        100 :         count--;</span></a>
 <a name="56"><span class="lineNum">      56 </span>                :<span class="lineCov">        100 : }</span></a>
 <a name="57"><span class="lineNum">      57 </span>                :            : </a>
-<a name="58"><span class="lineNum">      58 </span>                :<span class="lineNoCov">          0 : void p8_sbe_update_timer_expiry(uint64_t new_target)</span></a>
+<a name="58"><span class="lineNum">      58 </span>                :<span class="lineCov">        100 : void sbe_update_timer_expiry(uint64_t new_target)</span></a>
 <a name="59"><span class="lineNum">      59 </span>                :            : {</a>
 <a name="60"><span class="lineNum">      60 </span>                :            :         (void)new_target;</a>
 <a name="61"><span class="lineNum">      61 </span>                :            :         /* FIXME: do intersting SLW timer sim */</a>
-<a name="62"><span class="lineNum">      62 </span>                :<span class="lineNoCov">          0 : }</span></a>
+<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        100 : }</span></a>
 <a name="63"><span class="lineNum">      63 </span>                :            : </a>
-<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        100 : void p9_sbe_update_timer_expiry(uint64_t new_target)</span></a>
+<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        100 : bool sbe_timer_ok(void)</span></a>
 <a name="65"><span class="lineNum">      65 </span>                :            : {</a>
-<a name="66"><span class="lineNum">      66 </span>                :            :         (void)new_target;</a>
-<a name="67"><span class="lineNum">      67 </span>                :<span class="lineCov">        100 : }</span></a>
+<a name="66"><span class="lineNum">      66 </span>                :<span class="lineCov">        100 :         return true;</span></a>
+<a name="67"><span class="lineNum">      67 </span>                :            : }</a>
 <a name="68"><span class="lineNum">      68 </span>                :            : </a>
 <a name="69"><span class="lineNum">      69 </span>                :<span class="lineCov">          1 : int main(void)</span></a>
 <a name="70"><span class="lineNum">      70 </span>                :            : {</a>

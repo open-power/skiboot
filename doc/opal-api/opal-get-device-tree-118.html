@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL_GET_DEVICE_TREE &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL_GET_DEVICE_TREE &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-flash-110-111-112.html" title="OPAL Flash calls"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_GET_DEVICE_TREE</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -52,38 +53,37 @@
 </pre></div>
 </div>
 <p>Get device sub-tree.</p>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">phandle</span></code></dt><dd><p>root device node phandle of the device sub-tree</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">buf</span></code></dt><dd><p>FDT blob buffer or NULL</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">len</span></code></dt><dd><p>length of the FDT blob buffer</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">uint32_t</span> <span class="pre">phandle</span></code></dt>
+<dd>root device node phandle of the device sub-tree</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">buf</span></code></dt>
+<dd>FDT blob buffer or NULL</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">len</span></code></dt>
+<dd>length of the FDT blob buffer</dd>
 </dl>
 <p>Retrieve device sub-tree. The root node’s phandle is identified by &#64;phandle.
 The typical use is for the kernel to update its device tree following a change
 in hardware (e.g. PCI hotplug).</p>
 <div class="section" id="return-codes">
 <h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>FDT blob size</dt><dd><p>returned FDT blob buffer size when <code class="docutils literal notranslate"><span class="pre">buf</span></code> is NULL</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>FDT blob is created successfully</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>invalid argument &#64;phandle or &#64;len</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>failure creating FDT blob when calculating its size</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-no-mem"><span class="std std-ref">OPAL_NO_MEM</span></a></dt><dd><p>not enough room in buffer for device sub-tree</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-empty"><span class="std std-ref">OPAL_EMPTY</span></a></dt><dd><p>failure creating FDT blob</p>
-</dd>
+<dl class="docutils">
+<dt>FDT blob size</dt>
+<dd>returned FDT blob buffer size when <code class="docutils literal notranslate"><span class="pre">buf</span></code> is NULL</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>FDT blob is created successfully</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>invalid argument &#64;phandle or &#64;len</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
+<dd>failure creating FDT blob when calculating its size</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-no-mem"><span class="std std-ref">OPAL_NO_MEM</span></a></dt>
+<dd>not enough room in buffer for device sub-tree</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-empty"><span class="std std-ref">OPAL_EMPTY</span></a></dt>
+<dd>failure creating FDT blob</dd>
 </dl>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -111,15 +111,17 @@ in hardware (e.g. PCI hotplug).</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -136,15 +138,14 @@ in hardware (e.g. PCI hotplug).</p>
         <li class="right" >
           <a href="opal-flash-110-111-112.html" title="OPAL Flash calls"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_GET_DEVICE_TREE</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

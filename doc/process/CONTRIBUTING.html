@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contributing to skiboot &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Contributing to skiboot &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,9 +34,8 @@
         <li class="right" >
           <a href="dev-release-process.html" title="Development and Release Process"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Contributing to skiboot</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -44,18 +45,18 @@
           <div class="body" role="main">
             
   <div class="section" id="contributing-to-skiboot">
-<h1>Contributing to skiboot<a class="headerlink" href="#contributing-to-skiboot" title="Permalink to this headline">¶</a></h1>
+<span id="contributing-to-skiboot"></span><h1>Contributing to skiboot<a class="headerlink" href="#contributing-to-skiboot" title="Permalink to this headline">¶</a></h1>
 <p>skiboot is OPAL (OpenPOWER Abstraction Layer) boot and runtime firmware for
 POWER.</p>
 <p>If you haven’t already, join us on IRC (#openpower on Freenode) and on
-the mailing list ( <a class="reference external" href="mailto:skiboot&#37;&#52;&#48;lists&#46;ozlabs&#46;org">skiboot<span>&#64;</span>lists<span>&#46;</span>ozlabs<span>&#46;</span>org</a> - subscribe by
-going to <a class="reference external" href="https://lists.ozlabs.org/listinfo/skiboot">https://lists.ozlabs.org/listinfo/skiboot</a> )</p>
+the mailing list ( skiboot&#64;lists.ozlabs.org - subscribe by
+going to https://lists.ozlabs.org/listinfo/skiboot )</p>
 <p>While we do use GitHub Issues, patches are accepted via the mailing list.
 We expect participants to adhere to the GitHub Community Guidelines (found
-at <a class="reference external" href="https://help.github.com/articles/github-community-guidelines/">https://help.github.com/articles/github-community-guidelines/</a> ).</p>
+at https://help.github.com/articles/github-community-guidelines/ ).</p>
 <p>All contributions should have a Developer Certificate of Origin (see below).</p>
 <div class="section" id="development-environment">
-<h2>Development Environment<a class="headerlink" href="#development-environment" title="Permalink to this headline">¶</a></h2>
+<span id="development-environment"></span><h2>Development Environment<a class="headerlink" href="#development-environment" title="Permalink to this headline">¶</a></h2>
 <p>A host GCC of at least 4.9 is recommended (all modern Linux distributions
 provide this).</p>
 <p>You can build on x86-64, ppc64 or ppc64le, you just need a powerpc64 (BE)
@@ -63,51 +64,56 @@ cross compiler. The powerpc64le cross compilers packaged in Linux distributions
 can build BE code, so they are fine.</p>
 </div>
 <div class="section" id="developer-certificate-of-origin">
-<h2>Developer Certificate of Origin<a class="headerlink" href="#developer-certificate-of-origin" title="Permalink to this headline">¶</a></h2>
-<p>Contributions to this project should conform to the <cite>Developer Certificate
-of Origin</cite> as defined at <a class="reference external" href="http://elinux.org/Developer_Certificate_Of_Origin">http://elinux.org/Developer_Certificate_Of_Origin</a>.
+<span id="developer-certificate-of-origin"></span><h2>Developer Certificate of Origin<a class="headerlink" href="#developer-certificate-of-origin" title="Permalink to this headline">¶</a></h2>
+<p>Contributions to this project should conform to the <code class="docutils literal notranslate"><span class="pre">Developer</span> <span class="pre">Certificate</span> <span class="pre">of</span> <span class="pre">Origin</span></code> as defined at http://elinux.org/Developer_Certificate_Of_Origin.
 Commits to this project need to contain the following line to indicate
-the submitter accepts the DCO:
-<code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">Signed-off-by:</span> <span class="pre">Your</span> <span class="pre">Name</span> <span class="pre">&lt;your_email&#64;domain.com&gt;</span>
-<span class="pre">`</span></code>
-By contributing in this way, you agree to the terms as follows:
-<a href="#id1"><span class="problematic" id="id2">``</span></a>`
-Developer Certificate of Origin
-Version 1.1</p>
-<p>Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
-660 York Street, Suite 102,
-San Francisco, CA 94110 USA</p>
-<p>Everyone is permitted to copy and distribute verbatim copies of this
-license document, but changing it is not allowed.</p>
-<p>Developer’s Certificate of Origin 1.1</p>
-<p>By making a contribution to this project, I certify that:</p>
-<ol class="loweralpha simple">
-<li><p>The contribution was created in whole or in part by me and I
-have the right to submit it under the open source license
-indicated in the file; or</p></li>
-<li><p>The contribution is based upon previous work that, to the best
-of my knowledge, is covered under an appropriate open source
-license and I have the right under that license to submit that
-work with modifications, whether created in whole or in part
-by me, under the same open source license (unless I am
-permitted to submit under a different license), as indicated
-in the file; or</p></li>
-<li><p>The contribution was provided directly to me by some other
-person who certified (a), (b) or (c) and I have not modified
-it.</p></li>
-<li><p>I understand and agree that this project and the contribution
-are public and that a record of the contribution (including all
-personal information I submit with it, including my sign-off) is
-maintained indefinitely and may be redistributed consistent with
-this project or the open source license(s) involved.</p></li>
-</ol>
-<p><a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
+the submitter accepts the DCO:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Signed</span><span class="o">-</span><span class="n">off</span><span class="o">-</span><span class="n">by</span><span class="p">:</span> <span class="n">Your</span> <span class="n">Name</span> <span class="o">&lt;</span><span class="n">your_email</span><span class="nd">@domain</span><span class="o">.</span><span class="n">com</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>By contributing in this way, you agree to the terms as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Developer</span> <span class="n">Certificate</span> <span class="n">of</span> <span class="n">Origin</span>
+<span class="n">Version</span> <span class="mf">1.1</span>
+
+<span class="n">Copyright</span> <span class="p">(</span><span class="n">C</span><span class="p">)</span> <span class="mi">2004</span><span class="p">,</span> <span class="mi">2006</span> <span class="n">The</span> <span class="n">Linux</span> <span class="n">Foundation</span> <span class="ow">and</span> <span class="n">its</span> <span class="n">contributors</span><span class="o">.</span>
+<span class="mi">660</span> <span class="n">York</span> <span class="n">Street</span><span class="p">,</span> <span class="n">Suite</span> <span class="mi">102</span><span class="p">,</span>
+<span class="n">San</span> <span class="n">Francisco</span><span class="p">,</span> <span class="n">CA</span> <span class="mi">94110</span> <span class="n">USA</span>
+
+<span class="n">Everyone</span> <span class="ow">is</span> <span class="n">permitted</span> <span class="n">to</span> <span class="n">copy</span> <span class="ow">and</span> <span class="n">distribute</span> <span class="n">verbatim</span> <span class="n">copies</span> <span class="n">of</span> <span class="n">this</span>
+<span class="n">license</span> <span class="n">document</span><span class="p">,</span> <span class="n">but</span> <span class="n">changing</span> <span class="n">it</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">allowed</span><span class="o">.</span>
+
+
+<span class="n">Developer</span><span class="s1">&#39;s Certificate of Origin 1.1</span>
+
+<span class="n">By</span> <span class="n">making</span> <span class="n">a</span> <span class="n">contribution</span> <span class="n">to</span> <span class="n">this</span> <span class="n">project</span><span class="p">,</span> <span class="n">I</span> <span class="n">certify</span> <span class="n">that</span><span class="p">:</span>
+
+<span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="n">The</span> <span class="n">contribution</span> <span class="n">was</span> <span class="n">created</span> <span class="ow">in</span> <span class="n">whole</span> <span class="ow">or</span> <span class="ow">in</span> <span class="n">part</span> <span class="n">by</span> <span class="n">me</span> <span class="ow">and</span> <span class="n">I</span>
+    <span class="n">have</span> <span class="n">the</span> <span class="n">right</span> <span class="n">to</span> <span class="n">submit</span> <span class="n">it</span> <span class="n">under</span> <span class="n">the</span> <span class="nb">open</span> <span class="n">source</span> <span class="n">license</span>
+    <span class="n">indicated</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">file</span><span class="p">;</span> <span class="ow">or</span>
+
+<span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="n">The</span> <span class="n">contribution</span> <span class="ow">is</span> <span class="n">based</span> <span class="n">upon</span> <span class="n">previous</span> <span class="n">work</span> <span class="n">that</span><span class="p">,</span> <span class="n">to</span> <span class="n">the</span> <span class="n">best</span>
+    <span class="n">of</span> <span class="n">my</span> <span class="n">knowledge</span><span class="p">,</span> <span class="ow">is</span> <span class="n">covered</span> <span class="n">under</span> <span class="n">an</span> <span class="n">appropriate</span> <span class="nb">open</span> <span class="n">source</span>
+    <span class="n">license</span> <span class="ow">and</span> <span class="n">I</span> <span class="n">have</span> <span class="n">the</span> <span class="n">right</span> <span class="n">under</span> <span class="n">that</span> <span class="n">license</span> <span class="n">to</span> <span class="n">submit</span> <span class="n">that</span>
+    <span class="n">work</span> <span class="k">with</span> <span class="n">modifications</span><span class="p">,</span> <span class="n">whether</span> <span class="n">created</span> <span class="ow">in</span> <span class="n">whole</span> <span class="ow">or</span> <span class="ow">in</span> <span class="n">part</span>
+    <span class="n">by</span> <span class="n">me</span><span class="p">,</span> <span class="n">under</span> <span class="n">the</span> <span class="n">same</span> <span class="nb">open</span> <span class="n">source</span> <span class="n">license</span> <span class="p">(</span><span class="n">unless</span> <span class="n">I</span> <span class="n">am</span>
+    <span class="n">permitted</span> <span class="n">to</span> <span class="n">submit</span> <span class="n">under</span> <span class="n">a</span> <span class="n">different</span> <span class="n">license</span><span class="p">),</span> <span class="k">as</span> <span class="n">indicated</span>
+    <span class="ow">in</span> <span class="n">the</span> <span class="n">file</span><span class="p">;</span> <span class="ow">or</span>
+
+<span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="n">The</span> <span class="n">contribution</span> <span class="n">was</span> <span class="n">provided</span> <span class="n">directly</span> <span class="n">to</span> <span class="n">me</span> <span class="n">by</span> <span class="n">some</span> <span class="n">other</span>
+    <span class="n">person</span> <span class="n">who</span> <span class="n">certified</span> <span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="ow">and</span> <span class="n">I</span> <span class="n">have</span> <span class="ow">not</span> <span class="n">modified</span>
+    <span class="n">it</span><span class="o">.</span>
+
+<span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="n">I</span> <span class="n">understand</span> <span class="ow">and</span> <span class="n">agree</span> <span class="n">that</span> <span class="n">this</span> <span class="n">project</span> <span class="ow">and</span> <span class="n">the</span> <span class="n">contribution</span>
+    <span class="n">are</span> <span class="n">public</span> <span class="ow">and</span> <span class="n">that</span> <span class="n">a</span> <span class="n">record</span> <span class="n">of</span> <span class="n">the</span> <span class="n">contribution</span> <span class="p">(</span><span class="n">including</span> <span class="nb">all</span>
+    <span class="n">personal</span> <span class="n">information</span> <span class="n">I</span> <span class="n">submit</span> <span class="k">with</span> <span class="n">it</span><span class="p">,</span> <span class="n">including</span> <span class="n">my</span> <span class="n">sign</span><span class="o">-</span><span class="n">off</span><span class="p">)</span> <span class="ow">is</span>
+    <span class="n">maintained</span> <span class="n">indefinitely</span> <span class="ow">and</span> <span class="n">may</span> <span class="n">be</span> <span class="n">redistributed</span> <span class="n">consistent</span> <span class="k">with</span>
+    <span class="n">this</span> <span class="n">project</span> <span class="ow">or</span> <span class="n">the</span> <span class="nb">open</span> <span class="n">source</span> <span class="n">license</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="n">involved</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -136,15 +142,17 @@ this project or the open source license(s) involved.</p></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -161,14 +169,13 @@ this project or the open source license(s) involved.</p></li>
         <li class="right" >
           <a href="dev-release-process.html" title="Development and Release Process"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
- documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Contributing to skiboot</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
+ documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

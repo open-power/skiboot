@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot 5.0 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot 5.0 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-4.1.1.html" title="skiboot 4.1.1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot 5.0</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -50,97 +51,116 @@
 <p>Changes in 5.0 (since rc3):</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Fix chip id for nx coprocessors.</p></li>
-<li><p>hw/ipmi: Fix FW Boot Progress sensor</p></li>
-<li><p>bt: Add a temporary workaround for bmc dropping messages</p></li>
-<li><p>FSP/CUPD: Fix lock issue</p></li>
+<li>Fix chip id for nx coprocessors.</li>
+<li>hw/ipmi: Fix FW Boot Progress sensor</li>
+<li>bt: Add a temporary workaround for bmc dropping messages</li>
+<li>FSP/CUPD: Fix lock issue</li>
 </ul>
 </div></blockquote>
 <p>Changes in rc3 (since rc2):</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>add support for cec_power_down on mambo</p></li>
-<li><p>external/opal-prd: Use link register for cross-endian branch</p></li>
-<li><p>opal header file rework, Linux and skiboot now very closely match (API
-in opal-api.h)</p></li>
-<li><p>libflash: don’t use the low level interface if it doesn’t exist</p></li>
-<li><p>libflash/file: add file abstraction for libflash</p></li>
-<li><p>external: create a GUARD partition parsing utility</p></li>
+<li>add support for cec_power_down on mambo</li>
+<li>external/opal-prd: Use link register for cross-endian branch</li>
+<li>opal header file rework, Linux and skiboot now very closely match (API
+in opal-api.h)</li>
+<li>libflash: don’t use the low level interface if it doesn’t exist</li>
+<li>libflash/file: add file abstraction for libflash</li>
+<li>external: create a GUARD partition parsing utility</li>
 </ul>
 </div></blockquote>
 <p>Changes in rc2 (since rc1):</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>opal: Fix an issue where partial LID load causes opal to hang.</p></li>
-<li><p>nx: use proc_gen instead of param</p></li>
-<li><p>use chip id for NX engine Coproc Instance num</p></li>
-<li><p>Fix (hopefully) missing dot symbols in skiboot.map</p></li>
-<li><p>exceptions: Catch exceptions at boot time</p></li>
-<li><p>exceptions: Remove deprecated exception patching stuff</p></li>
-<li><p>mambo: Make mambo_utils.tcl optional</p></li>
-<li><p>mambo: Exit mambo when the simulation is stopped</p></li>
-<li><p>add NX register defines</p></li>
-<li><p>set NX crb input queues to 842 only</p></li>
-<li><p>core: Catch attempts to branch through a NULL pointer</p></li>
-<li><p>plat/firestone: Add missing platform hooks</p></li>
-<li><p>plat/firestone: Add missing platform hooks</p></li>
-<li><p>elog: Don’t call uninitialized platform elog_commit</p></li>
-<li><p>external/opal-prd: Use “official” switch-endian syscall</p></li>
-<li><p>hw/ipmi: Rework sensors and fix boot count sensor</p></li>
+<li>opal: Fix an issue where partial LID load causes opal to hang.</li>
+<li>nx: use proc_gen instead of param</li>
+<li>use chip id for NX engine Coproc Instance num</li>
+<li>Fix (hopefully) missing dot symbols in skiboot.map</li>
+<li>exceptions: Catch exceptions at boot time</li>
+<li>exceptions: Remove deprecated exception patching stuff</li>
+<li>mambo: Make mambo_utils.tcl optional</li>
+<li>mambo: Exit mambo when the simulation is stopped</li>
+<li>add NX register defines</li>
+<li>set NX crb input queues to 842 only</li>
+<li>core: Catch attempts to branch through a NULL pointer</li>
+<li>plat/firestone: Add missing platform hooks</li>
+<li>plat/firestone: Add missing platform hooks</li>
+<li>elog: Don’t call uninitialized platform elog_commit</li>
+<li>external/opal-prd: Use “official” switch-endian syscall</li>
+<li>hw/ipmi: Rework sensors and fix boot count sensor</li>
 </ul>
 </div></blockquote>
 <p>Changes in rc1 (since 4.1.1):</p>
 <p>General:</p>
 <blockquote>
 <div><ul>
-<li><p>big OPAL API documentation updates
+<li><p class="first">big OPAL API documentation updates
 We now document around 19 OPAL calls. There’s still ~100 left to doc
-though :)</p></li>
-<li><p>skiboot can load FreeBSD kernel payload (thanks to Nathan Whitehorn)</p></li>
-<li><p>You can now run sparse by setting C=1 when building</p></li>
-<li><p>PSI: Revert the timeout for PSI link recovery to architected value
-now 30mins (prev 15)</p></li>
-<li><p>cpuidle: Add validated metrics for idle states</p></li>
-<li><p>core/flash: Add flash API
-OPAL_FLASH_(READ|WRITE|ERASE)</p></li>
-<li><p>capi: Dynamically calculate which CAPP port to use
-no longer hardwired to PHB0</p></li>
-<li><p>vpd: Use slca parent-child relationship to create vpd tree</p></li>
-<li><p>opal: Do not overwrite same HMI event for multiple HMI errors.
-Now Linux will get a HMI event for each HMI error</p></li>
-<li><p>HMI event v2 now includes information about checkstop</p></li>
-<li><p>HMI improvements, handle more conditions gracefully:</p>
+though :)</p>
+</li>
+<li><p class="first">skiboot can load FreeBSD kernel payload (thanks to Nathan Whitehorn)</p>
+</li>
+<li><p class="first">You can now run sparse by setting C=1 when building</p>
+</li>
+<li><p class="first">PSI: Revert the timeout for PSI link recovery to architected value
+now 30mins (prev 15)</p>
+</li>
+<li><p class="first">cpuidle: Add validated metrics for idle states</p>
+</li>
+<li><p class="first">core/flash: Add flash API
+OPAL_FLASH_(READ|WRITE|ERASE)</p>
+</li>
+<li><p class="first">capi: Dynamically calculate which CAPP port to use
+no longer hardwired to PHB0</p>
+</li>
+<li><p class="first">vpd: Use slca parent-child relationship to create vpd tree</p>
+</li>
+<li><p class="first">opal: Do not overwrite same HMI event for multiple HMI errors.
+Now Linux will get a HMI event for each HMI error</p>
+</li>
+<li><p class="first">HMI event v2 now includes information about checkstop</p>
+</li>
+<li><p class="first">HMI improvements, handle more conditions gracefully:</p>
 <ul class="simple">
-<li><p>TB residue error</p></li>
-<li><p>TFMR firmware control error</p></li>
-<li><p>TFMR parity</p></li>
-<li><p>TFMR HDEC parity error</p></li>
-<li><p>TFMR DEC parity error</p></li>
-<li><p>TFMR SPURR/PURR parity error</p></li>
-<li><p>TB residue and HDEC parity HMI errors on split core</p></li>
+<li>TB residue error</li>
+<li>TFMR firmware control error</li>
+<li>TFMR parity</li>
+<li>TFMR HDEC parity error</li>
+<li>TFMR DEC parity error</li>
+<li>TFMR SPURR/PURR parity error</li>
+<li>TB residue and HDEC parity HMI errors on split core</li>
 </ul>
 </li>
-<li><p>hostservices: Cache lids prior to first load request</p></li>
-<li><p>Warn when pollers are called with a lock held
+<li><p class="first">hostservices: Cache lids prior to first load request</p>
+</li>
+<li><p class="first">Warn when pollers are called with a lock held
 and keep track of lock depth.</p>
 <p><strong>NOTE:</strong> This means we will get backtraces in skiboot msglog on FSP machines
 This is a KNOWN ISSUE and is largely harmless.
 There’s still a couple that we haven’t yet cleaned, these
 messages can be thought of as a TODO list for developers.</p>
 </li>
-<li><p>Don’t run pollers in time_wait if lock held</p></li>
-<li><p>pci: Don’t hang if we have only one CPU</p></li>
-<li><p>Detect recursive poller entry</p></li>
-<li><p>General cleanup</p></li>
-<li><p>Cleanup of opal.h so that we can have Linux and skiboot match</p></li>
-<li><p>add sparse annotations to opal.h</p></li>
-<li><p>Platform hooks for loading and preloading resources (LIDs)
+<li><p class="first">Don’t run pollers in time_wait if lock held</p>
+</li>
+<li><p class="first">pci: Don’t hang if we have only one CPU</p>
+</li>
+<li><p class="first">Detect recursive poller entry</p>
+</li>
+<li><p class="first">General cleanup</p>
+</li>
+<li><p class="first">Cleanup of opal.h so that we can have Linux and skiboot match</p>
+</li>
+<li><p class="first">add sparse annotations to opal.h</p>
+</li>
+<li><p class="first">Platform hooks for loading and preloading resources (LIDs)
 This lays the groundwork for cutting 4-20 seconds off boot in a
-future skiboot release.</p></li>
-<li><p>Fix potential race when clearing OCC interrupt status</p></li>
-<li><p>Add platform operation for reading sensors</p>
+future skiboot release.</p>
+</li>
+<li><p class="first">Fix potential race when clearing OCC interrupt status</p>
+</li>
+<li><p class="first">Add platform operation for reading sensors</p>
 <ul class="simple">
-<li><p>add support to read core and memory buffer temperatures</p></li>
+<li>add support to read core and memory buffer temperatures</li>
 </ul>
 </li>
 </ul>
@@ -148,67 +168,66 @@ future skiboot release.</p></li>
 <p>Mambo/POWER8 Functional Simulator:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Replace is_mambo_chip() with a better quirks mechanism.</p></li>
-<li><p>Don’t hang if we only have one CPU and PCI.</p></li>
+<li>Replace is_mambo_chip() with a better quirks mechanism.</li>
+<li>Don’t hang if we only have one CPU and PCI.</li>
 </ul>
 </div></blockquote>
 <p>BMC systems:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>BMC can load payload from flash</p></li>
-<li><p>IPMI on BMC systems: graceful poweroff and reboot</p></li>
-<li><p>IPMI on BMC systems: watchdog timer support</p></li>
-<li><p>IPMI on BMC systems: PNOR locking</p></li>
-<li><p>Support for IPMI progress sensor</p></li>
-<li><p>IPMI boot count sensor</p></li>
-<li><p>capi: Rework microcode flash download and CAPP upload
-load microcode on non-fsp systems</p></li>
-<li><p>NEW opal-prd userspace tool that handles PRD on non-FSP systems.
-and OPAL PRD calls to support it.</p></li>
-<li><p>Improvements to opal-prd, libflash, and ipmi</p></li>
-<li><p>ECC support in libflash</p></li>
-<li><p>Load CAPI micro code, enabling CAPI on OpenPower systems.</p></li>
-<li><p>Dynamically calculate which CAPP port to use, don’t hardcode to PHB0</p></li>
-<li><p>memboot flash backend</p></li>
+<li>BMC can load payload from flash</li>
+<li>IPMI on BMC systems: graceful poweroff and reboot</li>
+<li>IPMI on BMC systems: watchdog timer support</li>
+<li>IPMI on BMC systems: PNOR locking</li>
+<li>Support for IPMI progress sensor</li>
+<li>IPMI boot count sensor</li>
+<li>capi: Rework microcode flash download and CAPP upload
+load microcode on non-fsp systems</li>
+<li>NEW opal-prd userspace tool that handles PRD on non-FSP systems.
+and OPAL PRD calls to support it.</li>
+<li>Improvements to opal-prd, libflash, and ipmi</li>
+<li>ECC support in libflash</li>
+<li>Load CAPI micro code, enabling CAPI on OpenPower systems.</li>
+<li>Dynamically calculate which CAPP port to use, don’t hardcode to PHB0</li>
+<li>memboot flash backend</li>
 </ul>
 </div></blockquote>
 <p>POWER8</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>add nx-842 coproc support</p></li>
+<li>add nx-842 coproc support</li>
 </ul>
 </div></blockquote>
 <p>FSP systems:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Make abort() update sp attn area (like assert does)
-On FSP systems this gives better error logs/dumps when abort() is hit</p></li>
-<li><p>FSP/LEDS: Many improvements and bug fixes</p></li>
-<li><p>LED support for FSP machines
-Adds OPAL_LEDS_(GET|SET)_INDICATOR and device-tree bindings</p></li>
-<li><p>Refactor of fsp-rtc</p></li>
-<li><p>OCC loading fixes, including possible race condition where we would
-fail to IPL.</p></li>
+<li>Make abort() update sp attn area (like assert does)
+On FSP systems this gives better error logs/dumps when abort() is hit</li>
+<li>FSP/LEDS: Many improvements and bug fixes</li>
+<li>LED support for FSP machines
+Adds OPAL_LEDS_(GET|SET)_INDICATOR and device-tree bindings</li>
+<li>Refactor of fsp-rtc</li>
+<li>OCC loading fixes, including possible race condition where we would
+fail to IPL.</li>
 </ul>
 </div></blockquote>
 <p>POWER7</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Fix unsupported return code of OPAL_(UN)REGISTER_DUMP_REGION on P7</p></li>
-<li><p>occ: Don’t do bad XSCOMs on P7
+<li>Fix unsupported return code of OPAL_(UN)REGISTER_DUMP_REGION on P7</li>
+<li>occ: Don’t do bad XSCOMs on P7
 The OCC interrupt register only exists on P8, accessing it on P7 causes
-not only error logs but also causes PRD to eventually gard chips.</p></li>
-<li><p>cpu: Handle opal_reinit_cpus() more gracefully on P7
-no longer generate error logs</p></li>
-<li><p>libflash updates for openpower</p></li>
-<li><p>misc code cleanup</p></li>
-<li><p>add nx-842 coproc support</p></li>
+not only error logs but also causes PRD to eventually gard chips.</li>
+<li>cpu: Handle opal_reinit_cpus() more gracefully on P7
+no longer generate error logs</li>
+<li>libflash updates for openpower</li>
+<li>misc code cleanup</li>
+<li>add nx-842 coproc support</li>
 </ul>
 </div></blockquote>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -228,15 +247,17 @@ no longer generate error logs</p></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -253,15 +274,14 @@ no longer generate error logs</p></li>
         <li class="right" >
           <a href="skiboot-4.1.1.html" title="skiboot 4.1.1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot 5.0</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

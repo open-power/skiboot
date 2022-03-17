@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot-5.9 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot-5.9 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-5.8-rc1.html" title="skiboot-5.8-rc1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.9</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -62,7 +63,7 @@ There may be some 5.9.x stable releases, depending on what issues are found.</p>
 <div class="section" id="power8">
 <h3>POWER8<a class="headerlink" href="#power8" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>fast-reset by default (if possible)</p>
+<li><p class="first">fast-reset by default (if possible)</p>
 <p>Currently, this is limited to POWER8 systems.</p>
 <p>A normal reboot will, rather than doing a full IPL, go through a
 fast reboot procedure. This reduces the “reboot to petitboot” time
@@ -74,18 +75,18 @@ from minutes to a handful of seconds.</p>
 <h3>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h3>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc3.html#skiboot-5-9-rc3"><span class="std std-ref">skiboot-5.9-rc3</span></a>:</p>
 <ul class="simple">
-<li><p>occ-sensors : Add OCC inband sensor region to exports
-(useful for debugging)</p></li>
+<li>occ-sensors : Add OCC inband sensor region to exports
+(useful for debugging)</li>
 </ul>
 <p>Two SRESET fixes (see below for feature description):</p>
 <ul>
-<li><p>core: direct-controls: Fix clearing of special wakeup</p>
+<li><p class="first">core: direct-controls: Fix clearing of special wakeup</p>
 <p>‘special_wakeup_count’ is incremented on successfully asserting
 special wakeup. So we will never clear the special wakeup if we
 check ‘special_wakeup_count’ to be zero. Fix this issue by checking
 the ‘special_wakeup_count’ to 1 in dctl_clear_special_wakeup().</p>
 </li>
-<li><p>core/direct-controls: increase special wakeup timeout on POWER9</p>
+<li><p class="first">core/direct-controls: increase special wakeup timeout on POWER9</p>
 <p>Some instances have been observed where the special wakeup assert
 times out. The current timeout is too short for deeper sleep states.
 Hostboot uses 100ms, so match that.</p>
@@ -103,10 +104,10 @@ determine the status and return an appropriate error code.</p>
 </div></blockquote>
 <p>Since <a class="reference internal" href="skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a>:</p>
 <ul>
-<li><p>POWER9 power management during boot</p>
+<li><p class="first">POWER9 power management during boot</p>
 <p>Less power should be consumed during boot.</p>
 </li>
-<li><p>OPAL_SIGNAL_SYSTEM_RESET for POWER9</p>
+<li><p class="first">OPAL_SIGNAL_SYSTEM_RESET for POWER9</p>
 <p>This implements OPAL_SIGNAL_SYSTEM_RESET, using scom registers to
 quiesce the target thread and raise a system reset exception on it.
 It has been tested on DD2 with stop0 ESL=0 and ESL=1 shallow power
@@ -114,20 +115,20 @@ saving modes.</p>
 <p>DD1 is not implemented because it is sufficiently different as to
 make support difficult.</p>
 </li>
-<li><p>Enable deep idle states for POWER9</p>
+<li><p class="first">Enable deep idle states for POWER9</p>
 <ul>
-<li><p>SLW: Add support for p9_stop_api</p>
+<li><p class="first">SLW: Add support for p9_stop_api</p>
 <p>p9_stop_api’s are used to set SPR state on a core wakeup form a  deeper
 low power state. p9_stop_api uses  low level platform formware and
 self-restore microcode to restore the sprs to requested values.</p>
 <p>Code is taken from :
 <a class="reference external" href="https://github.com/open-power/hostboot/tree/master/src/import/chips/p9/procedures/utils/stopreg">https://github.com/open-power/hostboot/tree/master/src/import/chips/p9/procedures/utils/stopreg</a></p>
 </li>
-<li><p>SLW: Removing timebase related flags for stop4</p>
+<li><p class="first">SLW: Removing timebase related flags for stop4</p>
 <p>When a core enters stop4, it does not loose decrementer and time base.
 Hence removing flags OPAL_PM_DEC_STOP and OPAL_PM_TIMEBASE_STOP.</p>
 </li>
-<li><p>SLW: Allow deep states if homer address is known</p>
+<li><p class="first">SLW: Allow deep states if homer address is known</p>
 <p>Use a common variable has_wakeup_engine instead of has_slw to tell if
 the:
 - SLW image is populated in case of power8
@@ -135,18 +136,18 @@ the:
 <p>Currently we expect CME to be loaded if homer address is known ( except
 for simulators)</p>
 </li>
-<li><p>SLW: Configure self-restore for HRMOR</p>
+<li><p class="first">SLW: Configure self-restore for HRMOR</p>
 <p>Make a stop api call using libpore to restore HRMOR register. HRMOR needs
 to be cleared so that when thread exits stop, they arrives at linux
 system_reset vector (0x100).</p>
 </li>
-<li><p>SLW: Add opal_slw_set_reg support for power9</p>
+<li><p class="first">SLW: Add opal_slw_set_reg support for power9</p>
 <p>This OPAL call is made from Linux to OPAL to configure values in
 various SPRs after wakeup from a deep idle state.</p>
 </li>
 </ul>
 </li>
-<li><p>PHB4: CAPP recovery</p>
+<li><p class="first">PHB4: CAPP recovery</p>
 <p>CAPP recovery is initiated when a CAPP Machine Check is detected.
 The capp recovery procedure is initiated via a Hypervisor Maintenance
 interrupt (HMI).</p>
@@ -157,37 +158,37 @@ being asserted. The system continues running and the CAPP and PSL will
 be re-initialized.</p>
 <p>This implements CAPP recovery for POWER9 systems</p>
 </li>
-<li><p>Add <code class="docutils literal notranslate"><span class="pre">wafer-location</span></code> property for POWER9</p>
+<li><p class="first">Add <code class="docutils literal notranslate"><span class="pre">wafer-location</span></code> property for POWER9</p>
 <p>Extract wafer-location from ECID and add property under xscom node.
 - bits  64:71 are the chip x location (7:0)
 - bits  72:79 are the chip y location (7:0)</p>
 <p>Sample output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
 <span class="n">ecid</span>             <span class="mi">019</span><span class="n">a00d4</span> <span class="mi">03100718</span> <span class="mi">852</span><span class="n">c0000</span> <span class="mi">00</span><span class="n">fd7911</span>
-<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-location</span>
+<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-location</span>
 <span class="n">wafer</span><span class="o">-</span><span class="n">location</span>   <span class="mi">00000085</span> <span class="mi">0000002</span><span class="n">c</span>
 </pre></div>
 </div>
 </li>
-<li><p>Add <code class="docutils literal notranslate"><span class="pre">wafer-id</span></code> property for POWER9</p>
+<li><p class="first">Add <code class="docutils literal notranslate"><span class="pre">wafer-id</span></code> property for POWER9</p>
 <p>Wafer id is derived from ECID data.
 - bits   4:63 are the wafer id ( ten 6 bit fields each containing a code)</p>
 <p>Sample output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
 <span class="n">ecid</span>             <span class="mi">019</span><span class="n">a00d4</span> <span class="mi">03100718</span> <span class="mi">852</span><span class="n">c0000</span> <span class="mi">00</span><span class="n">fd7911</span>
-<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-id</span>
+<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-id</span>
 <span class="n">wafer</span><span class="o">-</span><span class="nb">id</span>         <span class="s2">&quot;6Q0DG340SO&quot;</span>
 </pre></div>
 </div>
 </li>
-<li><p>Add <code class="docutils literal notranslate"><span class="pre">ecid</span></code> property under <code class="docutils literal notranslate"><span class="pre">xscom</span></code> node for POWER9.
+<li><p class="first">Add <code class="docutils literal notranslate"><span class="pre">ecid</span></code> property under <code class="docutils literal notranslate"><span class="pre">xscom</span></code> node for POWER9.
 Sample output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
 <span class="n">ecid</span>             <span class="mi">019</span><span class="n">a00d4</span> <span class="mi">03100718</span> <span class="mi">852</span><span class="n">c0000</span> <span class="mi">00</span><span class="n">fd7911</span>
 </pre></div>
 </div>
 </li>
-<li><p>Add ibm,firmware-versions device tree node</p>
+<li><p class="first">Add ibm,firmware-versions device tree node</p>
 <p>In P8, hostboot provides mini device tree. It contains <code class="docutils literal notranslate"><span class="pre">/ibm,firmware-versions</span></code>
 node which has various firmware component version details.</p>
 <p>In P9, OPAL is building device tree. This patch adds support to parse VERSION
@@ -213,14 +214,14 @@ section of PNOR and create <code class="docutils literal notranslate"><span clas
 <h2>POWER9<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc5.html#skiboot-5-9-rc5"><span class="std std-ref">skiboot-5.9-rc5</span></a>:</p>
 <ul>
-<li><p>Suppress XSCOM chiplet-offline errors on P9</p>
+<li><p class="first">Suppress XSCOM chiplet-offline errors on P9</p>
 <p>Workaround on P9: PRD does operations it <em>knows</em> will fail with this
 error to work around a hardware issue where accesses via the PIB
 (FSI or OCC) work as expected, accesses via the ADU (what xscom goes
 through) do not. The chip logic will always return all FFs if there
 is any error on the scom.</p>
 </li>
-<li><p>asm/head: initialize preferred DSCR value</p>
+<li><p class="first">asm/head: initialize preferred DSCR value</p>
 <p>POWER7/8 use DSCR=0. POWER9 preferred value has “stride-N” enabled.</p>
 </li>
 </ul>
@@ -250,7 +251,7 @@ in the host:</p>
 </div>
 </div></blockquote>
 <ul>
-<li><p>hw/imc: pause microcode at boot</p>
+<li><p class="first">hw/imc: pause microcode at boot</p>
 <p>IMC nest counters has both in-band (ucode access) and out of
 band access to it. Since not all nest counter configurations
 are supported by ucode, out of band tools are used to characterize
@@ -266,23 +267,23 @@ and OPAL_IMC_COUNTERS_STOP API calls should be used to start and pause
 these IMC engines. <cite>doc/opal-api/opal-imc-counters.rst</cite> details the
 OPAL APIs and their usage.</p>
 </li>
-<li><p>hdata/i2c: update the list of known i2c devs</p>
+<li><p class="first">hdata/i2c: update the list of known i2c devs</p>
 <p>This updates the list of known i2c devices - as of HDAT spec v10.5e - so
 that they can be properly identified during the hdat parsing.</p>
 </li>
-<li><p>hdata/i2c: log unknown i2c devices</p>
+<li><p class="first">hdata/i2c: log unknown i2c devices</p>
 <p>An i2c device is unknown if either the i2c device list is outdated or
 the device is marked as unknown (0xFF) in the hdat.</p>
 </li>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a>:</p>
 <ul>
-<li><p>Disable Transactional Memory on Power9 DD 2.1</p>
+<li><p class="first">Disable Transactional Memory on Power9 DD 2.1</p>
 <p>Update pa_features_p9[] to disable TM (Transactional Memory). On DD 2.1
 TM is not usable by Linux without other workarounds, so skiboot must
 disable it.</p>
 </li>
-<li><p>xscom: Do not print error message for ‘chiplet offline’ return values</p>
+<li><p class="first">xscom: Do not print error message for ‘chiplet offline’ return values</p>
 <p>xscom_read/write operations returns CHIPLET_OFFLINE when chiplet is offline.
 Some multicast xscom_read/write requests from HBRT results in xscom operation
 on offline chiplet(s) and printing below warnings in OPAL console:</p>
@@ -293,25 +294,25 @@ on offline chiplet(s) and printing below warnings in OPAL console:</p>
 <p>Some SCOM users can deal correctly with this error code (notably opal-prd),
 so the error message is (in practice) erroneous.</p>
 </li>
-<li><p>IMC: Fix the core_imc_event_mask</p>
+<li><p class="first">IMC: Fix the core_imc_event_mask</p>
 <p>CORE_IMC_EVENT_MASK is a scom that contains bits to control event sampling for
 different machine state for core imc. The current event-mask setting sample
 events only on host kernel (hypervisor) and host userspace.</p>
 <p>Patch to enable the sampling of events in other machine states (like guest
 kernel and guest userspace).</p>
 </li>
-<li><p>IMC: Update the nest_pmus array with occ/gpe microcode uav updates</p>
+<li><p class="first">IMC: Update the nest_pmus array with occ/gpe microcode uav updates</p>
 <p>OOC/gpe nest microcode maintains the list of individual nest units
 supported. Sync the recent updates to the UAV with nest_pmus array.</p>
 <p>For reference occ/gpr microcode link for the UAV:
 <a class="reference external" href="https://github.com/open-power/occ/blob/master/src/occ_gpe1/gpe1_24x7.h">https://github.com/open-power/occ/blob/master/src/occ_gpe1/gpe1_24x7.h</a></p>
 </li>
-<li><p>Parse IOSLOT information from HDAT</p>
+<li><p class="first">Parse IOSLOT information from HDAT</p>
 <p>Add structure definitions that describe the physical PCIe topology of
 a system and parse them into the device-tree based PCIe slot
 description.</p>
 </li>
-<li><p>idle: user context state loss flags fix for stop states</p>
+<li><p class="first">idle: user context state loss flags fix for stop states</p>
 <p>The “lite” stop variants with PSSCR[ESL]=PSSCR[EC]=1 do not lose user
 context, while the non-lite variants do (ESL: enable state loss).</p>
 <p>Some of the POWER9 idle states had these wrong.</p>
@@ -320,13 +321,14 @@ context, while the non-lite variants do (ESL: enable state loss).</p>
 <div class="section" id="capi">
 <h3>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>POWER9 DD2 update</p>
+<li><p class="first">POWER9 DD2 update</p>
 <p>The CAPI initialization sequence has been updated in DD2.
 This patch adapts to the changes, retaining compatibility with DD1.
 The patch includes some changes to DD1 fix-ups as well.</p>
 </li>
-<li><p>Load CAPP microcode for POWER9 DD2.0 and DD2.1</p></li>
-<li><p>capi: Mask Psl Credit timeout error for POWER9</p>
+<li><p class="first">Load CAPP microcode for POWER9 DD2.0 and DD2.1</p>
+</li>
+<li><p class="first">capi: Mask Psl Credit timeout error for POWER9</p>
 <p>Mask the PSL credit timeout error in CAPP FIR Mask register
 bit(46). As per the h/w team this error is now deprecated and shouldn’t
 cause any fir-action for P9.</p>
@@ -344,96 +346,102 @@ old VPD and/or Hostboot, we print a <strong>giant scary warning</strong> in orde
 <p>Since <a class="reference internal" href="skiboot-5.9-rc2.html#skiboot-5-9-rc2"><span class="std std-ref">skiboot-5.9-rc2</span></a>:
 - Revert “npu2: Add vendor cap for IRQ testing”</p>
 <blockquote>
-<div><p>This reverts commit 9817c9e29b6fe00daa3a0e4420e69a97c90eb373 which seems to
+<div>This reverts commit 9817c9e29b6fe00daa3a0e4420e69a97c90eb373 which seems to
 break setting the PCI dev flag and the link number in the PCIe vendor
 specific config space. This leads to the device driver attempting to
-re-init the DL when it shouldn’t which can cause HMI’s.</p>
-</div></blockquote>
+re-init the DL when it shouldn’t which can cause HMI’s.</div></blockquote>
 <p>Since <a class="reference internal" href="skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a>:</p>
 <ul>
-<li><p>npu2: Read slot label from the HDAT link node</p>
+<li><p class="first">npu2: Read slot label from the HDAT link node</p>
 <p>Binding GPU to emulated NPU PCI devices is done using the slot labels
 since the NPU devices do not have a patching slot node we need to
 copy the label in here.</p>
 </li>
-<li><p>npu2: Copy link speed from the npu HDAT node</p>
+<li><p class="first">npu2: Copy link speed from the npu HDAT node</p>
 <p>This needs to be in the PCI device node so the speed of the NVLink
 can be passed to the GPU driver.</p>
 </li>
-<li><p>npu2: hw-procedures: Add settings to PHY_RESET</p>
+<li><p class="first">npu2: hw-procedures: Add settings to PHY_RESET</p>
 <p>Set a few new values in the PHY_RESET procedure, as specified by our
 updated programming guide documentation.</p>
 </li>
-<li><p>Parse NVLink information from HDAT</p>
+<li><p class="first">Parse NVLink information from HDAT</p>
 <p>Add the per-chip structures that descibe how the A-Bus/NVLink/OpenCAPI
 phy is configured. This generates the <a class="reference external" href="mailto:npu&#37;&#52;&#48;xyz">npu<span>&#64;</span>xyz</a> nodes for each chip on
 systems that support it.</p>
 </li>
-<li><p>npu2: Add vendor cap for IRQ testing</p>
+<li><p class="first">npu2: Add vendor cap for IRQ testing</p>
 <p>Provide a way to test recoverable data link interrupts via a new
 vendor capability byte.</p>
 </li>
-<li><p>npu2: Enable recoverable data link (no-stall) interrupts</p>
+<li><p class="first">npu2: Enable recoverable data link (no-stall) interrupts</p>
 <p>Allow the NPU2 to trigger “recoverable data link” interrupts.</p>
 </li>
-<li><p>npu2: Implement basic FLR (Function Level Reset)</p></li>
-<li><p>npu2: hw-procedures: Update PHY DC calibration procedure</p></li>
-<li><p>npu2: hw-procedures: Change rx_pr_phase_step value</p></li>
+<li><p class="first">npu2: Implement basic FLR (Function Level Reset)</p>
+</li>
+<li><p class="first">npu2: hw-procedures: Update PHY DC calibration procedure</p>
+</li>
+<li><p class="first">npu2: hw-procedures: Change rx_pr_phase_step value</p>
+</li>
 </ul>
 </div>
 <div class="section" id="xive">
 <h3>XIVE<a class="headerlink" href="#xive" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>xive: Fix opal_xive_dump_tm() to access W2 properly.
-The HW only supported limited access sizes.</p></li>
-<li><p>xive: Make opal_xive_allocate_irq() properly try all chips</p>
+<li><p class="first">xive: Fix opal_xive_dump_tm() to access W2 properly.
+The HW only supported limited access sizes.</p>
+</li>
+<li><p class="first">xive: Make opal_xive_allocate_irq() properly try all chips</p>
 <p>When requested via OPAL_XIVE_ANY_CHIP, we need to try all
 chips. We first try the current one (on which the caller
 sits) and if that fails, we iterate all chips until the
 allocation succeeds.</p>
 </li>
-<li><p>xive: Fix initialization &amp; cleanup of HW thread contexts</p>
+<li><p class="first">xive: Fix initialization &amp; cleanup of HW thread contexts</p>
 <p>Instead of trying to “pull” everything and clear VT (which didn’t
 work and caused some FIRs to be set), instead just clear and then
 set the PTER thread enable bit. This has the side effect of
 completely resetting the corresponding thread context.</p>
 <p>This fixes the spurrious XIVE FIRs reported by PRD and fircheck</p>
 </li>
-<li><p>xive: Add debug option for detecting misrouted IPI in emulation</p>
+<li><p class="first">xive: Add debug option for detecting misrouted IPI in emulation</p>
 <p>This is high overhead so we don’t enable it by default even
 in debug builds, it’s also a bit messy, but it allowed me to
 detect and debug a locking issue earlier so it can be useful.</p>
 </li>
-<li><p>xive: Increase the interrupt “gap” on debug builds</p>
+<li><p class="first">xive: Increase the interrupt “gap” on debug builds</p>
 <p>We normally allocate IPIs from 0x10. Make that 0x1000 on debug
 builds to limit the chances of overlapping with Linux interrupt
 numbers which makes debugging code that confuses them easier.</p>
 <p>Also add a warning in emulation if we get an interrupt in the
 queue whose number is below the gap.</p>
 </li>
-<li><p>xive: Fix locking around cache scrub &amp; watch</p>
+<li><p class="first">xive: Fix locking around cache scrub &amp; watch</p>
 <p>Thankfully the missing locking only affects debug code and
 init code that doesn’t run concurrently. Also adds a DEBUG
 option that checks the lock is properly held.</p>
 </li>
-<li><p>xive: Workaround HW issue with scrub facility</p>
+<li><p class="first">xive: Workaround HW issue with scrub facility</p>
 <p>Without this, we sometimes don’t observe from a CPU the
 values written to the ENDs or NVTs via the cache watch.</p>
 </li>
-<li><p>xive: Add exerciser for cache watch/scrub facility in DEBUG builds</p></li>
-<li><p>xive: Make assertion in xive_eq_for_target() more informative</p></li>
-<li><p>xive: Add debug code to check initial cache updates</p></li>
-<li><p>xive: Ensure pressure relief interrupts are disabled</p>
+<li><p class="first">xive: Add exerciser for cache watch/scrub facility in DEBUG builds</p>
+</li>
+<li><p class="first">xive: Make assertion in xive_eq_for_target() more informative</p>
+</li>
+<li><p class="first">xive: Add debug code to check initial cache updates</p>
+</li>
+<li><p class="first">xive: Ensure pressure relief interrupts are disabled</p>
 <p>We don’t use them and we hijack the VP field with their
 configuration to store the EQ reference, so make sure the
 kernel or guest can’t turn them back on by doing MMIO
 writes to ACK#</p>
 </li>
-<li><p>xive: Don’t try setting the reserved ACK# field in VPs</p>
+<li><p class="first">xive: Don’t try setting the reserved ACK# field in VPs</p>
 <p>That doesn’t work, the HW doesn’t implement it in the cache
 watch facility anyway.</p>
 </li>
-<li><p>xive: Remove useless memory barriers in VP/EQ inits</p>
+<li><p class="first">xive: Remove useless memory barriers in VP/EQ inits</p>
 <p>We no longer update “live” memory structures, we use a temporary
 copy on the stack and update the actual memory structure using
 the cache watch, so those barriers are pointless.</p>
@@ -444,7 +452,7 @@ the cache watch, so those barriers are pointless.</p>
 <h3>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h3>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc4.html#skiboot-5-9-rc4"><span class="std std-ref">skiboot-5.9-rc4</span></a>:</p>
 <ul>
-<li><p>phb4: Escalate freeze to fence to avoid checkstop</p>
+<li><p class="first">phb4: Escalate freeze to fence to avoid checkstop</p>
 <p>Freeze events such as MMIO loads can cause the PHB to lose it’s
 limited powerbus credits. If all credits are used and a further MMIO
 will cause a checkstop.</p>
@@ -452,11 +460,11 @@ will cause a checkstop.</p>
 fence. The fence will cause a full PHB reset which resets the powerbus
 credits and avoids the checkstop.</p>
 </li>
-<li><p>phb4: Update some init registers</p>
+<li><p class="first">phb4: Update some init registers</p>
 <p>New inits based on next PHB4 workbook. Increases some timeouts to
 avoid some spurious error conditions.</p>
 </li>
-<li><p>phb4: Enable PHB MMIO in phb4_root_port_init()</p>
+<li><p class="first">phb4: Enable PHB MMIO in phb4_root_port_init()</p>
 <p>Linux EEH flow is somewhat broken. It saves the PCIe config space of
 the PHB on boot, which it then uses to restore on EEH recovery. It
 does this to restore MMIO bars and some other pieces.</p>
@@ -476,12 +484,12 @@ fail.</p>
 phb4_root_port_init().</p>
 <p>With this we can recovery from a PHB fence event on POWER9.</p>
 </li>
-<li><p>phb4: Reduce link degraded message log level to debug</p>
+<li><p class="first">phb4: Reduce link degraded message log level to debug</p>
 <p>If we hit this message we’ll retry and fix the problem. If we run out
 of retries and can’t fix the problem, we’ll still print a log message
 at error level indicating a problem.</p>
 </li>
-<li><p>phb4: Fix GEN3 for DD2.00</p>
+<li><p class="first">phb4: Fix GEN3 for DD2.00</p>
 <p>In this fix: <code class="docutils literal notranslate"><span class="pre">62ac7631ae</span> <span class="pre">phb4:</span> <span class="pre">Fix</span> <span class="pre">PCIe</span> <span class="pre">GEN4</span> <span class="pre">on</span> <span class="pre">DD2.1</span> <span class="pre">and</span> <span class="pre">above</span></code>
 We fixed DD2.1 GEN4 but broke DD2.00 as GEN3.</p>
 <p>This fixes DD2.00 back to GEN3. This time for sure!</p>
@@ -490,9 +498,9 @@ We fixed DD2.1 GEN4 but broke DD2.00 as GEN3.</p>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc3.html#skiboot-5-9-rc3"><span class="std std-ref">skiboot-5.9-rc3</span></a>:
 - phb4: Fix PCIe GEN4 on DD2.1 and above</p>
 <blockquote>
-<div><dl class="simple">
-<dt>In this change:</dt><dd><p>eef0e197ab PHB4: Default to PCIe GEN3 on POWER9 DD2.00</p>
-</dd>
+<div><dl class="docutils">
+<dt>In this change:</dt>
+<dd>eef0e197ab PHB4: Default to PCIe GEN3 on POWER9 DD2.00</dd>
 </dl>
 <p>We clamped DD2.00 parts to GEN3 but unfortunately this change also
 applies to DD2.1 and above.</p>
@@ -500,19 +508,19 @@ applies to DD2.1 and above.</p>
 </div></blockquote>
 <p>Since <a class="reference internal" href="skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a>:</p>
 <ul>
-<li><p>phb4: Mask RXE_ARB: DEC Stage Valid Error</p>
+<li><p class="first">phb4: Mask RXE_ARB: DEC Stage Valid Error</p>
 <p>Change the inits to mask out the RXE ARB: DEC Stage Valid Error (bit
 370. This has been a fatal error but should be informational only.</p>
 <p>This update will be in the next version of the phb4 workbook.</p>
 </li>
-<li><p>phb4: Add additional adapter to retrain whitelist</p>
+<li><p class="first">phb4: Add additional adapter to retrain whitelist</p>
 <p>The single port version of the ConnectX-5 has a different device ID 0x1017.
 Updated descriptions to match pciutils database.</p>
 </li>
-<li><p>PHB4: Default to PCIe GEN3 on POWER9 DD2.00</p>
+<li><p class="first">PHB4: Default to PCIe GEN3 on POWER9 DD2.00</p>
 <p>You can use the NVRAM override for DD2.00 screened parts.</p>
 </li>
-<li><p>phb4: Retrain link if degraded</p>
+<li><p class="first">phb4: Retrain link if degraded</p>
 <p>On P9 Scale Out (Nimbus) DD2.0 and Scale in (Cumulus) DD1.0 (and
 below) the PCIe PHY can lockup causing training issues. This can cause
 a degradation in speed or width in ~5% of training cases (depending on
@@ -551,13 +559,13 @@ for each console. Latest kernel works fine without this patch.</p>
 </div></blockquote>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc1.html#skiboot-5-9-rc1"><span class="std std-ref">skiboot-5.9-rc1</span></a>:</p>
 <ul>
-<li><p>FSP/CONSOLE: Limit number of error logging</p>
+<li><p class="first">FSP/CONSOLE: Limit number of error logging</p>
 <p>Commit c8a7535f (FSP/CONSOLE: Workaround for unresponsive ipmi daemon) added
 error logging when buffer is full. In some corner cases kernel may call this
 function multiple time and we may endup logging error again and again.</p>
 <p>This patch fixes it by generating error log only once.</p>
 </li>
-<li><p>FSP/CONSOLE: Fix fsp_console_write_buffer_space() call</p>
+<li><p class="first">FSP/CONSOLE: Fix fsp_console_write_buffer_space() call</p>
 <p>Kernel calls fsp_console_write_buffer_space() to check console buffer space
 availability. If there is enough buffer space to write data, then kernel will
 call fsp_console_write() to write actual data.</p>
@@ -573,7 +581,7 @@ point we will start timer with timeout of SER_BUFFER_OUT_TIMEOUT (10 secs).
 If situation is not improved within 10 seconds means something went bad. Lets
 return OPAL_RESOURCE so that kernel can drop console write and continue.</p>
 </li>
-<li><p>FSP/CONSOLE: Close SOL session during R/R</p>
+<li><p class="first">FSP/CONSOLE: Close SOL session during R/R</p>
 <p>Presently we are not closing SOL and FW console sessions during R/R. Host will
 continue to write to SOL buffer during FSP R/R. If there is heavy console write
 operation happening during FSP R/R (like running <cite>top</cite> command inside console),
@@ -598,7 +606,7 @@ we may see RCU stalls (like below) in kernel.</p>
 </div>
 <p>Hence lets close SOL (and FW console) during FSP R/R.</p>
 </li>
-<li><p>FSP/CONSOLE: Do not associate unavailable console</p>
+<li><p class="first">FSP/CONSOLE: Do not associate unavailable console</p>
 <p>Presently OPAL sends associate/unassociate MBOX command for all
 FSP serial console (like below OPAL message). We have to check
 console is available or not before sending this message.</p>
@@ -607,73 +615,73 @@ console is available or not before sending this message.</p>
 </pre></div>
 </div>
 </li>
-<li><p>FSP: Disable PSI link whenever FSP tells OPAL about impending R/R</p>
+<li><p class="first">FSP: Disable PSI link whenever FSP tells OPAL about impending R/R</p>
 <p>Commit 42d5d047 fixed scenario where DPO has been initiated, but FSP went
 into reset before the CEC power down came in. But this is generic issue
 that can happen in normal shutdown path as well.</p>
 <p>Hence disable PSI link as soon as we detect FSP impending R/R.</p>
 </li>
-<li><p>fsp: return OPAL_BUSY_EVENT on failure sending FSP_CMD_POWERDOWN_NORM
+<li><p class="first">fsp: return OPAL_BUSY_EVENT on failure sending FSP_CMD_POWERDOWN_NORM
 Also, return OPAL_BUSY_EVENT on failure sending FSP_CMD_REBOOT / DEEP_REBOOT.</p>
 <p>We had a race condition between FSP Reset/Reload and powering down
 the system from the host:</p>
 <p>Roughly:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 2%" />
-<col style="width: 29%" />
-<col style="width: 69%" />
+<col width="2%" />
+<col width="29%" />
+<col width="69%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>#</p></th>
-<th class="head"><p>FSP</p></th>
-<th class="head"><p>Host</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">#</th>
+<th class="head">FSP</th>
+<th class="head">Host</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>Power on</p></td>
-<td></td>
+<tbody valign="top">
+<tr class="row-even"><td>1</td>
+<td>Power on</td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p>2</p></td>
-<td></td>
-<td><p>Power on</p></td>
+<tr class="row-odd"><td>2</td>
+<td>&#160;</td>
+<td>Power on</td>
 </tr>
-<tr class="row-even"><td><p>3</p></td>
-<td><p>(inject EPOW)</p></td>
-<td></td>
+<tr class="row-even"><td>3</td>
+<td>(inject EPOW)</td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p>4</p></td>
-<td><p>(trigger FSP R/R)</p></td>
-<td></td>
+<tr class="row-odd"><td>4</td>
+<td>(trigger FSP R/R)</td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p>5</p></td>
-<td></td>
-<td><p>Processes EPOW event, starts shutting down</p></td>
+<tr class="row-even"><td>5</td>
+<td>&#160;</td>
+<td>Processes EPOW event, starts shutting down</td>
 </tr>
-<tr class="row-odd"><td><p>6</p></td>
-<td></td>
-<td><p>calls OPAL_CEC_POWER_DOWN</p></td>
+<tr class="row-odd"><td>6</td>
+<td>&#160;</td>
+<td>calls OPAL_CEC_POWER_DOWN</td>
 </tr>
-<tr class="row-even"><td><p>7</p></td>
-<td><p>(is still in R/R)</p></td>
-<td></td>
+<tr class="row-even"><td>7</td>
+<td>(is still in R/R)</td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p>8</p></td>
-<td></td>
-<td><p>gets OPAL_INTERNAL_ERROR, spins in opal_poll_events</p></td>
+<tr class="row-odd"><td>8</td>
+<td>&#160;</td>
+<td>gets OPAL_INTERNAL_ERROR, spins in opal_poll_events</td>
 </tr>
-<tr class="row-even"><td><p>9</p></td>
-<td><p>(FSP comes back)</p></td>
-<td></td>
+<tr class="row-even"><td>9</td>
+<td>(FSP comes back)</td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p>10</p></td>
-<td></td>
-<td><p>spinning in opal_poll_events</p></td>
+<tr class="row-odd"><td>10</td>
+<td>&#160;</td>
+<td>spinning in opal_poll_events</td>
 </tr>
-<tr class="row-even"><td><p>11</p></td>
-<td><p>(thinks host is running)</p></td>
-<td></td>
+<tr class="row-even"><td>11</td>
+<td>(thinks host is running)</td>
+<td>&#160;</td>
 </tr>
 </tbody>
 </table>
@@ -711,7 +719,7 @@ Reset/Reload handling before we power off the system.</p>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a>:</p>
 <ul>
-<li><p>FSP/NVRAM: Handle “get vNVRAM statistics” command</p>
+<li><p class="first">FSP/NVRAM: Handle “get vNVRAM statistics” command</p>
 <p>FSP sends MBOX command (cmd : 0xEB, subcmd : 0x05, mod : 0x00) to get vNVRAM
 statistics. OPAL doesn’t maintain any such statistics. Hence return
 FSP_STATUS_INVALID_SUBCMD.</p>
@@ -723,11 +731,12 @@ FSP_STATUS_INVALID_SUBCMD.</p>
 </pre></div>
 </div>
 </li>
-<li><p>fsp: Move common prints to trace</p>
+<li><p class="first">fsp: Move common prints to trace</p>
 <p>These two prints just end up filling the skiboot logs on any machine
 that’s been booted for more than a few hours.</p>
-<dl class="simple">
-<dt>They have never been useful, so make them trace level. They were: ::</dt><dd><p>SURV: Received heartbeat acknowledge from FSP
+<dl class="docutils">
+<dt>They have never been useful, so make them trace level. They were: ::</dt>
+<dd><p class="first last">SURV: Received heartbeat acknowledge from FSP
 SURV: Sending the heartbeat command to FSP</p>
 </dd>
 </dl>
@@ -737,7 +746,7 @@ SURV: Sending the heartbeat command to FSP</p>
 <div class="section" id="bmc-based-systems">
 <h2>BMC based systems<a class="headerlink" href="#bmc-based-systems" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>hw/lpc-uart: read from RBR to clear character timeout interrupts</p>
+<li><p class="first">hw/lpc-uart: read from RBR to clear character timeout interrupts</p>
 <p>When using the aspeed SUART, we see a condition where the UART sends
 continuous character timeout interrupts. This change adds a (heavily
 commented) dummy read from the RBR to clear the interrupt condition on
@@ -745,15 +754,16 @@ init.</p>
 <p>This was observed on p9dsu systems, but likely applies to other systems
 using the SUART.</p>
 </li>
-<li><p>astbmc: Add methods for handing Device Tree based slots
-e.g. ones from HDAT on POWER9.</p></li>
+<li><p class="first">astbmc: Add methods for handing Device Tree based slots
+e.g. ones from HDAT on POWER9.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc5.html#skiboot-5-9-rc5"><span class="std std-ref">skiboot-5.9-rc5</span></a>:</p>
 <ul>
-<li><p>p8-i2c: Further timeout reworks</p>
+<li><p class="first">p8-i2c: Further timeout reworks</p>
 <p>This patch reworks the way timeouts are set so that rather than imposing
 a hard deadline based on the transaction length it uses a
 kick-the-can-down-the-road approach where the timeout will be reset each
@@ -764,7 +774,7 @@ as unusually slow or broken devices.</p>
 timeout handler. This is help to improve the robustness of the driver and
 prepare for a more substantial rework of the driver as a whole later on.</p>
 </li>
-<li><p>npu: Fix broken fast reset</p>
+<li><p class="first">npu: Fix broken fast reset</p>
 <p>0679f61244b “fast-reset: by default (if possible)” broke NPU - now
 the NV links does not get enabled after reboot.</p>
 <p>This disables fast reboot for NPU machines till a better solution is found.</p>
@@ -772,39 +782,39 @@ the NV links does not get enabled after reboot.</p>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc2.html#skiboot-5-9-rc2"><span class="std std-ref">skiboot-5.9-rc2</span></a>:</p>
 <ul>
-<li><p>Improvements to vpd device tree entries</p>
+<li><p class="first">Improvements to vpd device tree entries</p>
 <p>Previously we would miss some properties</p>
 </li>
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.9-rc1.html#skiboot-5-9-rc1"><span class="std std-ref">skiboot-5.9-rc1</span></a>:</p>
 <ul>
-<li><p>hw/p8-i2c: Fix deadlock in p9_i2c_bus_owner_change</p>
+<li><p class="first">hw/p8-i2c: Fix deadlock in p9_i2c_bus_owner_change</p>
 <p>When debugging a system where Linux was taking soft lockup errors with
 two CPUs stuck in OPAL:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 50%" />
-<col style="width: 50%" />
+<col width="50%" />
+<col width="50%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>CPU0</p></th>
-<th class="head"><p>CPU1</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">CPU0</th>
+<th class="head">CPU1</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>lock</p></td>
-<td></td>
+<tbody valign="top">
+<tr class="row-even"><td>lock</td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p>p8_i2c_recover</p></td>
-<td></td>
+<tr class="row-odd"><td>p8_i2c_recover</td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p>opal_handle_interrupt</p></td>
-<td><p>sync_timer
+<tr class="row-even"><td>opal_handle_interrupt</td>
+<td>sync_timer
 cancel_timer
 p9_i2c_bus_owner_change
 occ_p9_interrupt
 xive_source_interrupt
-opal_handle_interrupt</p></td>
+opal_handle_interrupt</td>
 </tr>
 </tbody>
 </table>
@@ -813,7 +823,7 @@ p9_i2c_bus_owner_change() has taken master-&gt;lock, but then is stuck waiting
 for all timers to complete. We deadlock.</p>
 <p>Fix this by using cancel_timer_async().</p>
 </li>
-<li><p>opal/cpu: Mark the core as bad while disabling threads of the core.</p>
+<li><p class="first">opal/cpu: Mark the core as bad while disabling threads of the core.</p>
 <p>If any of the core fails to sync its TB during chipTOD initialization,
 all the threads of that core are disabled. But this does not make
 linux kernel to ignore the core/cpus. It crashes while bringing them up
@@ -847,7 +857,7 @@ enter ? for help
 </ul>
 <p>Since <a class="reference internal" href="skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a>:</p>
 <ul>
-<li><p>ipmi: Convert common debug prints to trace</p>
+<li><p class="first">ipmi: Convert common debug prints to trace</p>
 <p>OPAL logs messages for every IPMI request from host. Sometime OPAL console
 is filled with only these messages. This path is pretty stable now and
 we have enough logs to cover bad path. Hence lets convert these debug
@@ -859,11 +869,11 @@ message to trace/info message. Examples are:</p>
 </pre></div>
 </div>
 </li>
-<li><p>libflash/file: Handle short read()s and write()s correctly</p>
+<li><p class="first">libflash/file: Handle short read()s and write()s correctly</p>
 <p>Currently we don’t move the buffer along for a short read() or write()
 and nor do we request only the remaining amount.</p>
 </li>
-<li><p>hw/p8-i2c: Rework timeout handling</p>
+<li><p class="first">hw/p8-i2c: Rework timeout handling</p>
 <p>Currently we treat a timeout as a hard failure and will automatically
 fail any transations that hit their timeout. This results in
 unnecessarily failing I2C requests if interrupts are dropped, etc.
@@ -874,7 +884,7 @@ handling to check the status and continue the transaction if it can.
 if it can while logging an error if it detects a timeout due to a
 dropped interrupt.</p>
 </li>
-<li><p>core/flash: Only expect ELF header for BOOTKERNEL partition flash resource</p>
+<li><p class="first">core/flash: Only expect ELF header for BOOTKERNEL partition flash resource</p>
 <p>When loading a flash resource which isn’t signed (secure and trusted
 boot) and which doesn’t have a subpartition, we assume it’s the
 BOOTKERNEL since previously this was the only such resource. Thus we
@@ -894,7 +904,7 @@ the FFS header. Also set the return code on error so we don’t
 erroneously return OPAL_SUCCESS. Add a check that the resource will fit
 in the supplied buffer to prevent buffer overrun.</p>
 </li>
-<li><p>flash: Support adding the no-erase property to flash</p>
+<li><p class="first">flash: Support adding the no-erase property to flash</p>
 <p>The mbox protocol explicitly states that an erase is not required
 before a write. This means that issuing an erase from userspace,
 through the mtd device, and back returns a successful operation
@@ -914,7 +924,7 @@ MTD_NO_ERASE flag from the device tree property.</p>
 - opal-prd: Fix memory leak</p>
 <p>Since <a class="reference internal" href="skiboot-5.8.html#skiboot-5-8"><span class="std std-ref">skiboot-5.8</span></a>:</p>
 <ul>
-<li><p>external/gard: Clear entire guard partition instead of entry by entry</p>
+<li><p class="first">external/gard: Clear entire guard partition instead of entry by entry</p>
 <p>When using the current implementation of the gard tool to ecc clear the
 entire GUARD partition it is done one gard record at a time. While this
 may be ok when accessing the actual flash this is very slow when done
@@ -926,50 +936,51 @@ entire buffer. Then we can do one big erase and write of the entire
 partition. This reduces the time to clear the guard partition to on the
 order of 4 seconds.</p>
 </li>
-<li><p>opal-prd: Fix opal-prd command line options</p>
+<li><p class="first">opal-prd: Fix opal-prd command line options</p>
 <p>HBRT OCC reset interface depends on service processor type.</p>
 <ul class="simple">
-<li><p>FSP: reset_pm_complex()</p></li>
-<li><p>BMC: process_occ_reset()</p></li>
+<li>FSP: reset_pm_complex()</li>
+<li>BMC: process_occ_reset()</li>
 </ul>
 <p>We have both <cite>occ</cite> and <cite>pm-complex</cite> command line interfaces.
 This patch adds support to dispaly appropriate message depending
 on system type.</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 6%" />
-<col style="width: 39%" />
-<col style="width: 55%" />
+<col width="6%" />
+<col width="39%" />
+<col width="55%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>SP</p></th>
-<th class="head"><p>Command</p></th>
-<th class="head"><p>Action</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">SP</th>
+<th class="head">Command</th>
+<th class="head">Action</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>FSP</p></td>
-<td><p>opal-prd occ</p></td>
-<td><p>display error message</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>FSP</td>
+<td>opal-prd occ</td>
+<td>display error message</td>
 </tr>
-<tr class="row-odd"><td><p>FSP</p></td>
-<td><p>opal-prd pm-complex</p></td>
-<td><p>Call pm_complex_reset()</p></td>
+<tr class="row-odd"><td>FSP</td>
+<td>opal-prd pm-complex</td>
+<td>Call pm_complex_reset()</td>
 </tr>
-<tr class="row-even"><td><p>BMC</p></td>
-<td><p>opal-prd occ</p></td>
-<td><p>Call process_occ_reset()</p></td>
+<tr class="row-even"><td>BMC</td>
+<td>opal-prd occ</td>
+<td>Call process_occ_reset()</td>
 </tr>
-<tr class="row-odd"><td><p>BMC</p></td>
-<td><p>opal-prd pm-complex</p></td>
-<td><p>display error message</p></td>
+<tr class="row-odd"><td>BMC</td>
+<td>opal-prd pm-complex</td>
+<td>display error message</td>
 </tr>
 </tbody>
 </table>
 </li>
-<li><p>opal-prd: detect service processor type and
-then make appropriate occ reset call.</p></li>
-<li><p>pflash: Fix erase command for unaligned start address</p>
+<li><p class="first">opal-prd: detect service processor type and
+then make appropriate occ reset call.</p>
+</li>
+<li><p class="first">pflash: Fix erase command for unaligned start address</p>
 <p>The erase_range() function handles erasing the flash for a given start
 address and length, and can handle an unaligned start address and
 length. However in the unaligned start address case we are incorrectly
@@ -979,13 +990,14 @@ address was then we probably want to do that before we overide the
 origin start address. So rearrange the code so that this is indeed the
 case.</p>
 </li>
-<li><p>external/gard: Print an error if run on an FSP system</p></li>
+<li><p class="first">external/gard: Print an error if run on an FSP system</p>
+</li>
 </ul>
 </div>
 <div class="section" id="simulators">
 <h2>Simulators<a class="headerlink" href="#simulators" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>mambo: Add mambo socket program</p>
+<li><p class="first">mambo: Add mambo socket program</p>
 <p>This adds a program that can be run inside a mambo simulator in linux
 userspace which enables TCP sockets to be proxied in and out of the
 simulator to the host.</p>
@@ -993,15 +1005,15 @@ simulator to the host.</p>
 drivers/infrastructure to run.</p>
 <p>Run inside the simulator:</p>
 <ul class="simple">
-<li><p>to forward host ssh connections to sim ssh server:
+<li>to forward host ssh connections to sim ssh server:
 <code class="docutils literal notranslate"><span class="pre">./mambo-socket-proxy</span> <span class="pre">-h</span> <span class="pre">10022</span> <span class="pre">-s</span> <span class="pre">22</span></code>, then connect to port 10022
-on your host with <code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">-p</span> <span class="pre">10022</span> <span class="pre">localhost</span></code></p></li>
-<li><p>to allow http proxy access from inside the sim to local http proxy:
-<code class="docutils literal notranslate"><span class="pre">./mambo-socket-proxy</span> <span class="pre">-b</span> <span class="pre">proxy.mynetwork</span> <span class="pre">-h</span> <span class="pre">3128</span> <span class="pre">-s</span> <span class="pre">3128</span></code></p></li>
+on your host with <code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">-p</span> <span class="pre">10022</span> <span class="pre">localhost</span></code></li>
+<li>to allow http proxy access from inside the sim to local http proxy:
+<code class="docutils literal notranslate"><span class="pre">./mambo-socket-proxy</span> <span class="pre">-b</span> <span class="pre">proxy.mynetwork</span> <span class="pre">-h</span> <span class="pre">3128</span> <span class="pre">-s</span> <span class="pre">3128</span></code></li>
 </ul>
 <p>Multiple connections are supported.</p>
 </li>
-<li><p>idle: disable stop*_lite POWER9 idle states for Mambo platform</p>
+<li><p class="first">idle: disable stop*_lite POWER9 idle states for Mambo platform</p>
 <p>Mambo prior to Mambo.7.8.21 had a bug where the stop idle instruction
 with PSSCR[ESL]=PSSCR[EC]=0 would resume with MSR set as though it had
 taken a system reset interrupt.</p>
@@ -1015,100 +1027,100 @@ lite stop states for the mambo platform for now.</p>
 <div class="section" id="contributors">
 <h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>209 csets from 32 developers</p></li>
-<li><p>2 employers found</p></li>
-<li><p>A total of 9619 lines added, 1612 removed (delta 8007)</p></li>
+<li>209 csets from 32 developers</li>
+<li>2 employers found</li>
+<li>A total of 9619 lines added, 1612 removed (delta 8007)</li>
 </ul>
 <p>Extending the analysis done for some previous releases, we can see our trends
 in code review across versions:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 14%" />
-<col style="width: 12%" />
-<col style="width: 16%" />
-<col style="width: 18%" />
-<col style="width: 18%" />
-<col style="width: 22%" />
+<col width="14%" />
+<col width="12%" />
+<col width="16%" />
+<col width="18%" />
+<col width="18%" />
+<col width="22%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Release</p></th>
-<th class="head"><p>csets</p></th>
-<th class="head"><p>Ack %</p></th>
-<th class="head"><p>Reviews %</p></th>
-<th class="head"><p>Tested %</p></th>
-<th class="head"><p>Reported %</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Release</th>
+<th class="head">csets</th>
+<th class="head">Ack %</th>
+<th class="head">Reviews %</th>
+<th class="head">Tested %</th>
+<th class="head">Reported %</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>5.0</p></td>
-<td><p>329</p></td>
-<td><p>15 (5%)</p></td>
-<td><p>20 (6%)</p></td>
-<td><p>1 (0%)</p></td>
-<td><p>0 (0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>5.0</td>
+<td>329</td>
+<td>15 (5%)</td>
+<td>20 (6%)</td>
+<td>1 (0%)</td>
+<td>0 (0%)</td>
 </tr>
-<tr class="row-odd"><td><p>5.1</p></td>
-<td><p>372</p></td>
-<td><p>13 (3%)</p></td>
-<td><p>38 (10%)</p></td>
-<td><p>1 (0%)</p></td>
-<td><p>4 (1%)</p></td>
+<tr class="row-odd"><td>5.1</td>
+<td>372</td>
+<td>13 (3%)</td>
+<td>38 (10%)</td>
+<td>1 (0%)</td>
+<td>4 (1%)</td>
 </tr>
-<tr class="row-even"><td><p>5.2-rc1</p></td>
-<td><p>334</p></td>
-<td><p>20 (6%)</p></td>
-<td><p>34 (10%)</p></td>
-<td><p>6 (2%)</p></td>
-<td><p>11 (3%)</p></td>
+<tr class="row-even"><td>5.2-rc1</td>
+<td>334</td>
+<td>20 (6%)</td>
+<td>34 (10%)</td>
+<td>6 (2%)</td>
+<td>11 (3%)</td>
 </tr>
-<tr class="row-odd"><td><p>5.3-rc1</p></td>
-<td><p>302</p></td>
-<td><p>36 (12%)</p></td>
-<td><p>53 (18%)</p></td>
-<td><p>4 (1%)</p></td>
-<td><p>5 (2%)</p></td>
+<tr class="row-odd"><td>5.3-rc1</td>
+<td>302</td>
+<td>36 (12%)</td>
+<td>53 (18%)</td>
+<td>4 (1%)</td>
+<td>5 (2%)</td>
 </tr>
-<tr class="row-even"><td><p>5.4</p></td>
-<td><p>361</p></td>
-<td><p>16 (4%)</p></td>
-<td><p>28 (8%)</p></td>
-<td><p>1 (0%)</p></td>
-<td><p>9 (2%)</p></td>
+<tr class="row-even"><td>5.4</td>
+<td>361</td>
+<td>16 (4%)</td>
+<td>28 (8%)</td>
+<td>1 (0%)</td>
+<td>9 (2%)</td>
 </tr>
-<tr class="row-odd"><td><p>5.5</p></td>
-<td><p>408</p></td>
-<td><p>11 (3%)</p></td>
-<td><p>48 (12%)</p></td>
-<td><p>14 (3%)</p></td>
-<td><p>10 (2%)</p></td>
+<tr class="row-odd"><td>5.5</td>
+<td>408</td>
+<td>11 (3%)</td>
+<td>48 (12%)</td>
+<td>14 (3%)</td>
+<td>10 (2%)</td>
 </tr>
-<tr class="row-even"><td><p>5.6</p></td>
-<td><p>87</p></td>
-<td><p>12 (14%)</p></td>
-<td><p>6 (7%)</p></td>
-<td><p>5 (6%)</p></td>
-<td><p>2 (2%)</p></td>
+<tr class="row-even"><td>5.6</td>
+<td>87</td>
+<td>12 (14%)</td>
+<td>6 (7%)</td>
+<td>5 (6%)</td>
+<td>2 (2%)</td>
 </tr>
-<tr class="row-odd"><td><p>5.7</p></td>
-<td><p>232</p></td>
-<td><p>30 (13%)</p></td>
-<td><p>32 (14%)</p></td>
-<td><p>5 (2%)</p></td>
-<td><p>2 (1%)</p></td>
+<tr class="row-odd"><td>5.7</td>
+<td>232</td>
+<td>30 (13%)</td>
+<td>32 (14%)</td>
+<td>5 (2%)</td>
+<td>2 (1%)</td>
 </tr>
-<tr class="row-even"><td><p>5.8</p></td>
-<td><p>157</p></td>
-<td><p>13 (8%)</p></td>
-<td><p>36 (23%)</p></td>
-<td><p>2 (1%)</p></td>
-<td><p>6 (4%)</p></td>
+<tr class="row-even"><td>5.8</td>
+<td>157</td>
+<td>13 (8%)</td>
+<td>36 (23%)</td>
+<td>2 (1%)</td>
+<td>6 (4%)</td>
 </tr>
-<tr class="row-odd"><td><p>5.9</p></td>
-<td><p>209</p></td>
-<td><p>15 (7%)</p></td>
-<td><p>78 (37%)</p></td>
-<td><p>3 (1%)</p></td>
-<td><p>10 (5%)</p></td>
+<tr class="row-odd"><td>5.9</td>
+<td>209</td>
+<td>15 (7%)</td>
+<td>78 (37%)</td>
+<td>3 (1%)</td>
+<td>10 (5%)</td>
 </tr>
 </tbody>
 </table>
@@ -1117,558 +1129,558 @@ patches that got “Reviewed-by” and if we exclude them, we’re back to 14%,
 which is more like what I’d expect.</p>
 <div class="section" id="developers-with-the-most-changesets">
 <h3>Developers with the most changesets<a class="headerlink" href="#developers-with-the-most-changesets" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
+<col width="72%" />
+<col width="8%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>28</p></td>
-<td><p>(13.4%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Stewart Smith</td>
+<td>28</td>
+<td>(13.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Vasant Hegde</p></td>
-<td><p>25</p></td>
-<td><p>(12.0%)</p></td>
+<tr class="row-odd"><td>Vasant Hegde</td>
+<td>25</td>
+<td>(12.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Joel Stanley</p></td>
-<td><p>25</p></td>
-<td><p>(12.0%)</p></td>
+<tr class="row-even"><td>Joel Stanley</td>
+<td>25</td>
+<td>(12.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>24</p></td>
-<td><p>(11.5%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>24</td>
+<td>(11.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
-<td><p>20</p></td>
-<td><p>(9.6%)</p></td>
+<tr class="row-even"><td>Oliver O’Halloran</td>
+<td>20</td>
+<td>(9.6%)</td>
 </tr>
-<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
-<td><p>16</p></td>
-<td><p>(7.7%)</p></td>
+<tr class="row-odd"><td>Benjamin Herrenschmidt</td>
+<td>16</td>
+<td>(7.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Nicholas Piggin</p></td>
-<td><p>12</p></td>
-<td><p>(5.7%)</p></td>
+<tr class="row-even"><td>Nicholas Piggin</td>
+<td>12</td>
+<td>(5.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Akshay Adiga</p></td>
-<td><p>8</p></td>
-<td><p>(3.8%)</p></td>
+<tr class="row-odd"><td>Akshay Adiga</td>
+<td>8</td>
+<td>(3.8%)</td>
 </tr>
-<tr class="row-even"><td><p>Madhavan Srinivasan</p></td>
-<td><p>7</p></td>
-<td><p>(3.3%)</p></td>
+<tr class="row-even"><td>Madhavan Srinivasan</td>
+<td>7</td>
+<td>(3.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Reza Arbab</p></td>
-<td><p>6</p></td>
-<td><p>(2.9%)</p></td>
+<tr class="row-odd"><td>Reza Arbab</td>
+<td>6</td>
+<td>(2.9%)</td>
 </tr>
-<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
-<td><p>3</p></td>
-<td><p>(1.4%)</p></td>
+<tr class="row-even"><td>Mahesh Salgaonkar</td>
+<td>3</td>
+<td>(1.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Claudio Carvalho</p></td>
-<td><p>3</p></td>
-<td><p>(1.4%)</p></td>
+<tr class="row-odd"><td>Claudio Carvalho</td>
+<td>3</td>
+<td>(1.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Suraj Jitindar Singh</p></td>
-<td><p>3</p></td>
-<td><p>(1.4%)</p></td>
+<tr class="row-even"><td>Suraj Jitindar Singh</td>
+<td>3</td>
+<td>(1.4%)</td>
 </tr>
-<tr class="row-odd"><td><p>Sam Bobroff</p></td>
-<td><p>3</p></td>
-<td><p>(1.4%)</p></td>
+<tr class="row-odd"><td>Sam Bobroff</td>
+<td>3</td>
+<td>(1.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-even"><td>Shilpasri G Bhat</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Ellerman</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-odd"><td>Michael Ellerman</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Andrew Donnellan</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-even"><td>Andrew Donnellan</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Vaibhav Jain</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-odd"><td>Vaibhav Jain</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Jeremy Kerr</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-even"><td>Jeremy Kerr</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Cyril Bur</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-odd"><td>Cyril Bur</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Christophe Lombard</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-even"><td>Christophe Lombard</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Daniel Black</p></td>
-<td><p>2</p></td>
-<td><p>(1.0%)</p></td>
+<tr class="row-odd"><td>Daniel Black</td>
+<td>2</td>
+<td>(1.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Alexey Kardashevskiy</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-even"><td>Alexey Kardashevskiy</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alistair Popple</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Alistair Popple</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Anton Blanchard</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-even"><td>Anton Blanchard</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Guilherme G. Piccoli</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Guilherme G. Piccoli</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-even"><td><p>John W Walthour</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-even"><td>John W Walthour</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Anju T Sudhakar</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Anju T Sudhakar</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Balbir Singh</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-even"><td>Balbir Singh</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Russell Currey</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Russell Currey</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-even"><td><p>William A. Kennington III</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-even"><td>William A. Kennington III</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Sukadev Bhattiprolu</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Sukadev Bhattiprolu</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-changed-lines">
 <h3>Developers with the most changed lines<a class="headerlink" href="#developers-with-the-most-changed-lines" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 70%" />
-<col style="width: 11%" />
-<col style="width: 19%" />
+<col width="70%" />
+<col width="11%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Akshay Adiga</p></td>
-<td><p>2731</p></td>
-<td><p>(27.9%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Akshay Adiga</td>
+<td>2731</td>
+<td>(27.9%)</td>
 </tr>
-<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
-<td><p>1512</p></td>
-<td><p>(15.5%)</p></td>
+<tr class="row-odd"><td>Oliver O’Halloran</td>
+<td>1512</td>
+<td>(15.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>1355</p></td>
-<td><p>(13.9%)</p></td>
+<tr class="row-even"><td>Stewart Smith</td>
+<td>1355</td>
+<td>(13.9%)</td>
 </tr>
-<tr class="row-odd"><td><p>Nicholas Piggin</p></td>
-<td><p>929</p></td>
-<td><p>(9.5%)</p></td>
+<tr class="row-odd"><td>Nicholas Piggin</td>
+<td>929</td>
+<td>(9.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Vasant Hegde</p></td>
-<td><p>827</p></td>
-<td><p>(8.5%)</p></td>
+<tr class="row-even"><td>Vasant Hegde</td>
+<td>827</td>
+<td>(8.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>719</p></td>
-<td><p>(7.4%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>719</td>
+<td>(7.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
-<td><p>522</p></td>
-<td><p>(5.3%)</p></td>
+<tr class="row-even"><td>Benjamin Herrenschmidt</td>
+<td>522</td>
+<td>(5.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Madhavan Srinivasan</p></td>
-<td><p>180</p></td>
-<td><p>(1.8%)</p></td>
+<tr class="row-odd"><td>Madhavan Srinivasan</td>
+<td>180</td>
+<td>(1.8%)</td>
 </tr>
-<tr class="row-even"><td><p>Sam Bobroff</p></td>
-<td><p>172</p></td>
-<td><p>(1.8%)</p></td>
+<tr class="row-even"><td>Sam Bobroff</td>
+<td>172</td>
+<td>(1.8%)</td>
 </tr>
-<tr class="row-odd"><td><p>Christophe Lombard</p></td>
-<td><p>170</p></td>
-<td><p>(1.7%)</p></td>
+<tr class="row-odd"><td>Christophe Lombard</td>
+<td>170</td>
+<td>(1.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
-<td><p>166</p></td>
-<td><p>(1.7%)</p></td>
+<tr class="row-even"><td>Mahesh Salgaonkar</td>
+<td>166</td>
+<td>(1.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
-<td><p>125</p></td>
-<td><p>(1.3%)</p></td>
+<tr class="row-odd"><td>Andrew Donnellan</td>
+<td>125</td>
+<td>(1.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Joel Stanley</p></td>
-<td><p>70</p></td>
-<td><p>(0.7%)</p></td>
+<tr class="row-even"><td>Joel Stanley</td>
+<td>70</td>
+<td>(0.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Reza Arbab</p></td>
-<td><p>64</p></td>
-<td><p>(0.7%)</p></td>
+<tr class="row-odd"><td>Reza Arbab</td>
+<td>64</td>
+<td>(0.7%)</td>
 </tr>
-<tr class="row-even"><td><p>Claudio Carvalho</p></td>
-<td><p>51</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-even"><td>Claudio Carvalho</td>
+<td>51</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Suraj Jitindar Singh</p></td>
-<td><p>42</p></td>
-<td><p>(0.4%)</p></td>
+<tr class="row-odd"><td>Suraj Jitindar Singh</td>
+<td>42</td>
+<td>(0.4%)</td>
 </tr>
-<tr class="row-even"><td><p>Alistair Popple</p></td>
-<td><p>28</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-even"><td>Alistair Popple</td>
+<td>28</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Jeremy Kerr</p></td>
-<td><p>25</p></td>
-<td><p>(0.3%)</p></td>
+<tr class="row-odd"><td>Jeremy Kerr</td>
+<td>25</td>
+<td>(0.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Michael Ellerman</p></td>
-<td><p>21</p></td>
-<td><p>(0.2%)</p></td>
+<tr class="row-even"><td>Michael Ellerman</td>
+<td>21</td>
+<td>(0.2%)</td>
 </tr>
-<tr class="row-odd"><td><p>Cyril Bur</p></td>
-<td><p>18</p></td>
-<td><p>(0.2%)</p></td>
+<tr class="row-odd"><td>Cyril Bur</td>
+<td>18</td>
+<td>(0.2%)</td>
 </tr>
-<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
-<td><p>17</p></td>
-<td><p>(0.2%)</p></td>
+<tr class="row-even"><td>Shilpasri G Bhat</td>
+<td>17</td>
+<td>(0.2%)</td>
 </tr>
-<tr class="row-odd"><td><p>Vaibhav Jain</p></td>
-<td><p>8</p></td>
-<td><p>(0.1%)</p></td>
+<tr class="row-odd"><td>Vaibhav Jain</td>
+<td>8</td>
+<td>(0.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Daniel Black</p></td>
-<td><p>6</p></td>
-<td><p>(0.1%)</p></td>
+<tr class="row-even"><td>Daniel Black</td>
+<td>6</td>
+<td>(0.1%)</td>
 </tr>
-<tr class="row-odd"><td><p>William A. Kennington III</p></td>
-<td><p>4</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>William A. Kennington III</td>
+<td>4</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Sukadev Bhattiprolu</p></td>
-<td><p>4</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>Sukadev Bhattiprolu</td>
+<td>4</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Alexey Kardashevskiy</p></td>
-<td><p>3</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Alexey Kardashevskiy</td>
+<td>3</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>John W Walthour</p></td>
-<td><p>3</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>John W Walthour</td>
+<td>3</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Balbir Singh</p></td>
-<td><p>3</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Balbir Singh</td>
+<td>3</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Guilherme G. Piccoli</p></td>
-<td><p>2</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>Guilherme G. Piccoli</td>
+<td>2</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Anton Blanchard</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Anton Blanchard</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Anju T Sudhakar</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-even"><td>Anju T Sudhakar</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Russell Currey</p></td>
-<td><p>1</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Russell Currey</td>
+<td>1</td>
+<td>(0.0%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-lines-removed">
 <h3>Developers with the most lines removed<a class="headerlink" href="#developers-with-the-most-lines-removed" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 70%" />
-<col style="width: 11%" />
-<col style="width: 19%" />
+<col width="70%" />
+<col width="11%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Alistair Popple</p></td>
-<td><p>28</p></td>
-<td><p>(1.7%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Alistair Popple</td>
+<td>28</td>
+<td>(1.7%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-signoffs">
 <h3>Developers with the most signoffs<a class="headerlink" href="#developers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
+<col width="72%" />
+<col width="8%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>180</p></td>
-<td><p>(97.8%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Stewart Smith</td>
+<td>180</td>
+<td>(97.8%)</td>
 </tr>
-<tr class="row-odd"><td><p>Shilpasri G Bhat</p></td>
-<td><p>2</p></td>
-<td><p>(1.1%)</p></td>
+<tr class="row-odd"><td>Shilpasri G Bhat</td>
+<td>2</td>
+<td>(1.1%)</td>
 </tr>
-<tr class="row-even"><td><p>Mukesh Ojha</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-even"><td>Mukesh Ojha</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Total</p></td>
-<td><p>184</p></td>
-<td><p>(100%)</p></td>
+<tr class="row-even"><td>Total</td>
+<td>184</td>
+<td>(100%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-reviews">
 <h3>Developers with the most reviews<a class="headerlink" href="#developers-with-the-most-reviews" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 75%" />
-<col style="width: 6%" />
-<col style="width: 19%" />
+<col width="75%" />
+<col width="6%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Michael Neuling</p></td>
-<td><p>25</p></td>
-<td><p>(32.5%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Michael Neuling</td>
+<td>25</td>
+<td>(32.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Russell Currey</p></td>
-<td><p>25</p></td>
-<td><p>(32.5%)</p></td>
+<tr class="row-odd"><td>Russell Currey</td>
+<td>25</td>
+<td>(32.5%)</td>
 </tr>
-<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
-<td><p>9</p></td>
-<td><p>(11.7%)</p></td>
+<tr class="row-even"><td>Vaidyanathan Srinivasan</td>
+<td>9</td>
+<td>(11.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
-<td><p>4</p></td>
-<td><p>(5.2%)</p></td>
+<tr class="row-odd"><td>Oliver O’Halloran</td>
+<td>4</td>
+<td>(5.2%)</td>
 </tr>
-<tr class="row-even"><td><p>Andrew Donnellan</p></td>
-<td><p>3</p></td>
-<td><p>(3.9%)</p></td>
+<tr class="row-even"><td>Andrew Donnellan</td>
+<td>3</td>
+<td>(3.9%)</td>
 </tr>
-<tr class="row-odd"><td><p>Frederic Barrat</p></td>
-<td><p>2</p></td>
-<td><p>(2.6%)</p></td>
+<tr class="row-odd"><td>Frederic Barrat</td>
+<td>2</td>
+<td>(2.6%)</td>
 </tr>
-<tr class="row-even"><td><p>Suraj Jitindar Singh</p></td>
-<td><p>2</p></td>
-<td><p>(2.6%)</p></td>
+<tr class="row-even"><td>Suraj Jitindar Singh</td>
+<td>2</td>
+<td>(2.6%)</td>
 </tr>
-<tr class="row-odd"><td><p>Vasant Hegde</p></td>
-<td><p>2</p></td>
-<td><p>(2.6%)</p></td>
+<tr class="row-odd"><td>Vasant Hegde</td>
+<td>2</td>
+<td>(2.6%)</td>
 </tr>
-<tr class="row-even"><td><p>Andrew Jeffery</p></td>
-<td><p>1</p></td>
-<td><p>(1.3%)</p></td>
+<tr class="row-even"><td>Andrew Jeffery</td>
+<td>1</td>
+<td>(1.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Samuel Mendoza-Jonas</p></td>
-<td><p>1</p></td>
-<td><p>(1.3%)</p></td>
+<tr class="row-odd"><td>Samuel Mendoza-Jonas</td>
+<td>1</td>
+<td>(1.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Alexey Kardashevskiy</p></td>
-<td><p>1</p></td>
-<td><p>(1.3%)</p></td>
+<tr class="row-even"><td>Alexey Kardashevskiy</td>
+<td>1</td>
+<td>(1.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Cyril Bur</p></td>
-<td><p>1</p></td>
-<td><p>(1.3%)</p></td>
+<tr class="row-odd"><td>Cyril Bur</td>
+<td>1</td>
+<td>(1.3%)</td>
 </tr>
-<tr class="row-even"><td><p>Akshay Adiga</p></td>
-<td><p>1</p></td>
-<td><p>(1.3%)</p></td>
+<tr class="row-even"><td>Akshay Adiga</td>
+<td>1</td>
+<td>(1.3%)</td>
 </tr>
-<tr class="row-odd"><td><p>Total</p></td>
-<td><p>77</p></td>
-<td><p>(100%)</p></td>
+<tr class="row-odd"><td>Total</td>
+<td>77</td>
+<td>(100%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-test-credits">
 <h3>Developers with the most test credits<a class="headerlink" href="#developers-with-the-most-test-credits" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 73%" />
-<col style="width: 5%" />
-<col style="width: 22%" />
+<col width="73%" />
+<col width="5%" />
+<col width="22%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
-<td><p>3</p></td>
-<td><p>(100.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Pridhiviraj Paidipeddi</td>
+<td>3</td>
+<td>(100.0%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-who-gave-the-most-tested-by-credits">
 <h3>Developers who gave the most tested-by credits<a class="headerlink" href="#developers-who-gave-the-most-tested-by-credits" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 75%" />
-<col style="width: 6%" />
-<col style="width: 19%" />
+<col width="75%" />
+<col width="6%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Vasant Hegde</p></td>
-<td><p>2</p></td>
-<td><p>(66.7%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Vasant Hegde</td>
+<td>2</td>
+<td>(66.7%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>1</p></td>
-<td><p>(33.3%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>1</td>
+<td>(33.3%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-with-the-most-report-credits">
 <h3>Developers with the most report credits<a class="headerlink" href="#developers-with-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 75%" />
-<col style="width: 6%" />
-<col style="width: 19%" />
+<col width="75%" />
+<col width="6%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Pridhiviraj Paidipeddi</p></td>
-<td><p>6</p></td>
-<td><p>(60.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Pridhiviraj Paidipeddi</td>
+<td>6</td>
+<td>(60.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
-<td><p>1</p></td>
-<td><p>(10.0%)</p></td>
+<tr class="row-odd"><td>Andrew Donnellan</td>
+<td>1</td>
+<td>(10.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>1</p></td>
-<td><p>(10.0%)</p></td>
+<tr class="row-even"><td>Stewart Smith</td>
+<td>1</td>
+<td>(10.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Shriya</p></td>
-<td><p>1</p></td>
-<td><p>(10.0%)</p></td>
+<tr class="row-odd"><td>Shriya</td>
+<td>1</td>
+<td>(10.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Robert Lippert</p></td>
-<td><p>1</p></td>
-<td><p>(10.0%)</p></td>
+<tr class="row-even"><td>Robert Lippert</td>
+<td>1</td>
+<td>(10.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Total</p></td>
-<td><p>10</p></td>
-<td><p>(100%)</p></td>
+<tr class="row-odd"><td>Total</td>
+<td>10</td>
+<td>(100%)</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="developers-who-gave-the-most-report-credits">
 <h3>Developers who gave the most report credits<a class="headerlink" href="#developers-who-gave-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 75%" />
-<col style="width: 6%" />
-<col style="width: 19%" />
+<col width="75%" />
+<col width="6%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Developer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Developer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>Stewart Smith</p></td>
-<td><p>3</p></td>
-<td><p>(30.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>Stewart Smith</td>
+<td>3</td>
+<td>(30.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Suraj Jitindar Singh</p></td>
-<td><p>3</p></td>
-<td><p>(30.0%)</p></td>
+<tr class="row-odd"><td>Suraj Jitindar Singh</td>
+<td>3</td>
+<td>(30.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Vasant Hegde</p></td>
-<td><p>2</p></td>
-<td><p>(20.0%)</p></td>
+<tr class="row-even"><td>Vasant Hegde</td>
+<td>2</td>
+<td>(20.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Michael Neuling</p></td>
-<td><p>1</p></td>
-<td><p>(10.0%)</p></td>
+<tr class="row-odd"><td>Michael Neuling</td>
+<td>1</td>
+<td>(10.0%)</td>
 </tr>
-<tr class="row-even"><td><p>Madhavan Srinivasan</p></td>
-<td><p>1</p></td>
-<td><p>(10.0%)</p></td>
+<tr class="row-even"><td>Madhavan Srinivasan</td>
+<td>1</td>
+<td>(10.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Total</p></td>
-<td><p>10</p></td>
-<td><p>(100%)</p></td>
+<tr class="row-odd"><td>Total</td>
+<td>10</td>
+<td>(100%)</td>
 </tr>
 </tbody>
 </table>
@@ -1676,94 +1688,94 @@ which is more like what I’d expect.</p>
 <div class="section" id="changesets-and-employers">
 <h3>Changesets and Employers<a class="headerlink" href="#changesets-and-employers" title="Permalink to this headline">¶</a></h3>
 <p>Top changeset contributors by employer:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 73%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
+<col width="73%" />
+<col width="8%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Employer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Employer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>IBM</p></td>
-<td><p>208</p></td>
-<td><p>(99.5%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>IBM</td>
+<td>208</td>
+<td>(99.5%)</td>
 </tr>
-<tr class="row-odd"><td><p>Google</p></td>
-<td><p>1</p></td>
-<td><p>(0.5%)</p></td>
+<tr class="row-odd"><td>Google</td>
+<td>1</td>
+<td>(0.5%)</td>
 </tr>
 </tbody>
 </table>
 <p>Top lines changed by employer:</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 69%" />
-<col style="width: 10%" />
-<col style="width: 21%" />
+<col width="69%" />
+<col width="10%" />
+<col width="21%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Employer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Employer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>IBM</p></td>
-<td><p>9776</p></td>
-<td><p>(100.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>IBM</td>
+<td>9776</td>
+<td>(100.0%)</td>
 </tr>
-<tr class="row-odd"><td><p>Google</p></td>
-<td><p>4</p></td>
-<td><p>(0.0%)</p></td>
+<tr class="row-odd"><td>Google</td>
+<td>4</td>
+<td>(0.0%)</td>
 </tr>
 </tbody>
 </table>
 <p>Employers with the most signoffs (total 184):</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 71%" />
-<col style="width: 8%" />
-<col style="width: 21%" />
+<col width="71%" />
+<col width="8%" />
+<col width="21%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Employer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Employer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>IBM</p></td>
-<td><p>184</p></td>
-<td><p>(100.0%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>IBM</td>
+<td>184</td>
+<td>(100.0%)</td>
 </tr>
 </tbody>
 </table>
 <p>Employers with the most hackers (total 32):</p>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 73%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
+<col width="73%" />
+<col width="8%" />
+<col width="19%" />
 </colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Employer</p></th>
-<th class="head"><p>#</p></th>
-<th class="head"><p>%</p></th>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Employer</th>
+<th class="head">#</th>
+<th class="head">%</th>
 </tr>
 </thead>
-<tbody>
-<tr class="row-even"><td><p>IBM</p></td>
-<td><p>31</p></td>
-<td><p>(96.9%)</p></td>
+<tbody valign="top">
+<tr class="row-even"><td>IBM</td>
+<td>31</td>
+<td>(96.9%)</td>
 </tr>
-<tr class="row-odd"><td><p>Google</p></td>
-<td><p>1</p></td>
-<td><p>(3.1%)</p></td>
+<tr class="row-odd"><td>Google</td>
+<td>1</td>
+<td>(3.1%)</td>
 </tr>
 </tbody>
 </table>
@@ -1772,7 +1784,6 @@ which is more like what I’d expect.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -1829,15 +1840,17 @@ which is more like what I’d expect.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1854,15 +1867,14 @@ which is more like what I’d expect.</p>
         <li class="right" >
           <a href="skiboot-5.8-rc1.html" title="skiboot-5.8-rc1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-5.9</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

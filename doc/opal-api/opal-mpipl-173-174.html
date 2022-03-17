@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL MPIPL APIs &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL MPIPL APIs &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-messages.html" title="OPAL_MESSAGE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL MPIPL APIs</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -54,7 +55,7 @@
 <p>These calls are used for MPIPL (Memory Preserving Initial Program Load).</p>
 <p>It is an OPTIONAL part of the OPAL spec.</p>
 <p>If a platform supports MPIPL, then we will have “/ibm,opal/dump” node in
-device tree (see <a class="reference internal" href="../device-tree/ibm%2Copal/dump.html#device-tree-ibm-opal-dump"><span class="std std-ref">Dump (MPIPL) Device Tree Binding</span></a>).</p>
+device tree (see <a class="reference internal" href="../device-tree/ibm,opal/dump.html#device-tree-ibm-opal-dump"><span class="std std-ref">Dump (MPIPL) Device Tree Binding</span></a>).</p>
 </div>
 <div class="section" id="opal-mpipl-update">
 <span id="id1"></span><h1>OPAL_MPIPL_UPDATE<a class="headerlink" href="#opal-mpipl-update" title="Permalink to this headline">¶</a></h1>
@@ -75,43 +76,43 @@ device tree (see <a class="reference internal" href="../device-tree/ibm%2Copal/d
 <div class="section" id="ops">
 <h2>ops :<a class="headerlink" href="#ops" title="Permalink to this headline">¶</a></h2>
 <blockquote>
-<div><dl class="simple">
-<dt>OPAL_MPIPL_ADD_RANGE</dt><dd><p>Add new entry to MPIPL table. Kernel will send src, dest and size.
+<div><dl class="docutils">
+<dt>OPAL_MPIPL_ADD_RANGE</dt>
+<dd>Add new entry to MPIPL table. Kernel will send src, dest and size.
 During MPIPL content from source address is moved to destination address.
 src  = Source start address
 dest = Destination start address
-size = size</p>
-</dd>
-<dt>OPAL_MPIPL_REMOVE_RANGE</dt><dd><p>Remove kernel requested entry from MPIPL table.
+size = size</dd>
+<dt>OPAL_MPIPL_REMOVE_RANGE</dt>
+<dd>Remove kernel requested entry from MPIPL table.
 src  = Source start address
 dest = Destination start address
-size = ignore</p>
-</dd>
-<dt>OPAL_MPIPL_REMOVE_ALL</dt><dd><p>Remove all kernel passed entry from MPIPL table.
+size = ignore</dd>
+<dt>OPAL_MPIPL_REMOVE_ALL</dt>
+<dd>Remove all kernel passed entry from MPIPL table.
 src  = ignore
 dest = ignore
-size = ignore</p>
-</dd>
-<dt>OPAL_MPIPL_FREE_PRESERVED_MEMORY</dt><dd><p>Post MPIPL, kernel will indicate OPAL that it has processed dump and
+size = ignore</dd>
+<dt>OPAL_MPIPL_FREE_PRESERVED_MEMORY</dt>
+<dd>Post MPIPL, kernel will indicate OPAL that it has processed dump and
 it can clear/release metadata area.
 src  = ignore
 dest = ignore
-size = ignore</p>
-</dd>
+size = ignore</dd>
 </dl>
 </div></blockquote>
 </div>
 <div class="section" id="return-values">
 <h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt><dd><p>Operation success</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p>Invalid parameter</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code></dt><dd><p>Ran out of space in MDST/MDDT table to add new entry</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_HARDWARE</span></code></dt><dd><p>Platform does not support fadump</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt>
+<dd>Operation success</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt>
+<dd>Invalid parameter</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code></dt>
+<dd>Ran out of space in MDST/MDDT table to add new entry</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_HARDWARE</span></code></dt>
+<dd>Platform does not support fadump</dd>
 </dl>
 </div>
 </div>
@@ -137,11 +138,11 @@ kernel will use <cite>opal_mpipl_query_tag</cite> call to retrieve these tags.</
 </div>
 <div class="section" id="id3">
 <h2>Return Values<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt><dd><p>Operation success</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p>Invalid parameter</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt>
+<dd>Operation success</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt>
+<dd>Invalid parameter</dd>
 </dl>
 </div>
 </div>
@@ -178,17 +179,16 @@ tag to retrieve metadata information and generate dump.</p>
 </div>
 <div class="section" id="id5">
 <h2>Return Values<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt><dd><p>Operation success</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p>Invalid parameter</p>
-</dd>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt>
+<dd>Operation success</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt>
+<dd>Invalid parameter</dd>
 </dl>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -226,15 +226,17 @@ tag to retrieve metadata information and generate dump.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -251,15 +253,14 @@ tag to retrieve metadata information and generate dump.</p>
         <li class="right" >
           <a href="opal-messages.html" title="OPAL_MESSAGE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL MPIPL APIs</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

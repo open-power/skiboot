@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skiboot-6.3-rc1 &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>skiboot-6.3-rc1 &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="skiboot-6.3.html" title="skiboot-6.3"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-6.3-rc1</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -62,11 +63,11 @@ did).</p>
 <div class="section" id="new-features">
 <span id="skiboot-6-3-rc1-new-features"></span><h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>hw/imc: Enable opal calls to init/start/stop IMC Trace mode</p>
+<li><p class="first">hw/imc: Enable opal calls to init/start/stop IMC Trace mode</p>
 <p>New OPAL APIs for In-Memory Collection Counter infrastructure(IMC),
 including a new device type called OPAL_IMC_COUNTERS_TRACE.</p>
 </li>
-<li><p>xive: Add calls to save/restore the queues and VPs HW state</p>
+<li><p class="first">xive: Add calls to save/restore the queues and VPs HW state</p>
 <p>To be able to support migration of guests using the XIVE native
 exploitation mode, (where the queue is effectively owned by the
 guest), KVM needs to be able to save and restore the HW-modified
@@ -76,7 +77,7 @@ of the VP from the NVT structure : the VP interrupt pending bits.</p>
 <p>However, there is no need to set back the NVT structure on P9. P10
 should be the same.</p>
 </li>
-<li><p>witherspoon: Add nvlink2 interconnect information</p>
+<li><p class="first">witherspoon: Add nvlink2 interconnect information</p>
 <p>GPUs on Redbud and Sequoia platforms are interconnected in groups of
 2 or 3 GPUs. The problem with that is if the user decides to pass a single
 GPU from a group to the userspace, we need to ensure that links between
@@ -87,21 +88,22 @@ disable links to peer GPUs, we need a topology map.</p>
 of peer GPUs and NVLink2 bridges. The index in the property is a GPU link
 number.</p>
 </li>
-<li><p>platforms/romulus: Also support talos</p>
+<li><p class="first">platforms/romulus: Also support talos</p>
 <p>The two are similar enough and I’d like to have a slot table for our
 Talos.</p>
 </li>
-<li><p>OpenCAPI support! (see <a class="reference internal" href="#skiboot-6-3-rc1-opencapi"><span class="std std-ref">OpenCAPI</span></a> section)</p></li>
-<li><p>opal/hmi: set a flag to inform OS that TOD/TB has failed.</p>
+<li><p class="first">OpenCAPI support! (see <a class="reference internal" href="#skiboot-6-3-rc1-opencapi"><span class="std std-ref">OpenCAPI</span></a> section)</p>
+</li>
+<li><p class="first">opal/hmi: set a flag to inform OS that TOD/TB has failed.</p>
 <p>Set a flag to indicate OS about TOD/TB failure as part of new
 opal_handle_hmi2 handler. This flag then can be used by OS to make sure
 functions depending on TB value (e.g. udelay()) are aware of TB not
 ticking.</p>
 </li>
-<li><p>astbmc: Enable IPMI HIOMAP for AMI platforms</p>
+<li><p class="first">astbmc: Enable IPMI HIOMAP for AMI platforms</p>
 <p>Required for Habanero, Palmetto and Romulus.</p>
 </li>
-<li><p>power-mgmt : occ : Add ‘freq-domain-mask’ DT property</p>
+<li><p class="first">power-mgmt : occ : Add ‘freq-domain-mask’ DT property</p>
 <p>Add a new device-tree property freq-domain-indicator to define group of
 CPUs which would share same frequency. This property has been added under
 power-mgmt node. It is a bitmask.</p>
@@ -121,7 +123,7 @@ recent frequency value requested by the CPUs in the quad.</p>
 the Quad to the maximum of the latest frequency requested by each of
 the component cores.</p>
 </li>
-<li><p>powercap: occ: Fix the powercapping range allowed for user</p>
+<li><p class="first">powercap: occ: Fix the powercapping range allowed for user</p>
 <p>OCC provides two limits for minimum powercap. One being hard powercap
 minimum which is guaranteed by OCC and the other one is a soft
 powercap minimum which is lesser than hard-min and may or may not be
@@ -131,7 +133,7 @@ minimum as the “powercap-min” DT property. And it also adds a new
 DT property called “powercap-hard-min” to export the hard-min powercap
 limit.</p>
 </li>
-<li><p>Add NVDIMM support</p>
+<li><p class="first">Add NVDIMM support</p>
 <p>NVDIMMs are memory modules that use a battery backup system to allow the
 contents RAM to be saved to non-volatile storage if system power goes
 away unexpectedly. This allows them to be used a high-performance
@@ -141,7 +143,7 @@ via the HDAT. We need to parse out the NVDIMM memory ranges and create
 memory regions with the “pmem-region” compatible label to make them
 available to the host.</p>
 </li>
-<li><p>core/exceptions: implement support for MCE interrupts in powersave</p>
+<li><p class="first">core/exceptions: implement support for MCE interrupts in powersave</p>
 <p>The ISA specifies that MCE interrupts in power saving modes will enter
 at 0x200 with powersave bits in SRR1 set. This is not currently
 supported properly, the MCE will just happen like a normal interrupt,
@@ -150,15 +152,15 @@ etc).</p>
 <p>So check the power save bits similarly to the sreset vector, and
 handle this properly.</p>
 </li>
-<li><p>core/exceptions: allow recoverable sreset exceptions</p>
+<li><p class="first">core/exceptions: allow recoverable sreset exceptions</p>
 <p>This requires implementing the MSR[RI] bit. Then just allow all
 non-fatal sreset exceptions to recover.</p>
 </li>
-<li><p>core/exceptions: implement an exception handler for non-powersave sresets</p>
+<li><p class="first">core/exceptions: implement an exception handler for non-powersave sresets</p>
 <p>Detect non-powersave sresets and send them to the normal exception
 handler which prints registers and stack.</p>
 </li>
-<li><p>Add PVR_TYPE_P9P</p>
+<li><p class="first">Add PVR_TYPE_P9P</p>
 <p>Enable a new PVR to get us running on another p9 variant.</p>
 </li>
 </ul>
@@ -166,7 +168,7 @@ handler which prints registers and stack.</p>
 <div class="section" id="deprecated-removed-features">
 <h2>Deprecated/Removed Features<a class="headerlink" href="#deprecated-removed-features" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>opal: Deprecate reading the PHB status</p>
+<li><p class="first">opal: Deprecate reading the PHB status</p>
 <p>The OPAL_PCI_EEH_FREEZE_STATUS call takes a bunch of parameters, one of
 them is &#64;phb_status. It is defined as __be64* and always NULL in
 the current Linux upstream but if anyone ever decides to read that status,
@@ -177,7 +179,7 @@ corruption; p7ioc-phb has the same issue.</p>
 the error message from PHB4 to the affected OPAL handlers.</p>
 <p>As far as we can tell, nobody has ever used this and thus it’s safe to remove.</p>
 </li>
-<li><p>Remove POWER9N DD1 support</p>
+<li><p class="first">Remove POWER9N DD1 support</p>
 <p>This is not a shipping product and is no longer supported by Linux
 or other firmware components.</p>
 </li>
@@ -186,15 +188,17 @@ or other firmware components.</p>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>core/i2c: Various bits of refactoring</p></li>
-<li><p>refactor backtrace generation infrastructure</p></li>
-<li><p>astbmc: Handle failure to initialise raw flash</p>
+<li><p class="first">core/i2c: Various bits of refactoring</p>
+</li>
+<li><p class="first">refactor backtrace generation infrastructure</p>
+</li>
+<li><p class="first">astbmc: Handle failure to initialise raw flash</p>
 <p>Initialising raw flash lead to a dead assignment to rc. Check the return
 code and take the failure path as necessary. Both before and after the
 fix we see output along the lines of the following when flash_init()
 fails:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">53.283182881</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mf">0800..0</span><span class="n">ff7</span> <span class="n">ops</span> <span class="o">@</span><span class="mh">0x300d4b98</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
-<span class="p">[</span>   <span class="mf">53.283184335</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mi">0</span><span class="n">ff8</span><span class="o">.</span><span class="mf">.0</span><span class="n">fff</span> <span class="n">ops</span> <span class="o">@</span><span class="mh">0x300d4bc8</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">53.283182881</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mf">0800.</span><span class="o">.</span><span class="mi">0</span><span class="n">ff7</span> <span class="n">ops</span> <span class="nd">@0x300d4b98</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
+<span class="p">[</span>   <span class="mf">53.283184335</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">IRQ</span><span class="p">:</span> <span class="n">Registering</span> <span class="mi">0</span><span class="n">ff8</span><span class="o">..</span><span class="mi">0</span><span class="n">fff</span> <span class="n">ops</span> <span class="nd">@0x300d4bc8</span> <span class="p">(</span><span class="n">data</span> <span class="mh">0x3052b9d8</span><span class="p">)</span>
 <span class="p">[</span>   <span class="mf">53.283185513</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="n">PHB</span><span class="c1">#0000: Initializing PHB...</span>
 <span class="p">[</span>   <span class="mf">53.288260827</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Can</span><span class="s1">&#39;t load resource id:0. No system flash found</span>
 <span class="p">[</span>   <span class="mf">53.288354442</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="n">FLASH</span><span class="p">:</span> <span class="n">Can</span><span class="s1">&#39;t load resource id:1. No system flash found</span>
@@ -231,7 +235,7 @@ of executing from unexpected memory locations. As such the issue is
 reduced to down to a fix for poor error hygene in the original change
 and a resolution for a Coverity warning (famous last words etc).</p>
 </li>
-<li><p>core/flash: Retry requests as necessary in flash_load_resource()</p>
+<li><p class="first">core/flash: Retry requests as necessary in flash_load_resource()</p>
 <p>We would like to successfully boot if we have a dependency on the BMC
 for flash even if the BMC is not current ready to service flash
 requests. On the assumption that it will become ready, retry for several
@@ -268,14 +272,14 @@ CPU 0040 Backtrace:
 no delay for e.g. the host kernel, just for asynchronously loaded
 resources during boot.</p>
 </li>
-<li><p>fast-reboot: occ: Call occ_pstates_init() on fast-reset on all machines</p>
+<li><p class="first">fast-reboot: occ: Call occ_pstates_init() on fast-reset on all machines</p>
 <p>Commit 815417dcda2e (“init, occ: Initialise OCC earlier on BMC systems”)
 conditionally invoked occ_pstates_init() only on FSP based systems in
 load_and_boot_kernel(). Due to this pstate table is re-parsed on FSP
 system and skipped on BMC system during fast-reboot. So this patch fixes
 this by invoking occ_pstates_init() on all boxes during fast-reboot.</p>
 </li>
-<li><p>opal/hmi: Don’t retry TOD recovery if it is already in failed state.</p>
+<li><p class="first">opal/hmi: Don’t retry TOD recovery if it is already in failed state.</p>
 <p>On TOD failure, all cores/thread receives HMI and very first thread that
 gets interrupt fixes the TOD where as others just resets the respective
 HMER error bit and return. But when TOD is unrecoverable, all the threads
@@ -284,7 +288,7 @@ opal. Set a global flag when TOD is unrecoverable so that rest of the
 threads go back to linux immediately avoiding lock ups in system
 reboot/panic path.</p>
 </li>
-<li><p>hw/bt: Do not disable ipmi message retry during OPAL boot</p>
+<li><p class="first">hw/bt: Do not disable ipmi message retry during OPAL boot</p>
 <p>Currently OPAL doesn’t know whether BMC is functioning or not. If BMC is
 down (like BMC reboot), then we keep on retry sending message to BMC. So
 in some corner cases we may hit hard lockup issue in kernel.</p>
@@ -293,7 +297,7 @@ for now commit 01f977c3 added option to disable message retry in synchronous.
 But this fix is not required during boot. Hence lets disable IPMI message
 retry during OPAL boot.</p>
 </li>
-<li><p>hdata/memory: Fix warning message</p>
+<li><p class="first">hdata/memory: Fix warning message</p>
 <p>Even though we added memory to device tree, we are getting below warning.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>   <span class="mf">57.136949696</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">Unable</span> <span class="n">to</span> <span class="n">use</span> <span class="n">memory</span> <span class="nb">range</span> <span class="mi">0</span> <span class="kn">from</span> <span class="nn">MSAREA</span> <span class="mi">0</span>
 <span class="p">[</span>   <span class="mf">57.137049753</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="n">Unable</span> <span class="n">to</span> <span class="n">use</span> <span class="n">memory</span> <span class="nb">range</span> <span class="mi">0</span> <span class="kn">from</span> <span class="nn">MSAREA</span> <span class="mi">1</span>
@@ -302,7 +306,7 @@ retry during OPAL boot.</p>
 </pre></div>
 </div>
 </li>
-<li><p>hw/bt: Add backend interface to disable ipmi message retry option</p>
+<li><p class="first">hw/bt: Add backend interface to disable ipmi message retry option</p>
 <p>During boot OPAL makes IPMI_GET_BT_CAPS call to BMC to get BT interface
 capabilities which includes IPMI message max resend count, message
 timeout, etc,. Most of the time OPAL gets response from BMC within
@@ -320,7 +324,7 @@ greatly reduces kernel hardlock up issues.</p>
 <p>This is short term fix. Long term solution is to convert all synchronous
 messages to asynhrounous one.</p>
 </li>
-<li><p>ipmi/power: Fix system reboot issue</p>
+<li><p class="first">ipmi/power: Fix system reboot issue</p>
 <p>Kernel makes reboot/shudown OPAL call for reboot/shutdown. Once kernel
 gets response from OPAL it runs opal_poll_events() until firmware
 handles the request.</p>
@@ -333,7 +337,7 @@ reboot/shutdown the system using BMC interface.</p>
 then it will resend the message. At some stage BMC will be ready to accept
 message and handles IPMI message.</p>
 </li>
-<li><p>firmware-versions: Add test case for parsing VERSION</p>
+<li><p class="first">firmware-versions: Add test case for parsing VERSION</p>
 <p>Also make it possible to use with afl-lop/afl-fuzz just to help make
 <em>sure</em> we’re all good.</p>
 <p>Additionally, if we hit a entry in VERSION that is larger than our
@@ -342,19 +346,19 @@ stack. This is only a problem if VERSION isn’t trusted, which as of
 4b8cc05a94513816d43fb8bd6178896b430af08f it is verified as part of
 Secure Boot.</p>
 </li>
-<li><p>core/fast-reboot: improve NMI handling during fast reset</p>
+<li><p class="first">core/fast-reboot: improve NMI handling during fast reset</p>
 <p>Improve sreset and MCE handling in fast reboot. Switch the HILE bit
 off before copying OPAL’s exception vectors, so NMIs can be handled
 properly. Also disable MSR[ME] while the vectors are being overwritten</p>
 </li>
-<li><p>core/cpu: HID update race</p>
+<li><p class="first">core/cpu: HID update race</p>
 <p>If the per-core HID register is updated concurrently by multiple
 threads, updates can get lost. This has been observed during fast
 reboot where the HILE bit does not get cleared on all cores, which
 can cause machine check exception interrupts to crash.</p>
 <p>Fix this by only updating HID on thread0.</p>
 </li>
-<li><p>SLW: Print verbose info on errors only</p>
+<li><p class="first">SLW: Print verbose info on errors only</p>
 <p>Change print level from debug to warning for reporting
 bad EC_PPM_SPECIAL_WKUP_* scom values. To reduce cluttering
 in the log print only on error.</p>
@@ -364,8 +368,9 @@ in the log print only on error.</p>
 <div class="section" id="ibm-fsp-based-platforms">
 <h2>IBM FSP based platforms<a class="headerlink" href="#ibm-fsp-based-platforms" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>platforms/firenze: Rework I2C controller fixups</p></li>
-<li><p>platforms/zz: Re-enable LXVPD slot information parsing</p>
+<li><p class="first">platforms/firenze: Rework I2C controller fixups</p>
+</li>
+<li><p class="first">platforms/zz: Re-enable LXVPD slot information parsing</p>
 <p>From memory this was disabled in the distant past since we were waiting
 for an updates to the LXPVD format. It looks like that never happened
 so re-enable it for the ZZ platform so that we can get PCI slot location
@@ -376,7 +381,7 @@ codes on ZZ.</p>
 <div class="section" id="hiomap">
 <h2>HIOMAP<a class="headerlink" href="#hiomap" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>astbmc: Try IPMI HIOMAP for P8</p>
+<li><p class="first">astbmc: Try IPMI HIOMAP for P8</p>
 <p>The HIOMAP protocol was developed after the release of P8 in preparation
 for P9. As a consequence P9 always uses it, but it has rarely been
 enabled for P8. P8DTU has recently added IPMI HIOMAP support to its BMC
@@ -384,19 +389,19 @@ firmware, so enable its use in skiboot with P8 machines. Doing so
 requires some rework to ensure fallback works correctly as in the past
 the fallback was to mbox, which will only work for P9.</p>
 </li>
-<li><p>libflash/ipmi-hiomap: Enforce message size for empty response</p>
+<li><p class="first">libflash/ipmi-hiomap: Enforce message size for empty response</p>
 <p>The protocol defines the response to the associated messages as empty
 except for the command ID and sequence fields. If the BMC is returning
 extra data consider the message malformed.</p>
 </li>
-<li><p>libflash/ipmi-hiomap: Remove unused close handling</p>
+<li><p class="first">libflash/ipmi-hiomap: Remove unused close handling</p>
 <p>Issuing a HIOMAP_C_CLOSE is not required by the protocol specification,
 rather a close can be implicit in a subsequent
 CREATE_{READ,WRITE}_WINDOW request. The implicit close provides an
 opportunity to reduce LPC traffic and the implementation takes up that
 optimisation, so remove the case from the IPMI callback handler.</p>
 </li>
-<li><p>libflash/ipmi-hiomap: Overhaul event handling</p>
+<li><p class="first">libflash/ipmi-hiomap: Overhaul event handling</p>
 <p>Reworking the event handling was inspired by a bug report by Vasant
 where the host would get wedged on multiple flash access attempts in the
 face of a persistent error state on the BMC-side. The cause of this bug
@@ -407,17 +412,17 @@ HIOMAP_E_DAEMON_READY is clear in the prior calls.</p>
 <p>Regardless, there were other correctness and efficiency problems with
 the handling strategy:</p>
 <ul class="simple">
-<li><p>Ack-able event state was not restored in the face of errors in the
-process of re-establishing protocol state</p></li>
-<li><p>It forced needless window restoration with respect to the context in
-which ipmi_hiomap_handle_events() was called.</p></li>
-<li><p>Tests for HIOMAP_E_DAEMON_READY and HIOMAP_E_FLASH_LOST were redundant
-with the overhauled error handling introduced in the previous patch</p></li>
+<li>Ack-able event state was not restored in the face of errors in the
+process of re-establishing protocol state</li>
+<li>It forced needless window restoration with respect to the context in
+which ipmi_hiomap_handle_events() was called.</li>
+<li>Tests for HIOMAP_E_DAEMON_READY and HIOMAP_E_FLASH_LOST were redundant
+with the overhauled error handling introduced in the previous patch</li>
 </ul>
 <p>Fix all of the above issues and add comments to explain the event
 handling flow.</p>
 </li>
-<li><p>libflash/ipmi-hiomap: Overhaul error handling</p>
+<li><p class="first">libflash/ipmi-hiomap: Overhaul error handling</p>
 <p>The aim is to improve the robustness with respect to absence of the
 BMC-side daemon. The current error handling roughly mirrors what was
 done for the mailbox implementation, but there’s room for improvement.</p>
@@ -435,13 +440,14 @@ operation no attempt is made to recover it on the spot, instead the
 error is returned up the stack and the caller can choose how it wishes
 to respond.</p>
 </li>
-<li><p>libflash/ipmi-hiomap: Fix leak of msg in callback</p></li>
+<li><p class="first">libflash/ipmi-hiomap: Fix leak of msg in callback</p>
+</li>
 </ul>
 </div>
 <div class="section" id="power8">
 <h2>POWER8<a class="headerlink" href="#power8" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>hw/phb3/naples: Disable D-states</p>
+<li><p class="first">hw/phb3/naples: Disable D-states</p>
 <p>Putting “Mellanox Technologies MT27700 Family [ConnectX-4] [15b3:1013]”
 (more precisely, the second of 2 its PCI functions, no matter in what
 order) into the D3 state causes EEH with the “PCT timeout” error.
@@ -450,7 +456,7 @@ seem to have this issue.</p>
 <p>This disables D-states changing for devices on root buses on Naples by
 installing a config space access filter (copied from PHB4).</p>
 </li>
-<li><p>cpufeatures: Always advertise POWER8NVL as DD2</p>
+<li><p class="first">cpufeatures: Always advertise POWER8NVL as DD2</p>
 <p>Despite the major version of PVR being 1 (0x004c0100) for POWER8NVL,
 these chips are functionally equalent to P8/P8E DD2 levels.</p>
 <p>This advertises POWER8NVL as DD2. As the result, skiboot adds
@@ -463,20 +469,21 @@ of missing LPCR_PECEDH.</p>
 <div class="section" id="p8dtu-platform">
 <h3>p8dtu Platform<a class="headerlink" href="#p8dtu-platform" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>p8dtu: Configure BMC graphics</p>
+<li><p class="first">p8dtu: Configure BMC graphics</p>
 <p>We can no-longer read the values from the BMC in the way we have in the
 past. Values were provided by Eric Chen of SMC.</p>
 </li>
-<li><p>p8dtu: Enable HIOMAP support</p></li>
+<li><p class="first">p8dtu: Enable HIOMAP support</p>
+</li>
 </ul>
 </div>
 <div class="section" id="vesnin-platform">
 <h3>Vesnin Platform<a class="headerlink" href="#vesnin-platform" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>platforms/vesnin: Disable PCIe port bifurcation</p>
+<li><p class="first">platforms/vesnin: Disable PCIe port bifurcation</p>
 <p>PCIe ports connected to CPU1 and CPU3 now work as x16 instead of x8x8.</p>
 </li>
-<li><p>Fix hang in pnv_platform_error_reboot path due to TOD failure.</p>
+<li><p class="first">Fix hang in pnv_platform_error_reboot path due to TOD failure.</p>
 <p>On TOD failure, with TB stuck, when linux heads down to
 pnv_platform_error_reboot() path due to unrecoverable hmi event, the panic
 cpu gets stuck in OPAL inside ipmi_queue_msg_sync(). At this time, rest
@@ -533,19 +540,19 @@ failed state as well.</p>
 <div class="section" id="power9">
 <span id="skiboot-6-3-rc1-power9"></span><h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>Retry link training at PCIe GEN1 if presence detected but training repeatedly failed</p>
+<li><p class="first">Retry link training at PCIe GEN1 if presence detected but training repeatedly failed</p>
 <p>Certain older PCIe 1.0 devices will not train unless the training process starts at GEN1 speeds.
 As a last resort when a device will not train, fall back to GEN1 speed for the last training attempt.</p>
 <p>This is verified to fix devices based on the Conexant CX23888 on the Talos II platform.</p>
 </li>
-<li><p>hw/phb4: Drop FRESET_DEASSERT_DELAY state</p>
+<li><p class="first">hw/phb4: Drop FRESET_DEASSERT_DELAY state</p>
 <p>The delay between the ASSERT_DELAY and DEASSERT_DELAY states is set to
 one timebase tick. This state seems to have been a hold over from PHB3
 where it was used to add a 1s delay between de-asserting PERST and
 polling the link for the CAPI FPGA. There’s no requirement for that here
 since the link polling on PHB4 is a bit smarter so we should be fine.</p>
 </li>
-<li><p>hw/phb4: Factor out PERST control</p>
+<li><p class="first">hw/phb4: Factor out PERST control</p>
 <p>Some time ago Mikey added some code work around a bug we found where a
 certain RAID card wouldn’t come back again after a fast-reboot. The
 workaround is setting the Link Disable bit before asserting PERST and
@@ -554,13 +561,13 @@ clear it after de-asserting PERST.</p>
 This patch moves the PERST control into its own function to reduce
 duplication and to the workaround is applied in all circumstances.</p>
 </li>
-<li><p>hw/phb4: Remove FRESET presence check</p>
+<li><p class="first">hw/phb4: Remove FRESET presence check</p>
 <p>When we do an freset the first step is to check if a card is present in
 the slot. However, this only occurs when we enter phb4_freset() with the
 slot state set to SLOT_NORMAL. This occurs in:</p>
 <ol class="loweralpha simple">
-<li><p>The creset path, and</p></li>
-<li><p>When the OS manually requests an FRESET via an OPAL call.</p></li>
+<li>The creset path, and</li>
+<li>When the OS manually requests an FRESET via an OPAL call.</li>
 </ol>
 <p>(a) is problematic because in the boot path the generic code will put the
 slot into FRESET_START manually before calling into phb4_freset(). This
@@ -575,7 +582,7 @@ the slot’s PERST signal being left asserted. This isn’t currently an issue,
 but if we want to support hotplug of devices into the root port it will
 be.</p>
 </li>
-<li><p>hw/phb4: Skip FRESET PERST when coming from CRESET</p>
+<li><p class="first">hw/phb4: Skip FRESET PERST when coming from CRESET</p>
 <p>PERST is asserted at the beginning of the CRESET process to prevent
 the downstream device from interacting with the host while the PHB logic
 is being reset and re-initialised. There is at least a 100ms wait during
@@ -586,13 +593,13 @@ to the 250ms PERST wait period that we typically use and sets the
 skip_perst flag so that we don’t wait this time again in the FRESET
 handler.</p>
 </li>
-<li><p>hw/phb4: Look for the hub-id from in the PBCQ node</p>
+<li><p class="first">hw/phb4: Look for the hub-id from in the PBCQ node</p>
 <p>The hub-id is stored in the PBCQ node rather than the stack node so we
 never add it to the PHB node. This breaks the lxvpd slot lookup code
 since the hub-id is encoded in the VPD record that we need to find the
 slot information.</p>
 </li>
-<li><p>hdata/iohub: Look for IOVPD on P9</p>
+<li><p class="first">hdata/iohub: Look for IOVPD on P9</p>
 <p>P8 and P9 use the same IO VPD setup, so we need to load the IOHUB VPD on
 P9 systems too.</p>
 </li>
@@ -600,7 +607,7 @@ P9 systems too.</p>
 <div class="section" id="capi2">
 <h3>CAPI2<a class="headerlink" href="#capi2" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>capp/phb4: Prevent HMI from getting triggered when disabling CAPP</p>
+<li><p class="first">capp/phb4: Prevent HMI from getting triggered when disabling CAPP</p>
 <p>While disabling CAPP an HMI gets triggered as soon as ETU is put in
 reset mode. This is caused as before we can disabled CAPP, it detects
 PHB link going down and triggers an HMI requesting Opal to perform
@@ -613,7 +620,7 @@ phb4_creset(). Also now since bringing down the PHB link now wont
 trigger an HMI and CAPP recovery, hence we manually set the
 PHB4_CAPP_RECOVERY flag on the phb to force recovery during creset.</p>
 </li>
-<li><p>phb4/capp: Implement sequence to disable CAPP and enable fast-reset</p>
+<li><p class="first">phb4/capp: Implement sequence to disable CAPP and enable fast-reset</p>
 <p>We implement h/w sequence to disable CAPP in disable_capi_mode() and
 with it also enable fast-reset for CAPI mode in phb4_set_capi_mode().</p>
 <p>Sequence to disable CAPP is executed in three phases. The first two
@@ -625,7 +632,7 @@ phb4_init_ioda3() is because by the time Opal PCI reset state machine
 reaches this function the PHB is already un-fenced and its
 configuration registers accessible via mmio.</p>
 </li>
-<li><p>capp/phb4: Force CAPP to PCIe mode during kernel shutdown</p>
+<li><p class="first">capp/phb4: Force CAPP to PCIe mode during kernel shutdown</p>
 <p>This patch introduces a new opal syncer for PHB4 named
 phb4_host_sync_reset(). We register this opal syncer when CAPP is
 activated successfully in phb4_set_capi_mode() so that it will be
@@ -641,14 +648,14 @@ ensure that Opal slot reset state machine makes forward progress.</p>
 <div class="section" id="witherspoon-platform">
 <h3>Witherspoon Platform<a class="headerlink" href="#witherspoon-platform" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>platforms/witherspoon: Make PCIe shared slot error message more informative</p>
+<li><p class="first">platforms/witherspoon: Make PCIe shared slot error message more informative</p>
 <p>If we’re missing chips for some reason, we print a warning when configuring
 the PCIe shared slot.</p>
 <p>The warning doesn’t really make it clear what “shared slot” is, and if it’s
 printed, it’ll come right after a bunch of messages about NPU setup, so
 let’s clarify the message to explicitly mention PCI.</p>
 </li>
-<li><p>witherspoon: Add nvlink2 interconnect information</p>
+<li><p class="first">witherspoon: Add nvlink2 interconnect information</p>
 <p>See <a class="reference internal" href="#skiboot-6-3-rc1-new-features"><span class="std std-ref">New Features</span></a> for details.</p>
 </li>
 </ul>
@@ -656,7 +663,7 @@ let’s clarify the message to explicitly mention PCI.</p>
 <div class="section" id="zaius-platform">
 <h3>Zaius Platform<a class="headerlink" href="#zaius-platform" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>zaius: Add BMC description</p>
+<li><p class="first">zaius: Add BMC description</p>
 <p>Frederic reported that Zaius was failing with a NULL dereference when
 trying to initialise IPMI HIOMAP. It turns out that the BMC wasn’t
 described at all, so add a description.</p>
@@ -666,7 +673,7 @@ described at all, so add a description.</p>
 <div class="section" id="p9dsu-platform">
 <h3>p9dsu platform<a class="headerlink" href="#p9dsu-platform" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>p9dsu: Fix p9dsu default variant</p>
+<li><p class="first">p9dsu: Fix p9dsu default variant</p>
 <p>Add the default when no riser_id is returned from the ipmi query.</p>
 <p>Allow a little more time for BMC reply and cleanup some label strings.</p>
 </li>
@@ -677,22 +684,22 @@ described at all, so add a description.</p>
 <h2>PCIe<a class="headerlink" href="#pcie" title="Permalink to this headline">¶</a></h2>
 <p>See <a class="reference internal" href="#skiboot-6-3-rc1-power9"><span class="std std-ref">POWER9</span></a> for POWER9 specific PCIe changes.</p>
 <ul>
-<li><p>core/pcie-slot: Don’t bail early in the power on case</p>
+<li><p class="first">core/pcie-slot: Don’t bail early in the power on case</p>
 <p>Exiting early in the power off case makes sense since we can’t disable
 slot power (or assert PERST) for suprise hotplug slots. However, we
 should not exit early in the power-on case since it’s possible slot
 power may have been disabled (or just not enabled at boot time).</p>
 </li>
-<li><p>firenze-pci: Always init slot info from LXVPD</p>
+<li><p class="first">firenze-pci: Always init slot info from LXVPD</p>
 <p>We can slot information from the LXVPD without having power control
 information about that slot. This patch changes the init path so that
 we always override the add_properties() call rather than only when we
 have power control information about the slot.</p>
 </li>
-<li><p>fsp/lxvpd: Print more LXVPD slot information</p>
+<li><p class="first">fsp/lxvpd: Print more LXVPD slot information</p>
 <p>Useful to know since it changes the behaviour of the slot core.</p>
 </li>
-<li><p>core/pcie-slot: Set power state from the PWRCTL flag</p>
+<li><p class="first">core/pcie-slot: Set power state from the PWRCTL flag</p>
 <p>For some reason we look at the power control indicator and use that to
 determine if the slot is “off” rather than the power control flag that
 is used to power down the slot.</p>
@@ -700,7 +707,7 @@ is used to power down the slot.</p>
 assumed to be powered on if there’s no slot capability, or if there’s
 no power control available.</p>
 </li>
-<li><p>core/pci: Increase the max slot string size</p>
+<li><p class="first">core/pci: Increase the max slot string size</p>
 <p>The maximum string length for the slot label / device location code in
 the PCI summary is currently 32 characters. This results in some IBM
 location codes being truncated due to their length, e.g.</p>
@@ -720,7 +727,7 @@ since that’s the maximum length for a location code.</p>
 <div class="section" id="opencapi">
 <span id="skiboot-6-3-rc1-opencapi"></span><h2>OpenCAPI<a class="headerlink" href="#opencapi" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>npu2/hw-procedures: Fix parallel zcal for opencapi</p>
+<li><p class="first">npu2/hw-procedures: Fix parallel zcal for opencapi</p>
 <p>For opencapi, we currently do impedance calibration when initializing
 the PHY for the device, which could run in parallel if we have
 multiple opencapi devices. But if 2 devices are on the same
@@ -729,17 +736,17 @@ bad results and is useless anyway since it only needs to be done once
 per obus.</p>
 <p>This patch splits the opencapi PHY reset in 2 parts:</p>
 <ul class="simple">
-<li><p>a ‘init’ part called serially at boot. That’s when zcal is done. If
+<li>a ‘init’ part called serially at boot. That’s when zcal is done. If
 we have 2 devices on the same socket, the zcal won’t be redone,
 since we’re called serially and we’ll see it has already be done for
-the obus</p></li>
-<li><p>a ‘reset’ part called during fundamental reset as a prereq for link
-training. It does the PHY setup for a set of lanes and the dccal.</p></li>
+the obus</li>
+<li>a ‘reset’ part called during fundamental reset as a prereq for link
+training. It does the PHY setup for a set of lanes and the dccal.</li>
 </ul>
 <p>The PHY team confirmed there’s no dependency between zcal and the
 other reset steps and it can be moved earlier.</p>
 </li>
-<li><p>npu2-hw-procedures: Fix zcal in mixed opencapi and nvlink mode</p>
+<li><p class="first">npu2-hw-procedures: Fix zcal in mixed opencapi and nvlink mode</p>
 <p>The zcal procedure needs to be run once per obus. We keep track of
 which obus is already calibrated in an array indexed by the obus
 number. However, the obus number is inferred from the brick index,
@@ -747,7 +754,7 @@ which works well for nvlink but not for opencapi.</p>
 <p>Create an obus_index() function, which, from a device, returns the
 correct obus index, irrespective of the device type.</p>
 </li>
-<li><p>npu2-opencapi: Fix adapter reset when using 2 adapters</p>
+<li><p class="first">npu2-opencapi: Fix adapter reset when using 2 adapters</p>
 <p>If two opencapi adapters are on the same obus, we may try to train the
 two links in parallel at boot time, when all the PCI links are being
 trained. Both links use the same i2c controller to handle the reset
@@ -757,14 +764,14 @@ current state of the i2c controller (and use locking).</p>
 <p>This went mostly unnoticed as you need to have 2 opencapi cards on the
 same socket and links tended to train anyway because of the retries.</p>
 </li>
-<li><p>npu2-opencapi: Extend delay after releasing reset on adapter</p>
+<li><p class="first">npu2-opencapi: Extend delay after releasing reset on adapter</p>
 <p>Give more time to the FPGA to process the reset signal. The previous
 delay, 5ms, is too short for newer adapters with bigger FPGAs. Extend
 it to 250ms.
 Ultimately, that delay will likely end up being added to the opencapi
 specification, but we are not there yet.</p>
 </li>
-<li><p>npu2-opencapi: ODL should be in reset when enabled</p>
+<li><p class="first">npu2-opencapi: ODL should be in reset when enabled</p>
 <p>We haven’t hit any problem so far, but from the ODL designer, the ODL
 should be in reset when it is enabled.</p>
 <p>The ODL remains in reset until we start a fundamental reset to
@@ -774,7 +781,7 @@ link. Asserting is therefore useless at boot, since the ODL is already
 in reset, but we keep it as it’s only a scom write and it’s needed
 when we reset/retrain from the OS.</p>
 </li>
-<li><p>npu2-opencapi: Keep ODL and adapter in reset at the same time</p>
+<li><p class="first">npu2-opencapi: Keep ODL and adapter in reset at the same time</p>
 <p>Split the function to assert and deassert the reset signal on the ODL,
 so that we can keep the ODL in reset while we reset the adapter,
 therefore having a window where both sides are in reset.</p>
@@ -783,7 +790,7 @@ need to split the ODL reset function for the following patch and it
 will become useful/required later when we introduce resetting an
 opencapi link from the OS.</p>
 </li>
-<li><p>npu2-opencapi: Setup perf counters to detect CRC errors</p>
+<li><p class="first">npu2-opencapi: Setup perf counters to detect CRC errors</p>
 <p>It’s possible to set up performance counters for the PLL to detect
 various conditions for the links in nvlink or opencapi mode. Since
 those counters are currently unused, let’s configure them when an obus
@@ -800,7 +807,7 @@ configured to be reset after each read.</p>
 <div class="section" id="nvlink2">
 <h2>NVLINK2<a class="headerlink" href="#nvlink2" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>npu2: Allow ATSD for LPAR other than 0</p>
+<li><p class="first">npu2: Allow ATSD for LPAR other than 0</p>
 <p>Each XTS MMIO ATSD# register is accompanied by another register -
 XTS MMIO ATSD0 LPARID# - which controls LPID filtering for ATSD
 transactions.</p>
@@ -811,7 +818,7 @@ the LPAR. The link number is used for an ATSD index.</p>
 <p>ATSD6&amp;7 stay mapped to the host (LPAR=0) all the time which seems to be
 acceptable price for the simplicity.</p>
 </li>
-<li><p>npu2: Add XTS_BDF_MAP wildcard refcount</p>
+<li><p class="first">npu2: Add XTS_BDF_MAP wildcard refcount</p>
 <p>Currently PID wildcard is programmed into the NPU once and never cleared
 up. This works for the bare metal as MSR does not change while the host
 OS is running.</p>
@@ -827,7 +834,7 @@ and should be smaller than NPU2_XTS_BDF_MAP_SIZE (defined as 16).</p>
 <div class="section" id="debugging-and-simulation">
 <h2>Debugging and simulation<a class="headerlink" href="#debugging-and-simulation" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>external/mambo: Error out if kernel is too large</p>
+<li><p class="first">external/mambo: Error out if kernel is too large</p>
 <p>If you’re trying to boot a gigantic kernel in mambo (which you can
 reproduce by building a kernel with CONFIG_MODULES=n) you’ll get
 misleading errors like:</p>
@@ -846,14 +853,14 @@ Making PAYLOAD_ADDR further back is one way to do this but if there’s a
 less gross way to generally work around this very niche problem, I can
 suggest that instead.</p>
 </li>
-<li><p>external/mambo: Populate kernel-base-address in the DT</p>
+<li><p class="first">external/mambo: Populate kernel-base-address in the DT</p>
 <p>skiboot.tcl defines PAYLOAD_ADDR as 0x20000000, which is the default in
 skiboot.  This is also the default in skiboot unless kernel-base-address
 is set in the device tree.</p>
 <p>If you change PAYLOAD_ADDR to something else for mambo, skiboot won’t
 see it because it doesn’t set that DT property, so fix it so that it does.</p>
 </li>
-<li><p>external/mambo: allow CPU targeting for most debug utils</p>
+<li><p class="first">external/mambo: allow CPU targeting for most debug utils</p>
 <p>Debug util functions target CPU 0:0:0 by default Some can be
 overidden explicitly per invocation, and others can’t at all.
 Even for those that can be overidden, it is a pain to type
@@ -862,20 +869,20 @@ them out when you’re debugging a particular thread.</p>
 target to be changed. Wire that up that default to all other utils.
 Provide a new ‘S’ step command which only steps the target CPU.</p>
 </li>
-<li><p>qemu: bt device isn’t always hanging off /</p>
+<li><p class="first">qemu: bt device isn’t always hanging off /</p>
 <p>Just use the normal for_each_compatible instead.</p>
 <p>Otherwise in the qemu model as executed by op-test,
 we wouldn’t go down the astbmc_init() path, thus not having flash.</p>
 </li>
-<li><p>devicetree: Add p9-simics.dts</p>
+<li><p class="first">devicetree: Add p9-simics.dts</p>
 <p>Add a p9-based devicetree that’s suitable for use with Simics.</p>
 </li>
-<li><p>devicetree: Move power9-phb4.dts</p>
+<li><p class="first">devicetree: Move power9-phb4.dts</p>
 <p>Clean up the formatting of power9-phb4.dts and move it to
 external/devicetree/p9.dts. This sets us up to include it as the basis
 for other trees.</p>
 </li>
-<li><p>devicetree: Add nx node to power9-phb4.dts</p>
+<li><p class="first">devicetree: Add nx node to power9-phb4.dts</p>
 <p>A (non-qemu) p9 without an nx node will assert in p9_darn_init():</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>dt_for_each_compatible(dt_root, nx, &quot;ibm,power9-nx&quot;)
         break;
@@ -888,17 +895,17 @@ if (!nx) {
 </div>
 <p>Since NX is this essential, add it to the device tree.</p>
 </li>
-<li><p>devicetree: Fix typo in power9-phb4.dts</p>
+<li><p class="first">devicetree: Fix typo in power9-phb4.dts</p>
 <p>Change “impi” to “ipmi”.</p>
 </li>
-<li><p>devicetree: Fix syntax error in power9-phb4.dts</p>
+<li><p class="first">devicetree: Fix syntax error in power9-phb4.dts</p>
 <p>Remove the extra space causing this:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="p">:</span> <span class="n">power9</span><span class="o">-</span><span class="n">phb4</span><span class="o">.</span><span class="n">dts</span><span class="p">:</span><span class="mf">156.15</span><span class="o">-</span><span class="mi">16</span> <span class="n">syntax</span> <span class="n">error</span>
 <span class="n">FATAL</span> <span class="n">ERROR</span><span class="p">:</span> <span class="n">Unable</span> <span class="n">to</span> <span class="n">parse</span> <span class="nb">input</span> <span class="n">tree</span>
 </pre></div>
 </div>
 </li>
-<li><p>core/init: enable machine check on secondaries</p>
+<li><p class="first">core/init: enable machine check on secondaries</p>
 <p>Secondary CPUs currently run with MSR[ME]=0 during boot, whih means
 if they take a machine check, the system will checkstop.</p>
 <p>Enable ME where possible and allow them to print registers.</p>
@@ -908,11 +915,11 @@ if they take a machine check, the system will checkstop.</p>
 <div class="section" id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>pflash: Don’t try update RO ToC</p>
+<li><p class="first">pflash: Don’t try update RO ToC</p>
 <p>In the future it’s likely the ToC will be marked as read-only. Don’t
 error out by assuming its writable.</p>
 </li>
-<li><p>pflash: Support encoding/decoding ECC’d partitions</p>
+<li><p class="first">pflash: Support encoding/decoding ECC’d partitions</p>
 <p>With the new –ecc option, pflash can add/remove ECC when
 reading/writing flash partitions protected by ECC.</p>
 <p>This is <em>not</em> flawless with current PNORs out in the wild though, as
@@ -929,7 +936,6 @@ out” to support reading the “valid” data from existing PNOR images.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -978,15 +984,17 @@ out” to support reading the “valid” data from existing PNOR images.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1003,15 +1011,14 @@ out” to support reading the “valid” data from existing PNOR images.</p>
         <li class="right" >
           <a href="skiboot-6.3.html" title="skiboot-6.3"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">skiboot-6.3-rc1</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

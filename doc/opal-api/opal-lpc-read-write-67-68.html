@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPAL_LPC_READ &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>OPAL_LPC_READ &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="opal-led-get-set-114-115.html" title="Service Indicators (LEDS)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_LPC_READ</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -69,34 +70,35 @@ From <code class="docutils literal notranslate"><span class="pre">addr</span></c
 variable named <code class="docutils literal notranslate"><span class="pre">data</span></code>.</p>
 <div class="section" id="parameters">
 <h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">chip_id</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> parameter contains value of the chip number identified at
-boot time.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">addr_type</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">addr_type</span></code> is one of the LPC supported address types.
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">chip_id</span></code></dt>
+<dd>The <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> parameter contains value of the chip number identified at
+boot time.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">addr_type</span></code></dt>
+<dd><p class="first">The <code class="docutils literal notranslate"><span class="pre">addr_type</span></code> is one of the LPC supported address types.
 Supported address types are:</p>
-<ul class="simple">
-<li><p>LPC memory,</p></li>
-<li><p>LPC IO and</p></li>
-<li><p>LPC firmware.</p></li>
+<ul class="last simple">
+<li>LPC memory,</li>
+<li>LPC IO and</li>
+<li>LPC firmware.</li>
 </ul>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">addr</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">addr</span></code> from which the data has to be read.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">data</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">data</span></code> will be used to store the read data.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">sz</span></code></dt><dd><p>How many <code class="docutils literal notranslate"><span class="pre">sz</span></code> bytes to be read in to <code class="docutils literal notranslate"><span class="pre">data</span></code>.</p>
-</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">addr</span></code></dt>
+<dd>The <code class="docutils literal notranslate"><span class="pre">addr</span></code> from which the data has to be read.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">data</span></code></dt>
+<dd>The <code class="docutils literal notranslate"><span class="pre">data</span></code> will be used to store the read data.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sz</span></code></dt>
+<dd>How many <code class="docutils literal notranslate"><span class="pre">sz</span></code> bytes to be read in to <code class="docutils literal notranslate"><span class="pre">data</span></code>.</dd>
 </dl>
 </div>
 <div class="section" id="return-codes">
 <h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Indicates either <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> not found or <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> doesn’t contain
-LPC information.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Indicates Success!</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>Indicates either <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> not found or <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> doesn’t contain
+LPC information.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Indicates Success!</dd>
 </dl>
 </div>
 </div>
@@ -124,40 +126,40 @@ LPC information.</p>
 From <code class="docutils literal notranslate"><span class="pre">addr</span></code> for <code class="docutils literal notranslate"><span class="pre">addr_type</span></code> with write size <code class="docutils literal notranslate"><span class="pre">sz</span></code> bytes.</p>
 <div class="section" id="id3">
 <h2>Parameters<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">chip_id</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> parameter contains value of the chip number identified at
-boot time.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">addr_type</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">addr_type</span></code> is one of the address types LPC supported.
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">chip_id</span></code></dt>
+<dd>The <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> parameter contains value of the chip number identified at
+boot time.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">addr_type</span></code></dt>
+<dd><p class="first">The <code class="docutils literal notranslate"><span class="pre">addr_type</span></code> is one of the address types LPC supported.
 Supported address types are:</p>
-<ul class="simple">
-<li><p>LPC memory,</p></li>
-<li><p>LPC IO and</p></li>
-<li><p>LPC firmware.</p></li>
+<ul class="last simple">
+<li>LPC memory,</li>
+<li>LPC IO and</li>
+<li>LPC firmware.</li>
 </ul>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">addr</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">addr</span></code> to where the <code class="docutils literal notranslate"><span class="pre">data</span></code> need to be written.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">data</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">data</span></code> for writing.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">sz</span></code></dt><dd><p>How many <code class="docutils literal notranslate"><span class="pre">sz</span></code> bytes to write.</p>
-</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">addr</span></code></dt>
+<dd>The <code class="docutils literal notranslate"><span class="pre">addr</span></code> to where the <code class="docutils literal notranslate"><span class="pre">data</span></code> need to be written.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">data</span></code></dt>
+<dd>The <code class="docutils literal notranslate"><span class="pre">data</span></code> for writing.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sz</span></code></dt>
+<dd>How many <code class="docutils literal notranslate"><span class="pre">sz</span></code> bytes to write.</dd>
 </dl>
 </div>
 <div class="section" id="id4">
 <h2>Return Codes<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Indicates either <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> not found or <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> doesn’t contain LPC
-information.</p>
-</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Indicates Success!</p>
-</dd>
+<dl class="docutils">
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
+<dd>Indicates either <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> not found or <code class="docutils literal notranslate"><span class="pre">chip_id</span></code> doesn’t contain LPC
+information.</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
+<dd>Indicates Success!</dd>
 </dl>
 </div>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -191,15 +193,17 @@ information.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -216,15 +220,14 @@ information.</p>
         <li class="right" >
           <a href="opal-led-get-set-114-115.html" title="Service Indicators (LEDS)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">OPAL_LPC_READ</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>

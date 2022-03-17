@@ -1,19 +1,21 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ibm,powerpc-cpu-features Binding &#8212; skiboot v6.7-45-g4b9ca02
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ibm,powerpc-cpu-features Binding &#8212; skiboot e32e57e
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -32,10 +34,9 @@
         <li class="right" >
           <a href="../vpd.html" title="VPD (Vital Product Data)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Device Tree</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Binding</a></li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Device Tree</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -60,23 +61,29 @@ assumed by parsers.</p>
 <p>The node is optional but should be provided by new OPAL firmware.</p>
 <p>Properties:</p>
 <ul>
-<li><p>device_type</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">device_type</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>string</p>
+<dt>Value type:</dt>
+<dd><p class="first last">string</p>
 </dd>
-<dt>Definition:</dt><dd><p>“cpu-features”</p>
+<dt>Definition:</dt>
+<dd><p class="first last">“cpu-features”</p>
 </dd>
 </dl>
 </li>
-<li><p>compatible</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">compatible</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>string</p>
+<dt>Value type:</dt>
+<dd><p class="first last">string</p>
 </dd>
-<dt>Definition:</dt><dd><p>“ibm,powerpc-cpu-features”</p>
+<dt>Definition:</dt>
+<dd><p class="first last">“ibm,powerpc-cpu-features”</p>
 </dd>
 </dl>
 <p>This compatibility refers to backwards compatibility of the overall
@@ -84,11 +91,13 @@ design with parsers that behave according to these guidelines. This can
 be extended in a backward compatible manner which would not warrant a
 revision of the compatible property.</p>
 </li>
-<li><p>isa</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">isa</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt;</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -113,11 +122,13 @@ in the code where they are implemented in skiboot/core/cpufeatures.c</p>
 <p>Presence of the node indicates the feature is available.</p>
 <p>Properties:</p>
 <ul>
-<li><p>isa</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">isa</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt;</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -126,40 +137,50 @@ Software should filter out features when constraining the
 environment to a particular ISA version.</p>
 <p>Value is defined similarly to /cpus/features/isa</p>
 </li>
-<li><p>usable-privilege</p>
-<dl>
-<dt>Usage:</dt><dd><p>required</p>
+<li><p class="first">usable-privilege</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">required</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt; bit mask</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt; bit mask</p>
 </dd>
-<dt>Definition:</dt><dd><p>Bit numbers are LSB0</p>
-<dl class="simple">
-<dt>bit 0:</dt><dd><p>PR (problem state / user mode)</p>
+<dt>Definition:</dt>
+<dd><p class="first">Bit numbers are LSB0</p>
+<dl class="docutils">
+<dt>bit 0:</dt>
+<dd><p class="first last">PR (problem state / user mode)</p>
 </dd>
-<dt>bit 1:</dt><dd><p>OS (privileged state)</p>
+<dt>bit 1:</dt>
+<dd><p class="first last">OS (privileged state)</p>
 </dd>
-<dt>bit 2:</dt><dd><p>HV (hypervisor state)</p>
+<dt>bit 2:</dt>
+<dd><p class="first last">HV (hypervisor state)</p>
 </dd>
 </dl>
-<p>All other bits reserved and should be zero.</p>
+<p class="last">All other bits reserved and should be zero.</p>
 </dd>
 </dl>
 <p>This property describes the privilege levels and/or software components
 that can use the feature.</p>
 <p>If bit 0 is set, then the hwcap-bit-nr property will exist.</p>
 </li>
-<li><p>hv-support</p>
-<dl>
-<dt>Usage:</dt><dd><p>optional</p>
+<li><p class="first">hv-support</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">optional</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt; bit mask</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt; bit mask</p>
 </dd>
-<dt>Definition:</dt><dd><p>Bit numbers are LSB0</p>
-<dl class="simple">
-<dt>bit 0:</dt><dd><p>HFSCR</p>
+<dt>Definition:</dt>
+<dd><p class="first">Bit numbers are LSB0</p>
+<dl class="docutils">
+<dt>bit 0:</dt>
+<dd><p class="first last">HFSCR</p>
 </dd>
 </dl>
-<p>All other bits reserved and should be zero.</p>
+<p class="last">All other bits reserved and should be zero.</p>
 </dd>
 </dl>
 <p>This property describes the HV privilege support required to enable the
@@ -170,18 +191,22 @@ this feature.</p>
 <p>If the HFSCR bit is set, then the hfscr-bit-nr property will exist and
 the feature may be enabled by setting this bit in the HFSCR register.</p>
 </li>
-<li><p>os-support</p>
-<dl>
-<dt>Usage:</dt><dd><p>optional</p>
+<li><p class="first">os-support</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">optional</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt; bit mask</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt; bit mask</p>
 </dd>
-<dt>Definition:</dt><dd><p>Bit numbers are LSB0</p>
-<dl class="simple">
-<dt>bit 0:</dt><dd><p>FSCR</p>
+<dt>Definition:</dt>
+<dd><p class="first">Bit numbers are LSB0</p>
+<dl class="docutils">
+<dt>bit 0:</dt>
+<dd><p class="first last">FSCR</p>
 </dd>
 </dl>
-<p>All other bits reserved and should be zero.</p>
+<p class="last">All other bits reserved and should be zero.</p>
 </dd>
 </dl>
 <p>This property describes the OS privilege support required to enable the
@@ -192,13 +217,16 @@ for this feature.</p>
 <p>If the FSCR bit is set, then the fscr-bit-nr property will exist and
 the feature may be enabled by setting this bit in the FSCR register.</p>
 </li>
-<li><p>hfscr-bit-nr</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>optional</p>
+<li><p class="first">hfscr-bit-nr</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">optional</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt;</p>
 </dd>
-<dt>Definition:</dt><dd><p>HFSCR bit position (LSB0)</p>
+<dt>Definition:</dt>
+<dd><p class="first last">HFSCR bit position (LSB0)</p>
 </dd>
 </dl>
 <p>This property exists when the hv-support property HFSCR bit is set. This
@@ -207,13 +235,16 @@ hypervisor must set in order to enable this feature.</p>
 <p>This property also exists if an HFSCR bit corresponds with this feature.
 This makes CPU feature parsing slightly simpler.</p>
 </li>
-<li><p>fscr-bit-nr</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>optional</p>
+<li><p class="first">fscr-bit-nr</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">optional</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt;</p>
 </dd>
-<dt>Definition:</dt><dd><p>FSCR bit position (LSB0)</p>
+<dt>Definition:</dt>
+<dd><p class="first last">FSCR bit position (LSB0)</p>
 </dd>
 </dl>
 <p>This property exists when the os-support property FSCR bit is set. This
@@ -222,13 +253,16 @@ operating system must set in order to enable this feature.</p>
 <p>This property also exists if an FSCR bit corresponds with this feature.
 This makes CPU feature parsing slightly simpler.</p>
 </li>
-<li><p>hwcap-bit-nr</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>optional</p>
+<li><p class="first">hwcap-bit-nr</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">optional</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;u32&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;u32&gt;</p>
 </dd>
-<dt>Definition:</dt><dd><p>Linux ELF AUX vector bit position (LSB0)</p>
+<dt>Definition:</dt>
+<dd><p class="first last">Linux ELF AUX vector bit position (LSB0)</p>
 </dd>
 </dl>
 <p>This property may exist when the usable-privilege property value has PR bit set.
@@ -244,20 +278,23 @@ advertised to userspace without a one-to-one hwcap bit number may not specify
 this bit. Operating system will handle those bits specifically.  All new
 features usable by userspace will have a hwcap-bit-nr property.</p>
 </li>
-<li><p>dependencies</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>optional</p>
+<li><p class="first">dependencies</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">optional</p>
 </dd>
-<dt>Value type:</dt><dd><p>&lt;prop-encoded-array&gt;</p>
+<dt>Value type:</dt>
+<dd><p class="first last">&lt;prop-encoded-array&gt;</p>
 </dd>
 </dl>
 <p>Definition:</p>
 <p>If this property exists then it is a list of phandles to cpu feature
 nodes that must be enabled for this feature to be enabled.</p>
 </li>
-<li><p>Custom properties of the feature</p>
-<dl class="simple">
-<dt>Usage:</dt><dd><p>optional</p>
+<li><p class="first">Custom properties of the feature</p>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd><p class="first last">optional</p>
 </dd>
 </dl>
 <p>Definition:</p>
@@ -316,7 +353,6 @@ nodes that must be enabled for this feature to be enabled.</p>
 </div>
 
 
-            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -346,15 +382,17 @@ nodes that must be enabled for this feature to be enabled.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -371,15 +409,14 @@ nodes that must be enabled for this feature to be enabled.</p>
         <li class="right" >
           <a href="../vpd.html" title="VPD (Vital Product Data)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot v6.7-45-g4b9ca02
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e32e57e
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Binding</a></li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>
