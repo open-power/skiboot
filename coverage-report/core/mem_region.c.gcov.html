@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-03-17 07:10:58</td>
+            <td class="headerValue">2022-05-04 18:46:15</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">39</td>
@@ -294,19 +294,19 @@
 <a name="223"><span class="lineNum">     223 </span>                :            : {</a>
 <a name="224"><span class="lineNum">     224 </span>                :<span class="lineCov">       4469 :         *offset = 0;</span></a>
 <a name="225"><span class="lineNum">     225 </span>                :            : </a>
-<a name="226"><span class="lineNum">     226 </span>                :<span class="lineCov">      17329 :         while (f-&gt;hdr.num_longs &gt;= *offset + longs) {</span></a>
+<a name="226"><span class="lineNum">     226 </span>                :<span class="lineCov">      16305 :         while (f-&gt;hdr.num_longs &gt;= *offset + longs) {</span></a>
 <a name="227"><span class="lineNum">     227 </span>                :            :                 size_t addr;</a>
 <a name="228"><span class="lineNum">     228 </span>                :            : </a>
-<a name="229"><span class="lineNum">     229 </span>                :<span class="lineCov">      17317 :                 addr = (unsigned long)f</span></a>
-<a name="230"><span class="lineNum">     230 </span>                :<span class="lineCov">      17317 :                         + (*offset + ALLOC_HDR_LONGS) * sizeof(long);</span></a>
-<a name="231"><span class="lineNum">     231 </span>                :<span class="lineCov">      17317 :                 if ((addr &amp; (align - 1)) == 0)</span></a>
+<a name="229"><span class="lineNum">     229 </span>                :<span class="lineCov">      16293 :                 addr = (unsigned long)f</span></a>
+<a name="230"><span class="lineNum">     230 </span>                :<span class="lineCov">      16293 :                         + (*offset + ALLOC_HDR_LONGS) * sizeof(long);</span></a>
+<a name="231"><span class="lineNum">     231 </span>                :<span class="lineCov">      16293 :                 if ((addr &amp; (align - 1)) == 0)</span></a>
 <a name="232"><span class="lineNum">     232 </span>                :<span class="lineCov">       4457 :                         return true;</span></a>
 <a name="233"><span class="lineNum">     233 </span>                :            : </a>
 <a name="234"><span class="lineNum">     234 </span>                :            :                 /* Don't make tiny chunks! */</a>
-<a name="235"><span class="lineNum">     235 </span>                :<span class="lineCov">      12860 :                 if (*offset == 0)</span></a>
+<a name="235"><span class="lineNum">     235 </span>                :<span class="lineCov">      11836 :                 if (*offset == 0)</span></a>
 <a name="236"><span class="lineNum">     236 </span>                :<span class="lineCov">         14 :                         *offset = ALLOC_MIN_LONGS;</span></a>
 <a name="237"><span class="lineNum">     237 </span>                :            :                 else</a>
-<a name="238"><span class="lineNum">     238 </span>                :<span class="lineCov">      12846 :                         (*offset)++;</span></a>
+<a name="238"><span class="lineNum">     238 </span>                :<span class="lineCov">      11822 :                         (*offset)++;</span></a>
 <a name="239"><span class="lineNum">     239 </span>                :            :         }</a>
 <a name="240"><span class="lineNum">     240 </span>                :<span class="lineCov">         12 :         return false;</span></a>
 <a name="241"><span class="lineNum">     241 </span>                :            : }</a>
