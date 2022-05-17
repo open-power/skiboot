@@ -841,41 +841,42 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 	return rc;
 }
 
+/* The recipe comes from the p10_getecid hardware procedure */
 static uint8_t xscom_get_ec_rev(struct proc_chip *chip)
 {
 	uint64_t ecid2 = 0;
-	uint8_t rev;
+	int8_t rev;
+	const int8_t *table;
+	/*                             0   1   2   3   4   5   6   7 */
+	const int8_t p9table[8] =     {0,  1, -1,  2, -1, -1, -1,  3};
+	const int8_t p10dd1table[8] = {0,  1,  2,  3, -1, -1,  4, -1};
+	const int8_t p10dd2table[8] = {0,  2,  3,  4, -1, -1,  5, -1};
 
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
 		return 0;
 
 	switch (proc_gen) {
 	case proc_gen_p9:
+		table = p9table;
+		break;
+	case proc_gen_p10:
+		if (chip->ec_level < 0x20)
+			table = p10dd1table;
+		else
+			table = p10dd2table;
 		break;
 	default:
 		return 0;
 	}
 
 	xscom_read(chip->id, 0x18002, &ecid2);
-	switch ((ecid2 >> 45) & 7) {
-	case 0:
-		rev = 0;
-		break;
-	case 1:
-		rev = 1;
-		break;
-	case 3:
-		rev = 2;
-		break;
-	case 7:
-		rev = 3;
-		break;
-	default:
-		rev = 0;
-	}
+
+	rev = table[(ecid2 >> 45) & 7];
+	if (rev < 0)
+		return 0;
 
 	prlog(PR_INFO, "P%d DD%i.%i%d detected\n",
-			9,
+			proc_gen == proc_gen_p9 ? 9 : 10,
 			0xf & (chip->ec_level >> 4),
 			chip->ec_level & 0xf,
 			rev);
