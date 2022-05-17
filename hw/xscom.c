@@ -841,6 +841,48 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 	return rc;
 }
 
+static uint8_t xscom_get_ec_rev(struct proc_chip *chip)
+{
+	uint64_t ecid2 = 0;
+	uint8_t rev;
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return 0;
+
+	switch (proc_gen) {
+	case proc_gen_p9:
+		break;
+	default:
+		return 0;
+	}
+
+	xscom_read(chip->id, 0x18002, &ecid2);
+	switch ((ecid2 >> 45) & 7) {
+	case 0:
+		rev = 0;
+		break;
+	case 1:
+		rev = 1;
+		break;
+	case 3:
+		rev = 2;
+		break;
+	case 7:
+		rev = 3;
+		break;
+	default:
+		rev = 0;
+	}
+
+	prlog(PR_INFO, "P%d DD%i.%i%d detected\n",
+			9,
+			0xf & (chip->ec_level >> 4),
+			chip->ec_level & 0xf,
+			rev);
+
+	return rev;
+}
+
 static void xscom_init_chip_info(struct proc_chip *chip)
 {
 	uint32_t val;
@@ -892,36 +934,8 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 	chip->ec_level = ((val >> 16) & 0xf) << 4;
 	chip->ec_level |= (val >> 8) & 0xf;
 
-	/*
-	 * On P9, grab the ECID bits to differenciate
-	 * DD1.01, 1.02, 2.00, etc...
-	 */
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
-		chip->ec_rev = 0;
-	} else if (proc_gen == proc_gen_p9) {
-		uint64_t ecid2 = 0;
-		uint8_t rev;
-		xscom_read(chip->id, 0x18002, &ecid2);
-		switch((ecid2 >> 45) & 7) {
-		case 0:
-			rev = 0;
-			break;
-		case 1:
-			rev = 1;
-			break;
-		case 3:
-			rev = 2;
-			break;
-		case 7:
-			rev = 3;
-			break;
-		default:
-			rev = 0;
-		}
-		prlog(PR_INFO,"P9 DD%i.%i%d detected\n", 0xf & (chip->ec_level >> 4),
-		       chip->ec_level & 0xf, rev);
-		chip->ec_rev = rev;
-	} /* XXX P10 */
+	/* Grab the ECID bits to differentiate DD1.01, 1.02, 2.00, etc... */
+	chip->ec_rev = xscom_get_ec_rev(chip);
 }
 
 /*
