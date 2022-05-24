@@ -104,6 +104,8 @@ static unsigned long fake_pvr = PVR_P8;
 
 unsigned int cpu_thread_count = 8;
 
+bool lpar_per_core;
+
 static inline unsigned long mfspr(unsigned int spr)
 {
 	assert(spr == SPR_PVR);

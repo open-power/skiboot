@@ -48,6 +48,7 @@
 #include <debug_descriptor.h>
 #include <occ.h>
 #include <opal-dump.h>
+#include <xscom-p9-regs.h>
 #include <xscom-p10-regs.h>
 
 enum proc_gen proc_gen;
@@ -1026,6 +1027,40 @@ static void mask_pc_system_xstop(void)
         }
 }
 
+bool lpar_per_core = false;
+
+static void probe_lpar_per_core(void)
+{
+	struct cpu_thread *cpu = this_cpu();
+	uint32_t chip_id = pir_to_chip_id(cpu->pir);
+	uint32_t core_id = pir_to_core_id(cpu->pir);
+	uint64_t addr;
+	uint64_t core_thread_state;
+	int rc;
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS) || chip_quirk(QUIRK_AWAN))
+		return;
+
+	if (proc_gen == proc_gen_p9)
+		addr = XSCOM_ADDR_P9_EC(core_id, P9_CORE_THREAD_STATE);
+	else if (proc_gen == proc_gen_p10)
+		addr = XSCOM_ADDR_P10_EC(core_id, P10_EC_CORE_THREAD_STATE);
+	else
+		return;
+
+	rc = xscom_read(chip_id, addr, &core_thread_state);
+	if (rc) {
+		prerror("Error reading CORE_THREAD_STATE rc:%d on PIR:%x\n",
+			rc, cpu->pir);
+		return;
+	}
+
+	if (core_thread_state & PPC_BIT(62)) {
+		lpar_per_core = true;
+		prlog(PR_WARNING, "LPAR-per-core mode detected. KVM may not be usable.");
+	}
+}
+
 
 /* Called from head.S, thus no prototype. */
 void __noreturn __nomcount  main_cpu_entry(const void *fdt);
@@ -1210,6 +1245,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
         /* Once all CPU are up apply this workaround */
         mask_pc_system_xstop();
+
+	/* P9/10 may be in LPAR-per-core mode, which is incompatible with KVM */
+	probe_lpar_per_core();
 
 	/* Add the /opal node to the device-tree */
 	add_opal_node();

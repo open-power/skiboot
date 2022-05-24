@@ -103,6 +103,8 @@ enum proc_gen {
 };
 extern enum proc_gen proc_gen;
 
+extern bool lpar_per_core;
+
 extern unsigned int pcie_max_link_speed;
 
 /* Convert a 4-bit number to a hex char */
