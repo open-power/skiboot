@@ -38,6 +38,7 @@ static struct lock reinit_lock = LOCK_UNLOCKED;
 static bool radix_supported;
 static unsigned long hid0_hile;
 static unsigned long hid0_attn;
+static unsigned long hid0_icache;
 static bool reconfigure_idle = false;
 static bool sreset_enabled;
 static bool ipi_enabled;
@@ -969,6 +970,16 @@ static void enable_attn(void)
 	hid0 = mfspr(SPR_HID0);
 	hid0 |= hid0_attn;
 	set_hid0(hid0);
+	if (hid0_icache) {
+		if (hid0 & hid0_icache) {
+			prlog(PR_WARNING, "enable_attn found hid0_cache bit set unexpectedly\n");
+			hid0 &= ~hid0_icache;
+		}
+		/* icache is flushed on hid0_icache 0->1 */
+		set_hid0(hid0 | hid0_icache);
+		set_hid0(hid0);
+	}
+
 }
 
 static void disable_attn(void)
@@ -978,6 +989,15 @@ static void disable_attn(void)
 	hid0 = mfspr(SPR_HID0);
 	hid0 &= ~hid0_attn;
 	set_hid0(hid0);
+	if (hid0_icache) {
+		if (hid0 & hid0_icache) {
+			prlog(PR_WARNING, "disable_attn found hid0_cache bit set unexpectedly\n");
+			hid0 &= ~hid0_icache;
+		}
+		/* icache is flushed on hid0_icache 0->1 */
+		set_hid0(hid0 | hid0_icache);
+		set_hid0(hid0);
+	}
 }
 
 extern void __trigger_attn(void);
@@ -1027,12 +1047,14 @@ void init_boot_cpu(void)
 		radix_supported = true;
 		hid0_hile = SPR_HID0_POWER9_HILE;
 		hid0_attn = SPR_HID0_POWER9_ENABLE_ATTN;
+		hid0_icache = SPR_HID0_POWER9_FLUSH_ICACHE;
 		break;
 	case PVR_TYPE_P10:
 		proc_gen = proc_gen_p10;
 		radix_supported = true;
 		hid0_hile = SPR_HID0_POWER10_HILE;
 		hid0_attn = SPR_HID0_POWER10_ENABLE_ATTN;
+		hid0_icache = SPR_HID0_POWER10_FLUSH_ICACHE;
 		break;
 	default:
 		proc_gen = proc_gen_unknown;
