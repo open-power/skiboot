@@ -4971,7 +4971,7 @@ static int64_t opal_xive_dump_tm(uint32_t offset, const char *n, uint32_t pir)
 	      " W2       W3\n", pir);
 	prlog(PR_INFO, "CPU[%04x]: %02x  %02x   %02x  %02x    %02x   "
 	       "%02x  %02x  %02x   %08x %08x\n", pir,
-	      (uint8_t)(v0 >> 58) & 0xff, (uint8_t)(v0 >> 48) & 0xff,
+	      (uint8_t)(v0 >> 56) & 0xff, (uint8_t)(v0 >> 48) & 0xff,
 	      (uint8_t)(v0 >> 40) & 0xff, (uint8_t)(v0 >> 32) & 0xff,
 	      (uint8_t)(v0 >> 24) & 0xff, (uint8_t)(v0 >> 16) & 0xff,
 	      (uint8_t)(v0 >>  8) & 0xff, (uint8_t)(v0      ) & 0xff,
