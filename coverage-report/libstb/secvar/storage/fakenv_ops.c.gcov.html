@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-05-24 17:20:14</td>
+            <td class="headerValue">2022-06-13 14:57:12</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">5</td>
@@ -223,10 +223,10 @@
 <a name="152"><span class="lineNum">     152 </span>                :            : </a>
 <a name="153"><span class="lineNum">     153 </span>                :<span class="lineNoCov">          0 :         switch (index) {</span></a>
 <a name="154"><span class="lineNum">     154 </span>                :<span class="lineNoCov">          0 :         case SECBOOT_TPMNV_VARS_INDEX:</span></a>
-<a name="155"><span class="lineNum">     155 </span>                :<span class="lineNoCov">          0 :                 memcpy(&amp;nv_name-&gt;t.name, tpmnv_vars_name, sizeof(TPM2B_NAME));</span></a>
+<a name="155"><span class="lineNum">     155 </span>                :<span class="lineNoCov">          0 :                 memcpy(&amp;nv_name-&gt;t.name, tpmnv_vars_name, sizeof(tpmnv_vars_name));</span></a>
 <a name="156"><span class="lineNum">     156 </span>                :<span class="lineNoCov">          0 :                 break;</span></a>
 <a name="157"><span class="lineNum">     157 </span>                :<span class="lineNoCov">          0 :         case SECBOOT_TPMNV_CONTROL_INDEX:</span></a>
-<a name="158"><span class="lineNum">     158 </span>                :<span class="lineNoCov">          0 :                 memcpy(&amp;nv_name-&gt;t.name, tpmnv_control_name, sizeof(TPM2B_NAME));</span></a>
+<a name="158"><span class="lineNum">     158 </span>                :<span class="lineNoCov">          0 :                 memcpy(&amp;nv_name-&gt;t.name, tpmnv_control_name, sizeof(tpmnv_control_name));</span></a>
 <a name="159"><span class="lineNum">     159 </span>                :<span class="lineNoCov">          0 :                 break;</span></a>
 <a name="160"><span class="lineNum">     160 </span>                :<span class="lineNoCov">          0 :         default:</span></a>
 <a name="161"><span class="lineNum">     161 </span>                :<span class="lineNoCov">          0 :                 return OPAL_INTERNAL_ERROR;</span></a>
