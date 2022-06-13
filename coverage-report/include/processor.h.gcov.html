@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-06-13 14:57:12</td>
+            <td class="headerValue">2022-06-13 20:37:26</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -258,259 +258,261 @@
 <a name="187"><span class="lineNum">     187 </span>                :            : #define SPR_HID0_POWER9_HILE            PPC_BIT(4)</a>
 <a name="188"><span class="lineNum">     188 </span>                :            : #define SPR_HID0_POWER10_HILE           PPC_BIT(4)</a>
 <a name="189"><span class="lineNum">     189 </span>                :            : #define SPR_HID0_POWER8_ENABLE_ATTN     PPC_BIT(31)</a>
-<a name="190"><span class="lineNum">     190 </span>                :            : #define SPR_HID0_POWER9_ENABLE_ATTN     (PPC_BIT(2) | PPC_BIT(3))</a>
-<a name="191"><span class="lineNum">     191 </span>                :            : #define SPR_HID0_POWER10_ENABLE_ATTN    (PPC_BIT(2) | PPC_BIT(3))</a>
-<a name="192"><span class="lineNum">     192 </span>                :            : #define SPR_HID0_POWER9_RADIX           PPC_BIT(8)</a>
-<a name="193"><span class="lineNum">     193 </span>                :            : </a>
-<a name="194"><span class="lineNum">     194 </span>                :            : /* PVR bits */</a>
-<a name="195"><span class="lineNum">     195 </span>                :            : #define SPR_PVR_TYPE                    0xffff0000</a>
-<a name="196"><span class="lineNum">     196 </span>                :            : #define SPR_PVR_CHIP_TYPE               0x0000f000</a>
-<a name="197"><span class="lineNum">     197 </span>                :            : #define SPR_PVR_VERS_MAJ                0x00000f00</a>
-<a name="198"><span class="lineNum">     198 </span>                :            : #define SPR_PVR_VERS_MIN                0x000000ff</a>
-<a name="199"><span class="lineNum">     199 </span>                :            : </a>
-<a name="200"><span class="lineNum">     200 </span>                :            : #define PVR_TYPE(_pvr)          GETFIELD(SPR_PVR_TYPE, _pvr)</a>
-<a name="201"><span class="lineNum">     201 </span>                :            : #define PVR_CHIP_TYPE(_pvr)     GETFIELD(SPR_PVR_CHIP_TYPE, _pvr)</a>
-<a name="202"><span class="lineNum">     202 </span>                :            : #define PVR_VERS_MAJ(_pvr)      GETFIELD(SPR_PVR_VERS_MAJ, _pvr)</a>
-<a name="203"><span class="lineNum">     203 </span>                :            : #define PVR_VERS_MIN(_pvr)      GETFIELD(SPR_PVR_VERS_MIN, _pvr)</a>
-<a name="204"><span class="lineNum">     204 </span>                :            : </a>
-<a name="205"><span class="lineNum">     205 </span>                :            : /* PVR definitions */</a>
-<a name="206"><span class="lineNum">     206 </span>                :            : #define PVR_TYPE_P8E    0x004b /* Murano */</a>
-<a name="207"><span class="lineNum">     207 </span>                :            : #define PVR_TYPE_P8     0x004d /* Venice */</a>
-<a name="208"><span class="lineNum">     208 </span>                :            : #define PVR_TYPE_P8NVL  0x004c /* Naples */</a>
-<a name="209"><span class="lineNum">     209 </span>                :            : #define PVR_TYPE_P9     0x004e</a>
-<a name="210"><span class="lineNum">     210 </span>                :            : #define PVR_TYPE_P9P    0x004f /* Axone */</a>
-<a name="211"><span class="lineNum">     211 </span>                :            : #define PVR_TYPE_P10    0x0080</a>
-<a name="212"><span class="lineNum">     212 </span>                :            : </a>
-<a name="213"><span class="lineNum">     213 </span>                :            : #ifdef __ASSEMBLY__</a>
+<a name="190"><span class="lineNum">     190 </span>                :            : #define SPR_HID0_POWER9_ENABLE_ATTN     PPC_BIT(3)</a>
+<a name="191"><span class="lineNum">     191 </span>                :            : #define SPR_HID0_POWER10_ENABLE_ATTN    PPC_BIT(3)</a>
+<a name="192"><span class="lineNum">     192 </span>                :            : #define SPR_HID0_POWER9_FLUSH_ICACHE    PPC_BIT(2)</a>
+<a name="193"><span class="lineNum">     193 </span>                :            : #define SPR_HID0_POWER10_FLUSH_ICACHE   PPC_BIT(2)</a>
+<a name="194"><span class="lineNum">     194 </span>                :            : #define SPR_HID0_POWER9_RADIX           PPC_BIT(8)</a>
+<a name="195"><span class="lineNum">     195 </span>                :            : </a>
+<a name="196"><span class="lineNum">     196 </span>                :            : /* PVR bits */</a>
+<a name="197"><span class="lineNum">     197 </span>                :            : #define SPR_PVR_TYPE                    0xffff0000</a>
+<a name="198"><span class="lineNum">     198 </span>                :            : #define SPR_PVR_CHIP_TYPE               0x0000f000</a>
+<a name="199"><span class="lineNum">     199 </span>                :            : #define SPR_PVR_VERS_MAJ                0x00000f00</a>
+<a name="200"><span class="lineNum">     200 </span>                :            : #define SPR_PVR_VERS_MIN                0x000000ff</a>
+<a name="201"><span class="lineNum">     201 </span>                :            : </a>
+<a name="202"><span class="lineNum">     202 </span>                :            : #define PVR_TYPE(_pvr)          GETFIELD(SPR_PVR_TYPE, _pvr)</a>
+<a name="203"><span class="lineNum">     203 </span>                :            : #define PVR_CHIP_TYPE(_pvr)     GETFIELD(SPR_PVR_CHIP_TYPE, _pvr)</a>
+<a name="204"><span class="lineNum">     204 </span>                :            : #define PVR_VERS_MAJ(_pvr)      GETFIELD(SPR_PVR_VERS_MAJ, _pvr)</a>
+<a name="205"><span class="lineNum">     205 </span>                :            : #define PVR_VERS_MIN(_pvr)      GETFIELD(SPR_PVR_VERS_MIN, _pvr)</a>
+<a name="206"><span class="lineNum">     206 </span>                :            : </a>
+<a name="207"><span class="lineNum">     207 </span>                :            : /* PVR definitions */</a>
+<a name="208"><span class="lineNum">     208 </span>                :            : #define PVR_TYPE_P8E    0x004b /* Murano */</a>
+<a name="209"><span class="lineNum">     209 </span>                :            : #define PVR_TYPE_P8     0x004d /* Venice */</a>
+<a name="210"><span class="lineNum">     210 </span>                :            : #define PVR_TYPE_P8NVL  0x004c /* Naples */</a>
+<a name="211"><span class="lineNum">     211 </span>                :            : #define PVR_TYPE_P9     0x004e</a>
+<a name="212"><span class="lineNum">     212 </span>                :            : #define PVR_TYPE_P9P    0x004f /* Axone */</a>
+<a name="213"><span class="lineNum">     213 </span>                :            : #define PVR_TYPE_P10    0x0080</a>
 <a name="214"><span class="lineNum">     214 </span>                :            : </a>
-<a name="215"><span class="lineNum">     215 </span>                :            : /* Thread priority control opcodes */</a>
-<a name="216"><span class="lineNum">     216 </span>                :            : #define smt_low         or 1,1,1</a>
-<a name="217"><span class="lineNum">     217 </span>                :            : #define smt_medium      or 2,2,2</a>
-<a name="218"><span class="lineNum">     218 </span>                :            : #define smt_high        or 3,3,3</a>
-<a name="219"><span class="lineNum">     219 </span>                :            : #define smt_medium_high or 5,5,5</a>
-<a name="220"><span class="lineNum">     220 </span>                :            : #define smt_medium_low  or 6,6,6</a>
-<a name="221"><span class="lineNum">     221 </span>                :            : #define smt_extra_high  or 7,7,7</a>
-<a name="222"><span class="lineNum">     222 </span>                :            : #define smt_very_low    or 31,31,31</a>
-<a name="223"><span class="lineNum">     223 </span>                :            : #define smt_lowest      smt_low ; smt_very_low</a>
-<a name="224"><span class="lineNum">     224 </span>                :            : </a>
-<a name="225"><span class="lineNum">     225 </span>                :            : #else /* __ASSEMBLY__ */</a>
+<a name="215"><span class="lineNum">     215 </span>                :            : #ifdef __ASSEMBLY__</a>
+<a name="216"><span class="lineNum">     216 </span>                :            : </a>
+<a name="217"><span class="lineNum">     217 </span>                :            : /* Thread priority control opcodes */</a>
+<a name="218"><span class="lineNum">     218 </span>                :            : #define smt_low         or 1,1,1</a>
+<a name="219"><span class="lineNum">     219 </span>                :            : #define smt_medium      or 2,2,2</a>
+<a name="220"><span class="lineNum">     220 </span>                :            : #define smt_high        or 3,3,3</a>
+<a name="221"><span class="lineNum">     221 </span>                :            : #define smt_medium_high or 5,5,5</a>
+<a name="222"><span class="lineNum">     222 </span>                :            : #define smt_medium_low  or 6,6,6</a>
+<a name="223"><span class="lineNum">     223 </span>                :            : #define smt_extra_high  or 7,7,7</a>
+<a name="224"><span class="lineNum">     224 </span>                :            : #define smt_very_low    or 31,31,31</a>
+<a name="225"><span class="lineNum">     225 </span>                :            : #define smt_lowest      smt_low ; smt_very_low</a>
 <a name="226"><span class="lineNum">     226 </span>                :            : </a>
-<a name="227"><span class="lineNum">     227 </span>                :            : #include &lt;ccan/str/str.h&gt;</a>
-<a name="228"><span class="lineNum">     228 </span>                :            : #include &lt;compiler.h&gt;</a>
-<a name="229"><span class="lineNum">     229 </span>                :            : #include &lt;stdbool.h&gt;</a>
-<a name="230"><span class="lineNum">     230 </span>                :            : #include &lt;stdint.h&gt;</a>
-<a name="231"><span class="lineNum">     231 </span>                :            : </a>
-<a name="232"><span class="lineNum">     232 </span>                :            : #define PPC_INST_NOP    0x60000000UL</a>
-<a name="233"><span class="lineNum">     233 </span>                :            : #define PPC_INST_TRAP   0x7fe00008UL</a>
-<a name="234"><span class="lineNum">     234 </span>                :            : </a>
-<a name="235"><span class="lineNum">     235 </span>                :            : #define RB(b)           (((b) &amp; 0x1f) &lt;&lt; 11)</a>
-<a name="236"><span class="lineNum">     236 </span>                :            : #define MSGSND(b)       stringify(.long 0x7c00019c | RB(b))</a>
-<a name="237"><span class="lineNum">     237 </span>                :            : #define MSGCLR(b)       stringify(.long 0x7c0001dc | RB(b))</a>
-<a name="238"><span class="lineNum">     238 </span>                :            : #define MSGSYNC         stringify(.long 0x7c0006ec)</a>
-<a name="239"><span class="lineNum">     239 </span>                :            : </a>
-<a name="240"><span class="lineNum">     240 </span>                :<span class="lineCov">          4 : static inline bool is_power9n(uint32_t version)</span></a>
-<a name="241"><span class="lineNum">     241 </span>                :            : {</a>
-<a name="242"><span class="lineNum">     242 </span>                :<span class="lineCov">          4 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></a>
-<a name="243"><span class="lineNum">     243 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="244"><span class="lineNum">     244 </span>                :            :         /*</a>
-<a name="245"><span class="lineNum">     245 </span>                :            :          * Bit 13 tells us:</a>
-<a name="246"><span class="lineNum">     246 </span>                :            :          *   0 = Scale out (aka Nimbus)</a>
-<a name="247"><span class="lineNum">     247 </span>                :            :          *   1 = Scale up  (aka Cumulus)</a>
-<a name="248"><span class="lineNum">     248 </span>                :            :          */</a>
-<a name="249"><span class="lineNum">     249 </span>                :<span class="lineCov">          4 :         if ((version &gt;&gt; 13) &amp; 1)</span></a>
-<a name="250"><span class="lineNum">     250 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="251"><span class="lineNum">     251 </span>                :<span class="lineCov">          4 :         return true;</span></a>
-<a name="252"><span class="lineNum">     252 </span>                :            : }</a>
-<a name="253"><span class="lineNum">     253 </span>                :            : </a>
-<a name="254"><span class="lineNum">     254 </span>                :            : static inline bool is_fused_core(uint32_t version)</a>
-<a name="255"><span class="lineNum">     255 </span>                :            : {</a>
-<a name="256"><span class="lineNum">     256 </span>                :            :         if (PVR_TYPE(version) == PVR_TYPE_P9) {</a>
-<a name="257"><span class="lineNum">     257 </span>                :            :                 switch(PVR_CHIP_TYPE(version)) {</a>
-<a name="258"><span class="lineNum">     258 </span>                :            :                         case 0:</a>
-<a name="259"><span class="lineNum">     259 </span>                :            :                         case 2:</a>
-<a name="260"><span class="lineNum">     260 </span>                :            :                                 return true;</a>
-<a name="261"><span class="lineNum">     261 </span>                :            :                         default:</a>
-<a name="262"><span class="lineNum">     262 </span>                :            :                                 return false;</a>
-<a name="263"><span class="lineNum">     263 </span>                :            :                 }</a>
-<a name="264"><span class="lineNum">     264 </span>                :            : </a>
-<a name="265"><span class="lineNum">     265 </span>                :            :         } else if(PVR_TYPE(version) == PVR_TYPE_P10) {</a>
-<a name="266"><span class="lineNum">     266 </span>                :            :                 if(PVR_CHIP_TYPE(version) &amp; 0x01)</a>
-<a name="267"><span class="lineNum">     267 </span>                :            :                         return false;</a>
-<a name="268"><span class="lineNum">     268 </span>                :            :                 else</a>
-<a name="269"><span class="lineNum">     269 </span>                :            :                         return true;</a>
-<a name="270"><span class="lineNum">     270 </span>                :            :         } else</a>
-<a name="271"><span class="lineNum">     271 </span>                :            :                 return false;</a>
-<a name="272"><span class="lineNum">     272 </span>                :            : }</a>
-<a name="273"><span class="lineNum">     273 </span>                :            : </a>
-<a name="274"><span class="lineNum">     274 </span>                :<span class="lineNoCov">          0 : static inline bool is_power9c(uint32_t version) </span></a>
-<a name="275"><span class="lineNum">     275 </span>                :            : {</a>
-<a name="276"><span class="lineNum">     276 </span>                :            : </a>
-<a name="277"><span class="lineNum">     277 </span>                :<span class="lineNoCov">          0 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></a>
-<a name="278"><span class="lineNum">     278 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="279"><span class="lineNum">     279 </span>                :            :         /*</a>
-<a name="280"><span class="lineNum">     280 </span>                :            :          * Bit 13 tells us:</a>
-<a name="281"><span class="lineNum">     281 </span>                :            :          *   0 = Scale out (aka Nimbus)</a>
-<a name="282"><span class="lineNum">     282 </span>                :            :          *   1 = Scale up  (aka Cumulus)</a>
-<a name="283"><span class="lineNum">     283 </span>                :            :          */</a>
-<a name="284"><span class="lineNum">     284 </span>                :<span class="lineNoCov">          0 :         if (!((version &gt;&gt; 13) &amp; 1))</span></a>
-<a name="285"><span class="lineNum">     285 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="286"><span class="lineNum">     286 </span>                :<span class="lineNoCov">          0 :         return true;</span></a>
-<a name="287"><span class="lineNum">     287 </span>                :            : }</a>
-<a name="288"><span class="lineNum">     288 </span>                :            : </a>
-<a name="289"><span class="lineNum">     289 </span>                :            : #ifndef __TEST__</a>
+<a name="227"><span class="lineNum">     227 </span>                :            : #else /* __ASSEMBLY__ */</a>
+<a name="228"><span class="lineNum">     228 </span>                :            : </a>
+<a name="229"><span class="lineNum">     229 </span>                :            : #include &lt;ccan/str/str.h&gt;</a>
+<a name="230"><span class="lineNum">     230 </span>                :            : #include &lt;compiler.h&gt;</a>
+<a name="231"><span class="lineNum">     231 </span>                :            : #include &lt;stdbool.h&gt;</a>
+<a name="232"><span class="lineNum">     232 </span>                :            : #include &lt;stdint.h&gt;</a>
+<a name="233"><span class="lineNum">     233 </span>                :            : </a>
+<a name="234"><span class="lineNum">     234 </span>                :            : #define PPC_INST_NOP    0x60000000UL</a>
+<a name="235"><span class="lineNum">     235 </span>                :            : #define PPC_INST_TRAP   0x7fe00008UL</a>
+<a name="236"><span class="lineNum">     236 </span>                :            : </a>
+<a name="237"><span class="lineNum">     237 </span>                :            : #define RB(b)           (((b) &amp; 0x1f) &lt;&lt; 11)</a>
+<a name="238"><span class="lineNum">     238 </span>                :            : #define MSGSND(b)       stringify(.long 0x7c00019c | RB(b))</a>
+<a name="239"><span class="lineNum">     239 </span>                :            : #define MSGCLR(b)       stringify(.long 0x7c0001dc | RB(b))</a>
+<a name="240"><span class="lineNum">     240 </span>                :            : #define MSGSYNC         stringify(.long 0x7c0006ec)</a>
+<a name="241"><span class="lineNum">     241 </span>                :            : </a>
+<a name="242"><span class="lineNum">     242 </span>                :<span class="lineCov">          4 : static inline bool is_power9n(uint32_t version)</span></a>
+<a name="243"><span class="lineNum">     243 </span>                :            : {</a>
+<a name="244"><span class="lineNum">     244 </span>                :<span class="lineCov">          4 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></a>
+<a name="245"><span class="lineNum">     245 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="246"><span class="lineNum">     246 </span>                :            :         /*</a>
+<a name="247"><span class="lineNum">     247 </span>                :            :          * Bit 13 tells us:</a>
+<a name="248"><span class="lineNum">     248 </span>                :            :          *   0 = Scale out (aka Nimbus)</a>
+<a name="249"><span class="lineNum">     249 </span>                :            :          *   1 = Scale up  (aka Cumulus)</a>
+<a name="250"><span class="lineNum">     250 </span>                :            :          */</a>
+<a name="251"><span class="lineNum">     251 </span>                :<span class="lineCov">          4 :         if ((version &gt;&gt; 13) &amp; 1)</span></a>
+<a name="252"><span class="lineNum">     252 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="253"><span class="lineNum">     253 </span>                :<span class="lineCov">          4 :         return true;</span></a>
+<a name="254"><span class="lineNum">     254 </span>                :            : }</a>
+<a name="255"><span class="lineNum">     255 </span>                :            : </a>
+<a name="256"><span class="lineNum">     256 </span>                :            : static inline bool is_fused_core(uint32_t version)</a>
+<a name="257"><span class="lineNum">     257 </span>                :            : {</a>
+<a name="258"><span class="lineNum">     258 </span>                :            :         if (PVR_TYPE(version) == PVR_TYPE_P9) {</a>
+<a name="259"><span class="lineNum">     259 </span>                :            :                 switch(PVR_CHIP_TYPE(version)) {</a>
+<a name="260"><span class="lineNum">     260 </span>                :            :                         case 0:</a>
+<a name="261"><span class="lineNum">     261 </span>                :            :                         case 2:</a>
+<a name="262"><span class="lineNum">     262 </span>                :            :                                 return true;</a>
+<a name="263"><span class="lineNum">     263 </span>                :            :                         default:</a>
+<a name="264"><span class="lineNum">     264 </span>                :            :                                 return false;</a>
+<a name="265"><span class="lineNum">     265 </span>                :            :                 }</a>
+<a name="266"><span class="lineNum">     266 </span>                :            : </a>
+<a name="267"><span class="lineNum">     267 </span>                :            :         } else if(PVR_TYPE(version) == PVR_TYPE_P10) {</a>
+<a name="268"><span class="lineNum">     268 </span>                :            :                 if(PVR_CHIP_TYPE(version) &amp; 0x01)</a>
+<a name="269"><span class="lineNum">     269 </span>                :            :                         return false;</a>
+<a name="270"><span class="lineNum">     270 </span>                :            :                 else</a>
+<a name="271"><span class="lineNum">     271 </span>                :            :                         return true;</a>
+<a name="272"><span class="lineNum">     272 </span>                :            :         } else</a>
+<a name="273"><span class="lineNum">     273 </span>                :            :                 return false;</a>
+<a name="274"><span class="lineNum">     274 </span>                :            : }</a>
+<a name="275"><span class="lineNum">     275 </span>                :            : </a>
+<a name="276"><span class="lineNum">     276 </span>                :<span class="lineNoCov">          0 : static inline bool is_power9c(uint32_t version) </span></a>
+<a name="277"><span class="lineNum">     277 </span>                :            : {</a>
+<a name="278"><span class="lineNum">     278 </span>                :            : </a>
+<a name="279"><span class="lineNum">     279 </span>                :<span class="lineNoCov">          0 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></a>
+<a name="280"><span class="lineNum">     280 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="281"><span class="lineNum">     281 </span>                :            :         /*</a>
+<a name="282"><span class="lineNum">     282 </span>                :            :          * Bit 13 tells us:</a>
+<a name="283"><span class="lineNum">     283 </span>                :            :          *   0 = Scale out (aka Nimbus)</a>
+<a name="284"><span class="lineNum">     284 </span>                :            :          *   1 = Scale up  (aka Cumulus)</a>
+<a name="285"><span class="lineNum">     285 </span>                :            :          */</a>
+<a name="286"><span class="lineNum">     286 </span>                :<span class="lineNoCov">          0 :         if (!((version &gt;&gt; 13) &amp; 1))</span></a>
+<a name="287"><span class="lineNum">     287 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="288"><span class="lineNum">     288 </span>                :<span class="lineNoCov">          0 :         return true;</span></a>
+<a name="289"><span class="lineNum">     289 </span>                :            : }</a>
 <a name="290"><span class="lineNum">     290 </span>                :            : </a>
-<a name="291"><span class="lineNum">     291 </span>                :            : /* POWER9 and above only */</a>
-<a name="292"><span class="lineNum">     292 </span>                :            : static inline void flush_erat(void)</a>
-<a name="293"><span class="lineNum">     293 </span>                :            : {</a>
-<a name="294"><span class="lineNum">     294 </span>                :            :         asm volatile(&quot;slbia        7&quot;);</a>
-<a name="295"><span class="lineNum">     295 </span>                :            : }</a>
-<a name="296"><span class="lineNum">     296 </span>                :            : </a>
-<a name="297"><span class="lineNum">     297 </span>                :            : /*</a>
-<a name="298"><span class="lineNum">     298 </span>                :            :  * SMT priority</a>
-<a name="299"><span class="lineNum">     299 </span>                :            :  */</a>
-<a name="300"><span class="lineNum">     300 </span>                :            : </a>
-<a name="301"><span class="lineNum">     301 </span>                :            : static inline void smt_low(void)        { asm volatile(&quot;or 1,1,1&quot;);   }</a>
-<a name="302"><span class="lineNum">     302 </span>                :            : static inline void smt_medium(void)     { asm volatile(&quot;or 2,2,2&quot;);   }</a>
-<a name="303"><span class="lineNum">     303 </span>                :            : static inline void smt_high(void)       { asm volatile(&quot;or 3,3,3&quot;);   }</a>
-<a name="304"><span class="lineNum">     304 </span>                :            : static inline void smt_medium_high(void){ asm volatile(&quot;or 5,5,5&quot;);   }</a>
-<a name="305"><span class="lineNum">     305 </span>                :            : static inline void smt_medium_low(void) { asm volatile(&quot;or 6,6,6&quot;);   }</a>
-<a name="306"><span class="lineNum">     306 </span>                :            : static inline void smt_extra_high(void) { asm volatile(&quot;or 7,7,7&quot;);   }</a>
-<a name="307"><span class="lineNum">     307 </span>                :            : static inline void smt_very_low(void)   { asm volatile(&quot;or 31,31,31&quot;);        }</a>
-<a name="308"><span class="lineNum">     308 </span>                :            : static inline void smt_lowest(void)     { smt_low(); smt_very_low();    }</a>
-<a name="309"><span class="lineNum">     309 </span>                :            : </a>
-<a name="310"><span class="lineNum">     310 </span>                :            : /*</a>
-<a name="311"><span class="lineNum">     311 </span>                :            :  * SPR access functions</a>
-<a name="312"><span class="lineNum">     312 </span>                :            :  */</a>
-<a name="313"><span class="lineNum">     313 </span>                :            : </a>
-<a name="314"><span class="lineNum">     314 </span>                :            : static inline unsigned long mfmsr(void)</a>
-<a name="315"><span class="lineNum">     315 </span>                :            : {</a>
-<a name="316"><span class="lineNum">     316 </span>                :            :         unsigned long val;</a>
-<a name="317"><span class="lineNum">     317 </span>                :            :         </a>
-<a name="318"><span class="lineNum">     318 </span>                :            :         asm volatile(&quot;mfmsr %0&quot; : &quot;=r&quot;(val) : : &quot;memory&quot;);</a>
-<a name="319"><span class="lineNum">     319 </span>                :            :         return val;</a>
-<a name="320"><span class="lineNum">     320 </span>                :            : }</a>
-<a name="321"><span class="lineNum">     321 </span>                :            : </a>
-<a name="322"><span class="lineNum">     322 </span>                :            : static inline void mtmsr(unsigned long val)</a>
-<a name="323"><span class="lineNum">     323 </span>                :            : {</a>
-<a name="324"><span class="lineNum">     324 </span>                :            :         asm volatile(&quot;mtmsr %0&quot; : : &quot;r&quot;(val) : &quot;memory&quot;);</a>
-<a name="325"><span class="lineNum">     325 </span>                :            : }</a>
-<a name="326"><span class="lineNum">     326 </span>                :            : </a>
-<a name="327"><span class="lineNum">     327 </span>                :            : static inline void mtmsrd(unsigned long val, int l)</a>
-<a name="328"><span class="lineNum">     328 </span>                :            : {</a>
-<a name="329"><span class="lineNum">     329 </span>                :            :         asm volatile(&quot;mtmsrd %0,%1&quot; : : &quot;r&quot;(val), &quot;i&quot;(l) : &quot;memory&quot;);</a>
-<a name="330"><span class="lineNum">     330 </span>                :            : }</a>
-<a name="331"><span class="lineNum">     331 </span>                :            : </a>
-<a name="332"><span class="lineNum">     332 </span>                :            : static inline __attribute__((always_inline))</a>
-<a name="333"><span class="lineNum">     333 </span>                :            : unsigned long mfspr(const unsigned int spr)</a>
-<a name="334"><span class="lineNum">     334 </span>                :            : {</a>
-<a name="335"><span class="lineNum">     335 </span>                :            :         unsigned long val;</a>
-<a name="336"><span class="lineNum">     336 </span>                :            : </a>
-<a name="337"><span class="lineNum">     337 </span>                :            :         asm volatile(&quot;mfspr %0,%1&quot; : &quot;=r&quot;(val) : &quot;i&quot;(spr) : &quot;memory&quot;);</a>
-<a name="338"><span class="lineNum">     338 </span>                :            :         return val;</a>
-<a name="339"><span class="lineNum">     339 </span>                :            : }</a>
-<a name="340"><span class="lineNum">     340 </span>                :            : </a>
-<a name="341"><span class="lineNum">     341 </span>                :            : static inline __attribute__((always_inline))</a>
-<a name="342"><span class="lineNum">     342 </span>                :            : void mtspr(const unsigned int spr, unsigned long val)</a>
-<a name="343"><span class="lineNum">     343 </span>                :            : {</a>
-<a name="344"><span class="lineNum">     344 </span>                :            :         asm volatile(&quot;mtspr %0,%1&quot; : : &quot;i&quot;(spr), &quot;r&quot;(val) : &quot;memory&quot;);</a>
-<a name="345"><span class="lineNum">     345 </span>                :            : }</a>
-<a name="346"><span class="lineNum">     346 </span>                :            : </a>
-<a name="347"><span class="lineNum">     347 </span>                :            : /* Helpers for special sequences needed by some registers */</a>
-<a name="348"><span class="lineNum">     348 </span>                :            : extern void set_hid0(unsigned long hid0);</a>
-<a name="349"><span class="lineNum">     349 </span>                :            : extern void trigger_attn(void);</a>
-<a name="350"><span class="lineNum">     350 </span>                :            : </a>
-<a name="351"><span class="lineNum">     351 </span>                :            : /*</a>
-<a name="352"><span class="lineNum">     352 </span>                :            :  * Barriers</a>
-<a name="353"><span class="lineNum">     353 </span>                :            :  */</a>
-<a name="354"><span class="lineNum">     354 </span>                :            : </a>
-<a name="355"><span class="lineNum">     355 </span>                :            : static inline void eieio(void)</a>
-<a name="356"><span class="lineNum">     356 </span>                :            : {</a>
-<a name="357"><span class="lineNum">     357 </span>                :            :         asm volatile(&quot;eieio&quot; : : : &quot;memory&quot;);</a>
-<a name="358"><span class="lineNum">     358 </span>                :            : }</a>
-<a name="359"><span class="lineNum">     359 </span>                :            : </a>
-<a name="360"><span class="lineNum">     360 </span>                :            : static inline void sync(void)</a>
-<a name="361"><span class="lineNum">     361 </span>                :            : {</a>
-<a name="362"><span class="lineNum">     362 </span>                :            :         asm volatile(&quot;sync&quot; : : : &quot;memory&quot;);</a>
-<a name="363"><span class="lineNum">     363 </span>                :            : }</a>
-<a name="364"><span class="lineNum">     364 </span>                :            : </a>
-<a name="365"><span class="lineNum">     365 </span>                :            : static inline void lwsync(void)</a>
-<a name="366"><span class="lineNum">     366 </span>                :            : {</a>
-<a name="367"><span class="lineNum">     367 </span>                :            :         asm volatile(&quot;lwsync&quot; : : : &quot;memory&quot;);</a>
-<a name="368"><span class="lineNum">     368 </span>                :            : }</a>
-<a name="369"><span class="lineNum">     369 </span>                :            : </a>
-<a name="370"><span class="lineNum">     370 </span>                :            : static inline void isync(void)</a>
-<a name="371"><span class="lineNum">     371 </span>                :            : {</a>
-<a name="372"><span class="lineNum">     372 </span>                :            :         asm volatile(&quot;isync&quot; : : : &quot;memory&quot;);</a>
-<a name="373"><span class="lineNum">     373 </span>                :            : }</a>
-<a name="374"><span class="lineNum">     374 </span>                :            : </a>
-<a name="375"><span class="lineNum">     375 </span>                :            : </a>
-<a name="376"><span class="lineNum">     376 </span>                :            : /*</a>
-<a name="377"><span class="lineNum">     377 </span>                :            :  * Cache sync</a>
-<a name="378"><span class="lineNum">     378 </span>                :            :  */</a>
-<a name="379"><span class="lineNum">     379 </span>                :            : static inline void sync_icache(void)</a>
-<a name="380"><span class="lineNum">     380 </span>                :            : {</a>
-<a name="381"><span class="lineNum">     381 </span>                :            :         asm volatile(&quot;sync; icbi 0,%0; sync; isync&quot; : : &quot;r&quot; (0) : &quot;memory&quot;);</a>
-<a name="382"><span class="lineNum">     382 </span>                :            : }</a>
-<a name="383"><span class="lineNum">     383 </span>                :            : </a>
-<a name="384"><span class="lineNum">     384 </span>                :            : /*</a>
-<a name="385"><span class="lineNum">     385 </span>                :            :  * Doorbells</a>
-<a name="386"><span class="lineNum">     386 </span>                :            :  */</a>
-<a name="387"><span class="lineNum">     387 </span>                :            : static inline void msgclr(void)</a>
-<a name="388"><span class="lineNum">     388 </span>                :            : {</a>
-<a name="389"><span class="lineNum">     389 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36));</a>
-<a name="390"><span class="lineNum">     390 </span>                :            :         asm volatile(MSGCLR(%0) : : &quot;r&quot;(rb));</a>
-<a name="391"><span class="lineNum">     391 </span>                :            : }</a>
-<a name="392"><span class="lineNum">     392 </span>                :            : </a>
-<a name="393"><span class="lineNum">     393 </span>                :            : static inline void p9_dbell_receive(void)</a>
-<a name="394"><span class="lineNum">     394 </span>                :            : {</a>
-<a name="395"><span class="lineNum">     395 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36));</a>
-<a name="396"><span class="lineNum">     396 </span>                :            :         asm volatile(MSGCLR(%0) &quot;;&quot;</a>
-<a name="397"><span class="lineNum">     397 </span>                :            :                      MSGSYNC    &quot;;&quot;</a>
-<a name="398"><span class="lineNum">     398 </span>                :            :                      &quot;lwsync&quot;</a>
-<a name="399"><span class="lineNum">     399 </span>                :            :                      : : &quot;r&quot;(rb));</a>
-<a name="400"><span class="lineNum">     400 </span>                :            : }</a>
-<a name="401"><span class="lineNum">     401 </span>                :            : </a>
-<a name="402"><span class="lineNum">     402 </span>                :            : static inline void p9_dbell_send(uint32_t pir)</a>
-<a name="403"><span class="lineNum">     403 </span>                :            : {</a>
-<a name="404"><span class="lineNum">     404 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36)) | pir;</a>
-<a name="405"><span class="lineNum">     405 </span>                :            :         asm volatile(&quot;sync ;&quot;</a>
-<a name="406"><span class="lineNum">     406 </span>                :            :                      MSGSND(%0)</a>
-<a name="407"><span class="lineNum">     407 </span>                :            :                      : : &quot;r&quot;(rb));</a>
-<a name="408"><span class="lineNum">     408 </span>                :            : }</a>
-<a name="409"><span class="lineNum">     409 </span>                :            : </a>
-<a name="410"><span class="lineNum">     410 </span>                :            : /*</a>
-<a name="411"><span class="lineNum">     411 </span>                :            :  * Byteswap load/stores</a>
-<a name="412"><span class="lineNum">     412 </span>                :            :  */</a>
-<a name="413"><span class="lineNum">     413 </span>                :            : </a>
-<a name="414"><span class="lineNum">     414 </span>                :            : static inline uint16_t ld_le16(const uint16_t *addr)</a>
-<a name="415"><span class="lineNum">     415 </span>                :            : {</a>
-<a name="416"><span class="lineNum">     416 </span>                :            :         uint16_t val;</a>
-<a name="417"><span class="lineNum">     417 </span>                :            :         asm volatile(&quot;lhbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="418"><span class="lineNum">     418 </span>                :            :         return val;</a>
-<a name="419"><span class="lineNum">     419 </span>                :            : }</a>
-<a name="420"><span class="lineNum">     420 </span>                :            : </a>
-<a name="421"><span class="lineNum">     421 </span>                :            : static inline uint32_t ld_le32(const uint32_t *addr)</a>
-<a name="422"><span class="lineNum">     422 </span>                :            : {</a>
-<a name="423"><span class="lineNum">     423 </span>                :            :         uint32_t val;</a>
-<a name="424"><span class="lineNum">     424 </span>                :            :         asm volatile(&quot;lwbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="425"><span class="lineNum">     425 </span>                :            :         return val;</a>
-<a name="426"><span class="lineNum">     426 </span>                :            : }</a>
-<a name="427"><span class="lineNum">     427 </span>                :            : </a>
-<a name="428"><span class="lineNum">     428 </span>                :            : static inline void st_le16(uint16_t *addr, uint16_t val)</a>
-<a name="429"><span class="lineNum">     429 </span>                :            : {</a>
-<a name="430"><span class="lineNum">     430 </span>                :            :         asm volatile(&quot;sthbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="431"><span class="lineNum">     431 </span>                :            : }</a>
-<a name="432"><span class="lineNum">     432 </span>                :            : </a>
-<a name="433"><span class="lineNum">     433 </span>                :            : static inline void st_le32(uint32_t *addr, uint32_t val)</a>
-<a name="434"><span class="lineNum">     434 </span>                :            : {</a>
-<a name="435"><span class="lineNum">     435 </span>                :            :         asm volatile(&quot;stwbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="436"><span class="lineNum">     436 </span>                :            : }</a>
-<a name="437"><span class="lineNum">     437 </span>                :            : </a>
-<a name="438"><span class="lineNum">     438 </span>                :            : #endif /* __TEST__ */</a>
+<a name="291"><span class="lineNum">     291 </span>                :            : #ifndef __TEST__</a>
+<a name="292"><span class="lineNum">     292 </span>                :            : </a>
+<a name="293"><span class="lineNum">     293 </span>                :            : /* POWER9 and above only */</a>
+<a name="294"><span class="lineNum">     294 </span>                :            : static inline void flush_erat(void)</a>
+<a name="295"><span class="lineNum">     295 </span>                :            : {</a>
+<a name="296"><span class="lineNum">     296 </span>                :            :         asm volatile(&quot;slbia        7&quot;);</a>
+<a name="297"><span class="lineNum">     297 </span>                :            : }</a>
+<a name="298"><span class="lineNum">     298 </span>                :            : </a>
+<a name="299"><span class="lineNum">     299 </span>                :            : /*</a>
+<a name="300"><span class="lineNum">     300 </span>                :            :  * SMT priority</a>
+<a name="301"><span class="lineNum">     301 </span>                :            :  */</a>
+<a name="302"><span class="lineNum">     302 </span>                :            : </a>
+<a name="303"><span class="lineNum">     303 </span>                :            : static inline void smt_low(void)        { asm volatile(&quot;or 1,1,1&quot;);   }</a>
+<a name="304"><span class="lineNum">     304 </span>                :            : static inline void smt_medium(void)     { asm volatile(&quot;or 2,2,2&quot;);   }</a>
+<a name="305"><span class="lineNum">     305 </span>                :            : static inline void smt_high(void)       { asm volatile(&quot;or 3,3,3&quot;);   }</a>
+<a name="306"><span class="lineNum">     306 </span>                :            : static inline void smt_medium_high(void){ asm volatile(&quot;or 5,5,5&quot;);   }</a>
+<a name="307"><span class="lineNum">     307 </span>                :            : static inline void smt_medium_low(void) { asm volatile(&quot;or 6,6,6&quot;);   }</a>
+<a name="308"><span class="lineNum">     308 </span>                :            : static inline void smt_extra_high(void) { asm volatile(&quot;or 7,7,7&quot;);   }</a>
+<a name="309"><span class="lineNum">     309 </span>                :            : static inline void smt_very_low(void)   { asm volatile(&quot;or 31,31,31&quot;);        }</a>
+<a name="310"><span class="lineNum">     310 </span>                :            : static inline void smt_lowest(void)     { smt_low(); smt_very_low();    }</a>
+<a name="311"><span class="lineNum">     311 </span>                :            : </a>
+<a name="312"><span class="lineNum">     312 </span>                :            : /*</a>
+<a name="313"><span class="lineNum">     313 </span>                :            :  * SPR access functions</a>
+<a name="314"><span class="lineNum">     314 </span>                :            :  */</a>
+<a name="315"><span class="lineNum">     315 </span>                :            : </a>
+<a name="316"><span class="lineNum">     316 </span>                :            : static inline unsigned long mfmsr(void)</a>
+<a name="317"><span class="lineNum">     317 </span>                :            : {</a>
+<a name="318"><span class="lineNum">     318 </span>                :            :         unsigned long val;</a>
+<a name="319"><span class="lineNum">     319 </span>                :            :         </a>
+<a name="320"><span class="lineNum">     320 </span>                :            :         asm volatile(&quot;mfmsr %0&quot; : &quot;=r&quot;(val) : : &quot;memory&quot;);</a>
+<a name="321"><span class="lineNum">     321 </span>                :            :         return val;</a>
+<a name="322"><span class="lineNum">     322 </span>                :            : }</a>
+<a name="323"><span class="lineNum">     323 </span>                :            : </a>
+<a name="324"><span class="lineNum">     324 </span>                :            : static inline void mtmsr(unsigned long val)</a>
+<a name="325"><span class="lineNum">     325 </span>                :            : {</a>
+<a name="326"><span class="lineNum">     326 </span>                :            :         asm volatile(&quot;mtmsr %0&quot; : : &quot;r&quot;(val) : &quot;memory&quot;);</a>
+<a name="327"><span class="lineNum">     327 </span>                :            : }</a>
+<a name="328"><span class="lineNum">     328 </span>                :            : </a>
+<a name="329"><span class="lineNum">     329 </span>                :            : static inline void mtmsrd(unsigned long val, int l)</a>
+<a name="330"><span class="lineNum">     330 </span>                :            : {</a>
+<a name="331"><span class="lineNum">     331 </span>                :            :         asm volatile(&quot;mtmsrd %0,%1&quot; : : &quot;r&quot;(val), &quot;i&quot;(l) : &quot;memory&quot;);</a>
+<a name="332"><span class="lineNum">     332 </span>                :            : }</a>
+<a name="333"><span class="lineNum">     333 </span>                :            : </a>
+<a name="334"><span class="lineNum">     334 </span>                :            : static inline __attribute__((always_inline))</a>
+<a name="335"><span class="lineNum">     335 </span>                :            : unsigned long mfspr(const unsigned int spr)</a>
+<a name="336"><span class="lineNum">     336 </span>                :            : {</a>
+<a name="337"><span class="lineNum">     337 </span>                :            :         unsigned long val;</a>
+<a name="338"><span class="lineNum">     338 </span>                :            : </a>
+<a name="339"><span class="lineNum">     339 </span>                :            :         asm volatile(&quot;mfspr %0,%1&quot; : &quot;=r&quot;(val) : &quot;i&quot;(spr) : &quot;memory&quot;);</a>
+<a name="340"><span class="lineNum">     340 </span>                :            :         return val;</a>
+<a name="341"><span class="lineNum">     341 </span>                :            : }</a>
+<a name="342"><span class="lineNum">     342 </span>                :            : </a>
+<a name="343"><span class="lineNum">     343 </span>                :            : static inline __attribute__((always_inline))</a>
+<a name="344"><span class="lineNum">     344 </span>                :            : void mtspr(const unsigned int spr, unsigned long val)</a>
+<a name="345"><span class="lineNum">     345 </span>                :            : {</a>
+<a name="346"><span class="lineNum">     346 </span>                :            :         asm volatile(&quot;mtspr %0,%1&quot; : : &quot;i&quot;(spr), &quot;r&quot;(val) : &quot;memory&quot;);</a>
+<a name="347"><span class="lineNum">     347 </span>                :            : }</a>
+<a name="348"><span class="lineNum">     348 </span>                :            : </a>
+<a name="349"><span class="lineNum">     349 </span>                :            : /* Helpers for special sequences needed by some registers */</a>
+<a name="350"><span class="lineNum">     350 </span>                :            : extern void set_hid0(unsigned long hid0);</a>
+<a name="351"><span class="lineNum">     351 </span>                :            : extern void trigger_attn(void);</a>
+<a name="352"><span class="lineNum">     352 </span>                :            : </a>
+<a name="353"><span class="lineNum">     353 </span>                :            : /*</a>
+<a name="354"><span class="lineNum">     354 </span>                :            :  * Barriers</a>
+<a name="355"><span class="lineNum">     355 </span>                :            :  */</a>
+<a name="356"><span class="lineNum">     356 </span>                :            : </a>
+<a name="357"><span class="lineNum">     357 </span>                :            : static inline void eieio(void)</a>
+<a name="358"><span class="lineNum">     358 </span>                :            : {</a>
+<a name="359"><span class="lineNum">     359 </span>                :            :         asm volatile(&quot;eieio&quot; : : : &quot;memory&quot;);</a>
+<a name="360"><span class="lineNum">     360 </span>                :            : }</a>
+<a name="361"><span class="lineNum">     361 </span>                :            : </a>
+<a name="362"><span class="lineNum">     362 </span>                :            : static inline void sync(void)</a>
+<a name="363"><span class="lineNum">     363 </span>                :            : {</a>
+<a name="364"><span class="lineNum">     364 </span>                :            :         asm volatile(&quot;sync&quot; : : : &quot;memory&quot;);</a>
+<a name="365"><span class="lineNum">     365 </span>                :            : }</a>
+<a name="366"><span class="lineNum">     366 </span>                :            : </a>
+<a name="367"><span class="lineNum">     367 </span>                :            : static inline void lwsync(void)</a>
+<a name="368"><span class="lineNum">     368 </span>                :            : {</a>
+<a name="369"><span class="lineNum">     369 </span>                :            :         asm volatile(&quot;lwsync&quot; : : : &quot;memory&quot;);</a>
+<a name="370"><span class="lineNum">     370 </span>                :            : }</a>
+<a name="371"><span class="lineNum">     371 </span>                :            : </a>
+<a name="372"><span class="lineNum">     372 </span>                :            : static inline void isync(void)</a>
+<a name="373"><span class="lineNum">     373 </span>                :            : {</a>
+<a name="374"><span class="lineNum">     374 </span>                :            :         asm volatile(&quot;isync&quot; : : : &quot;memory&quot;);</a>
+<a name="375"><span class="lineNum">     375 </span>                :            : }</a>
+<a name="376"><span class="lineNum">     376 </span>                :            : </a>
+<a name="377"><span class="lineNum">     377 </span>                :            : </a>
+<a name="378"><span class="lineNum">     378 </span>                :            : /*</a>
+<a name="379"><span class="lineNum">     379 </span>                :            :  * Cache sync</a>
+<a name="380"><span class="lineNum">     380 </span>                :            :  */</a>
+<a name="381"><span class="lineNum">     381 </span>                :            : static inline void sync_icache(void)</a>
+<a name="382"><span class="lineNum">     382 </span>                :            : {</a>
+<a name="383"><span class="lineNum">     383 </span>                :            :         asm volatile(&quot;sync; icbi 0,%0; sync; isync&quot; : : &quot;r&quot; (0) : &quot;memory&quot;);</a>
+<a name="384"><span class="lineNum">     384 </span>                :            : }</a>
+<a name="385"><span class="lineNum">     385 </span>                :            : </a>
+<a name="386"><span class="lineNum">     386 </span>                :            : /*</a>
+<a name="387"><span class="lineNum">     387 </span>                :            :  * Doorbells</a>
+<a name="388"><span class="lineNum">     388 </span>                :            :  */</a>
+<a name="389"><span class="lineNum">     389 </span>                :            : static inline void msgclr(void)</a>
+<a name="390"><span class="lineNum">     390 </span>                :            : {</a>
+<a name="391"><span class="lineNum">     391 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36));</a>
+<a name="392"><span class="lineNum">     392 </span>                :            :         asm volatile(MSGCLR(%0) : : &quot;r&quot;(rb));</a>
+<a name="393"><span class="lineNum">     393 </span>                :            : }</a>
+<a name="394"><span class="lineNum">     394 </span>                :            : </a>
+<a name="395"><span class="lineNum">     395 </span>                :            : static inline void p9_dbell_receive(void)</a>
+<a name="396"><span class="lineNum">     396 </span>                :            : {</a>
+<a name="397"><span class="lineNum">     397 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36));</a>
+<a name="398"><span class="lineNum">     398 </span>                :            :         asm volatile(MSGCLR(%0) &quot;;&quot;</a>
+<a name="399"><span class="lineNum">     399 </span>                :            :                      MSGSYNC    &quot;;&quot;</a>
+<a name="400"><span class="lineNum">     400 </span>                :            :                      &quot;lwsync&quot;</a>
+<a name="401"><span class="lineNum">     401 </span>                :            :                      : : &quot;r&quot;(rb));</a>
+<a name="402"><span class="lineNum">     402 </span>                :            : }</a>
+<a name="403"><span class="lineNum">     403 </span>                :            : </a>
+<a name="404"><span class="lineNum">     404 </span>                :            : static inline void p9_dbell_send(uint32_t pir)</a>
+<a name="405"><span class="lineNum">     405 </span>                :            : {</a>
+<a name="406"><span class="lineNum">     406 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36)) | pir;</a>
+<a name="407"><span class="lineNum">     407 </span>                :            :         asm volatile(&quot;sync ;&quot;</a>
+<a name="408"><span class="lineNum">     408 </span>                :            :                      MSGSND(%0)</a>
+<a name="409"><span class="lineNum">     409 </span>                :            :                      : : &quot;r&quot;(rb));</a>
+<a name="410"><span class="lineNum">     410 </span>                :            : }</a>
+<a name="411"><span class="lineNum">     411 </span>                :            : </a>
+<a name="412"><span class="lineNum">     412 </span>                :            : /*</a>
+<a name="413"><span class="lineNum">     413 </span>                :            :  * Byteswap load/stores</a>
+<a name="414"><span class="lineNum">     414 </span>                :            :  */</a>
+<a name="415"><span class="lineNum">     415 </span>                :            : </a>
+<a name="416"><span class="lineNum">     416 </span>                :            : static inline uint16_t ld_le16(const uint16_t *addr)</a>
+<a name="417"><span class="lineNum">     417 </span>                :            : {</a>
+<a name="418"><span class="lineNum">     418 </span>                :            :         uint16_t val;</a>
+<a name="419"><span class="lineNum">     419 </span>                :            :         asm volatile(&quot;lhbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
+<a name="420"><span class="lineNum">     420 </span>                :            :         return val;</a>
+<a name="421"><span class="lineNum">     421 </span>                :            : }</a>
+<a name="422"><span class="lineNum">     422 </span>                :            : </a>
+<a name="423"><span class="lineNum">     423 </span>                :            : static inline uint32_t ld_le32(const uint32_t *addr)</a>
+<a name="424"><span class="lineNum">     424 </span>                :            : {</a>
+<a name="425"><span class="lineNum">     425 </span>                :            :         uint32_t val;</a>
+<a name="426"><span class="lineNum">     426 </span>                :            :         asm volatile(&quot;lwbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
+<a name="427"><span class="lineNum">     427 </span>                :            :         return val;</a>
+<a name="428"><span class="lineNum">     428 </span>                :            : }</a>
+<a name="429"><span class="lineNum">     429 </span>                :            : </a>
+<a name="430"><span class="lineNum">     430 </span>                :            : static inline void st_le16(uint16_t *addr, uint16_t val)</a>
+<a name="431"><span class="lineNum">     431 </span>                :            : {</a>
+<a name="432"><span class="lineNum">     432 </span>                :            :         asm volatile(&quot;sthbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
+<a name="433"><span class="lineNum">     433 </span>                :            : }</a>
+<a name="434"><span class="lineNum">     434 </span>                :            : </a>
+<a name="435"><span class="lineNum">     435 </span>                :            : static inline void st_le32(uint32_t *addr, uint32_t val)</a>
+<a name="436"><span class="lineNum">     436 </span>                :            : {</a>
+<a name="437"><span class="lineNum">     437 </span>                :            :         asm volatile(&quot;stwbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
+<a name="438"><span class="lineNum">     438 </span>                :            : }</a>
 <a name="439"><span class="lineNum">     439 </span>                :            : </a>
-<a name="440"><span class="lineNum">     440 </span>                :            : #endif /* __ASSEMBLY__ */</a>
+<a name="440"><span class="lineNum">     440 </span>                :            : #endif /* __TEST__ */</a>
 <a name="441"><span class="lineNum">     441 </span>                :            : </a>
-<a name="442"><span class="lineNum">     442 </span>                :            : #endif /* __PROCESSOR_H */</a>
+<a name="442"><span class="lineNum">     442 </span>                :            : #endif /* __ASSEMBLY__ */</a>
+<a name="443"><span class="lineNum">     443 </span>                :            : </a>
+<a name="444"><span class="lineNum">     444 </span>                :            : #endif /* __PROCESSOR_H */</a>
 </pre>
       </td>
     </tr>
