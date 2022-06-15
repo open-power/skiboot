@@ -2520,6 +2520,15 @@ void xive_source_mask(struct irq_source *is, uint32_t isn)
 	xive_update_irq_mask(s, isn - s->esb_base, true);
 }
 
+static bool xive_has_opal_interrupts(struct irq_source *is)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+
+	if (!s->orig_ops || !s->orig_ops->attributes || !s->orig_ops->interrupt)
+		return false;
+	return true;
+}
+
 static const struct irq_source_ops xive_irq_source_ops = {
 	.get_xive = xive_source_get_xive,
 	.set_xive = xive_source_set_xive,
@@ -2527,6 +2536,7 @@ static const struct irq_source_ops xive_irq_source_ops = {
 	.interrupt = xive_source_interrupt,
 	.attributes = xive_source_attributes,
 	.name = xive_source_name,
+	.has_opal_interrupts = xive_has_opal_interrupts,
 };
 
 static void __xive_register_source(struct xive *x, struct xive_src *s,
