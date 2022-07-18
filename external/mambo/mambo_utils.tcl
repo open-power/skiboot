@@ -423,6 +423,13 @@ proc bt { {sp 0} } {
         set sym [addr2func $lr]
         puts "stack:$pa \t$lr\t$sym"
         if { $bc == 0 } { break }
+
+        # catch illegal address in case of endian mismatch
+        set tstpa [ mysim cpu $p:$c:$t util dtranslate $bc ]
+        if {[catch { set tst [ mem_display_64 $tstpa $le ] } ]} {
+            set le [ expr ! $le ]
+            set bc [ mem_display_64 $pa $le ]
+        }
         set sp $bc
     }
     puts ""
