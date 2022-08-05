@@ -364,8 +364,8 @@ foreach pmem_file $pmem_files { # PMEM_DISK
     } else {
 	set pmem_mode "rw"
     }
-    if {[catch {mysim memory mmap $pmem_start $pmem_size $pmem_file $pmem_mode}]} {
-	puts "ERROR: pmem: 'mysim mmap' command needs newer mambo"
+    if {[catch {mysim memory mmap $pmem_start $pmem_size $pmem_file $pmem_mode} err]} {
+	puts "ERROR: pmem: 'mysim mmap' $err"
 	exit
     }
     set pmem_start [pmem_node_add $pmem_root $pmem_start $pmem_size]
