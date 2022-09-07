@@ -169,6 +169,32 @@ proc s { {nr 1} } {
     }
 }
 
+proc ftrace { {nr 1} } {
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    set pc [mysim cpu $p:$c:$t display spr pc]
+    set sym [lindex [split [addr2func $pc] {+}] 0]
+    set prev_pc $pc
+
+    puts [ipc]
+    puts "$sym"
+
+    for { set i 0 } { $i < $nr } { incr i 1 } {
+        set pc [mysim cpu $p:$c:$t display spr pc]
+        set sym2 [lindex [split [addr2func $pc] {+}] 0]
+
+        if { $sym2 != $sym } {
+            puts "$sym2 \t\t(from [addr2func $prev_pc])"
+            set sym $sym2
+        }
+        set prev_pc $pc
+
+        mysim step 1
+    }
+}
+
 proc S { {nr 1} } {
     upvar #0 target_t t
     upvar #0 target_c c
