@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-6.3.3 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-6.3.3 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-6.3.2.html" title="skiboot-6.3.2"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.3</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-6-3-3">
+  <section id="skiboot-6-3-3">
 <span id="id1"></span><h1>skiboot-6.3.3<a class="headerlink" href="#skiboot-6-3-3" title="Permalink to this headline">¶</a></h1>
 <p>skiboot 6.3.3 was released on Wednesday Aug 6th, 2019. It replaces
 <a class="reference internal" href="skiboot-6.3.2.html#skiboot-6-3-2"><span class="std std-ref">skiboot-6.3.2</span></a> as the current stable release in the 6.3.x series.</p>
@@ -53,7 +53,7 @@
 due to the bug fixes it contains.</p>
 <p>Bug fixes included in this release are:</p>
 <ul>
-<li><p class="first">struct p9_sbe_msg doesn’t need to be packed</p>
+<li><p>struct p9_sbe_msg doesn’t need to be packed</p>
 <p>Only the reg member is sent anywhere (via xscom_write), so the structure
 does not need to be packed.</p>
 </li>
@@ -67,8 +67,8 @@ ointer value [-Werror=address-of-packed-member]
 </pre></div>
 </div>
 <ul class="simple">
-<li>hdata/vpd: fix printing (char*)0x00
-GCC9 now catches this bug:</li>
+<li><p>hdata/vpd: fix printing (char*)0x00
+GCC9 now catches this bug:</p></li>
 </ul>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>In file included from hdata/vpd.c:17:
 In function ‘vpd_vini_parse’,
@@ -87,7 +87,7 @@ cc1: all warnings being treated as errors
 </pre></div>
 </div>
 <ul class="simple">
-<li>errorlog: Prevent alignment error building with gcc9.</li>
+<li><p>errorlog: Prevent alignment error building with gcc9.</p></li>
 </ul>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Fixes this build error:
 [ 52s] hw/fsp/fsp-elog-write.c: In function &#39;opal_elog_read&#39;:
@@ -98,7 +98,7 @@ in an unaligned pointer value [-Werror=address-of-packed-member]
 </pre></div>
 </div>
 <ul>
-<li><p class="first">Support BMC IPMI heartbeat command</p>
+<li><p>Support BMC IPMI heartbeat command</p>
 <p>A few years ago, the OpenBMC code added support for a “heartbeat”
 command to send to the host. This command is used after the BMC is reset
 to check if the host is running. Support was never added to the host
@@ -112,12 +112,12 @@ the command though since no action is needed). Here’s the tested output
 of this patch in the host console (with debug enabled):
 IPMI: BMC issued heartbeat command: 00</p>
 </li>
-<li><p class="first">Add: add mihawk platform file</p>
-</li>
+<li><p>Add: add mihawk platform file</p></li>
 </ul>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -137,17 +137,15 @@ IPMI: BMC issued heartbeat command: 00</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -164,14 +162,15 @@ IPMI: BMC issued heartbeat command: 00</p>
         <li class="right" >
           <a href="skiboot-6.3.2.html" title="skiboot-6.3.2"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.3.3</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.1.0-beta2 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.1.0-beta2 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.1.0-beta1.html" title="skiboot-5.1.0-beta1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.0-beta2</a></li> 
       </ul>
     </div>  
 
@@ -45,89 +45,97 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-1-0-beta2">
+  <section id="skiboot-5-1-0-beta2">
 <h1>skiboot-5.1.0-beta2<a class="headerlink" href="#skiboot-5-1-0-beta2" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.1.0-beta2 was released on August 14th, 2015.</p>
 <p>skiboot-5.1.0-beta2 is the second beta release of skiboot 5.1, which will
 become a new stable release, replacing skiboot-5.0 (released April 14th 2015)</p>
 <p>Skiboot 5.1.0-beta2 contains all fixes from skiboot-5.0 stable branch up to
 skiboot-5.0.5 and everything from 5.1.0-beta1.</p>
-<div class="section" id="new-features">
+<section id="new-features">
 <h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
 <p>Over skiboot-5.1.0-beta1, the following features have been added:</p>
 <ul>
-<li><dl class="first docutils">
-<dt>opal-api: Add OPAL call to handle abnormal reboots.</dt>
-<dd><p class="first">OPAL_CEC_REBOOT2
+<li><dl>
+<dt>opal-api: Add OPAL call to handle abnormal reboots.</dt><dd><p>OPAL_CEC_REBOOT2
 Currently it will support two reboot types (0). normal reboot, that
 will behave similar to that of opal_cec_reboot() call, and
 (1). platform error reboot.</p>
-<p class="last">Long term, this is designed to replace OPAL_CEC_REBOOT.</p>
+<p>Long term, this is designed to replace OPAL_CEC_REBOOT.</p>
 </dd>
 </dl>
 </li>
 </ul>
-</div>
-<div class="section" id="bug-fixes">
+</section>
+<section id="bug-fixes">
 <h2>Bug fixes<a class="headerlink" href="#bug-fixes" title="Permalink to this headline">¶</a></h2>
 <p>Over skiboot-5.1.0-beta1, the following bugs have been fixed:</p>
 <ul class="simple">
-<li>external/opal-prd: Only map each PRD range once<ul>
-<li>could eventually lead to failing to map PRD ranges</li>
+<li><p>external/opal-prd: Only map each PRD range once</p>
+<ul>
+<li><p>could eventually lead to failing to map PRD ranges</p></li>
 </ul>
 </li>
-<li>On skiboot crash, don’t try to print symbol when we didn’t find one<ul>
-<li>makes backtrace prettier</li>
+<li><p>On skiboot crash, don’t try to print symbol when we didn’t find one</p>
+<ul>
+<li><p>makes backtrace prettier</p></li>
 </ul>
 </li>
-<li>On skiboot crash, dump hssr0 and hsrr1 registers correctly.</li>
-<li>Better support old and biarch compilers<ul>
-<li>test “new” compiler flags before using them</li>
-<li>Specify -mabi=elfv1 if supported (which means it’s needed)</li>
+<li><p>On skiboot crash, dump hssr0 and hsrr1 registers correctly.</p></li>
+<li><p>Better support old and biarch compilers</p>
+<ul>
+<li><p>test “new” compiler flags before using them</p></li>
+<li><p>Specify -mabi=elfv1 if supported (which means it’s needed)</p></li>
 </ul>
 </li>
-<li>fix boot-coverage-report makefile target</li>
-<li>ipmi: Fix the opal_ipmi_recv() call to handle the error path<ul>
-<li>Could make kernel a sad panda when in continues with other IPMI commands</li>
+<li><p>fix boot-coverage-report makefile target</p></li>
+<li><p>ipmi: Fix the opal_ipmi_recv() call to handle the error path</p>
+<ul>
+<li><p>Could make kernel a sad panda when in continues with other IPMI commands</p></li>
 </ul>
 </li>
-<li>IPMI: truncate SELs at 2kb<ul>
-<li>it’s the limit of the astbmc. We think.</li>
+<li><p>IPMI: truncate SELs at 2kb</p>
+<ul>
+<li><p>it’s the limit of the astbmc. We think.</p></li>
 </ul>
 </li>
-<li>IPMI/SEL/PEL:<ul>
-<li>As per PEL spec, we should log events with severity &gt;= 0x22 and “service
+<li><p>IPMI/SEL/PEL:</p>
+<ul>
+<li><p>As per PEL spec, we should log events with severity &gt;= 0x22 and “service
 action flag” is “on”. But in our case, all logs OPAL originagted logs
 are makred as report externally.
-We now only report logs with severity &gt;= 0x22</li>
+We now only report logs with severity &gt;= 0x22</p></li>
 </ul>
 </li>
-<li>IPMI: fixes to eSEL logging</li>
-<li>hw/phb3: Change reserved PE to 255<ul>
-<li>Currently, we have reserved PE#0 to which all RIDs are mapped prior
+<li><p>IPMI: fixes to eSEL logging</p></li>
+<li><p>hw/phb3: Change reserved PE to 255</p>
+<ul>
+<li><p>Currently, we have reserved PE#0 to which all RIDs are mapped prior
 to PE assignment request from kernel. The last M64 BAR is configured
 to have shared mode. So we have to cut off the first M64 segment,
 which corresponds to reserved PE#0 in kernel. If the first BAR
 (for example PF’s IOV BAR) requires huge alignment in kernel, we
 have to waste huge M64 space to accommodate the alignment. If we
-have reserved PE#256, the waste of M64 space will be avoided.</li>
+have reserved PE#256, the waste of M64 space will be avoided.</p></li>
 </ul>
 </li>
 </ul>
-</div>
-<div class="section" id="other-changes">
+</section>
+<section id="other-changes">
 <h2>Other changes<a class="headerlink" href="#other-changes" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>unified version numbers for bundled utilities</li>
-<li>external/boot_test/boot_test.sh<ul>
-<li>better usable for automated boot testing</li>
+<li><p>unified version numbers for bundled utilities</p></li>
+<li><p>external/boot_test/boot_test.sh</p>
+<ul>
+<li><p>better usable for automated boot testing</p></li>
 </ul>
 </li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -157,17 +165,15 @@ have reserved PE#256, the waste of M64 space will be avoided.</li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -184,14 +190,15 @@ have reserved PE#256, the waste of M64 space will be avoided.</li>
         <li class="right" >
           <a href="skiboot-5.1.0-beta1.html" title="skiboot-5.1.0-beta1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.0-beta2</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

@@ -37,12 +37,12 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">2</td>
             <td class="headerCovTableEntry">4</td>
-            <td class="headerCovTableEntryLo">50.0 %</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntryLo">66.7 %</td>
           </tr>
           <tr>
             <td></td>
@@ -123,16 +123,16 @@
 <a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">         56 : static int read_u32(const char *input, uint32_t *val)</span></a>
 <a name="53"><span class="lineNum">      53 </span>                :            : {</a>
 <a name="54"><span class="lineNum">      54 </span>                :<span class="lineCov">         56 :         char *endptr;</span></a>
-<a name="55"><span class="lineNum">      55 </span>                :<span class="lineCov">        112 :         *val = strtoul(input, &amp;endptr, 0);</span></a>
+<a name="55"><span class="lineNum">      55 </span>                :<span class="lineCov">         56 :         *val = strtoul(input, &amp;endptr, 0);</span></a>
 <a name="56"><span class="lineNum">      56 </span>                :<span class="lineCov">         56 :         return (*endptr == SEPARATOR) ? 0 : 1;</span></a>
 <a name="57"><span class="lineNum">      57 </span>                :            : }</a>
 <a name="58"><span class="lineNum">      58 </span>                :            : </a>
-<a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">        196 : static const char *advance_line(const char *input)</span></a>
+<a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">        168 : static const char *advance_line(const char *input)</span></a>
 <a name="60"><span class="lineNum">      60 </span>                :            : {</a>
-<a name="61"><span class="lineNum">      61 </span>                :<span class="lineCov">        196 :         char *pos = strchr(input, SEPARATOR);</span></a>
-<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        196 :         if (!pos)</span></a>
+<a name="61"><span class="lineNum">      61 </span>                :<span class="lineCov">        168 :         char *pos = strchr(input, SEPARATOR);</span></a>
+<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        168 :         if (!pos)</span></a>
 <a name="63"><span class="lineNum">      63 </span>                :            :                 return NULL;</a>
-<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">         28 :         return pos + 1;</span></a>
+<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        168 :         return pos + 1;</span></a>
 <a name="65"><span class="lineNum">      65 </span>                :            : }</a>
 <a name="66"><span class="lineNum">      66 </span>                :            : </a>
 <a name="67"><span class="lineNum">      67 </span>                :<span class="lineNoCov">          0 : static struct ffs_hdr *parse_toc(const char *line, uint32_t block_size,</span></a>

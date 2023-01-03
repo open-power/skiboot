@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.7-rc2 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.7-rc2 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.7-rc1.html" title="skiboot-5.7-rc1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.7-rc2</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-7-rc2">
+  <section id="skiboot-5-7-rc2">
 <span id="id1"></span><h1>skiboot-5.7-rc2<a class="headerlink" href="#skiboot-5-7-rc2" title="Permalink to this headline">¶</a></h1>
 <p>skiboot v5.7-rc2 was released on Thursday July 13th 2017. It is the second
 release candidate of skiboot 5.7, which will become the new stable release
@@ -62,15 +62,14 @@ similar to op-build, but slightly offset to allow for a short stabilisation
 period. Expected release dates and contents are tracked using GitHub milestone
 and issues: <a class="reference external" href="https://github.com/open-power/skiboot/milestones">https://github.com/open-power/skiboot/milestones</a></p>
 <p>Over <a class="reference internal" href="skiboot-5.7-rc1.html#skiboot-5-7-rc1"><span class="std std-ref">skiboot-5.7-rc1</span></a>, we have the following changes:</p>
-<div class="section" id="power9">
+<section id="power9">
 <h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
 <p>There are many important changes for POWER9 DD1 and DD2 systems. POWER9 support
 should be considered in development and skiboot 5.7 is certainly <strong>NOT</strong>
 suitable for POWER9 production environments.</p>
 <ul>
-<li><p class="first">HDAT: Add IPMI sensor data under /bmc node</p>
-</li>
-<li><p class="first">numa/associativity: Add a new level of NUMA for GPU’s</p>
+<li><p>HDAT: Add IPMI sensor data under /bmc node</p></li>
+<li><p>numa/associativity: Add a new level of NUMA for GPU’s</p>
 <p>Today we have an issue where the NUMA nodes corresponding
 to GPU’s have the same affinity/distance as normal memory
 nodes. Our reference-points today supports two levels
@@ -78,16 +77,16 @@ nodes. Our reference-points today supports two levels
 systems. This patch adds a new level [0x4, X, 0x2] and
 uses node-id as at all levels for the GPU.</p>
 </li>
-<li><p class="first">xive: Enable memory backing of queues</p>
+<li><p>xive: Enable memory backing of queues</p>
 <p>This dedicates 6x64k pages of memory permanently for the XIVE to
 use for internal queue overflow. This allows the XIVE to deal with
 some corner cases where the internal queues might prove insufficient.</p>
 </li>
-<li><p class="first">xive: Properly get rid of donated indirect pages during reset</p>
+<li><p>xive: Properly get rid of donated indirect pages during reset</p>
 <p>Otherwise they keep being used accross kexec causing memory
 corruption in subsequent kernels once KVM has been used.</p>
 </li>
-<li><p class="first">cpu: Better handle unknown flags in opal_reinit_cpus()</p>
+<li><p>cpu: Better handle unknown flags in opal_reinit_cpus()</p>
 <p>At the moment, if we get passed flags we don’t know about, we
 return OPAL_UNSUPPORTED but we still perform whatever actions
 was requied by the flags we do support. Additionally, on P8,
@@ -98,31 +97,31 @@ be careful at least on P8, but to avoid future issues let’s clean
 that up, make sure we only use slw_reinit() when HILE isn’t
 supported.</p>
 </li>
-<li><p class="first">cpu: Unconditionally cleanup TLBs on P9 in opal_reinit_cpus()</p>
+<li><p>cpu: Unconditionally cleanup TLBs on P9 in opal_reinit_cpus()</p>
 <p>This can work around problems where Linux fails to properly
 cleanup part or all of the TLB on kexec.</p>
 </li>
-<li><p class="first">Fix scom addresses for power9 nx checkstop hmi handling.</p>
+<li><p>Fix scom addresses for power9 nx checkstop hmi handling.</p>
 <p>Scom addresses for NX status, DMA &amp; ENGINE FIR and PBI FIR has changed
 for Power9. Fixup thoes while handling nx checkstop for Power9.</p>
 </li>
-<li><p class="first">Fix scom addresses for power9 core checkstop hmi handling.</p>
+<li><p>Fix scom addresses for power9 core checkstop hmi handling.</p>
 <p>Scom addresses for CORE FIR (Fault Isolation Register) and Malfunction
 Alert Register has changed for Power9. Fixup those while handling core
 checkstop for Power9.</p>
 <p>Without this change HMI handler fails to check for correct reason for
 core checkstop on Power9.</p>
 </li>
-<li><p class="first">core/mem_region: check return value of add_region</p>
+<li><p>core/mem_region: check return value of add_region</p>
 <p>The only sensible thing to do if this fails is to abort() as we’ve
 likely just failed reserving reserved memory regions, and nothing
 good comes from that.</p>
 </li>
 </ul>
-<div class="section" id="phb4">
+<section id="phb4">
 <h3>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">phb4: Do more retries on link training failures
+<li><p>phb4: Do more retries on link training failures
 Currently we only retry once when we have a link training failure.
 This changes this to be 3 retries as 1 retry is not giving us enough
 reliablity.</p>
@@ -131,7 +130,7 @@ incorrectly detect a link presence when there really is nothing
 present. I’ll post a followup patch to optimise our timings to help
 mitigate this later.</p>
 </li>
-<li><p class="first">phb4: Workaround phy lockup by doing full PHB reset on retry</p>
+<li><p>phb4: Workaround phy lockup by doing full PHB reset on retry</p>
 <p>For PHB4 it’s possible that the phy may end up in a bad state where it
 can no longer recieve data. This can manifest as the link not
 retraining. A simple PERST will not clear this. The PHB must be
@@ -141,44 +140,44 @@ completely reset.</p>
 state (lower speed or narrower width). This patch doesn’t attempt to
 fix that (will come later).</p>
 </li>
-<li><p class="first">pci: Add ability to trace timing</p>
+<li><p>pci: Add ability to trace timing</p>
 <p>PCI link training is responsible for a huge chunk of the skiboot boot
 time, so add the ability to trace it waiting in the main state
 machine.</p>
 </li>
-<li><p class="first">pci: Print resetting PHB notice at higher log level</p>
+<li><p>pci: Print resetting PHB notice at higher log level</p>
 <p>Currently during boot there a long delay while we wait for the PHBs to
 be reset and train. During this time, there is no output from skiboot
 and the last message doesn’t give an indication of what’s happening.</p>
 <p>This boosts the PHB reset message from info to notice so users can see
 what’s happening during this long period of waiting.</p>
 </li>
-<li><p class="first">phb4: Only set one bit in nfir</p>
+<li><p>phb4: Only set one bit in nfir</p>
 <p>The MPIPL procedure says to only set bit 26 when forcing the PEC into
 freeze mode. Currently we set bits 24-27.</p>
 <p>This changes the code to follow spec and only set bit 26.</p>
 </li>
-<li><p class="first">phb4: Fix order of pfir/nfir clearing in CRESET</p>
+<li><p>phb4: Fix order of pfir/nfir clearing in CRESET</p>
 <p>According to the workbook, pfir must be cleared before the nfir.
 The way we have it now causes the nfir to not clear properly in some
 error circumstances.</p>
 <p>This swaps the order to match the workbook.</p>
 </li>
-<li><p class="first">phb4: Remove incorrect state transition</p>
+<li><p>phb4: Remove incorrect state transition</p>
 <p>When waiting in PHB4_SLOT_CRESET_WAIT_CQ for transations to end, we
 incorrectly move onto the next state.  Generally we don’t hit this as
 the transactions have ended already anyway.</p>
 <p>This removes the incorrect state transition.</p>
 </li>
-<li><p class="first">phb4: Set default lane equalisation</p>
+<li><p>phb4: Set default lane equalisation</p>
 <p>Set default lane equalisation if there is nothing in the device-tree.</p>
 <p>Default value taken from hdat and confirmed by hardware team. Neatens
 the code up a bit too.</p>
 </li>
-<li><p class="first">hdata: Fix phb4 lane-eq property generation</p>
+<li><p>hdata: Fix phb4 lane-eq property generation</p>
 <p>The lane-eq data we get from hdat is all 7s but what we end up in the
 device tree is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">xscom</span><span class="nd">@603fc00000000</span><span class="o">/</span><span class="n">pbcq</span><span class="nd">@4010c00</span><span class="o">/</span><span class="n">stack</span><span class="nd">@0</span><span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">lane</span><span class="o">-</span><span class="n">eq</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">xscom</span><span class="o">@</span><span class="mi">603</span><span class="n">fc00000000</span><span class="o">/</span><span class="n">pbcq</span><span class="o">@</span><span class="mi">4010</span><span class="n">c00</span><span class="o">/</span><span class="n">stack</span><span class="o">@</span><span class="mi">0</span><span class="o">/</span><span class="n">ibm</span><span class="p">,</span><span class="n">lane</span><span class="o">-</span><span class="n">eq</span>
                  <span class="mi">00000000</span> <span class="mi">31</span><span class="n">c339e0</span> <span class="mi">00000000</span> <span class="mi">0000000</span><span class="n">c</span>
                  <span class="mi">00000000</span> <span class="mi">00000000</span> <span class="mi">00000000</span> <span class="mi">00000000</span>
                  <span class="mi">00000000</span> <span class="mi">31</span><span class="n">c30000</span> <span class="mi">77777777</span> <span class="mi">77777777</span>
@@ -188,47 +187,48 @@ device tree is:</p>
 <p>This fixes grabbing the properties from hdat and fixes the call to put
 them in the device tree.</p>
 </li>
-<li><p class="first">phb4: Fix PHB4 fence recovery.</p>
+<li><p>phb4: Fix PHB4 fence recovery.</p>
 <p>We had a few problems:</p>
 <ul class="simple">
-<li>We used the wrong register to trigger the reset (spec bug)</li>
-<li>We should clear the PFIR and NFIR while the reset is asserted</li>
-<li>… and in the right order !</li>
-<li>We should only apply the DD1 workaround after the reset has
-been lifted.</li>
-<li>We should ensure we use ASB whenever we are fenced or doing a
-CRESET</li>
-<li>Make config ops write with ASB</li>
+<li><p>We used the wrong register to trigger the reset (spec bug)</p></li>
+<li><p>We should clear the PFIR and NFIR while the reset is asserted</p></li>
+<li><p>… and in the right order !</p></li>
+<li><p>We should only apply the DD1 workaround after the reset has
+been lifted.</p></li>
+<li><p>We should ensure we use ASB whenever we are fenced or doing a
+CRESET</p></li>
+<li><p>Make config ops write with ASB</p></li>
 </ul>
 </li>
-<li><p class="first">phb4: Verbose EEH options</p>
+<li><p>phb4: Verbose EEH options</p>
 <p>Enabled via nvram pci-eeh-verbose=true. ie.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">pci</span><span class="o">-</span><span class="n">eeh</span><span class="o">-</span><span class="n">verbose</span><span class="o">=</span><span class="n">true</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">phb4: Print more info when PHB fences</p>
+<li><p>phb4: Print more info when PHB fences</p>
 <p>For now at PHBERR level. We don’t have room in the diags data
 passed to Linux for these unfortunately.</p>
 </li>
 </ul>
-</div>
-</div>
-<div class="section" id="testing-development">
+</section>
+</section>
+<section id="testing-development">
 <h2>Testing/development<a class="headerlink" href="#testing-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>lpc: remove double LPC prefix from messages</li>
-<li>opal-ci/fetch-debian-jessie-installer: follow redirects
-Fixes some CI failures</li>
-<li>test/qemu-jessie: bail out fast on kernel panic</li>
-<li>test/qemu-jessie: dump boot log on failure</li>
-<li>travis: add fedora26</li>
-<li>xz: add fallthrough annotations to silence GCC7 warning</li>
+<li><p>lpc: remove double LPC prefix from messages</p></li>
+<li><p>opal-ci/fetch-debian-jessie-installer: follow redirects
+Fixes some CI failures</p></li>
+<li><p>test/qemu-jessie: bail out fast on kernel panic</p></li>
+<li><p>test/qemu-jessie: dump boot log on failure</p></li>
+<li><p>travis: add fedora26</p></li>
+<li><p>xz: add fallthrough annotations to silence GCC7 warning</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -260,17 +260,15 @@ Fixes some CI failures</li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -287,14 +285,15 @@ Fixes some CI failures</li>
         <li class="right" >
           <a href="skiboot-5.7-rc1.html" title="skiboot-5.7-rc1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.7-rc2</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

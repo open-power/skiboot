@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_NPU_SET_RELAXED_ORDER &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_NPU_SET_RELAXED_ORDER &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-npu2-146-147-148.html" title="OPAL NPU2 calls"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_NPU_SET_RELAXED_ORDER</a></li> 
       </ul>
     </div>  
 
@@ -45,67 +45,68 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-npu-set-relaxed-order">
+  <section id="opal-npu-set-relaxed-order">
 <span id="id1"></span><h1>OPAL_NPU_SET_RELAXED_ORDER<a class="headerlink" href="#opal-npu-set-relaxed-order" title="Permalink to this headline">¶</a></h1>
 <p>Request that relaxed memory ordering be enabled or disabled for a device.</p>
-<div class="section" id="parameters">
+<section id="parameters">
 <h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
 <span class="n">uint16_t</span> <span class="n">bdfn</span>
 <span class="nb">bool</span> <span class="n">request_enabled</span>
 </pre></div>
 </div>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
-<dd>OPAL ID of the PHB</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt>
-<dd>Bus-Device-Function number of the device</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">request_enabled</span></code></dt>
-<dd>Requested state of relaxed memory ordering enablement</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>OPAL ID of the PHB</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt><dd><p>Bus-Device-Function number of the device</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">request_enabled</span></code></dt><dd><p>Requested state of relaxed memory ordering enablement</p>
+</dd>
 </dl>
-</div>
-<div class="section" id="return-values">
+</section>
+<section id="return-values">
 <h2>Return values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt>
-<dd>Requested state set</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt>
-<dd>The given phb_id or bdfn is invalid or out of range</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_CONSTRAINED</span></code></dt>
-<dd>Relaxed ordering can not be enabled until an enable request is made
-for every device on this PHB.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code></dt>
-<dd>No more relaxed ordering sources are available</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_SUCCESS</span></code></dt><dd><p>Requested state set</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p>The given phb_id or bdfn is invalid or out of range</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_CONSTRAINED</span></code></dt><dd><p>Relaxed ordering can not be enabled until an enable request is made
+for every device on this PHB.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_RESOURCE</span></code></dt><dd><p>No more relaxed ordering sources are available</p>
+</dd>
 </dl>
-</div>
-</div>
-<div class="section" id="opal-npu-get-relaxed-order">
+</section>
+</section>
+<section id="opal-npu-get-relaxed-order">
 <span id="id2"></span><h1>OPAL_NPU_GET_RELAXED_ORDER<a class="headerlink" href="#opal-npu-get-relaxed-order" title="Permalink to this headline">¶</a></h1>
 <p>Query the relaxed memory ordering state of a device.</p>
-<div class="section" id="id3">
+<section id="id3">
 <h2>Parameters<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
 <span class="n">uint64_t</span> <span class="n">bdfn</span>
 </pre></div>
 </div>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
-<dd>OPAL ID of the PHB</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt>
-<dd>Bus-Device-Function number of the device</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>OPAL ID of the PHB</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bdfn</span></code></dt><dd><p>Bus-Device-Function number of the device</p>
+</dd>
 </dl>
-</div>
-<div class="section" id="id4">
+</section>
+<section id="id4">
 <h2>Return values<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>On success, the current relaxed ordering state is returned.</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt>
-<dd>The given phb_id or bdfn is invalid.</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">OPAL_PARAMETER</span></code></dt><dd><p>The given phb_id or bdfn is invalid.</p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -139,17 +140,15 @@ for every device on this PHB.</dd>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -166,14 +165,15 @@ for every device on this PHB.</dd>
         <li class="right" >
           <a href="opal-npu2-146-147-148.html" title="OPAL NPU2 calls"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_NPU_SET_RELAXED_ORDER</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.1.12 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.1.12 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.1.11.html" title="skiboot-5.1.11"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.12</a></li> 
       </ul>
     </div>  
 
@@ -45,70 +45,70 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-1-12">
+  <section id="skiboot-5-1-12">
 <h1>skiboot-5.1.12<a class="headerlink" href="#skiboot-5-1-12" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.1.12 was released on Friday December 4th, 2015.</p>
 <p>skiboot-5.1.12 is the 13th stable release of 5.1, it follows skiboot-5.1.11
 (which was released November 13th, 2015).</p>
 <p>Skiboot 5.1.12 contains bug fixes and a performance improvement.</p>
-<div class="section" id="opal-prd">
+<section id="opal-prd">
 <h2>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Display an explict and obvious message if running on a system that does
+<li><p>Display an explict and obvious message if running on a system that does
 not support opal-prd, such as an IBM FSP based POWER system, where the
-FSP takes on the role of opal-prd.</li>
+FSP takes on the role of opal-prd.</p></li>
 </ul>
-</div>
-<div class="section" id="pflash">
+</section>
+<section id="pflash">
 <h2>pflash<a class="headerlink" href="#pflash" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Fix a missing (C) header
-- cherry-picked from master.</li>
+<li><p>Fix a missing (C) header
+- cherry-picked from master.</p></li>
 </ul>
-</div>
-<div class="section" id="general">
+</section>
+<section id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Don’t link with libgcc
-- On some toolchains, we don’t have libgcc available.</li>
+<li><p>Don’t link with libgcc
+- On some toolchains, we don’t have libgcc available.</p></li>
 </ul>
-</div>
-<div class="section" id="power8-phb-pcie-specific">
+</section>
+<section id="power8-phb-pcie-specific">
 <h2>POWER8 PHB (PCIe) specific<a class="headerlink" href="#power8-phb-pcie-specific" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><dl class="first docutils">
-<dt>hw/phb3: Flush cache line after updating P/Q bits</dt>
-<dd><p class="first">When doing an MSI EOI, we update the P and Q bits in the IVE. That causes
+<li><dl>
+<dt>hw/phb3: Flush cache line after updating P/Q bits</dt><dd><p>When doing an MSI EOI, we update the P and Q bits in the IVE. That causes
 the corresponding cache line to be dirty in the L3 which will cause a
 subsequent update by the PHB (upon receiving the next MSI) to get a few
 retries until it gets flushed.</p>
 <p>We improve the situation (and thus performance) by doing a dcbf
 instruction to force a flush of the update we do in SW.</p>
-<p class="last">This improves interrupt performance, reducing latency per interrupt.
+<p>This improves interrupt performance, reducing latency per interrupt.
 The improvement will vary by workload.</p>
 </dd>
 </dl>
 </li>
 </ul>
-</div>
-<div class="section" id="ibm-fsp-based-machines">
+</section>
+<section id="ibm-fsp-based-machines">
 <h2>IBM FSP based machines<a class="headerlink" href="#ibm-fsp-based-machines" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>FSP: Give up PSI link on shutdown
-This clears up some erroneous SRCs (error logs) in some situations.</li>
-<li><dl class="first docutils">
-<dt>Correctly report back Real Time Clock errors to host</dt>
-<dd>Under certain rare error conditions, we could return an error code
+<li><p>FSP: Give up PSI link on shutdown
+This clears up some erroneous SRCs (error logs) in some situations.</p></li>
+<li><dl class="simple">
+<dt>Correctly report back Real Time Clock errors to host</dt><dd><p>Under certain rare error conditions, we could return an error code
 to the host OS that would cause current Linux kernels to get stuck
 in an infinite loop during boot.
-This was introduced in skiboot-5.0-rc1.</dd>
+This was introduced in skiboot-5.0-rc1.</p>
+</dd>
 </dl>
 </li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -140,17 +140,15 @@ This was introduced in skiboot-5.0-rc1.</dd>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -167,14 +165,15 @@ This was introduced in skiboot-5.0-rc1.</dd>
         <li class="right" >
           <a href="skiboot-5.1.11.html" title="skiboot-5.1.11"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.12</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

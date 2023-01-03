@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>ibm,powerpc-cpu-features Design &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>ibm,powerpc-cpu-features Design &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="binding.html" title="ibm,powerpc-cpu-features Binding"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Design</a></li> 
       </ul>
     </div>  
 
@@ -45,12 +45,12 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ibm-powerpc-cpu-features-design">
+  <section id="ibm-powerpc-cpu-features-design">
 <h1>ibm,powerpc-cpu-features Design<a class="headerlink" href="#ibm-powerpc-cpu-features-design" title="Permalink to this headline">¶</a></h1>
 <p>The OPAL / skiboot code is the canonical location for this specification.  All
 definitions of features, constant, bit positions, etc. must be documented here
 before being deployed in Linux. This is not presently part of LoPAPR.</p>
-<div class="section" id="interfaces">
+<section id="interfaces">
 <h2>Interfaces<a class="headerlink" href="#interfaces" title="Permalink to this headline">¶</a></h2>
 <p>This specification describes the ibm,powerpc-cpu-features binding (the formal
 definition of binding can be found in binding.txt in this directory).</p>
@@ -61,8 +61,8 @@ done in coordination with OPAL / skiboot, Linux, and glibc projects.</p>
 build a subset with unsupported/disabled features and hypervisor specifics
 removed, and pass that to a guest OS. The OS may advertise features to
 userspace.</p>
-</div>
-<div class="section" id="background">
+</section>
+<section id="background">
 <h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
 <p>The cpu-features binding (subsequently “cpu-features”) aims to provide an
 extensible metadata and protocol between different levels of system software
@@ -82,8 +82,8 @@ all levels of the stack (firmware, hypervisor, OS, userspace), with the
 ability for new CPU features to be used by some components without all
 components being upgraded (e.g., a new floating point instruction could be
 used by userspace math library without upgrading kernel and hypervisor).</p>
-</div>
-<div class="section" id="overview">
+</section>
+<section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>The cpu-features node is created by firmware and passed to the hypervisor.
 The hypervisor may create cpu-features node to be passed to guest, based on
@@ -110,24 +110,24 @@ for this privilege level is implicit: if the software know how to use a
 feature, it also knows how to enable it).</p>
 <p>Feature node properties:</p>
 <ul class="simple">
-<li>“isa”, the Power ISA version where this feature first became available.
-In case of an implementation specific feature</li>
-<li>“usable-privilege”, a bitmask (HV, OS, PR/user) specifying which privilege
-levels this feature may be used in.</li>
-<li>“hv-support”, a bitmask. If this exists, the hypervisor must do some work
+<li><p>“isa”, the Power ISA version where this feature first became available.
+In case of an implementation specific feature</p></li>
+<li><p>“usable-privilege”, a bitmask (HV, OS, PR/user) specifying which privilege
+levels this feature may be used in.</p></li>
+<li><p>“hv-support”, a bitmask. If this exists, the hypervisor must do some work
 to enable support for lesser privilege levels. Bits can be set in this mask
 to specify prescription/recipes to enable the feature without custom code.
 If no bits are set, no recipe exists and custom code must be used. HFSCR
-register enable bit is the only such recipe currently.</li>
-<li>“os-support”, similar to hv-support. FSCR recipe.</li>
-<li>Features may have additional properties associated, must be documented with
-the feature.</li>
-<li>Recipes may have additional properties associated. HFSCR recipe has
-hfscr-bit-nr, and FSCR recipe has fscr-bit-nr.</li>
-<li>“dependencies” array of phandles. If this exists, it links to the
-features that must be enabled in order for this feature to be enabled.</li>
-<li>“hwcap-bit-nr” if it exists provides a Linux ELF AUXV HWCAP bit number that
-can be used to advertise this feature to userspace.</li>
+register enable bit is the only such recipe currently.</p></li>
+<li><p>“os-support”, similar to hv-support. FSCR recipe.</p></li>
+<li><p>Features may have additional properties associated, must be documented with
+the feature.</p></li>
+<li><p>Recipes may have additional properties associated. HFSCR recipe has
+hfscr-bit-nr, and FSCR recipe has fscr-bit-nr.</p></li>
+<li><p>“dependencies” array of phandles. If this exists, it links to the
+features that must be enabled in order for this feature to be enabled.</p></li>
+<li><p>“hwcap-bit-nr” if it exists provides a Linux ELF AUXV HWCAP bit number that
+can be used to advertise this feature to userspace.</p></li>
 </ul>
 <p>Together, these compatibility, support, and dependencies properties allow
 unknown features to be enabled and advertised to lesser privilege levels
@@ -138,18 +138,18 @@ recipes. Unknown properties should also be ignored. This allows extensibility
 for additional methods and metadata for enablement and advertisement.</p>
 <p>The policy for selecting and configuring which features to advertise and use
 is left for implementations.</p>
-</div>
-<div class="section" id="guidelines-for-defining-features">
+</section>
+<section id="guidelines-for-defining-features">
 <h2>Guidelines for defining features<a class="headerlink" href="#guidelines-for-defining-features" title="Permalink to this headline">¶</a></h2>
 <p>As a rough guide, features should be based on functional groups of changes
 to the ISA, or related performance characteristics.</p>
 <p>Grouping should be made by one or a combination of those that:</p>
 <ul class="simple">
-<li>Share common enablement requirements (e.g., share particular registers or
-firmware setup requirements).</li>
-<li>Share common usage patterns (e..g, likely to be used together).</li>
-<li>Are implemented with a particular new hardware unit.</li>
-<li>Are optional in the ISA.</li>
+<li><p>Share common enablement requirements (e.g., share particular registers or
+firmware setup requirements).</p></li>
+<li><p>Share common usage patterns (e..g, likely to be used together).</p></li>
+<li><p>Are implemented with a particular new hardware unit.</p></li>
+<li><p>Are optional in the ISA.</p></li>
 </ul>
 <p>Granularity can be debated, but fine grained and encompassing is generally
 preferable. For example, memory management unit may be considered fundamental,
@@ -171,10 +171,11 @@ a feature should indicate the presence of an additional CPU feature (e.g., a
 new instruction or register). This requires some anticipation and foresight
 for defining CPU features. “Negative” features may be unavoidable in some
 cases.</p>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -205,17 +206,15 @@ cases.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -232,14 +231,15 @@ cases.</p>
         <li class="right" >
           <a href="binding.html" title="ibm,powerpc-cpu-features Binding"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Design</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

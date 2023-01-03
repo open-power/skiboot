@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">6</td>
-            <td class="headerCovTableEntry">10</td>
-            <td class="headerCovTableEntryLo">60.0 %</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -410,9 +410,9 @@
 <a name="339"><span class="lineNum">     339 </span>                :            :  * be16_to_cpu - convert a big-endian uint16_t value</a>
 <a name="340"><span class="lineNum">     340 </span>                :            :  * @be_val: big-endian value to convert</a>
 <a name="341"><span class="lineNum">     341 </span>                :            :  */</a>
-<a name="342"><span class="lineNum">     342 </span>                :            : static inline uint16_t be16_to_cpu(beint16_t be_val)</a>
+<a name="342"><span class="lineNum">     342 </span>                :<span class="lineNoCov">          0 : static inline uint16_t be16_to_cpu(beint16_t be_val)</span></a>
 <a name="343"><span class="lineNum">     343 </span>                :            : {</a>
-<a name="344"><span class="lineNum">     344 </span>                :            :         return BE16_TO_CPU(be_val);</a>
+<a name="344"><span class="lineNum">     344 </span>                :<span class="lineNoCov">          0 :         return BE16_TO_CPU(be_val);</span></a>
 <a name="345"><span class="lineNum">     345 </span>                :            : }</a>
 <a name="346"><span class="lineNum">     346 </span>                :            : </a>
 <a name="347"><span class="lineNum">     347 </span>                :            : /* Whichever they include first, they get these definitions. */</a>

@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_PHB_SET_OPTION &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_PHB_SET_OPTION &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-pci-tce-kill-126.html" title="OPAL_PCI_TCE_KILL"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PHB_SET_OPTION</a></li> 
       </ul>
     </div>  
 
@@ -45,60 +45,61 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-phb-set-option">
+  <section id="opal-phb-set-option">
 <span id="id1"></span><h1>OPAL_PHB_SET_OPTION<a class="headerlink" href="#opal-phb-set-option" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PHB_SET_OPTION                  179</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_phb_set_option</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">opt</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">setting</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_phb_set_option</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">opt</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">setting</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>This call translate an PHB option to a PHB flag for specific PHB model and
 writes it to the hardware.</p>
 <p>Supported options are:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span> <span class="n">OpalPhbOption</span> <span class="p">{</span>
-     <span class="n">OPAL_PHB_OPTION_TVE1_4GB</span> <span class="o">=</span> <span class="mh">0x1</span><span class="p">,</span>
-     <span class="n">OPAL_PHB_OPTION_MMIO_EEH_DISABLE</span> <span class="o">=</span> <span class="mh">0x2</span>
-<span class="p">};</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="n">OpalPhbOption</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB_OPTION_TVE1_4GB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x1</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB_OPTION_MMIO_EEH_DISABLE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x2</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 </pre></div>
 </div>
 <p>OPAL_PHB_OPTION_TVE1_4GB: If set, uses TVE#1 for DMA access above 4GB; allowed setting 0 or 1.</p>
 <p>OPAL_PHB_OPTION_MMIO_EEH_DISABLE: Disables EEH for all MMIO commands; allowed setting 0 or 1.</p>
-<div class="section" id="returns">
+<section id="returns">
 <h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>Success</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>if either the call or the option is not supported</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>if PHB is unknown or a new setting is out of range</dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>if either the call or the option is not supported</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>if PHB is unknown or a new setting is out of range</p>
+</dd>
 </dl>
-</div>
-</div>
-<div class="section" id="opal-phb-get-option">
+</section>
+</section>
+<section id="opal-phb-get-option">
 <span id="id2"></span><h1>OPAL_PHB_GET_OPTION<a class="headerlink" href="#opal-phb-get-option" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PHB_GET_OPTION                          180</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_phb_get_option</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">opt</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="o">*</span><span class="n">setting</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_phb_get_option</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">opt</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="o">*</span><span class="n">setting</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>This call reads the hardware specific PHB flag and translates to a PHB option.</p>
 <p>For the list of supported options refer to OPAL_PHB_SET_OPTION above.</p>
-<div class="section" id="id3">
+<section id="id3">
 <h2>Returns<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>Success</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>if either the call or the option is not supported</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>if PHB is unknown or a new setting is out of range or no memory
-allocated for the return value</dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>if either the call or the option is not supported</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>if PHB is unknown or a new setting is out of range or no memory
+allocated for the return value</p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -130,17 +131,15 @@ allocated for the return value</dd>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -157,14 +156,15 @@ allocated for the return value</dd>
         <li class="right" >
           <a href="opal-pci-tce-kill-126.html" title="OPAL_PCI_TCE_KILL"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PHB_SET_OPTION</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

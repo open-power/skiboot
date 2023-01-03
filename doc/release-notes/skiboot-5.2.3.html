@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.2.3 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.2.3 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.2.2.html" title="skiboot-5.2.2"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.2.3</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-2-3">
+  <section id="skiboot-5-2-3">
 <h1>skiboot-5.2.3<a class="headerlink" href="#skiboot-5-2-3" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.2.3 was released on Thursday June 30th, 2016.</p>
 <p>skiboot-5.2.3 is the 4th stable release of skiboot 5.2, the new stable
@@ -59,20 +59,20 @@ frequency tables, which could lead to no CPU frequency scaling.</p>
 <p>This is the second release that will follow the (now documented) Skiboot
 stable rules - see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a>.</p>
 <p>Over skiboot-5.2.2, the following fixes are included:</p>
-<div class="section" id="openpower-platforms">
+<section id="openpower-platforms">
 <h2>OpenPOWER platforms<a class="headerlink" href="#openpower-platforms" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>occ: Filter out entries from Pmin to Pmax in pstate table
+<li><p>occ: Filter out entries from Pmin to Pmax in pstate table
 (cherry picked from commit eca02ee2e62cee115d921a01cea061782ce47cc7)
 Without this fix, with newer OCC firmware on some OpenPOWER machines,
 we would fail to parse the table from the OCC, which meant the host OS
-would not get a table of supported CPU frequencies.</li>
+would not get a table of supported CPU frequencies.</p></li>
 </ul>
-</div>
-<div class="section" id="general">
+</section>
+<section id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">pci: Do a dummy config write to devices to establish bus number
+<li><p>pci: Do a dummy config write to devices to establish bus number
 (cherry picked from commit f46c1e506d199332b0f9741278c8ec35b3e39135)</p>
 <blockquote>
 <div><p>On PCI Express, devices need to know their own bus number in order
@@ -92,23 +92,22 @@ before it’s likely to send error packets upstream, we should thus do a
 dummy configuration write to it as soon as possible after probing.</p>
 </div></blockquote>
 </li>
-<li><p class="first">Fix GCC 6 warning in backtrace code
-(cherry picked from commit 793f6f5b32c96f2774bd955b6062c74a672317ca)</p>
-</li>
-<li><p class="first">Backport of user visible typo fixes
-partial cherry picked from 4c95b5e04e3c4f72e4005574f67cd6e365d3276f</p>
-</li>
+<li><p>Fix GCC 6 warning in backtrace code
+(cherry picked from commit 793f6f5b32c96f2774bd955b6062c74a672317ca)</p></li>
+<li><p>Backport of user visible typo fixes
+partial cherry picked from 4c95b5e04e3c4f72e4005574f67cd6e365d3276f</p></li>
 </ul>
-</div>
-<div class="section" id="utilities">
+</section>
+<section id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Fix ARM build failure with parallel make</li>
+<li><p>Fix ARM build failure with parallel make</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -138,17 +137,15 @@ partial cherry picked from 4c95b5e04e3c4f72e4005574f67cd6e365d3276f</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -165,14 +162,15 @@ partial cherry picked from 4c95b5e04e3c4f72e4005574f67cd6e365d3276f</p>
         <li class="right" >
           <a href="skiboot-5.2.2.html" title="skiboot-5.2.2"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.2.3</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

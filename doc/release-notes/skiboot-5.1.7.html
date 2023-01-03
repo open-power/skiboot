@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.1.7 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.1.7 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.1.6.html" title="skiboot-5.1.6"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.7</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-1-7">
+  <section id="skiboot-5-1-7">
 <h1>skiboot-5.1.7<a class="headerlink" href="#skiboot-5-1-7" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.1.7 was released on October 13th, 2015.</p>
 <p>skiboot-5.1.7 is the 8th stable release of 5.1, it follows skiboot-5.1.6
@@ -55,19 +55,19 @@ fix release with one important bug fix for FSP systems.</p>
 <p>Over skiboot-5.1.6, we have the following changes:</p>
 <p>Generic:</p>
 <ul class="simple">
-<li><dl class="first docutils">
-<dt>PHB3: Retry fundamental reset</dt>
-<dd>This introduces another PHB3 state (PHB3_STATE_FRESET_START)
+<li><dl class="simple">
+<dt>PHB3: Retry fundamental reset</dt><dd><p>This introduces another PHB3 state (PHB3_STATE_FRESET_START)
 allowing to redo fundamental reset if the link doesn’t come up
 in time at the first attempt, to improve the robustness of PHB’s
 fundamental reset. If the link comes up after the first reset,
-the 2nd reset won’t be issued at all.</dd>
+the 2nd reset won’t be issued at all.</p>
+</dd>
 </dl>
 </li>
 </ul>
 <p>FSP based systems:</p>
 <ul>
-<li><p class="first">hw/fsp/fsp-leds.c: use allocated buffer for FSP_CMD_GET_LED_LIST response</p>
+<li><p>hw/fsp/fsp-leds.c: use allocated buffer for FSP_CMD_GET_LED_LIST response</p>
 <p>This fixes a bug where we would overwrite roughly 4kb of memory belonging
 to Linux when the FSP would ask firmware for a list of LEDs in the system.
 This wouldn’t happen often (once before Linux was running and possibly
@@ -75,9 +75,10 @@ only once during runtime, and <em>early</em> runtime at that) but it was possibl
 for this corruption to show up and be detected.</p>
 </li>
 </ul>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -97,17 +98,15 @@ for this corruption to show up and be detected.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -124,14 +123,15 @@ for this corruption to show up and be detected.</p>
         <li class="right" >
           <a href="skiboot-5.1.6.html" title="skiboot-5.1.6"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.7</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

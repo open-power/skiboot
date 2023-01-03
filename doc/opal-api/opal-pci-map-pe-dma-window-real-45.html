@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_PCI_MAP_PE_DMA_WINDOW_REAL &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_PCI_MAP_PE_DMA_WINDOW_REAL &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-pci-map-pe-dma-window-44.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_DMA_WINDOW_REAL</a></li> 
       </ul>
     </div>  
 
@@ -45,15 +45,15 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-pci-map-pe-dma-window-real">
+  <section id="opal-pci-map-pe-dma-window-real">
 <span id="id1"></span><h1>OPAL_PCI_MAP_PE_DMA_WINDOW_REAL<a class="headerlink" href="#opal-pci-map-pe-dma-window-real" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL              45</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_map_pe_dma_window_real</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
-                                        <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span>
-                                        <span class="kt">uint16_t</span> <span class="n">window_id</span><span class="p">,</span>
-                                        <span class="kt">uint64_t</span> <span class="n">pci_start_addr</span><span class="p">,</span>
-                                        <span class="kt">uint64_t</span> <span class="n">pci_mem_size</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_map_pe_dma_window_real</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pe_number</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                        </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">window_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_start_addr</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_mem_size</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p><strong>WARNING:</strong> following documentation is from old sources, and is possibly
@@ -66,34 +66,35 @@ system memory real address. The PHB passes PCI address bits 04:63 directly to
 system real address bits 04:63 when PCI address bits 04:39 are within the
 region specified by mem_addr t0 mem_addr + window_size.</p>
 <p>The addresses must be 16MB aligned and a multiple of 16MB in size.</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
-<dd>is the value from the PHB node ibm,opal-phbid property.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">dma_window_number</span></code></dt>
-<dd>specifies the DMA window</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dma_window_number</span></code></dt><dd><p>specifies the DMA window</p>
+</dd>
 </dl>
 <p>For ibm,opal-ioda PHBs the dma_window_number is an index from 0 to the PHB
 total number of windows minus 1. For ibm,opal-ioda2 PHBs the DMA window_number
 is an index from 0 to n-1, where n is the number of windows per window set,
 within the window set associated with the specified PE number.</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">pe_number</span></code></dt>
-<dd>is the index of the PE that is authorized to DMA to this window
-address space in PCI memory,</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">mem_addr</span></code></dt>
-<dd>is the starting 64-bit system real address mapped directly to the
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">pe_number</span></code></dt><dd><p>is the index of the PE that is authorized to DMA to this window
+address space in PCI memory,</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mem_addr</span></code></dt><dd><p>is the starting 64-bit system real address mapped directly to the
 starting address in PCI memory. Addresses below 4GB are zero in bits above
 bit 32. This value must be aligned on a 16MB boundary; OPAL returns
-OPAL_PARAMETER for any value that is not a multiple of 16MB.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">window_size</span></code></dt>
-<dd>is the size, in bytes, of the address range defined by this
+OPAL_PARAMETER for any value that is not a multiple of 16MB.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">window_size</span></code></dt><dd><p>is the size, in bytes, of the address range defined by this
 window. This value must be a multiple of 16MB; OPAL returns <a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a>
 for any value that is not a multiple of 16MB. A value of ‘0’ indicates to
-disable this DMA window.</dd>
+disable this DMA window.</p>
+</dd>
 </dl>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -113,17 +114,15 @@ disable this DMA window.</dd>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -140,14 +139,15 @@ disable this DMA window.</dd>
         <li class="right" >
           <a href="opal-pci-map-pe-dma-window-44.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_DMA_WINDOW_REAL</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

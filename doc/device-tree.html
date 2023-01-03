@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Device Tree &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Device Tree &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -34,8 +33,9 @@
         <li class="right" >
           <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot d6d8386
- documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e6cda17
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Device Tree</a></li> 
       </ul>
     </div>  
 
@@ -44,34 +44,34 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="device-tree">
+  <section id="device-tree">
 <span id="id1"></span><h1>Device Tree<a class="headerlink" href="#device-tree" title="Permalink to this headline">¶</a></h1>
 <p>General notes on the Device Tree produced by skiboot. This chapter
 <strong>needs updating</strong>.</p>
-<div class="section" id="general-comments">
+<section id="general-comments">
 <h2>General comments<a class="headerlink" href="#general-comments" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>skiboot does not require nodes to have phandle properties, but
+<li><p>skiboot does not require nodes to have phandle properties, but
 if you have them then <em>all</em> nodes must have them including the
 root of the device-tree (currently a HB bug !). It is recommended
-to have them since they are needed to represent the cache levels.</li>
-<li><strong>NOTE</strong>: The example tree below only has phandle properties for
+to have them since they are needed to represent the cache levels.</p></li>
+<li><p><strong>NOTE</strong>: The example tree below only has phandle properties for
 nodes that are referenced by other nodes. This is <em>not</em> correct
 and is purely done for keeping this document smaller, make sure
-to follow the rule above.</li>
-<li>Only the “phandle” property is required. Sapphire also generates
+to follow the rule above.</p></li>
+<li><p>Only the “phandle” property is required. Sapphire also generates
 a “linux,phandle” for backward compatibility but doesn’t require
-it as an input</li>
-<li>Any property not specifically documented must be put in “as is”</li>
-<li>All ibm,chip-id properties contain a HW chip ID which correspond
+it as an input</p></li>
+<li><p>Any property not specifically documented must be put in “as is”</p></li>
+<li><p>All ibm,chip-id properties contain a HW chip ID which correspond
 on P8 to the PIR value shifted right by 7 bits, ie. it’s a 6-bit
-value made of a 3-bit node number and a 3-bit chip number.</li>
-<li>Unit addresses (&#64;xxxx part of node names) should if possible use
+value made of a 3-bit node number and a 3-bit chip number.</p></li>
+<li><p>Unit addresses (&#64;xxxx part of node names) should if possible use
 lower case hexadecimal to be consistent with what skiboot does
-and to help some stupid parsers out there…</li>
+and to help some stupid parsers out there…</p></li>
 </ul>
-</div>
-<div class="section" id="reserve-map">
+</section>
+<section id="reserve-map">
 <h2>Reserve Map<a class="headerlink" href="#reserve-map" title="Permalink to this headline">¶</a></h2>
 <p>Here are the reserve map entries. They should exactly match the
 reserved-ranges property of the root node (see documentation
@@ -86,12 +86,12 @@ of that property)</p>
 <span class="k">/memreserve/</span>  <span class="mh">0x0000000400000000</span> <span class="mh">0x0000000000600450</span><span class="p">;</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="root-node">
+</section>
+<section id="root-node">
 <h2>Root Node<a class="headerlink" href="#root-node" title="Permalink to this headline">¶</a></h2>
 <p>Root node of device tree. There are a few required and a few optional properties
 that sit in the root node. They’re described here.</p>
-<div class="section" id="compatible">
+<section id="compatible">
 <h3>compatible<a class="headerlink" href="#compatible" title="Permalink to this headline">¶</a></h3>
 <p>The “compatible” properties are string lists indicating the overall
 compatibility from the more specific to the least specific.</p>
@@ -108,8 +108,8 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
   <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="example">
+</section>
+<section id="example">
 <h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="k">/dts-v1/;</span>
 <span class="k">/</span> <span class="p">{</span>
@@ -537,11 +537,12 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
 <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -575,17 +576,15 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -602,13 +601,14 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
         <li class="right" >
           <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot d6d8386
- documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e6cda17
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Device Tree</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

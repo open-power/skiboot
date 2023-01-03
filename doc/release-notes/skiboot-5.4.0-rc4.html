@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.4.0-rc4 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.4.0-rc4 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.4.0-rc3.html" title="skiboot-5.4.0-rc3"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc4</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-4-0-rc4">
+  <section id="skiboot-5-4-0-rc4">
 <span id="id1"></span><h1>skiboot-5.4.0-rc4<a class="headerlink" href="#skiboot-5-4-0-rc4" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.4.0-rc4 was released on Tuesday November 8th 2016. It is the
 fourth (and hopefully final) release candidate of skiboot 5.4, which will
@@ -62,7 +62,7 @@ definition. The aim is for skiboot-5.4.x to be in op-build v1.13, which is due
 by November 23rd 2016.</p>
 <p>Over <a class="reference internal" href="skiboot-5.4.0-rc3.html#skiboot-5-4-0-rc3"><span class="std std-ref">skiboot-5.4.0-rc3</span></a>, we have a few changes:</p>
 <ul>
-<li><p class="first">Add BMC platform to enable correct OEM IPMI commands</p>
+<li><p>Add BMC platform to enable correct OEM IPMI commands</p>
 <p>An out of tree platform (p8dtu) uses a different IPMI OEM command
 for IPMI_PARTIAL_ADD_ESEL. This exposed some assumptions about the BMC
 implementation in our core code.</p>
@@ -71,25 +71,22 @@ that is present. We allow it to be set at runtime rather than purely
 statically in struct platform as it’s possible to have differing BMC
 implementations on the one machine (e.g. AMI BMC or OpenBMC).</p>
 </li>
-<li><p class="first">hw/ipmi-sensor: Fix setting of firmware progress sensor properly.</p>
+<li><p>hw/ipmi-sensor: Fix setting of firmware progress sensor properly.</p>
 <p>On FSP systems, OPAL was incorrectly setting firmware status
 on a sensor id “00” which doesn’t exist.</p>
 </li>
-<li><p class="first">pflash: remove stray d in from info message</p>
-</li>
-<li><p class="first">libflash/pflash: support whole chip erase on mtd access</p>
-</li>
-<li><p class="first">boot_test: fix typo in console message</p>
-</li>
-<li><p class="first">core/pci: Fix criteria in pci_cfg_reg_filter(), i.e. NVLink didn’t work.</p>
-</li>
-<li><p class="first">Remove KERNEL_COMMAND_LINE mention from config.h</p>
+<li><p>pflash: remove stray d in from info message</p></li>
+<li><p>libflash/pflash: support whole chip erase on mtd access</p></li>
+<li><p>boot_test: fix typo in console message</p></li>
+<li><p>core/pci: Fix criteria in pci_cfg_reg_filter(), i.e. NVLink didn’t work.</p></li>
+<li><p>Remove KERNEL_COMMAND_LINE mention from config.h</p>
 <p>We removed the functionality but not the define.</p>
 </li>
 </ul>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -109,17 +106,15 @@ on a sensor id “00” which doesn’t exist.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -136,14 +131,15 @@ on a sensor id “00” which doesn’t exist.</p>
         <li class="right" >
           <a href="skiboot-5.4.0-rc3.html" title="skiboot-5.4.0-rc3"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.4.0-rc4</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

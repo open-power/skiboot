@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.2.0-rc1 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.2.0-rc1 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.2.0.html" title="skiboot-5.2.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.2.0-rc1</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-2-0-rc1">
+  <section id="skiboot-5-2-0-rc1">
 <h1>skiboot-5.2.0-rc1<a class="headerlink" href="#skiboot-5-2-0-rc1" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.2.0-rc1 was released on Friday Feb 26th, 2016.</p>
 <p>skiboot-5.2.0-rc1 is the first release candidate of skiboot 5.2, which will
@@ -56,83 +56,84 @@ released August 17th, 2015.</p>
 stable rules - see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a>.</p>
 <p>The current plan is to release skiboot-5.2.0 mid-March 2016, with a focus on
 bug fixing for future 5.2.0-rc releases.</p>
-<div class="section" id="new-features">
+<section id="new-features">
 <h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
 <p>Over skiboot-5.1, the following features have been added:</p>
 <ul class="simple">
-<li>Naples (P8’, i.e. P8 with NVLINK) processor support, including NVLINK.</li>
-<li>Improvements in gard, libflash/pflash and opal-prd utilities<ul>
-<li>increased testing</li>
-<li>increased usability</li>
-<li>systemd scripts for opal-prd</li>
-<li>pflash can now use the /dev/mtd device to access BMC flash rather than
+<li><p>Naples (P8’, i.e. P8 with NVLINK) processor support, including NVLINK.</p></li>
+<li><p>Improvements in gard, libflash/pflash and opal-prd utilities</p>
+<ul>
+<li><p>increased testing</p></li>
+<li><p>increased usability</p></li>
+<li><p>systemd scripts for opal-prd</p></li>
+<li><p>pflash can now use the /dev/mtd device to access BMC flash rather than
 accessing it directly. It is <em>important</em> that you use –mtd if your
-BMC may otherwise know how to interact with its own flash.</li>
+BMC may otherwise know how to interact with its own flash.</p></li>
 </ul>
 </li>
-<li>support for Micron N25Q256Ax and N25Qx256Ax NOR flash.</li>
-<li>support for Winbond W25Q256BV NOR flash</li>
-<li>support for an emulated (“fake”) RTC clock, useful in simulators
-and during bringup</li>
-<li>Explicit 1:1 mapping in ranges properties have been added to PCI
+<li><p>support for Micron N25Q256Ax and N25Qx256Ax NOR flash.</p></li>
+<li><p>support for Winbond W25Q256BV NOR flash</p></li>
+<li><p>support for an emulated (“fake”) RTC clock, useful in simulators
+and during bringup</p></li>
+<li><p>Explicit 1:1 mapping in ranges properties have been added to PCI
 bridges. This allows a neat trick with offb and VGA ports that should
-probably not be told to young children.</li>
-<li>Added support to read the V2 format of the OCC-OPAL memory region,
-which supports Workload Optimized Frequency (WOF)</li>
+probably not be told to young children.</p></li>
+<li><p>Added support to read the V2 format of the OCC-OPAL memory region,
+which supports Workload Optimized Frequency (WOF)</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-behavior">
+</section>
+<section id="changes-in-behavior">
 <h2>Changes in behavior<a class="headerlink" href="#changes-in-behavior" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Assigning OPAL IDs to PHBs is now fixed and based on the chip id and PHB
-index on that chip. On POWER7, we continue to use allocated numbers.</li>
-<li>We now query the BMC for BT capabilities rather than making assumptions</li>
+<li><p>Assigning OPAL IDs to PHBs is now fixed and based on the chip id and PHB
+index on that chip. On POWER7, we continue to use allocated numbers.</p></li>
+<li><p>We now query the BMC for BT capabilities rather than making assumptions</p></li>
 </ul>
-</div>
-<div class="section" id="removed-support">
+</section>
+<section id="removed-support">
 <h2>Removed support<a class="headerlink" href="#removed-support" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>p5ioc2 is no longer supported.
-This affects a grand total of two POWER7 systems in the world.</li>
+<li><p>p5ioc2 is no longer supported.
+This affects a grand total of two POWER7 systems in the world.</p></li>
 </ul>
 <p><strong>NOTE</strong>: It is planned that skiboot-5.2 will be the last release supporting
 POWER7 machines.</p>
-</div>
-<div class="section" id="bugs-fixed">
+</section>
+<section id="bugs-fixed">
 <h2>Bugs fixed<a class="headerlink" href="#bugs-fixed" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>PHB3: Fix unexpected ER (all) on errinjct by PCI config</li>
-<li>hw/bt: timeout messages when BT interface isn’t functional</li>
-<li>On Habanero, Slot3 should have been “Slot 3”.</li>
-<li>We now completely flush the console buffer before power down and reboot</li>
-<li>For chips with ibm,occ-functional-state set to false, we don’t wait
+<li><p>PHB3: Fix unexpected ER (all) on errinjct by PCI config</p></li>
+<li><p>hw/bt: timeout messages when BT interface isn’t functional</p></li>
+<li><p>On Habanero, Slot3 should have been “Slot 3”.</p></li>
+<li><p>We now completely flush the console buffer before power down and reboot</p></li>
+<li><p>For chips with ibm,occ-functional-state set to false, we don’t wait
 for the OCC to start. This caused needless delay in booting on simulators
-which did not simulate OCCs.</li>
-<li>Change OCC reset order to always reset slave OCCs first.</li>
-<li>slw: Remove overwrites for EX_PM_CORE_ECO_VRET and EX_PM_CORE_PFET_VRET
-(these were already initialized in hostboot)</li>
-<li>p8-i2c: send stop bit on timeouts.
-Some devices can otherwise leave the bus in a held state.</li>
+which did not simulate OCCs.</p></li>
+<li><p>Change OCC reset order to always reset slave OCCs first.</p></li>
+<li><p>slw: Remove overwrites for EX_PM_CORE_ECO_VRET and EX_PM_CORE_PFET_VRET
+(these were already initialized in hostboot)</p></li>
+<li><p>p8-i2c: send stop bit on timeouts.
+Some devices can otherwise leave the bus in a held state.</p></li>
 </ul>
-</div>
-<div class="section" id="other-improvements">
+</section>
+<section id="other-improvements">
 <h2>Other improvements<a class="headerlink" href="#other-improvements" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>many fixes of compiler and static analysis warnings</li>
-<li>increased unit test coverage</li>
-<li>Unit test of “boot debian jessie installer”</li>
-<li>ability to plug in other simulators to run existing tests (e.g. simulator for
-non pegasus p8)</li>
-<li>Support using (patched) Qemu with PowerNV platform support for running
-unit tests.</li>
-<li>increased support for running with sparse</li>
-<li>We now build with -fstack-protector-strong if supported by the compiler</li>
-<li>We now build with -Werror for -Wformat</li>
-<li>pflash is now built as part of travis-ci and for Coverity Scan.</li>
-<li>There is now a RPM SPEC file that can be used as the basis for packaging
-skiboot and associated utilities.</li>
+<li><p>many fixes of compiler and static analysis warnings</p></li>
+<li><p>increased unit test coverage</p></li>
+<li><p>Unit test of “boot debian jessie installer”</p></li>
+<li><p>ability to plug in other simulators to run existing tests (e.g. simulator for
+non pegasus p8)</p></li>
+<li><p>Support using (patched) Qemu with PowerNV platform support for running
+unit tests.</p></li>
+<li><p>increased support for running with sparse</p></li>
+<li><p>We now build with -fstack-protector-strong if supported by the compiler</p></li>
+<li><p>We now build with -Werror for -Wformat</p></li>
+<li><p>pflash is now built as part of travis-ci and for Coverity Scan.</p></li>
+<li><p>There is now a RPM SPEC file that can be used as the basis for packaging
+skiboot and associated utilities.</p></li>
 </ul>
-<div class="section" id="contributors">
+<section id="contributors">
 <h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h3>
 <p>We have had a number of improvements in workflow over skiboot-5.1.0. Looking
 back, we have roughly the same number of changesets (372 for 5.1.0, 334 for
@@ -140,45 +141,45 @@ back, we have roughly the same number of changesets (372 for 5.1.0, 334 for
 rate of development.</p>
 <p>Complete statistics are included below (generated by gitdm), but I’d like to
 draw attention to a couple of stats:</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="19%" />
-<col width="14%" />
-<col width="17%" />
-<col width="17%" />
-<col width="14%" />
-<col width="19%" />
+<col style="width: 19%" />
+<col style="width: 14%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Release</th>
-<th class="head">csets</th>
-<th class="head">Ack</th>
-<th class="head">Reviews</th>
-<th class="head">Tested</th>
-<th class="head">Reported</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>Release</p></th>
+<th class="head"><p>csets</p></th>
+<th class="head"><p>Ack</p></th>
+<th class="head"><p>Reviews</p></th>
+<th class="head"><p>Tested</p></th>
+<th class="head"><p>Reported</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>5.0</td>
-<td>329</td>
-<td>15</td>
-<td>20</td>
-<td>1</td>
-<td>0</td>
+<tbody>
+<tr class="row-even"><td><p>5.0</p></td>
+<td><p>329</p></td>
+<td><p>15</p></td>
+<td><p>20</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
 </tr>
-<tr class="row-odd"><td>5.1</td>
-<td>372</td>
-<td>13</td>
-<td>38</td>
-<td>1</td>
-<td>4</td>
+<tr class="row-odd"><td><p>5.1</p></td>
+<td><p>372</p></td>
+<td><p>13</p></td>
+<td><p>38</p></td>
+<td><p>1</p></td>
+<td><p>4</p></td>
 </tr>
-<tr class="row-even"><td>5.2-rc1</td>
-<td>334</td>
-<td>20</td>
-<td>34</td>
-<td>6</td>
-<td>11</td>
+<tr class="row-even"><td><p>5.2-rc1</p></td>
+<td><p>334</p></td>
+<td><p>20</p></td>
+<td><p>34</p></td>
+<td><p>6</p></td>
+<td><p>11</p></td>
 </tr>
 </tbody>
 </table>
@@ -191,409 +192,410 @@ existing test teams to start commenting on the patches themselves.</p>
 2 employers found
 A total of 46172 lines added, 23274 removed (delta 22898)</p>
 <p>Developers with the most changesets</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="70%" />
-<col width="30%" />
+<col style="width: 70%" />
+<col style="width: 30%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Stewart Smith</td>
-<td>146 (43.7%)</td>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>146 (43.7%)</p></td>
 </tr>
-<tr class="row-odd"><td>Cyril Bur</td>
-<td>52 (15.6%)</td>
+<tr class="row-odd"><td><p>Cyril Bur</p></td>
+<td><p>52 (15.6%)</p></td>
 </tr>
-<tr class="row-even"><td>Benjamin Herrenschmidt</td>
-<td>15 (4.5%)</td>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>15 (4.5%)</p></td>
 </tr>
-<tr class="row-odd"><td>Joel Stanley</td>
-<td>12 (3.6%)</td>
+<tr class="row-odd"><td><p>Joel Stanley</p></td>
+<td><p>12 (3.6%)</p></td>
 </tr>
-<tr class="row-even"><td>Gavin Shan</td>
-<td>12 (3.6%)</td>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>12 (3.6%)</p></td>
 </tr>
-<tr class="row-odd"><td>Alistair Popple</td>
-<td>10 (3.0%)</td>
+<tr class="row-odd"><td><p>Alistair Popple</p></td>
+<td><p>10 (3.0%)</p></td>
 </tr>
-<tr class="row-even"><td>Vasant Hegde</td>
-<td>10 (3.0%)</td>
+<tr class="row-even"><td><p>Vasant Hegde</p></td>
+<td><p>10 (3.0%)</p></td>
 </tr>
-<tr class="row-odd"><td>Michael Neuling</td>
-<td>10 (3.0%)</td>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>10 (3.0%)</p></td>
 </tr>
-<tr class="row-even"><td>Russell Currey</td>
-<td>9 (2.7%)</td>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>9 (2.7%)</p></td>
 </tr>
-<tr class="row-odd"><td>Cédric Le Goater</td>
-<td>8 (2.4%)</td>
+<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
+<td><p>8 (2.4%)</p></td>
 </tr>
-<tr class="row-even"><td>Jeremy Kerr</td>
-<td>8 (2.4%)</td>
+<tr class="row-even"><td><p>Jeremy Kerr</p></td>
+<td><p>8 (2.4%)</p></td>
 </tr>
-<tr class="row-odd"><td>Samuel Mendoza-Jonas</td>
-<td>6 (1.8%)</td>
+<tr class="row-odd"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>6 (1.8%)</p></td>
 </tr>
-<tr class="row-even"><td>Neelesh Gupta</td>
-<td>6 (1.8%)</td>
+<tr class="row-even"><td><p>Neelesh Gupta</p></td>
+<td><p>6 (1.8%)</p></td>
 </tr>
-<tr class="row-odd"><td>Shilpasri G Bhat</td>
-<td>4 (1.2%)</td>
+<tr class="row-odd"><td><p>Shilpasri G Bhat</p></td>
+<td><p>4 (1.2%)</p></td>
 </tr>
-<tr class="row-even"><td>Oliver O’Halloran</td>
-<td>4 (1.2%)</td>
+<tr class="row-even"><td><p>Oliver O’Halloran</p></td>
+<td><p>4 (1.2%)</p></td>
 </tr>
-<tr class="row-odd"><td>Mahesh Salgaonkar</td>
-<td>4 (1.2%)</td>
+<tr class="row-odd"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>4 (1.2%)</p></td>
 </tr>
-<tr class="row-even"><td>Vipin K Parashar</td>
-<td>3 (0.9%)</td>
+<tr class="row-even"><td><p>Vipin K Parashar</p></td>
+<td><p>3 (0.9%)</p></td>
 </tr>
-<tr class="row-odd"><td>Daniel Axtens</td>
-<td>3 (0.9%)</td>
+<tr class="row-odd"><td><p>Daniel Axtens</p></td>
+<td><p>3 (0.9%)</p></td>
 </tr>
-<tr class="row-even"><td>Andrew Donnellan</td>
-<td>2 (0.6%)</td>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>2 (0.6%)</p></td>
 </tr>
-<tr class="row-odd"><td>Philippe Bergheaud</td>
-<td>2 (0.6%)</td>
+<tr class="row-odd"><td><p>Philippe Bergheaud</p></td>
+<td><p>2 (0.6%)</p></td>
 </tr>
-<tr class="row-even"><td>Ananth N Mavinakayanahalli</td>
-<td>2 (0.6%)</td>
+<tr class="row-even"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>2 (0.6%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vaibhav Jain</td>
-<td>1 (0.3%)</td>
+<tr class="row-odd"><td><p>Vaibhav Jain</p></td>
+<td><p>1 (0.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Sam Mendoza-Jonas</td>
-<td>1 (0.3%)</td>
+<tr class="row-even"><td><p>Sam Mendoza-Jonas</p></td>
+<td><p>1 (0.3%)</p></td>
 </tr>
-<tr class="row-odd"><td>Adriana Kobylak</td>
-<td>1 (0.3%)</td>
+<tr class="row-odd"><td><p>Adriana Kobylak</p></td>
+<td><p>1 (0.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Shreyas B. Prabhu</td>
-<td>1 (0.3%)</td>
+<tr class="row-even"><td><p>Shreyas B. Prabhu</p></td>
+<td><p>1 (0.3%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vaidyanathan Srinivasan</td>
-<td>1 (0.3%)</td>
+<tr class="row-odd"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>1 (0.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Ian Munsie</td>
-<td>1 (0.3%)</td>
+<tr class="row-even"><td><p>Ian Munsie</p></td>
+<td><p>1 (0.3%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most changed lines</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="67%" />
-<col width="33%" />
+<col style="width: 67%" />
+<col style="width: 33%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Stewart Smith</td>
-<td>19533 (39.4%)</td>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>19533 (39.4%)</p></td>
 </tr>
-<tr class="row-odd"><td>Oliver O’Halloran</td>
-<td>17920 (36.1%)</td>
+<tr class="row-odd"><td><p>Oliver O’Halloran</p></td>
+<td><p>17920 (36.1%)</p></td>
 </tr>
-<tr class="row-even"><td>Alistair Popple</td>
-<td>3285 (6.6%)</td>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>3285 (6.6%)</p></td>
 </tr>
-<tr class="row-odd"><td>Daniel Axtens</td>
-<td>2154 (4.3%)</td>
+<tr class="row-odd"><td><p>Daniel Axtens</p></td>
+<td><p>2154 (4.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Cyril Bur</td>
-<td>2028 (4.1%)</td>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>2028 (4.1%)</p></td>
 </tr>
-<tr class="row-odd"><td>Benjamin Herrenschmidt</td>
-<td>941 (1.9%)</td>
+<tr class="row-odd"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>941 (1.9%)</p></td>
 </tr>
-<tr class="row-even"><td>Neelesh Gupta</td>
-<td>434 (0.9%)</td>
+<tr class="row-even"><td><p>Neelesh Gupta</p></td>
+<td><p>434 (0.9%)</p></td>
 </tr>
-<tr class="row-odd"><td>Gavin Shan</td>
-<td>294 (0.6%)</td>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>294 (0.6%)</p></td>
 </tr>
-<tr class="row-even"><td>Russell Currey</td>
-<td>261 (0.5%)</td>
+<tr class="row-even"><td><p>Russell Currey</p></td>
+<td><p>261 (0.5%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vasant Hegde</td>
-<td>245 (0.5%)</td>
+<tr class="row-odd"><td><p>Vasant Hegde</p></td>
+<td><p>245 (0.5%)</p></td>
 </tr>
-<tr class="row-even"><td>Cédric Le Goater</td>
-<td>209 (0.4%)</td>
+<tr class="row-even"><td><p>Cédric Le Goater</p></td>
+<td><p>209 (0.4%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vipin K Parashar</td>
-<td>155 (0.3%)</td>
+<tr class="row-odd"><td><p>Vipin K Parashar</p></td>
+<td><p>155 (0.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Shilpasri G Bhat</td>
-<td>153 (0.3%)</td>
+<tr class="row-even"><td><p>Shilpasri G Bhat</p></td>
+<td><p>153 (0.3%)</p></td>
 </tr>
-<tr class="row-odd"><td>Joel Stanley</td>
-<td>140 (0.3%)</td>
+<tr class="row-odd"><td><p>Joel Stanley</p></td>
+<td><p>140 (0.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Vaidyanathan Srinivasan</td>
-<td>135 (0.3%)</td>
+<tr class="row-even"><td><p>Vaidyanathan Srinivasan</p></td>
+<td><p>135 (0.3%)</p></td>
 </tr>
-<tr class="row-odd"><td>Michael Neuling</td>
-<td>111 (0.2%)</td>
+<tr class="row-odd"><td><p>Michael Neuling</p></td>
+<td><p>111 (0.2%)</p></td>
 </tr>
-<tr class="row-even"><td>Samuel Mendoza-Jonas</td>
-<td>81 (0.2%)</td>
+<tr class="row-even"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>81 (0.2%)</p></td>
 </tr>
-<tr class="row-odd"><td>Jeremy Kerr</td>
-<td>60 (0.1%)</td>
+<tr class="row-odd"><td><p>Jeremy Kerr</p></td>
+<td><p>60 (0.1%)</p></td>
 </tr>
-<tr class="row-even"><td>Mahesh Salgaonkar</td>
-<td>58 (0.1%)</td>
+<tr class="row-even"><td><p>Mahesh Salgaonkar</p></td>
+<td><p>58 (0.1%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vaibhav Jain</td>
-<td>50 (0.1%)</td>
+<tr class="row-odd"><td><p>Vaibhav Jain</p></td>
+<td><p>50 (0.1%)</p></td>
 </tr>
-<tr class="row-even"><td>Ananth N Mavinakayanahalli</td>
-<td>43 (0.1%)</td>
+<tr class="row-even"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>43 (0.1%)</p></td>
 </tr>
-<tr class="row-odd"><td>Shreyas B. Prabhu</td>
-<td>17 (0.0%)</td>
+<tr class="row-odd"><td><p>Shreyas B. Prabhu</p></td>
+<td><p>17 (0.0%)</p></td>
 </tr>
-<tr class="row-even"><td>Sam Mendoza-Jonas</td>
-<td>12 (0.0%)</td>
+<tr class="row-even"><td><p>Sam Mendoza-Jonas</p></td>
+<td><p>12 (0.0%)</p></td>
 </tr>
-<tr class="row-odd"><td>Andrew Donnellan</td>
-<td>10 (0.0%)</td>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>10 (0.0%)</p></td>
 </tr>
-<tr class="row-even"><td>Ian Munsie</td>
-<td>8 (0.0%)</td>
+<tr class="row-even"><td><p>Ian Munsie</p></td>
+<td><p>8 (0.0%)</p></td>
 </tr>
-<tr class="row-odd"><td>Philippe Bergheaud</td>
-<td>6 (0.0%)</td>
+<tr class="row-odd"><td><p>Philippe Bergheaud</p></td>
+<td><p>6 (0.0%)</p></td>
 </tr>
-<tr class="row-even"><td>Adriana Kobylak</td>
-<td>6 (0.0%)</td>
+<tr class="row-even"><td><p>Adriana Kobylak</p></td>
+<td><p>6 (0.0%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most lines removed</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="66%" />
-<col width="34%" />
+<col style="width: 66%" />
+<col style="width: 34%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Daniel Axtens</td>
-<td>2149 (9.2%)</td>
+<tbody>
+<tr class="row-even"><td><p>Daniel Axtens</p></td>
+<td><p>2149 (9.2%)</p></td>
 </tr>
-<tr class="row-odd"><td>Shreyas B. Prabhu</td>
-<td>17 (0.1%)</td>
+<tr class="row-odd"><td><p>Shreyas B. Prabhu</p></td>
+<td><p>17 (0.1%)</p></td>
 </tr>
-<tr class="row-even"><td>Andrew Donnellan</td>
-<td>9 (0.0%)</td>
+<tr class="row-even"><td><p>Andrew Donnellan</p></td>
+<td><p>9 (0.0%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vipin K Parashar</td>
-<td>2 (0.0%)</td>
+<tr class="row-odd"><td><p>Vipin K Parashar</p></td>
+<td><p>2 (0.0%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most signoffs (total 190)</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="66%" />
-<col width="34%" />
+<col style="width: 66%" />
+<col style="width: 34%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Stewart Smith</td>
-<td>188 (98.9%)</td>
+<tbody>
+<tr class="row-even"><td><p>Stewart Smith</p></td>
+<td><p>188 (98.9%)</p></td>
 </tr>
-<tr class="row-odd"><td>Gavin Shan</td>
-<td>1 (0.5%)</td>
+<tr class="row-odd"><td><p>Gavin Shan</p></td>
+<td><p>1 (0.5%)</p></td>
 </tr>
-<tr class="row-even"><td>Neelesh Gupta</td>
-<td>1 (0.5%)</td>
+<tr class="row-even"><td><p>Neelesh Gupta</p></td>
+<td><p>1 (0.5%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most reviews (total 34)</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="66%" />
-<col width="34%" />
+<col style="width: 66%" />
+<col style="width: 34%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Patrick Williams</td>
-<td>5 (14.7%)</td>
+<tbody>
+<tr class="row-even"><td><p>Patrick Williams</p></td>
+<td><p>5 (14.7%)</p></td>
 </tr>
-<tr class="row-odd"><td>Joel Stanley</td>
-<td>5 (14.7%)</td>
+<tr class="row-odd"><td><p>Joel Stanley</p></td>
+<td><p>5 (14.7%)</p></td>
 </tr>
-<tr class="row-even"><td>Cédric Le Goater</td>
-<td>5 (14.7%)</td>
+<tr class="row-even"><td><p>Cédric Le Goater</p></td>
+<td><p>5 (14.7%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vasant Hegde</td>
-<td>4 (11.8%)</td>
+<tr class="row-odd"><td><p>Vasant Hegde</p></td>
+<td><p>4 (11.8%)</p></td>
 </tr>
-<tr class="row-even"><td>Alistair Popple</td>
-<td>4 (11.8%)</td>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>4 (11.8%)</p></td>
 </tr>
-<tr class="row-odd"><td>Sam Mendoza-Jonas</td>
-<td>3 (8.8%)</td>
+<tr class="row-odd"><td><p>Sam Mendoza-Jonas</p></td>
+<td><p>3 (8.8%)</p></td>
 </tr>
-<tr class="row-even"><td>Samuel Mendoza-Jonas</td>
-<td>3 (8.8%)</td>
+<tr class="row-even"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>3 (8.8%)</p></td>
 </tr>
-<tr class="row-odd"><td>Andrew Donnellan</td>
-<td>2 (5.9%)</td>
+<tr class="row-odd"><td><p>Andrew Donnellan</p></td>
+<td><p>2 (5.9%)</p></td>
 </tr>
-<tr class="row-even"><td>Cyril Bur</td>
-<td>2 (5.9%)</td>
+<tr class="row-even"><td><p>Cyril Bur</p></td>
+<td><p>2 (5.9%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vaibhav Jain</td>
-<td>1 (2.9%)</td>
+<tr class="row-odd"><td><p>Vaibhav Jain</p></td>
+<td><p>1 (2.9%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most test credits (total 6)</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="66%" />
-<col width="34%" />
+<col style="width: 66%" />
+<col style="width: 34%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Vipin K Parashar</td>
-<td>3 (50.0%)</td>
+<tbody>
+<tr class="row-even"><td><p>Vipin K Parashar</p></td>
+<td><p>3 (50.0%)</p></td>
 </tr>
-<tr class="row-odd"><td>Vaibhav Jain</td>
-<td>2 (33.3%)</td>
+<tr class="row-odd"><td><p>Vaibhav Jain</p></td>
+<td><p>2 (33.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Gajendra B Bandhu1</td>
-<td>1 (16.7%)</td>
+<tr class="row-even"><td><p>Gajendra B Bandhu1</p></td>
+<td><p>1 (16.7%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers who gave the most tested-by credits (total 6)</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="68%" />
-<col width="33%" />
+<col style="width: 68%" />
+<col style="width: 33%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Gavin Shan</td>
-<td>2 (33.3%)</td>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>2 (33.3%)</p></td>
 </tr>
-<tr class="row-odd"><td>Ananth N Mavinakayanahalli</td>
-<td>2 (33.3%)</td>
+<tr class="row-odd"><td><p>Ananth N Mavinakayanahalli</p></td>
+<td><p>2 (33.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Alistair Popple</td>
-<td>1 (16.7%)</td>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>1 (16.7%)</p></td>
 </tr>
-<tr class="row-odd"><td>Stewart Smith</td>
-<td>1 (16.7%)</td>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>1 (16.7%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers with the most report credits (total 11)</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="66%" />
-<col width="34%" />
+<col style="width: 66%" />
+<col style="width: 34%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Vaibhav Jain</td>
-<td>2 (18.2%)</td>
+<tbody>
+<tr class="row-even"><td><p>Vaibhav Jain</p></td>
+<td><p>2 (18.2%)</p></td>
 </tr>
-<tr class="row-odd"><td>Paul Nguyen</td>
-<td>2 (18.2%)</td>
+<tr class="row-odd"><td><p>Paul Nguyen</p></td>
+<td><p>2 (18.2%)</p></td>
 </tr>
-<tr class="row-even"><td>Alistair Popple</td>
-<td>1 (9.1%)</td>
+<tr class="row-even"><td><p>Alistair Popple</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
-<tr class="row-odd"><td>Cédric Le Goater</td>
-<td>1 (9.1%)</td>
+<tr class="row-odd"><td><p>Cédric Le Goater</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
-<tr class="row-even"><td>Aneesh Kumar K.V</td>
-<td>1 (9.1%)</td>
+<tr class="row-even"><td><p>Aneesh Kumar K.V</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
-<tr class="row-odd"><td>Dionysius d. Bell</td>
-<td>1 (9.1%)</td>
+<tr class="row-odd"><td><p>Dionysius d. Bell</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
-<tr class="row-even"><td>Pradeep Ramanna</td>
-<td>1 (9.1%)</td>
+<tr class="row-even"><td><p>Pradeep Ramanna</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
-<tr class="row-odd"><td>John Walthour</td>
-<td>1 (9.1%)</td>
+<tr class="row-odd"><td><p>John Walthour</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
-<tr class="row-even"><td>Benjamin Herrenschmidt</td>
-<td>1 (9.1%)</td>
+<tr class="row-even"><td><p>Benjamin Herrenschmidt</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
 </tbody>
 </table>
 <p>Developers who gave the most report credits (total 11)</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="66%" />
-<col width="34%" />
+<col style="width: 66%" />
+<col style="width: 34%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Gavin Shan</td>
-<td>6 (54.5%)</td>
+<tbody>
+<tr class="row-even"><td><p>Gavin Shan</p></td>
+<td><p>6 (54.5%)</p></td>
 </tr>
-<tr class="row-odd"><td>Stewart Smith</td>
-<td>3 (27.3%)</td>
+<tr class="row-odd"><td><p>Stewart Smith</p></td>
+<td><p>3 (27.3%)</p></td>
 </tr>
-<tr class="row-even"><td>Samuel Mendoza-Jonas</td>
-<td>1 (9.1%)</td>
+<tr class="row-even"><td><p>Samuel Mendoza-Jonas</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
-<tr class="row-odd"><td>Shilpasri G Bhat</td>
-<td>1 (9.1%)</td>
+<tr class="row-odd"><td><p>Shilpasri G Bhat</p></td>
+<td><p>1 (9.1%)</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -628,17 +630,15 @@ A total of 46172 lines added, 23274 removed (delta 22898)</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -655,14 +655,15 @@ A total of 46172 lines added, 23274 removed (delta 22898)</p>
         <li class="right" >
           <a href="skiboot-5.2.0.html" title="skiboot-5.2.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.2.0-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

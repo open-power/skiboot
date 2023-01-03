@@ -1,25 +1,24 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>ibm,cvc &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>ibm,cvc &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="ibm,firmware-versions node" href="ibm,firmware-versions.html" />
+    <link rel="next" title="ibm,firmware-versions node" href="ibm%2Cfirmware-versions.html" />
     <link rel="prev" title="Device Tree" href="index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -29,14 +28,15 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="ibm,firmware-versions.html" title="ibm,firmware-versions node"
+          <a href="ibm%2Cfirmware-versions.html" title="ibm,firmware-versions node"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Device Tree"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,cvc</a></li> 
       </ul>
     </div>  
 
@@ -45,13 +45,13 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ibm-cvc">
+  <section id="ibm-cvc">
 <span id="device-tree-ibm-cvc"></span><h1>ibm,cvc<a class="headerlink" href="#ibm-cvc" title="Permalink to this headline">¶</a></h1>
 <p>This describes the code (a.k.a container verification code) that skiboot uses
 to verify signed firmware blobs. Each ibm,cvc child node describes CVC service,
 which has a version and offset (reg).</p>
 <p>Added in the device tree from <code class="docutils literal notranslate"><span class="pre">ibm,secureboot-v2</span></code>.</p>
-<div class="section" id="required-properties">
+<section id="required-properties">
 <h2>Required properties<a class="headerlink" href="#required-properties" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>compatible:      should be &quot;ibm,container-verification-code&quot;
 
@@ -59,8 +59,8 @@ memory-region:   this points to the reserved memory where the
                  container-verification-code is stored.
 </pre></div>
 </div>
-</div>
-<div class="section" id="example">
+</section>
+<section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,cvc</span> <span class="p">{</span>
         <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10f</span><span class="p">&gt;;</span>
@@ -85,10 +85,11 @@ memory-region:   this points to the reserved memory where the
 <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -107,7 +108,7 @@ memory-region:   this points to the reserved memory where the
   <p class="topless"><a href="index.html"
                         title="previous chapter">Device Tree</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="ibm,firmware-versions.html"
+  <p class="topless"><a href="ibm%2Cfirmware-versions.html"
                         title="next chapter">ibm,firmware-versions node</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -117,17 +118,15 @@ memory-region:   this points to the reserved memory where the
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -139,19 +138,20 @@ memory-region:   this points to the reserved memory where the
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="ibm,firmware-versions.html" title="ibm,firmware-versions node"
+          <a href="ibm%2Cfirmware-versions.html" title="ibm,firmware-versions node"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Device Tree"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,cvc</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

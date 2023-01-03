@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_MESSAGE &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_MESSAGE &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_MESSAGE</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-message">
+  <section id="opal-message">
 <span id="opal-messages"></span><h1>OPAL_MESSAGE<a class="headerlink" href="#opal-message" title="Permalink to this headline">¶</a></h1>
 <p>The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The
 messages are defined by enum opal_msg_type. The host is notified of there
@@ -71,18 +71,18 @@ details.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<div class="section" id="opal-msg-async-comp">
+<section id="opal-msg-async-comp">
 <h2>OPAL_MSG_ASYNC_COMP<a class="headerlink" href="#opal-msg-async-comp" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">token</span>
 <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">rc</span>
 </pre></div>
 </div>
 <p>Additional parameters are function-specific.</p>
-</div>
-<div class="section" id="opal-msg-mem-err">
+</section>
+<section id="opal-msg-mem-err">
 <h2>OPAL_MSG_MEM_ERR<a class="headerlink" href="#opal-msg-mem-err" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="opal-msg-epow">
+</section>
+<section id="opal-msg-epow">
 <span id="id1"></span><h2>OPAL_MSG_EPOW<a class="headerlink" href="#opal-msg-epow" title="Permalink to this headline">¶</a></h2>
 <p>Used by OPAL to issue environmental and power warnings to host OS for
 conditions requiring an earlier poweroff. A few examples of these are high
@@ -93,8 +93,8 @@ all supported EPOW events. OPAL_SYSPOWER_CHNG, OPAL_SYSPOWER_FAIL and
 OPAL_SYSPOWER_INC events don’t require system poweroff.</p>
 <p>Host OS should look for ‘ibm,opal-v3-epow’ string as compatible property
 for ‘epow’ node under OPAL device-tree to determine epow support.</p>
-</div>
-<div class="section" id="opal-msg-shutdown">
+</section>
+<section id="opal-msg-shutdown">
 <h2>OPAL_MSG_SHUTDOWN<a class="headerlink" href="#opal-msg-shutdown" title="Permalink to this headline">¶</a></h2>
 <p>Used by OPAL to inform the host OS it must imitate a graceful shutdown. Uses
 the first parameter to indicate weather the system is going down for shutdown
@@ -102,8 +102,8 @@ or a reboot.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x01</span> <span class="n">reboot</span><span class="p">,</span> <span class="mh">0x00</span> <span class="n">shutdown</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="opal-msg-hmi-evt">
+</section>
+<section id="opal-msg-hmi-evt">
 <span id="id2"></span><h2>OPAL_MSG_HMI_EVT<a class="headerlink" href="#opal-msg-hmi-evt" title="Permalink to this headline">¶</a></h2>
 <p>Used by OPAL to sends the OPAL HMI Event to the host OS that reports a
 summary of HMI error and whether it was successfully recovered or not.</p>
@@ -120,10 +120,10 @@ Version 0 is invalid version and unsupported.</p>
 to V1 version.</p>
 <p>Notes:</p>
 <ul class="simple">
-<li>When adding new structure to the union in future, the version number
-must be bumped.</li>
-<li>All future versions must be backward compatible to all its older versions.</li>
-<li>Size of this structure should not exceed that of struct opal_msg.</li>
+<li><p>When adding new structure to the union in future, the version number
+must be bumped.</p></li>
+<li><p>All future versions must be backward compatible to all its older versions.</p></li>
+<li><p>Size of this structure should not exceed that of struct opal_msg.</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">OpalHMIEvent</span> <span class="p">{</span>
      <span class="n">uint8_t</span>         <span class="n">version</span><span class="p">;</span>        <span class="o">/*</span> <span class="mh">0x00</span> <span class="o">*/</span>
@@ -155,15 +155,15 @@ must be bumped.</li>
 <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="opal-msg-dpo">
+</section>
+<section id="opal-msg-dpo">
 <span id="id3"></span><h2>OPAL_MSG_DPO<a class="headerlink" href="#opal-msg-dpo" title="Permalink to this headline">¶</a></h2>
 <p>Delayed poweroff where OPAL informs host OS that a poweroff has been
 requested and a forced shutdown will happen in future. Host OS can use
 OPAL_GET_DPO_STATUS API to query OPAL the number of seconds remaining
 before a forced poweroff will occur.</p>
-</div>
-<div class="section" id="opal-msg-prd">
+</section>
+<section id="opal-msg-prd">
 <span id="id4"></span><h2>OPAL_MSG_PRD<a class="headerlink" href="#opal-msg-prd" title="Permalink to this headline">¶</a></h2>
 <p>This message is a OPAL-to-HBRT notification, and contains a
 struct opal_prd_msg:</p>
@@ -206,8 +206,8 @@ struct opal_prd_msg:</p>
 </div>
 <p>Responses from the kernel use the same message format, but are passed
 through the <a class="reference internal" href="opal-prd-msg-113.html#opal-prd-msg"><span class="std std-ref">OPAL_PRD_MSG</span></a> call.</p>
-</div>
-<div class="section" id="opal-msg-occ">
+</section>
+<section id="opal-msg-occ">
 <h2>OPAL_MSG_OCC<a class="headerlink" href="#opal-msg-occ" title="Permalink to this headline">¶</a></h2>
 <p>This is used by OPAL to inform host about OCC events like OCC reset,
 OCC load and throttle status change by OCC which can indicate the
@@ -247,15 +247,16 @@ these values.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">opal_occ_msg.type</span> <span class="pre">&gt;</span> <span class="pre">2</span></code> then host should ignore the message for now,
 new events can be defined for <code class="docutils literal notranslate"><span class="pre">opal_occ_msg.type</span></code> in the future versions
 of OPAL.</p>
-</div>
-<div class="section" id="opal-msg-prd2">
+</section>
+<section id="opal-msg-prd2">
 <h2>OPAL_MSG_PRD2<a class="headerlink" href="#opal-msg-prd2" title="Permalink to this headline">¶</a></h2>
 <p>This message is a OPAL-to-HBRT notification. Its same as OPAL_MSG_PRD except
 this one supports passing more than 64bytes (8*8) of data.</p>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -291,17 +292,15 @@ this one supports passing more than 64bytes (8*8) of data.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -318,14 +317,15 @@ this one supports passing more than 64bytes (8*8) of data.</p>
         <li class="right" >
           <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_MESSAGE</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>PCI &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>PCI &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -34,8 +33,9 @@
         <li class="right" >
           <a href="nvlink.html" title="OPAL/Skiboot Nvlink Interface Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot d6d8386
- documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e6cda17
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PCI</a></li> 
       </ul>
     </div>  
 
@@ -44,27 +44,27 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="pci">
+  <section id="pci">
 <h1>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="debugging">
+<section id="debugging">
 <h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
 <p>There exist a couple of NVRAM options for enabling extra debug functionality
 to help debug PCI issues. These are not ABI and may be changed or removed at
 <strong>any</strong> time.</p>
-<div class="section" id="verbose-eeh">
+<section id="verbose-eeh">
 <h3>Verbose EEH<a class="headerlink" href="#verbose-eeh" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">pci</span><span class="o">-</span><span class="n">eeh</span><span class="o">-</span><span class="n">verbose</span><span class="o">=</span><span class="n">true</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="disable-eeh-mmio">
+</section>
+<section id="disable-eeh-mmio">
 <h3>Disable EEH MMIO<a class="headerlink" href="#disable-eeh-mmio" title="Permalink to this headline">¶</a></h3>
-<dl class="docutils">
-<dt>::</dt>
-<dd>nvram -p ibm,skiboot –update-config pci-eeh-mmio=disabled</dd>
+<dl class="simple">
+<dt>::</dt><dd><p>nvram -p ibm,skiboot –update-config pci-eeh-mmio=disabled</p>
+</dd>
 </dl>
-</div>
-<div class="section" id="check-for-rx-errors-after-link-training">
+</section>
+<section id="check-for-rx-errors-after-link-training">
 <h3>Check for RX errors after link training<a class="headerlink" href="#check-for-rx-errors-after-link-training" title="Permalink to this headline">¶</a></h3>
 <p>Some PHB4 PHYs can get stuck in a bad state where they are constantly
 retraining the link. This happens transparently to skiboot and Linux
@@ -82,8 +82,8 @@ retrain the link. i.e.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvram</span> <span class="o">-</span><span class="n">p</span> <span class="n">ibm</span><span class="p">,</span><span class="n">skiboot</span> <span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">config</span> <span class="n">phb</span><span class="o">-</span><span class="n">rx</span><span class="o">-</span><span class="n">err</span><span class="o">-</span><span class="nb">max</span><span class="o">=</span><span class="mi">8</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="retrain-link-if-degraded">
+</section>
+<section id="retrain-link-if-degraded">
 <h3>Retrain link if degraded<a class="headerlink" href="#retrain-link-if-degraded" title="Permalink to this headline">¶</a></h3>
 <p>On P9 Scale Out (Nimbus) DD2.0 and Scale in (Cumulus) DD1.0 (and
 below) the PCIe PHY can lockup causing training issues. This can cause
@@ -107,16 +107,16 @@ P9 chips when a degraded link is detected. The new option is
 </div>
 <p>This option may increase the boot time if used on a badly behaving
 card.</p>
-</div>
-<div class="section" id="maximum-link-speed">
+</section>
+<section id="maximum-link-speed">
 <h3>Maximum link speed<a class="headerlink" href="#maximum-link-speed" title="Permalink to this headline">¶</a></h3>
 <p>Was useful during bringup on P9 DD1.</p>
-<dl class="docutils">
-<dt>::</dt>
-<dd>nvram -p ibm,skiboot –update-config pcie-max-link-speed=4</dd>
+<dl class="simple">
+<dt>::</dt><dd><p>nvram -p ibm,skiboot –update-config pcie-max-link-speed=4</p>
+</dd>
 </dl>
-</div>
-<div class="section" id="ric-mata-mode">
+</section>
+<section id="ric-mata-mode">
 <h3>Ric Mata Mode<a class="headerlink" href="#ric-mata-mode" title="Permalink to this headline">¶</a></h3>
 <p>This mode (for PHB4) will trace the training process closely. This activates
 as soon as PERST is deasserted and produces human readable output of
@@ -149,9 +149,9 @@ and details on speed and link width.</p>
 </div>
 <p>Named after the person the output of this mode is typically sent to.</p>
 <p><strong>WARNING</strong>: The documentation below <strong>urgently needs updating</strong> and is <em>woefully</em> incomplete.</p>
-</div>
-</div>
-<div class="section" id="ioda-pe-setup-sequences">
+</section>
+</section>
+<section id="ioda-pe-setup-sequences">
 <h2>IODA PE Setup Sequences<a class="headerlink" href="#ioda-pe-setup-sequences" title="Permalink to this headline">¶</a></h2>
 <p>(<strong>WARNING</strong>: this was rescued from old internal documentation. Needs verification)</p>
 <p>To setup basic PE mappings, the host performs this basic sequence:</p>
@@ -162,23 +162,22 @@ allocate memory for PE structures and then calls
 <p>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_set_peltv(phb_id,</span> <span class="pre">parent_pe,</span> <span class="pre">child_pe,</span> <span class="pre">state)</span></code> to
 set a parent PELT vector bit for the child PE argument to 1 (a child of the
 parent) or 0 (not in the parent PE domain).</p>
-</div>
-<div class="section" id="ioda-mmio-setup-sequences">
+</section>
+<section id="ioda-mmio-setup-sequences">
 <h2>IODA MMIO Setup Sequences<a class="headerlink" href="#ioda-mmio-setup-sequences" title="Permalink to this headline">¶</a></h2>
 <p>(<strong>WARNING</strong>: this was rescued from old internal documentation. Needs verification)</p>
 <p>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_phb_mmio_enable(</span> <span class="pre">phb_id,</span> <span class="pre">window_type,</span> <span class="pre">window_num,</span> <span class="pre">0x0)</span></code> to disable the MMIO window.</p>
 <p>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_set_phb_mmio_window(</span> <span class="pre">phb_id,</span> <span class="pre">mmio_window,</span> <span class="pre">starting_real_address,</span> <span class="pre">starting_pci_address,</span> <span class="pre">segment_size)</span></code> to change the MMIO window location in PCI and/or processor real address space, or to change the size – and corresponding window size – of a particular MMIO window.</p>
 <p>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_map_pe_mmio_window(</span> <span class="pre">pe_number,</span> <span class="pre">mmio_window,</span> <span class="pre">segment_number)</span></code> to map PEs to window segments, for each segment mapped to each PE.</p>
 <p>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_phb_mmio_enable(</span> <span class="pre">phb_id,</span> <span class="pre">window_type,</span> <span class="pre">window_num,</span> <span class="pre">0x1)</span></code> to enable the MMIO window.</p>
-</div>
-<div class="section" id="ioda-msi-setup-sequences">
+</section>
+<section id="ioda-msi-setup-sequences">
 <h2>IODA MSI Setup Sequences<a class="headerlink" href="#ioda-msi-setup-sequences" title="Permalink to this headline">¶</a></h2>
 <p>(<strong>WARNING</strong>: this was rescued from old internal documentation. Needs verification)</p>
 <p>To setup MSIs:</p>
 <ol class="arabic">
-<li><p class="first">For ibm,opal-ioda PHBs, the host chooses an MVE for a PE to use and calls <code class="docutils literal notranslate"><span class="pre">opal_pci_set_mve(</span> <span class="pre">phb_id,</span> <span class="pre">mve_number,</span> <span class="pre">pe_number,)</span></code> to setup the MVE for the PE number. HAL treats this call as a NOP and returns hal_success status for ibm,opal-ioda2 PHBs.</p>
-</li>
-<li><p class="first">The host chooses an XIVE to use with a PE and calls
+<li><p>For ibm,opal-ioda PHBs, the host chooses an MVE for a PE to use and calls <code class="docutils literal notranslate"><span class="pre">opal_pci_set_mve(</span> <span class="pre">phb_id,</span> <span class="pre">mve_number,</span> <span class="pre">pe_number,)</span></code> to setup the MVE for the PE number. HAL treats this call as a NOP and returns hal_success status for ibm,opal-ioda2 PHBs.</p></li>
+<li><p>The host chooses an XIVE to use with a PE and calls
 a. <code class="docutils literal notranslate"><span class="pre">opal_pci_set_xive_pe(</span> <span class="pre">phb_id,</span> <span class="pre">xive_number,</span> <span class="pre">pe_number)</span></code> to authorize that PE to signal that XIVE as an interrupt. The host must call this function for each XIVE assigned to a particular PE, but may use this call for all XIVEs prior to calling <code class="docutils literal notranslate"><span class="pre">opel_pci_set_mve()</span></code> to bind the PE XIVEs to an MVE. For MSI conventional, the host must bind a unique MVE for each sequential set of 32 XIVEs.
 b. The host forms the interrupt_source_number from the combination of the device tree MSI property base BUID and XIVE number, as an input to <code class="docutils literal notranslate"><span class="pre">opal_set_xive(interrupt_source_number,</span> <span class="pre">server_number,</span> <span class="pre">priority)</span></code> and <code class="docutils literal notranslate"><span class="pre">opal_get_xive(interrupt_source_number,</span> <span class="pre">server_number,</span> <span class="pre">priority)</span></code> to set or return the server and priority numbers within an XIVE.
 c. <code class="docutils literal notranslate"><span class="pre">opal_get_msi_64[32](phb_id,</span> <span class="pre">mve_number,</span> <span class="pre">xive_num,</span> <span class="pre">msi_range,</span> <span class="pre">msi_address,</span> <span class="pre">message_data)</span></code> to determine the MSI DMA address (32 or 64 bit) and message data value for that xive.</p>
@@ -186,26 +185,26 @@ c. <code class="docutils literal notranslate"><span class="pre">opal_get_msi_64[
 <div><p>For MSI conventional, the host uses this for each sequential power of 2 set of 1 to 32 MSIs, to determine the MSI DMA address and starting message data value for that MSI range. For MSI-X, the host calls this uniquely for each MSI interrupt with an msi_range input value of 1.</p>
 </div></blockquote>
 </li>
-<li><p class="first">For <code class="docutils literal notranslate"><span class="pre">ibm,opal-ioda</span></code> PHBs, once the MVE and XIVRs are setup for a PE, the host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_set_mve_enable(</span> <span class="pre">phb_id,</span> <span class="pre">mve_number,</span> <span class="pre">state)</span></code> to enable that MVE to be a valid target of MSI DMAs. The host may also call this function to disable an MVE when changing PE domains or states.</p>
-</li>
+<li><p>For <code class="docutils literal notranslate"><span class="pre">ibm,opal-ioda</span></code> PHBs, once the MVE and XIVRs are setup for a PE, the host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_set_mve_enable(</span> <span class="pre">phb_id,</span> <span class="pre">mve_number,</span> <span class="pre">state)</span></code> to enable that MVE to be a valid target of MSI DMAs. The host may also call this function to disable an MVE when changing PE domains or states.</p></li>
 </ol>
-</div>
-<div class="section" id="ioda-dma-setup-sequences">
+</section>
+<section id="ioda-dma-setup-sequences">
 <h2>IODA DMA Setup Sequences<a class="headerlink" href="#ioda-dma-setup-sequences" title="Permalink to this headline">¶</a></h2>
 <p>(<strong>WARNING</strong>: this was rescued from old internal documentation. Needs verification)</p>
 <p>To Manage DMA Windows :</p>
 <ol class="arabic simple">
-<li>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_map_pe_dma_window(</span> <span class="pre">phb_id,</span> <span class="pre">dma_window_number,</span> <span class="pre">pe_number,</span> <span class="pre">tce_levels,</span> <span class="pre">tce_table_addr,</span> <span class="pre">tce_table_size,</span> <span class="pre">tce_page_size,</span> <span class="pre">utin64_t*</span> <span class="pre">pci_start_addr</span> <span class="pre">)</span></code> to setup a DMA window for a PE to translate through a TCE table structure in KVM memory.</li>
-<li>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_map_pe_dma_window_real(</span> <span class="pre">phb_id,</span> <span class="pre">dma_window_number,</span> <span class="pre">pe_number,</span> <span class="pre">mem_low_addr,</span> <span class="pre">mem_high_addr)</span></code> to setup a DMA window for a PE that is translated (but validated by the PHB as an untranlsated address space authorized to this PE).</li>
+<li><p>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_map_pe_dma_window(</span> <span class="pre">phb_id,</span> <span class="pre">dma_window_number,</span> <span class="pre">pe_number,</span> <span class="pre">tce_levels,</span> <span class="pre">tce_table_addr,</span> <span class="pre">tce_table_size,</span> <span class="pre">tce_page_size,</span> <span class="pre">utin64_t*</span> <span class="pre">pci_start_addr</span> <span class="pre">)</span></code> to setup a DMA window for a PE to translate through a TCE table structure in KVM memory.</p></li>
+<li><p>The host calls <code class="docutils literal notranslate"><span class="pre">opal_pci_map_pe_dma_window_real(</span> <span class="pre">phb_id,</span> <span class="pre">dma_window_number,</span> <span class="pre">pe_number,</span> <span class="pre">mem_low_addr,</span> <span class="pre">mem_high_addr)</span></code> to setup a DMA window for a PE that is translated (but validated by the PHB as an untranlsated address space authorized to this PE).</p></li>
 </ol>
-</div>
-<div class="section" id="device-tree-bindings">
+</section>
+<section id="device-tree-bindings">
 <h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Permalink to this headline">¶</a></h2>
 <p>See <a class="reference internal" href="device-tree/pci.html"><span class="doc">PCI Device Tree Bindings</span></a> for device tree information.</p>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -246,17 +245,15 @@ c. <code class="docutils literal notranslate"><span class="pre">opal_get_msi_64[
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -273,13 +270,14 @@ c. <code class="docutils literal notranslate"><span class="pre">opal_get_msi_64[
         <li class="right" >
           <a href="nvlink.html" title="OPAL/Skiboot Nvlink Interface Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot d6d8386
- documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e6cda17
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PCI</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

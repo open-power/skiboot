@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>ibm,opal/sensor-groups &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>ibm,opal/sensor-groups &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -34,10 +33,11 @@
         <li class="right" >
           <a href="secvar.html" title="Secvar Binding"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../ibm,opal.html" accesskey="U">ibm,opal</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" accesskey="U">ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal/sensor-groups</a></li> 
       </ul>
     </div>  
 
@@ -46,28 +46,28 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ibm-opal-sensor-groups">
+  <section id="ibm-opal-sensor-groups">
 <span id="device-tree-ibm-opal-sensor-groups"></span><h1>ibm,opal/sensor-groups<a class="headerlink" href="#ibm-opal-sensor-groups" title="Permalink to this headline">¶</a></h1>
 <p>This node contains all sensor groups defined in the system.
 Each child node here represents a sensor group.</p>
-<dl class="docutils">
-<dt>For example <span class="classifier-delimiter">:</span> <span class="classifier">::</span></dt>
-<dd><a class="reference external" href="mailto:occ-csm&#37;&#52;&#48;1c00020/">occ-csm<span>&#64;</span>1c00020/</a></dd>
+<dl class="simple">
+<dt>For example<span class="classifier">::</span></dt><dd><p><a class="reference external" href="mailto:occ-csm&#37;&#52;&#48;1c00020/">occ-csm<span>&#64;</span>1c00020/</a></p>
+</dd>
 </dl>
 <p>The compatible property is set to “ibm,opal-sensor-group”</p>
 <p>Each child node has below properties:</p>
-<dl class="docutils">
-<dt><cite>type</cite></dt>
-<dd>string to indicate the sensor group</dd>
-<dt><cite>sensor-group-id</cite></dt>
-<dd>Uniquely identifies a sensor group.</dd>
-<dt><cite>ibm,chip-id</cite></dt>
-<dd>This property is added if the sensor group is chip specific</dd>
-<dt><cite>sensors</cite></dt>
-<dd>Phandles of all sensors belonging to this sensor group</dd>
-<dt><cite>ops</cite></dt>
-<dd>Array of opal call numbers to indicate the available sensor group
-operations</dd>
+<dl class="simple">
+<dt><cite>type</cite></dt><dd><p>string to indicate the sensor group</p>
+</dd>
+<dt><cite>sensor-group-id</cite></dt><dd><p>Uniquely identifies a sensor group.</p>
+</dd>
+<dt><cite>ibm,chip-id</cite></dt><dd><p>This property is added if the sensor group is chip specific</p>
+</dd>
+<dt><cite>sensors</cite></dt><dd><p>Phandles of all sensors belonging to this sensor group</p>
+</dd>
+<dt><cite>ops</cite></dt><dd><p>Array of opal call numbers to indicate the available sensor group
+operations</p>
+</dd>
 </dl>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,opal</span> <span class="p">{</span>
   <span class="nc">sensor-groups</span> <span class="p">{</span>
@@ -85,9 +85,10 @@ operations</dd>
  <span class="p">};</span>
 </pre></div>
 </div>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -107,17 +108,15 @@ operations</dd>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -134,15 +133,16 @@ operations</dd>
         <li class="right" >
           <a href="secvar.html" title="Secvar Binding"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../ibm,opal.html" >ibm,opal</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,opal/sensor-groups</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

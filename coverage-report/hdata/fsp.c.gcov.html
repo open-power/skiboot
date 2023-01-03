@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">90</td>
-            <td class="headerCovTableEntry">245</td>
-            <td class="headerCovTableEntryLo">36.7 %</td>
+            <td class="headerCovTableEntry">247</td>
+            <td class="headerCovTableEntryLo">36.4 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">6</td>
@@ -318,7 +318,7 @@
 <a name="247"><span class="lineNum">     247 </span>                :<span class="lineNoCov">          0 :         base = be64_to_cpu(iopath-&gt;lpc.uart_base);</span></a>
 <a name="248"><span class="lineNum">     248 </span>                :            : </a>
 <a name="249"><span class="lineNum">     249 </span>                :<span class="lineNoCov">          0 :         serial = add_lpc_io_node(lpc, &quot;serial&quot;, base,</span></a>
-<a name="250"><span class="lineNum">     250 </span>                :            :                 be32_to_cpu(iopath-&gt;lpc.uart_size));</a>
+<a name="250"><span class="lineNum">     250 </span>                :<span class="lineNoCov">          0 :                 be32_to_cpu(iopath-&gt;lpc.uart_size));</span></a>
 <a name="251"><span class="lineNum">     251 </span>                :            : </a>
 <a name="252"><span class="lineNum">     252 </span>                :<span class="lineNoCov">          0 :         dt_add_property_string(serial, &quot;compatible&quot;, &quot;ns16550&quot;);</span></a>
 <a name="253"><span class="lineNum">     253 </span>                :            : </a>
@@ -419,7 +419,7 @@
 <a name="348"><span class="lineNum">     348 </span>                :            :                                       ipmi_sensors-&gt;data[i].type);</a>
 <a name="349"><span class="lineNum">     349 </span>                :            : </a>
 <a name="350"><span class="lineNum">     350 </span>                :<span class="lineNoCov">          0 :                 add_chip_id_to_sensors(sensor_node,</span></a>
-<a name="351"><span class="lineNum">     351 </span>                :            :                                 be32_to_cpu(ipmi_sensors-&gt;data[i].slca_index));</a>
+<a name="351"><span class="lineNum">     351 </span>                :<span class="lineNoCov">          0 :                                 be32_to_cpu(ipmi_sensors-&gt;data[i].slca_index));</span></a>
 <a name="352"><span class="lineNum">     352 </span>                :            :         }</a>
 <a name="353"><span class="lineNum">     353 </span>                :            : }</a>
 <a name="354"><span class="lineNum">     354 </span>                :            : </a>

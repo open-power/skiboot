@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_PCI_GET_PHB_DIAG_DATA2 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_PCI_GET_PHB_DIAG_DATA2 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-pci-get-hub-diag-data-50.html" title="OPAL_PCI_GET_HUB_DIAG_DATA"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_GET_PHB_DIAG_DATA2</a></li> 
       </ul>
     </div>  
 
@@ -45,229 +45,229 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-pci-get-phb-diag-data2">
+  <section id="opal-pci-get-phb-diag-data2">
 <span id="id1"></span><h1>OPAL_PCI_GET_PHB_DIAG_DATA2<a class="headerlink" href="#opal-pci-get-phb-diag-data2" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_GET_PHB_DIAG_DATA2          64</span>
 
 <span class="cm">/**</span>
 <span class="cm"> * This structure defines the overlay which will be used to store PHB error</span>
 <span class="cm"> * data upon request.</span>
-<span class="cm"> */</span>
- <span class="k">enum</span> <span class="p">{</span>
-     <span class="n">OPAL_PHB_ERROR_DATA_VERSION_1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
- <span class="p">};</span>
+<span class="cm"> */</span><span class="w"></span>
+<span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB_ERROR_DATA_VERSION_1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w"> </span><span class="p">};</span><span class="w"></span>
 
-<span class="k">enum</span> <span class="p">{</span>
-     <span class="n">OPAL_PHB_ERROR_DATA_TYPE_P7IOC</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-     <span class="n">OPAL_PHB_ERROR_DATA_TYPE_PHB3</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-     <span class="n">OPAL_PHB_ERROR_DATA_TYPE_PHB4</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="p">};</span>
+<span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB_ERROR_DATA_TYPE_P7IOC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB_ERROR_DATA_TYPE_PHB3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB_ERROR_DATA_TYPE_PHB4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="k">enum</span> <span class="p">{</span>
-     <span class="n">OPAL_P7IOC_NUM_PEST_REGS</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
-     <span class="n">OPAL_PHB3_NUM_PEST_REGS</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
-     <span class="n">OPAL_PHB4_NUM_PEST_REGS</span> <span class="o">=</span> <span class="mi">512</span>
-<span class="p">};</span>
+<span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_P7IOC_NUM_PEST_REGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">128</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB3_NUM_PEST_REGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">256</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_PHB4_NUM_PEST_REGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">512</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="k">struct</span> <span class="n">OpalIoPhbErrorCommon</span> <span class="p">{</span>
-     <span class="n">__be32</span> <span class="n">version</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">ioType</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">len</span><span class="p">;</span>
-<span class="p">};</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">OpalIoPhbErrorCommon</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">version</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">ioType</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">len</span><span class="p">;</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="k">struct</span> <span class="n">OpalIoP7IOCPhbErrorData</span> <span class="p">{</span>
-     <span class="k">struct</span> <span class="n">OpalIoPhbErrorCommon</span> <span class="n">common</span><span class="p">;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">OpalIoP7IOCPhbErrorData</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="k">struct</span><span class="w"> </span><span class="nc">OpalIoPhbErrorCommon</span><span class="w"> </span><span class="n">common</span><span class="p">;</span><span class="w"></span>
 
-     <span class="n">__be32</span> <span class="n">brdgCtl</span><span class="p">;</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">brdgCtl</span><span class="p">;</span><span class="w"></span>
 
-     <span class="c1">// P7IOC utl regs</span>
-     <span class="n">__be32</span> <span class="n">portStatusReg</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">rootCmplxStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">busAgentStatus</span><span class="p">;</span>
+<span class="w">     </span><span class="c1">// P7IOC utl regs</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">portStatusReg</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">rootCmplxStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">busAgentStatus</span><span class="p">;</span><span class="w"></span>
 
-     <span class="c1">// P7IOC cfg regs</span>
-     <span class="n">__be32</span> <span class="n">deviceStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">slotStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">linkStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">devCmdStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">devSecStatus</span><span class="p">;</span>
+<span class="w">     </span><span class="c1">// P7IOC cfg regs</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">deviceStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">slotStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">linkStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">devCmdStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">devSecStatus</span><span class="p">;</span><span class="w"></span>
 
-     <span class="c1">// cfg AER regs</span>
-     <span class="n">__be32</span> <span class="n">rootErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">uncorrErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">corrErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr1</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr2</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr3</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr4</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">sourceId</span><span class="p">;</span>
+<span class="w">     </span><span class="c1">// cfg AER regs</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">rootErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">uncorrErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">corrErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr1</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr2</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr3</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr4</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">sourceId</span><span class="p">;</span><span class="w"></span>
 
-     <span class="n">__be32</span> <span class="n">rsv3</span><span class="p">;</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">rsv3</span><span class="p">;</span><span class="w"></span>
 
-     <span class="c1">// Record data about the call to allocate a buffer.</span>
-     <span class="n">__be64</span> <span class="n">errorClass</span><span class="p">;</span>
-     <span class="n">__be64</span> <span class="n">correlator</span><span class="p">;</span>
+<span class="w">     </span><span class="c1">// Record data about the call to allocate a buffer.</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">errorClass</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">correlator</span><span class="p">;</span><span class="w"></span>
 
-     <span class="c1">//P7IOC MMIO Error Regs</span>
-     <span class="n">__be64</span> <span class="n">p7iocPlssr</span><span class="p">;</span>                <span class="c1">// n120</span>
-     <span class="n">__be64</span> <span class="n">p7iocCsr</span><span class="p">;</span>                  <span class="c1">// n110</span>
-     <span class="n">__be64</span> <span class="n">lemFir</span><span class="p">;</span>                    <span class="c1">// nC00</span>
-     <span class="n">__be64</span> <span class="n">lemErrorMask</span><span class="p">;</span>              <span class="c1">// nC18</span>
-     <span class="n">__be64</span> <span class="n">lemWOF</span><span class="p">;</span>                    <span class="c1">// nC40</span>
-     <span class="n">__be64</span> <span class="n">phbErrorStatus</span><span class="p">;</span>            <span class="c1">// nC80</span>
-     <span class="n">__be64</span> <span class="n">phbFirstErrorStatus</span><span class="p">;</span>       <span class="c1">// nC88</span>
-     <span class="n">__be64</span> <span class="n">phbErrorLog0</span><span class="p">;</span>              <span class="c1">// nCC0</span>
-     <span class="n">__be64</span> <span class="n">phbErrorLog1</span><span class="p">;</span>              <span class="c1">// nCC8</span>
-     <span class="n">__be64</span> <span class="n">mmioErrorStatus</span><span class="p">;</span>           <span class="c1">// nD00</span>
-     <span class="n">__be64</span> <span class="n">mmioFirstErrorStatus</span><span class="p">;</span>      <span class="c1">// nD08</span>
-     <span class="n">__be64</span> <span class="n">mmioErrorLog0</span><span class="p">;</span>             <span class="c1">// nD40</span>
-     <span class="n">__be64</span> <span class="n">mmioErrorLog1</span><span class="p">;</span>             <span class="c1">// nD48</span>
-     <span class="n">__be64</span> <span class="n">dma0ErrorStatus</span><span class="p">;</span>           <span class="c1">// nD80</span>
-     <span class="n">__be64</span> <span class="n">dma0FirstErrorStatus</span><span class="p">;</span>      <span class="c1">// nD88</span>
-     <span class="n">__be64</span> <span class="n">dma0ErrorLog0</span><span class="p">;</span>             <span class="c1">// nDC0</span>
-     <span class="n">__be64</span> <span class="n">dma0ErrorLog1</span><span class="p">;</span>             <span class="c1">// nDC8</span>
-     <span class="n">__be64</span> <span class="n">dma1ErrorStatus</span><span class="p">;</span>           <span class="c1">// nE00</span>
-     <span class="n">__be64</span> <span class="n">dma1FirstErrorStatus</span><span class="p">;</span>      <span class="c1">// nE08</span>
-     <span class="n">__be64</span> <span class="n">dma1ErrorLog0</span><span class="p">;</span>             <span class="c1">// nE40</span>
-     <span class="n">__be64</span> <span class="n">dma1ErrorLog1</span><span class="p">;</span>             <span class="c1">// nE48</span>
-     <span class="n">__be64</span> <span class="n">pestA</span><span class="p">[</span><span class="n">OPAL_P7IOC_NUM_PEST_REGS</span><span class="p">];</span>
-     <span class="n">__be64</span> <span class="n">pestB</span><span class="p">[</span><span class="n">OPAL_P7IOC_NUM_PEST_REGS</span><span class="p">];</span>
-<span class="p">};</span>
+<span class="w">     </span><span class="c1">//P7IOC MMIO Error Regs</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">p7iocPlssr</span><span class="p">;</span><span class="w">                </span><span class="c1">// n120</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">p7iocCsr</span><span class="p">;</span><span class="w">                  </span><span class="c1">// n110</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemFir</span><span class="p">;</span><span class="w">                    </span><span class="c1">// nC00</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemErrorMask</span><span class="p">;</span><span class="w">              </span><span class="c1">// nC18</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemWOF</span><span class="p">;</span><span class="w">                    </span><span class="c1">// nC40</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorStatus</span><span class="p">;</span><span class="w">            </span><span class="c1">// nC80</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbFirstErrorStatus</span><span class="p">;</span><span class="w">       </span><span class="c1">// nC88</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorLog0</span><span class="p">;</span><span class="w">              </span><span class="c1">// nCC0</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorLog1</span><span class="p">;</span><span class="w">              </span><span class="c1">// nCC8</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioErrorStatus</span><span class="p">;</span><span class="w">           </span><span class="c1">// nD00</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioFirstErrorStatus</span><span class="p">;</span><span class="w">      </span><span class="c1">// nD08</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioErrorLog0</span><span class="p">;</span><span class="w">             </span><span class="c1">// nD40</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioErrorLog1</span><span class="p">;</span><span class="w">             </span><span class="c1">// nD48</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0ErrorStatus</span><span class="p">;</span><span class="w">           </span><span class="c1">// nD80</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0FirstErrorStatus</span><span class="p">;</span><span class="w">      </span><span class="c1">// nD88</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0ErrorLog0</span><span class="p">;</span><span class="w">             </span><span class="c1">// nDC0</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0ErrorLog1</span><span class="p">;</span><span class="w">             </span><span class="c1">// nDC8</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1ErrorStatus</span><span class="p">;</span><span class="w">           </span><span class="c1">// nE00</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1FirstErrorStatus</span><span class="p">;</span><span class="w">      </span><span class="c1">// nE08</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1ErrorLog0</span><span class="p">;</span><span class="w">             </span><span class="c1">// nE40</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1ErrorLog1</span><span class="p">;</span><span class="w">             </span><span class="c1">// nE48</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">pestA</span><span class="p">[</span><span class="n">OPAL_P7IOC_NUM_PEST_REGS</span><span class="p">];</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">pestB</span><span class="p">[</span><span class="n">OPAL_P7IOC_NUM_PEST_REGS</span><span class="p">];</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="k">struct</span> <span class="n">OpalIoPhb3ErrorData</span> <span class="p">{</span>
-     <span class="k">struct</span> <span class="n">OpalIoPhbErrorCommon</span> <span class="n">common</span><span class="p">;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">OpalIoPhb3ErrorData</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="k">struct</span><span class="w"> </span><span class="nc">OpalIoPhbErrorCommon</span><span class="w"> </span><span class="n">common</span><span class="p">;</span><span class="w"></span>
 
-     <span class="n">__be32</span> <span class="n">brdgCtl</span><span class="p">;</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">brdgCtl</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* PHB3 UTL regs */</span>
-     <span class="n">__be32</span> <span class="n">portStatusReg</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">rootCmplxStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">busAgentStatus</span><span class="p">;</span>
+<span class="w">     </span><span class="cm">/* PHB3 UTL regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">portStatusReg</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">rootCmplxStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">busAgentStatus</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* PHB3 cfg regs */</span>
-     <span class="n">__be32</span> <span class="n">deviceStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">slotStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">linkStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">devCmdStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">devSecStatus</span><span class="p">;</span>
+<span class="w">     </span><span class="cm">/* PHB3 cfg regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">deviceStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">slotStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">linkStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">devCmdStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">devSecStatus</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* cfg AER regs */</span>
-     <span class="n">__be32</span> <span class="n">rootErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">uncorrErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">corrErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr1</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr2</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr3</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr4</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">sourceId</span><span class="p">;</span>
+<span class="w">     </span><span class="cm">/* cfg AER regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">rootErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">uncorrErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">corrErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr1</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr2</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr3</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr4</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">sourceId</span><span class="p">;</span><span class="w"></span>
 
-     <span class="n">__be32</span> <span class="n">rsv3</span><span class="p">;</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">rsv3</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* Record data about the call to allocate a buffer */</span>
-     <span class="n">__be64</span> <span class="n">errorClass</span><span class="p">;</span>
-     <span class="n">__be64</span> <span class="n">correlator</span><span class="p">;</span>
+<span class="w">     </span><span class="cm">/* Record data about the call to allocate a buffer */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">errorClass</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">correlator</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* PHB3 MMIO Error Regs */</span>
-     <span class="n">__be64</span> <span class="n">nFir</span><span class="p">;</span>                    <span class="cm">/* 000 */</span>
-     <span class="n">__be64</span> <span class="n">nFirMask</span><span class="p">;</span>                <span class="cm">/* 003 */</span>
-     <span class="n">__be64</span> <span class="n">nFirWOF</span><span class="p">;</span>         <span class="cm">/* 008 */</span>
-     <span class="n">__be64</span> <span class="n">phbPlssr</span><span class="p">;</span>                <span class="cm">/* 120 */</span>
-     <span class="n">__be64</span> <span class="n">phbCsr</span><span class="p">;</span>          <span class="cm">/* 110 */</span>
-     <span class="n">__be64</span> <span class="n">lemFir</span><span class="p">;</span>          <span class="cm">/* C00 */</span>
-     <span class="n">__be64</span> <span class="n">lemErrorMask</span><span class="p">;</span>            <span class="cm">/* C18 */</span>
-     <span class="n">__be64</span> <span class="n">lemWOF</span><span class="p">;</span>          <span class="cm">/* C40 */</span>
-     <span class="n">__be64</span> <span class="n">phbErrorStatus</span><span class="p">;</span>  <span class="cm">/* C80 */</span>
-     <span class="n">__be64</span> <span class="n">phbFirstErrorStatus</span><span class="p">;</span>     <span class="cm">/* C88 */</span>
-     <span class="n">__be64</span> <span class="n">phbErrorLog0</span><span class="p">;</span>            <span class="cm">/* CC0 */</span>
-     <span class="n">__be64</span> <span class="n">phbErrorLog1</span><span class="p">;</span>            <span class="cm">/* CC8 */</span>
-     <span class="n">__be64</span> <span class="n">mmioErrorStatus</span><span class="p">;</span> <span class="cm">/* D00 */</span>
-     <span class="n">__be64</span> <span class="n">mmioFirstErrorStatus</span><span class="p">;</span>    <span class="cm">/* D08 */</span>
-     <span class="n">__be64</span> <span class="n">mmioErrorLog0</span><span class="p">;</span>           <span class="cm">/* D40 */</span>
-     <span class="n">__be64</span> <span class="n">mmioErrorLog1</span><span class="p">;</span>           <span class="cm">/* D48 */</span>
-     <span class="n">__be64</span> <span class="n">dma0ErrorStatus</span><span class="p">;</span> <span class="cm">/* D80 */</span>
-     <span class="n">__be64</span> <span class="n">dma0FirstErrorStatus</span><span class="p">;</span>    <span class="cm">/* D88 */</span>
-     <span class="n">__be64</span> <span class="n">dma0ErrorLog0</span><span class="p">;</span>           <span class="cm">/* DC0 */</span>
-     <span class="n">__be64</span> <span class="n">dma0ErrorLog1</span><span class="p">;</span>           <span class="cm">/* DC8 */</span>
-     <span class="n">__be64</span> <span class="n">dma1ErrorStatus</span><span class="p">;</span> <span class="cm">/* E00 */</span>
-     <span class="n">__be64</span> <span class="n">dma1FirstErrorStatus</span><span class="p">;</span>    <span class="cm">/* E08 */</span>
-     <span class="n">__be64</span> <span class="n">dma1ErrorLog0</span><span class="p">;</span>           <span class="cm">/* E40 */</span>
-     <span class="n">__be64</span> <span class="n">dma1ErrorLog1</span><span class="p">;</span>           <span class="cm">/* E48 */</span>
-     <span class="n">__be64</span> <span class="n">pestA</span><span class="p">[</span><span class="n">OPAL_PHB3_NUM_PEST_REGS</span><span class="p">];</span>
-     <span class="n">__be64</span> <span class="n">pestB</span><span class="p">[</span><span class="n">OPAL_PHB3_NUM_PEST_REGS</span><span class="p">];</span>
-<span class="p">};</span>
+<span class="w">     </span><span class="cm">/* PHB3 MMIO Error Regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">nFir</span><span class="p">;</span><span class="w">                    </span><span class="cm">/* 000 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">nFirMask</span><span class="p">;</span><span class="w">                </span><span class="cm">/* 003 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">nFirWOF</span><span class="p">;</span><span class="w">         </span><span class="cm">/* 008 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPlssr</span><span class="p">;</span><span class="w">                </span><span class="cm">/* 120 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbCsr</span><span class="p">;</span><span class="w">          </span><span class="cm">/* 110 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemFir</span><span class="p">;</span><span class="w">          </span><span class="cm">/* C00 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemErrorMask</span><span class="p">;</span><span class="w">            </span><span class="cm">/* C18 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemWOF</span><span class="p">;</span><span class="w">          </span><span class="cm">/* C40 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorStatus</span><span class="p">;</span><span class="w">  </span><span class="cm">/* C80 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbFirstErrorStatus</span><span class="p">;</span><span class="w">     </span><span class="cm">/* C88 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorLog0</span><span class="p">;</span><span class="w">            </span><span class="cm">/* CC0 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorLog1</span><span class="p">;</span><span class="w">            </span><span class="cm">/* CC8 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioErrorStatus</span><span class="p">;</span><span class="w"> </span><span class="cm">/* D00 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioFirstErrorStatus</span><span class="p">;</span><span class="w">    </span><span class="cm">/* D08 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioErrorLog0</span><span class="p">;</span><span class="w">           </span><span class="cm">/* D40 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">mmioErrorLog1</span><span class="p">;</span><span class="w">           </span><span class="cm">/* D48 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0ErrorStatus</span><span class="p">;</span><span class="w"> </span><span class="cm">/* D80 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0FirstErrorStatus</span><span class="p">;</span><span class="w">    </span><span class="cm">/* D88 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0ErrorLog0</span><span class="p">;</span><span class="w">           </span><span class="cm">/* DC0 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma0ErrorLog1</span><span class="p">;</span><span class="w">           </span><span class="cm">/* DC8 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1ErrorStatus</span><span class="p">;</span><span class="w"> </span><span class="cm">/* E00 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1FirstErrorStatus</span><span class="p">;</span><span class="w">    </span><span class="cm">/* E08 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1ErrorLog0</span><span class="p">;</span><span class="w">           </span><span class="cm">/* E40 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">dma1ErrorLog1</span><span class="p">;</span><span class="w">           </span><span class="cm">/* E48 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">pestA</span><span class="p">[</span><span class="n">OPAL_PHB3_NUM_PEST_REGS</span><span class="p">];</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">pestB</span><span class="p">[</span><span class="n">OPAL_PHB3_NUM_PEST_REGS</span><span class="p">];</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="k">struct</span> <span class="n">OpalIoPhb4ErrorData</span> <span class="p">{</span>
-     <span class="k">struct</span> <span class="n">OpalIoPhbErrorCommon</span> <span class="n">common</span><span class="p">;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">OpalIoPhb4ErrorData</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="k">struct</span><span class="w"> </span><span class="nc">OpalIoPhbErrorCommon</span><span class="w"> </span><span class="n">common</span><span class="p">;</span><span class="w"></span>
 
-     <span class="n">__be32</span> <span class="n">brdgCtl</span><span class="p">;</span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">brdgCtl</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* XXX missing UTL registers? */</span>
+<span class="w">     </span><span class="cm">/* XXX missing UTL registers? */</span><span class="w"></span>
 
-     <span class="cm">/* PHB4 cfg regs */</span>
-     <span class="n">__be32</span> <span class="n">deviceStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">slotStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">linkStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">devCmdStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">devSecStatus</span><span class="p">;</span>
+<span class="w">     </span><span class="cm">/* PHB4 cfg regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">deviceStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">slotStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">linkStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">devCmdStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">devSecStatus</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* cfg AER regs */</span>
-     <span class="n">__be32</span> <span class="n">rootErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">uncorrErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">corrErrorStatus</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr1</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr2</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr3</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">tlpHdr4</span><span class="p">;</span>
-     <span class="n">__be32</span> <span class="n">sourceId</span><span class="p">;</span>
+<span class="w">     </span><span class="cm">/* cfg AER regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">rootErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">uncorrErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">corrErrorStatus</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr1</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr2</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr3</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">tlpHdr4</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be32</span><span class="w"> </span><span class="n">sourceId</span><span class="p">;</span><span class="w"></span>
 
-     <span class="cm">/* PHB4 ETU Error Regs */</span>
-     <span class="n">__be64</span> <span class="n">nFir</span><span class="p">;</span>                            <span class="cm">/* 000 */</span>
-     <span class="n">__be64</span> <span class="n">nFirMask</span><span class="p">;</span>                        <span class="cm">/* 003 */</span>
-     <span class="n">__be64</span> <span class="n">nFirWOF</span><span class="p">;</span>                         <span class="cm">/* 008 */</span>
-     <span class="n">__be64</span> <span class="n">phbPlssr</span><span class="p">;</span>                        <span class="cm">/* 120 */</span>
-     <span class="n">__be64</span> <span class="n">phbCsr</span><span class="p">;</span>                          <span class="cm">/* 110 */</span>
-     <span class="n">__be64</span> <span class="n">lemFir</span><span class="p">;</span>                          <span class="cm">/* C00 */</span>
-     <span class="n">__be64</span> <span class="n">lemErrorMask</span><span class="p">;</span>                    <span class="cm">/* C18 */</span>
-     <span class="n">__be64</span> <span class="n">lemWOF</span><span class="p">;</span>                          <span class="cm">/* C40 */</span>
-     <span class="n">__be64</span> <span class="n">phbErrorStatus</span><span class="p">;</span>                  <span class="cm">/* C80 */</span>
-     <span class="n">__be64</span> <span class="n">phbFirstErrorStatus</span><span class="p">;</span>             <span class="cm">/* C88 */</span>
-     <span class="n">__be64</span> <span class="n">phbErrorLog0</span><span class="p">;</span>                    <span class="cm">/* CC0 */</span>
-     <span class="n">__be64</span> <span class="n">phbErrorLog1</span><span class="p">;</span>                    <span class="cm">/* CC8 */</span>
-     <span class="n">__be64</span> <span class="n">phbTxeErrorStatus</span><span class="p">;</span>               <span class="cm">/* D00 */</span>
-     <span class="n">__be64</span> <span class="n">phbTxeFirstErrorStatus</span><span class="p">;</span>          <span class="cm">/* D08 */</span>
-     <span class="n">__be64</span> <span class="n">phbTxeErrorLog0</span><span class="p">;</span>                 <span class="cm">/* D40 */</span>
-     <span class="n">__be64</span> <span class="n">phbTxeErrorLog1</span><span class="p">;</span>                 <span class="cm">/* D48 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeArbErrorStatus</span><span class="p">;</span>            <span class="cm">/* D80 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeArbFirstErrorStatus</span><span class="p">;</span>       <span class="cm">/* D88 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeArbErrorLog0</span><span class="p">;</span>              <span class="cm">/* DC0 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeArbErrorLog1</span><span class="p">;</span>              <span class="cm">/* DC8 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeMrgErrorStatus</span><span class="p">;</span>            <span class="cm">/* E00 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeMrgFirstErrorStatus</span><span class="p">;</span>       <span class="cm">/* E08 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeMrgErrorLog0</span><span class="p">;</span>              <span class="cm">/* E40 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeMrgErrorLog1</span><span class="p">;</span>              <span class="cm">/* E48 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeTceErrorStatus</span><span class="p">;</span>            <span class="cm">/* E80 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeTceFirstErrorStatus</span><span class="p">;</span>       <span class="cm">/* E88 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeTceErrorLog0</span><span class="p">;</span>              <span class="cm">/* EC0 */</span>
-     <span class="n">__be64</span> <span class="n">phbRxeTceErrorLog1</span><span class="p">;</span>              <span class="cm">/* EC8 */</span>
+<span class="w">     </span><span class="cm">/* PHB4 ETU Error Regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">nFir</span><span class="p">;</span><span class="w">                            </span><span class="cm">/* 000 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">nFirMask</span><span class="p">;</span><span class="w">                        </span><span class="cm">/* 003 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">nFirWOF</span><span class="p">;</span><span class="w">                         </span><span class="cm">/* 008 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPlssr</span><span class="p">;</span><span class="w">                        </span><span class="cm">/* 120 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbCsr</span><span class="p">;</span><span class="w">                          </span><span class="cm">/* 110 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemFir</span><span class="p">;</span><span class="w">                          </span><span class="cm">/* C00 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemErrorMask</span><span class="p">;</span><span class="w">                    </span><span class="cm">/* C18 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">lemWOF</span><span class="p">;</span><span class="w">                          </span><span class="cm">/* C40 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorStatus</span><span class="p">;</span><span class="w">                  </span><span class="cm">/* C80 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbFirstErrorStatus</span><span class="p">;</span><span class="w">             </span><span class="cm">/* C88 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorLog0</span><span class="p">;</span><span class="w">                    </span><span class="cm">/* CC0 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbErrorLog1</span><span class="p">;</span><span class="w">                    </span><span class="cm">/* CC8 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbTxeErrorStatus</span><span class="p">;</span><span class="w">               </span><span class="cm">/* D00 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbTxeFirstErrorStatus</span><span class="p">;</span><span class="w">          </span><span class="cm">/* D08 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbTxeErrorLog0</span><span class="p">;</span><span class="w">                 </span><span class="cm">/* D40 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbTxeErrorLog1</span><span class="p">;</span><span class="w">                 </span><span class="cm">/* D48 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeArbErrorStatus</span><span class="p">;</span><span class="w">            </span><span class="cm">/* D80 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeArbFirstErrorStatus</span><span class="p">;</span><span class="w">       </span><span class="cm">/* D88 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeArbErrorLog0</span><span class="p">;</span><span class="w">              </span><span class="cm">/* DC0 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeArbErrorLog1</span><span class="p">;</span><span class="w">              </span><span class="cm">/* DC8 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeMrgErrorStatus</span><span class="p">;</span><span class="w">            </span><span class="cm">/* E00 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeMrgFirstErrorStatus</span><span class="p">;</span><span class="w">       </span><span class="cm">/* E08 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeMrgErrorLog0</span><span class="p">;</span><span class="w">              </span><span class="cm">/* E40 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeMrgErrorLog1</span><span class="p">;</span><span class="w">              </span><span class="cm">/* E48 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeTceErrorStatus</span><span class="p">;</span><span class="w">            </span><span class="cm">/* E80 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeTceFirstErrorStatus</span><span class="p">;</span><span class="w">       </span><span class="cm">/* E88 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeTceErrorLog0</span><span class="p">;</span><span class="w">              </span><span class="cm">/* EC0 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRxeTceErrorLog1</span><span class="p">;</span><span class="w">              </span><span class="cm">/* EC8 */</span><span class="w"></span>
 
-     <span class="cm">/* PHB4 REGB Error Regs */</span>
-     <span class="n">__be64</span> <span class="n">phbPblErrorStatus</span><span class="p">;</span>               <span class="cm">/* 1900 */</span>
-     <span class="n">__be64</span> <span class="n">phbPblFirstErrorStatus</span><span class="p">;</span>          <span class="cm">/* 1908 */</span>
-     <span class="n">__be64</span> <span class="n">phbPblErrorLog0</span><span class="p">;</span>                 <span class="cm">/* 1940 */</span>
-     <span class="n">__be64</span> <span class="n">phbPblErrorLog1</span><span class="p">;</span>                 <span class="cm">/* 1948 */</span>
-     <span class="n">__be64</span> <span class="n">phbPcieDlpErrorLog1</span><span class="p">;</span>             <span class="cm">/* 1AA0 */</span>
-     <span class="n">__be64</span> <span class="n">phbPcieDlpErrorLog2</span><span class="p">;</span>             <span class="cm">/* 1AA8 */</span>
-     <span class="n">__be64</span> <span class="n">phbPcieDlpErrorStatus</span><span class="p">;</span>           <span class="cm">/* 1AB0 */</span>
-     <span class="n">__be64</span> <span class="n">phbRegbErrorStatus</span><span class="p">;</span>              <span class="cm">/* 1C00 */</span>
-     <span class="n">__be64</span> <span class="n">phbRegbFirstErrorStatus</span><span class="p">;</span>         <span class="cm">/* 1C08 */</span>
-     <span class="n">__be64</span> <span class="n">phbRegbErrorLog0</span><span class="p">;</span>                <span class="cm">/* 1C40 */</span>
-     <span class="n">__be64</span> <span class="n">phbRegbErrorLog1</span><span class="p">;</span>                <span class="cm">/* 1C48 */</span>
+<span class="w">     </span><span class="cm">/* PHB4 REGB Error Regs */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPblErrorStatus</span><span class="p">;</span><span class="w">               </span><span class="cm">/* 1900 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPblFirstErrorStatus</span><span class="p">;</span><span class="w">          </span><span class="cm">/* 1908 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPblErrorLog0</span><span class="p">;</span><span class="w">                 </span><span class="cm">/* 1940 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPblErrorLog1</span><span class="p">;</span><span class="w">                 </span><span class="cm">/* 1948 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPcieDlpErrorLog1</span><span class="p">;</span><span class="w">             </span><span class="cm">/* 1AA0 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPcieDlpErrorLog2</span><span class="p">;</span><span class="w">             </span><span class="cm">/* 1AA8 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbPcieDlpErrorStatus</span><span class="p">;</span><span class="w">           </span><span class="cm">/* 1AB0 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRegbErrorStatus</span><span class="p">;</span><span class="w">              </span><span class="cm">/* 1C00 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRegbFirstErrorStatus</span><span class="p">;</span><span class="w">         </span><span class="cm">/* 1C08 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRegbErrorLog0</span><span class="p">;</span><span class="w">                </span><span class="cm">/* 1C40 */</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">phbRegbErrorLog1</span><span class="p">;</span><span class="w">                </span><span class="cm">/* 1C48 */</span><span class="w"></span>
 
-     <span class="n">__be64</span> <span class="n">pestA</span><span class="p">[</span><span class="n">OPAL_PHB4_NUM_PEST_REGS</span><span class="p">];</span>
-     <span class="n">__be64</span> <span class="n">pestB</span><span class="p">[</span><span class="n">OPAL_PHB4_NUM_PEST_REGS</span><span class="p">];</span>
-<span class="p">};</span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">pestA</span><span class="p">[</span><span class="n">OPAL_PHB4_NUM_PEST_REGS</span><span class="p">];</span><span class="w"></span>
+<span class="w">     </span><span class="n">__be64</span><span class="w"> </span><span class="n">pestB</span><span class="p">[</span><span class="n">OPAL_PHB4_NUM_PEST_REGS</span><span class="p">];</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_get_phb_diag_data2</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">diag_buffer</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">diag_buffer_len</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_get_phb_diag_data2</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">diag_buffer</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">diag_buffer_len</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Get PCI diagnostic data from a given PHB. Each PHB present in the device tree
@@ -278,41 +278,42 @@ small common structure will allow the OS to work out what format the data
 is coming in.</p>
 <p>In future, it’s possible that the format will change to be more flexible, and
 require less OS support.</p>
-<div class="section" id="parameters">
+<section id="parameters">
 <h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">phb_id</span></code></dt>
-<dd>the ID of the PHB you want to retrieve data from</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*diag_buffer</span></code></dt>
-<dd>an allocated buffer to store diag data in</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">diag_buffer_len</span></code></dt>
-<dd>size in bytes of the diag buffer</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">phb_id</span></code></dt><dd><p>the ID of the PHB you want to retrieve data from</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*diag_buffer</span></code></dt><dd><p>an allocated buffer to store diag data in</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64_t</span> <span class="pre">diag_buffer_len</span></code></dt><dd><p>size in bytes of the diag buffer</p>
+</dd>
 </dl>
-</div>
-<div class="section" id="calling">
+</section>
+<section id="calling">
 <h2>Calling<a class="headerlink" href="#calling" title="Permalink to this headline">¶</a></h2>
 <p>Retrieve the PHB’s diagnostic data.  The diagnostic data is stored in the
 buffer pointed by &#64;diag_buffer.  Different PHB versions will store different
 diagnostics, defined in include/opal-api.h as <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">OpalIo&lt;PHBVer&gt;ErrorData</span></code>.</p>
 <p><a class="reference internal" href="index.html#opal-pci-get-phb-diag-data"><span class="std std-ref">OPAL_PCI_GET_PHB_DIAG_DATA</span></a> is deprecated and
 <a class="reference internal" href="#opal-pci-get-phb-diag-data2"><span class="std std-ref">OPAL_PCI_GET_PHB_DIAG_DATA2</span></a> should be used instead.</p>
-</div>
-<div class="section" id="return-codes">
+</section>
+<section id="return-codes">
 <h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>Diagnostic data has been retrieved and stored successfully</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>The given buffer is too small to store the diagnostic data</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
-<dd>The PHB is in a broken state and its data cannot be retreived</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>Diagnostic data is not implemented for this PHB type</dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Diagnostic data has been retrieved and stored successfully</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>The given buffer is too small to store the diagnostic data</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>The PHB is in a broken state and its data cannot be retreived</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Diagnostic data is not implemented for this PHB type</p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -342,17 +343,15 @@ diagnostics, defined in include/opal-api.h as <code class="docutils literal notr
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -369,14 +368,15 @@ diagnostics, defined in include/opal-api.h as <code class="docutils literal notr
         <li class="right" >
           <a href="opal-pci-get-hub-diag-data-50.html" title="OPAL_PCI_GET_HUB_DIAG_DATA"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_GET_PHB_DIAG_DATA2</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

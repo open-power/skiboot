@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_PCI_EEH_FREEZE_CLEAR &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_PCI_EEH_FREEZE_CLEAR &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-pci-config-read-write-13-14-15-16-17-18.html" title="OPAL PCI Config Space Access"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_EEH_FREEZE_CLEAR</a></li> 
       </ul>
     </div>  
 
@@ -45,40 +45,41 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-pci-eeh-freeze-clear">
+  <section id="opal-pci-eeh-freeze-clear">
 <span id="id1"></span><h1>OPAL_PCI_EEH_FREEZE_CLEAR<a class="headerlink" href="#opal-pci-eeh-freeze-clear" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_EEH_FREEZE_CLEAR            26</span>
 
-<span class="k">enum</span> <span class="n">OpalEehFreezeActionToken</span> <span class="p">{</span>
-     <span class="n">OPAL_EEH_ACTION_CLEAR_FREEZE_MMIO</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-     <span class="n">OPAL_EEH_ACTION_CLEAR_FREEZE_DMA</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-     <span class="n">OPAL_EEH_ACTION_CLEAR_FREEZE_ALL</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalEehFreezeActionToken</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_EEH_ACTION_CLEAR_FREEZE_MMIO</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_EEH_ACTION_CLEAR_FREEZE_DMA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_EEH_ACTION_CLEAR_FREEZE_ALL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"></span>
 
-     <span class="n">OPAL_EEH_ACTION_SET_FREEZE_MMIO</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-     <span class="n">OPAL_EEH_ACTION_SET_FREEZE_DMA</span>  <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-     <span class="n">OPAL_EEH_ACTION_SET_FREEZE_ALL</span>  <span class="o">=</span> <span class="mi">3</span>
-<span class="p">};</span>
+<span class="w">     </span><span class="n">OPAL_EEH_ACTION_SET_FREEZE_MMIO</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_EEH_ACTION_SET_FREEZE_DMA</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"></span>
+<span class="w">     </span><span class="n">OPAL_EEH_ACTION_SET_FREEZE_ALL</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_eeh_freeze_clear</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">eeh_action_token</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_eeh_freeze_clear</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pe_number</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">eeh_action_token</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
-<div class="section" id="returns">
+<section id="returns">
 <h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>Success!</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>Invalid PHB</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>PHB doesn’t support this operation.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
-<dd>Hardware issue prevents completing operation. OPAL may have detected it
-being broken.</dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success!</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid PHB</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>PHB doesn’t support this operation.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>Hardware issue prevents completing operation. OPAL may have detected it
+being broken.</p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -106,17 +107,15 @@ being broken.</dd>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -133,14 +132,15 @@ being broken.</dd>
         <li class="right" >
           <a href="opal-pci-config-read-write-13-14-15-16-17-18.html" title="OPAL PCI Config Space Access"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_EEH_FREEZE_CLEAR</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

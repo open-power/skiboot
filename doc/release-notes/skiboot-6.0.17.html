@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-6.0.17 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-6.0.17 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-6.0.16.html" title="skiboot-6.0.16"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.17</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-6-0-17">
+  <section id="skiboot-6-0-17">
 <span id="id1"></span><h1>skiboot-6.0.17<a class="headerlink" href="#skiboot-6-0-17" title="Permalink to this headline">¶</a></h1>
 <p>skiboot 6.0.17 was released on Wednesday February 20th, 2019. It replaces
 <a class="reference internal" href="skiboot-6.0.16.html#skiboot-6-0-16"><span class="std std-ref">skiboot-6.0.16</span></a> as the current stable release in the 6.0.x series.</p>
@@ -53,22 +53,20 @@
 due to the bug fixes it contains.</p>
 <p>Bug fixes included in this release are:</p>
 <ul>
-<li><p class="first">core/opal: Print PIR value in exit path, which is useful for debugging.</p>
-</li>
-<li><p class="first">core/ipmi: Improve error message</p>
-</li>
-<li><p class="first">hdata: Fix dtc warnings</p>
+<li><p>core/opal: Print PIR value in exit path, which is useful for debugging.</p></li>
+<li><p>core/ipmi: Improve error message</p></li>
+<li><p>hdata: Fix dtc warnings</p>
 <p>Fix dtc warnings related to mcbist node</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="nd">@1</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
-<span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="nd">@2</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
-<span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="nd">@603fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="nd">@1</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
-<span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="nd">@603fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="nd">@2</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="o">@</span><span class="mi">1</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
+<span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="o">@</span><span class="mi">2</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
+<span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="o">@</span><span class="mi">603</span><span class="n">fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="o">@</span><span class="mi">1</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
+<span class="ne">Warning</span> <span class="p">(</span><span class="n">reg_format</span><span class="p">):</span> <span class="s2">&quot;reg&quot;</span> <span class="nb">property</span> <span class="ow">in</span> <span class="o">/</span><span class="n">xscom</span><span class="o">@</span><span class="mi">603</span><span class="n">fc00000000</span><span class="o">/</span><span class="n">mcbist</span><span class="o">@</span><span class="mi">2</span> <span class="n">has</span> <span class="n">invalid</span> <span class="n">length</span> <span class="p">(</span><span class="mi">4</span> <span class="nb">bytes</span><span class="p">)</span> <span class="p">(</span><span class="c1">#address-cells == 1, #size-cells == 1)</span>
 </pre></div>
 </div>
 <p>Ideally we should add proper xscom range here… but we are not getting that
 information in HDAT today. Lets fix warning until we get proper data in HDAT.</p>
 </li>
-<li><p class="first">hdata/test: workaround dtc bugs</p>
+<li><p>hdata/test: workaround dtc bugs</p>
 <p>In dtc v1.4.5 to at least v1.4.7 there have been a few bugs introduced
 that change the layout of what’s produced in the dts. In order to be
 immune from them, we should use the (provided) dtdiff utility, but we
@@ -78,7 +76,7 @@ conversion will.</p>
 <p>This fixes a bunch of unit test failures on the version of dtc shipped
 with recent Linux distros such as Fedora 29.</p>
 </li>
-<li><p class="first">firmware-versions: Add test case for parsing VERSION</p>
+<li><p>firmware-versions: Add test case for parsing VERSION</p>
 <p>Also make it possible to use with afl-lop/afl-fuzz just to help make
 <em>sure</em> we’re all good.</p>
 <p>Additionally, if we hit a entry in VERSION that is larger than our
@@ -87,14 +85,14 @@ stack. This is only a problem if VERSION isn’t trusted, which as of
 4b8cc05a94513816d43fb8bd6178896b430af08f it is verified as part of
 Secure Boot.</p>
 </li>
-<li><p class="first">core/cpu: HID update race</p>
+<li><p>core/cpu: HID update race</p>
 <p>If the per-core HID register is updated concurrently by multiple
 threads, updates can get lost. This has been observed during fast
 reboot where the HILE bit does not get cleared on all cores, which
 can cause machine check exception interrupts to crash.</p>
 <p>Fix this by only updating HID on thread0.</p>
 </li>
-<li><p class="first">cpufeatures: Always advertise POWER8NVL as DD2</p>
+<li><p>cpufeatures: Always advertise POWER8NVL as DD2</p>
 <p>Despite the major version of PVR being 1 (0x004c0100) for POWER8NVL,
 these chips are functionally equalent to P8/P8E DD2 levels.</p>
 <p>This advertises POWER8NVL as DD2. As the result, skiboot adds
@@ -104,9 +102,10 @@ threads; otherwise “KVM: CPU %d seems to be stuck” would appear because
 of missing LPCR_PECEDH.</p>
 </li>
 </ul>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -126,17 +125,15 @@ of missing LPCR_PECEDH.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -153,14 +150,15 @@ of missing LPCR_PECEDH.</p>
         <li class="right" >
           <a href="skiboot-6.0.16.html" title="skiboot-6.0.16"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.0.17</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

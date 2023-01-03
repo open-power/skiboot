@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.1.18 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.1.18 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.1.17.html" title="skiboot-5.1.17"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.18</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-1-18">
+  <section id="skiboot-5-1-18">
 <span id="id1"></span><h1>skiboot-5.1.18<a class="headerlink" href="#skiboot-5-1-18" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.1.18 was released on Friday 26th August 2016.</p>
 <p>skiboot-5.1.18 is the 19th stable release of 5.1, it follows skiboot-5.1.17
@@ -54,28 +54,29 @@
 <p>Changes are:</p>
 <p>All platforms:</p>
 <ul class="simple">
-<li>opal/hmi: Fix a TOD HMI failure during a race condition.
-Rare race condition which meant we wouldn’t recover from TOD error</li>
-<li>hw/phb3: Update capi initialization sequence
+<li><p>opal/hmi: Fix a TOD HMI failure during a race condition.
+Rare race condition which meant we wouldn’t recover from TOD error</p></li>
+<li><p>hw/phb3: Update capi initialization sequence
 The capi initialization sequence was revised in a circumvention
 document when a ‘link down’ error was converted from fatal to Endpoint
 Recoverable. Other, non-capi, register setup was corrected even before
 the initial open-source release of skiboot, but a few capi-related
 registers were not updated then, so this patch fixes it.
 The point is that a link-down error detected by the UTL logic will
-lead to an AIB fence, so that the CAPP unit can detect the error.</li>
+lead to an AIB fence, so that the CAPP unit can detect the error.</p></li>
 </ul>
 <p>FSP platforms:</p>
 <ul class="simple">
-<li>FSP/ELOG: Fix OPAL generated elog resend logic</li>
-<li>FSP/ELOG: Fix possible event notifier hangs</li>
-<li>FSP/ELOG: Disable event notification if list is not consistent</li>
-<li>FSP/ELOG: Fix OPAL generated elog event notification</li>
-<li>FSP/ELOG: Disable event notification during kexec</li>
+<li><p>FSP/ELOG: Fix OPAL generated elog resend logic</p></li>
+<li><p>FSP/ELOG: Fix possible event notifier hangs</p></li>
+<li><p>FSP/ELOG: Disable event notification if list is not consistent</p></li>
+<li><p>FSP/ELOG: Fix OPAL generated elog event notification</p></li>
+<li><p>FSP/ELOG: Disable event notification during kexec</p></li>
 </ul>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -95,17 +96,15 @@ lead to an AIB fence, so that the CAPP unit can detect the error.</li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -122,14 +121,15 @@ lead to an AIB fence, so that the CAPP unit can detect the error.</li>
         <li class="right" >
           <a href="skiboot-5.1.17.html" title="skiboot-5.1.17"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.18</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

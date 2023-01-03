@@ -1,26 +1,25 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>IMC Device Tree Bindings &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>IMC Device Tree Bindings &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="P9 memory hierarchy" href="memory-hierarchy.html" />
-    <link rel="prev" title="ibm,secureboot" href="ibm,secureboot.html" /> 
+    <link rel="prev" title="ibm,secureboot" href="ibm%2Csecureboot.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -32,11 +31,12 @@
           <a href="memory-hierarchy.html" title="P9 memory hierarchy"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="ibm,secureboot.html" title="ibm,secureboot"
+          <a href="ibm%2Csecureboot.html" title="ibm,secureboot"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">IMC Device Tree Bindings</a></li> 
       </ul>
     </div>  
 
@@ -45,10 +45,10 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="imc-device-tree-bindings">
+  <section id="imc-device-tree-bindings">
 <span id="device-tree-imc"></span><h1>IMC Device Tree Bindings<a class="headerlink" href="#imc-device-tree-bindings" title="Permalink to this headline">¶</a></h1>
 <p>See <a class="reference internal" href="../imc.html#imc"><span class="std std-ref">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</span></a> for general In-Memory Collection (IMC) counter information.</p>
-<div class="section" id="imc-counters-top-level-node">
+<section id="imc-counters-top-level-node">
 <h2>imc-counters top-level node<a class="headerlink" href="#imc-counters-top-level-node" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">imc-counters</span> <span class="p">{</span>
   <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-in-memory-counters&quot;</span><span class="p">;</span>
@@ -61,8 +61,8 @@
 <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="imc-device-units-bindings">
+</section>
+<section id="imc-device-units-bindings">
 <h2>IMC device/units bindings<a class="headerlink" href="#imc-device-units-bindings" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">mcs3</span> <span class="p">{</span>
         <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,imc-counters&quot;</span><span class="p">;</span>
@@ -95,8 +95,8 @@
  <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="imc-device-event-bindings">
+</section>
+<section id="imc-device-event-bindings">
 <h2>IMC device event bindings<a class="headerlink" href="#imc-device-event-bindings" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">nest-mcs-events</span> <span class="p">{</span>
         <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
@@ -129,30 +129,32 @@
  <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="trace-mode-scom">
+</section>
+<section id="trace-mode-scom">
 <h2>Trace-mode SCOM<a class="headerlink" href="#trace-mode-scom" title="Permalink to this headline">¶</a></h2>
 <p>Trace scom is a 64 bit value which contains the event information for
 IMC-trace mode. Following is the trace-scom layout.</p>
 <p><strong>TRACE_IMC_SCOM bit representation</strong></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">0-1:</th><td class="field-body">SAMPSEL</td>
-</tr>
-<tr class="field-even field"><th class="field-name">2-33:</th><td class="field-body">CPMC_LOAD</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">34-40:</th><td class="field-body">CPMC1SEL</td>
-</tr>
-<tr class="field-even field"><th class="field-name">41-47:</th><td class="field-body">CPMC2SEL</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">48-50:</th><td class="field-body">BUFFERSIZE</td>
-</tr>
-<tr class="field-even field"><th class="field-name">51-63:</th><td class="field-body">RESERVED</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">0-1</dt>
+<dd class="field-odd"><p>SAMPSEL</p>
+</dd>
+<dt class="field-even">2-33</dt>
+<dd class="field-even"><p>CPMC_LOAD</p>
+</dd>
+<dt class="field-odd">34-40</dt>
+<dd class="field-odd"><p>CPMC1SEL</p>
+</dd>
+<dt class="field-even">41-47</dt>
+<dd class="field-even"><p>CPMC2SEL</p>
+</dd>
+<dt class="field-odd">48-50</dt>
+<dd class="field-odd"><p>BUFFERSIZE</p>
+</dd>
+<dt class="field-even">51-63</dt>
+<dd class="field-even"><p>RESERVED</p>
+</dd>
+</dl>
 <p><em>CPMC_LOAD</em> contains the sampling duration. <em>SAMPSEL</em> and <em>CPMC*SEL</em>
 determines the event to count. <em>BUFFRSIZE</em> indicates the memory range.</p>
 <p><em>BUFFERSIZE</em> can be</p>
@@ -163,10 +165,11 @@ b’011’ - 32K entries * 64 per entry = 2M
 b’100’ - 64K entries * 64 per entry = 4M
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -184,7 +187,7 @@ b’100’ - 64K entries * 64 per entry = 4M
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="ibm,secureboot.html"
+  <p class="topless"><a href="ibm%2Csecureboot.html"
                         title="previous chapter">ibm,secureboot</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="memory-hierarchy.html"
@@ -197,17 +200,15 @@ b’100’ - 64K entries * 64 per entry = 4M
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -222,16 +223,17 @@ b’100’ - 64K entries * 64 per entry = 4M
           <a href="memory-hierarchy.html" title="P9 memory hierarchy"
              >next</a> |</li>
         <li class="right" >
-          <a href="ibm,secureboot.html" title="ibm,secureboot"
+          <a href="ibm%2Csecureboot.html" title="ibm,secureboot"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">IMC Device Tree Bindings</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

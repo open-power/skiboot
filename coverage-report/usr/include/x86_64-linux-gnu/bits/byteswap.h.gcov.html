@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">3</td>
@@ -70,7 +70,7 @@
 <pre class="sourceHeading">           Branch data     Line data    Source code</pre>
 <pre class="source">
 <a name="1"><span class="lineNum">       1 </span>                :            : /* Macros and inline functions to swap the order of bytes in integer values.</a>
-<a name="2"><span class="lineNum">       2 </span>                :            :    Copyright (C) 1997-2020 Free Software Foundation, Inc.</a>
+<a name="2"><span class="lineNum">       2 </span>                :            :    Copyright (C) 1997-2022 Free Software Foundation, Inc.</a>
 <a name="3"><span class="lineNum">       3 </span>                :            :    This file is part of the GNU C Library.</a>
 <a name="4"><span class="lineNum">       4 </span>                :            : </a>
 <a name="5"><span class="lineNum">       5 </span>                :            :    The GNU C Library is free software; you can redistribute it and/or</a>
@@ -117,7 +117,7 @@
 <a name="46"><span class="lineNum">      46 </span>                :            :    | (((x) &amp; 0x0000ff00u) &lt;&lt; 8) | (((x) &amp; 0x000000ffu) &lt;&lt; 24))</a>
 <a name="47"><span class="lineNum">      47 </span>                :            : </a>
 <a name="48"><span class="lineNum">      48 </span>                :            : static __inline __uint32_t</a>
-<a name="49"><span class="lineNum">      49 </span>                :<span class="lineCov">         56 : __bswap_32 (__uint32_t __bsx)</span></a>
+<a name="49"><span class="lineNum">      49 </span>                :<span class="lineCov">         52 : __bswap_32 (__uint32_t __bsx)</span></a>
 <a name="50"><span class="lineNum">      50 </span>                :            : {</a>
 <a name="51"><span class="lineNum">      51 </span>                :            : #if __GNUC_PREREQ (4, 3)</a>
 <a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">         52 :   return __builtin_bswap32 (__bsx);</span></a>

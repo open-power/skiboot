@@ -31,13 +31,13 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">207</td>
-            <td class="headerCovTableEntry">273</td>
-            <td class="headerCovTableEntryMed">75.8 %</td>
+            <td class="headerCovTableEntry">208</td>
+            <td class="headerCovTableEntry">274</td>
+            <td class="headerCovTableEntryMed">75.9 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">17</td>
@@ -440,7 +440,7 @@
 <a name="369"><span class="lineNum">     369 </span>                :<span class="lineCov">         24 :                 cinfo = card_info_lookup((char *)kw);</span></a>
 <a name="370"><span class="lineNum">     370 </span>                :<span class="lineCov">         24 :                 if (cinfo) {</span></a>
 <a name="371"><span class="lineNum">     371 </span>                :<span class="lineCov">         16 :                         dt_add_property_string(node,</span></a>
-<a name="372"><span class="lineNum">     372 </span>                :            :                                        &quot;description&quot;, cinfo-&gt;description);</a>
+<a name="372"><span class="lineNum">     372 </span>                :<span class="lineCov">         16 :                                        &quot;description&quot;, cinfo-&gt;description);</span></a>
 <a name="373"><span class="lineNum">     373 </span>                :            :                 } else {</a>
 <a name="374"><span class="lineNum">     374 </span>                :<span class="lineCov">          8 :                         desc = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;DR&quot;, &amp;sz);</span></a>
 <a name="375"><span class="lineNum">     375 </span>                :<span class="lineCov">          8 :                         if (desc) {</span></a>

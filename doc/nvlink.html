@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL/Skiboot Nvlink Interface Documentation &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL/Skiboot Nvlink Interface Documentation &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -34,8 +33,9 @@
         <li class="right" >
           <a href="memory.html" title="Memory in skiboot"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot d6d8386
- documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e6cda17
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL/Skiboot Nvlink Interface Documentation</a></li> 
       </ul>
     </div>  
 
@@ -44,9 +44,9 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-skiboot-nvlink-interface-documentation">
+  <section id="opal-skiboot-nvlink-interface-documentation">
 <span id="nvlink"></span><h1>OPAL/Skiboot Nvlink Interface Documentation<a class="headerlink" href="#opal-skiboot-nvlink-interface-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="overview">
+<section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>NV-Link is a high speed interconnect that is used in conjunction with
 a PCI-E connection to create an interface between chips that provides
@@ -62,8 +62,8 @@ NV-Link.</p>
 <p>Presently the NV-Link is only capable of data transfers initiated by
 the target, thus the emulated PCI device will only handle registers
 for link initialisation, DMA transfers and error reporting (EEH).</p>
-</div>
-<div class="section" id="emulated-pci-devices">
+</section>
+<section id="emulated-pci-devices">
 <h2>Emulated PCI Devices<a class="headerlink" href="#emulated-pci-devices" title="Permalink to this headline">¶</a></h2>
 <p>Each link will be exported as an emulated PCI device with a minimum of
 two emulated PCI devices per GPU. Emulated PCI devices are grouped per
@@ -72,49 +72,49 @@ GPU.</p>
 the Linux kernel. It has a standard PCI configuration space to expose
 necessary device parameters. The only functionality available is
 related to the setup of DMA windows.</p>
-<div class="section" id="configuration-space-parameters">
+<section id="configuration-space-parameters">
 <h3>Configuration Space Parameters<a class="headerlink" href="#configuration-space-parameters" title="Permalink to this headline">¶</a></h3>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="17%" />
-<col width="26%" />
-<col width="57%" />
+<col style="width: 17%" />
+<col style="width: 26%" />
+<col style="width: 57%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">&#160;</th>
-<th class="head">&#160;</th>
-<th class="head">&#160;</th>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>Vendor ID</td>
-<td>0x1014</td>
-<td>(IBM)</td>
+<tbody>
+<tr class="row-even"><td><p>Vendor ID</p></td>
+<td><p>0x1014</p></td>
+<td><p>(IBM)</p></td>
 </tr>
-<tr class="row-odd"><td>Device ID</td>
-<td>0x04ea</td>
-<td>&#160;</td>
+<tr class="row-odd"><td><p>Device ID</p></td>
+<td><p>0x04ea</p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td>Revision ID</td>
-<td>0x00</td>
-<td>&#160;</td>
+<tr class="row-even"><td><p>Revision ID</p></td>
+<td><p>0x00</p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td>Class</td>
-<td>0x068000 / 0x068001</td>
-<td>(Bridge Device Other, ProgIf = 0x0 / 0x1)</td>
+<tr class="row-odd"><td><p>Class</p></td>
+<td><p>0x068000 / 0x068001</p></td>
+<td><p>(Bridge Device Other, ProgIf = 0x0 / 0x1)</p></td>
 </tr>
-<tr class="row-even"><td>BAR0/1</td>
-<td>TL/DL Registers</td>
-<td>&#160;</td>
+<tr class="row-even"><td><p>BAR0/1</p></td>
+<td><p>TL/DL Registers</p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td>BAR2/3</td>
-<td>GEN-ID Registers</td>
-<td>(Only for rev-id = 0x1)</td>
+<tr class="row-odd"><td><p>BAR2/3</p></td>
+<td><p>GEN-ID Registers</p></td>
+<td><p>(Only for rev-id = 0x1)</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="tl-dl-registers">
+</section>
+<section id="tl-dl-registers">
 <h3>TL/DL Registers<a class="headerlink" href="#tl-dl-registers" title="Permalink to this headline">¶</a></h3>
 <p>Each link has 128KB of TL/DL registers. These will always be mapped
 to 64-bit BAR#0 of the emulated PCI device configuration space.</p>
@@ -125,8 +125,8 @@ to 64-bit BAR#0 of the emulated PCI device configuration space.</p>
 <span class="n">BAR</span><span class="c1">#0       +-----------+</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="generation-registers-gen-id">
+</section>
+<section id="generation-registers-gen-id">
 <h3>Generation Registers (GEN-ID)<a class="headerlink" href="#generation-registers-gen-id" title="Permalink to this headline">¶</a></h3>
 <p>On POWER9 each link has 64K of generation ID registers for the relaxed
 ordering mode syncronisation. Refer to the programming guide for
@@ -134,8 +134,8 @@ details of the register layout in this BAR.</p>
 <p>Relaxed ordering mode will be disabled by default as it requires
 device driver support. Device drivers will need to request relaxed
 ordering mode through some yet to be designed mechanism.</p>
-</div>
-<div class="section" id="vendor-specific-capabilities">
+</section>
+<section id="vendor-specific-capabilities">
 <h3>Vendor Specific Capabilities<a class="headerlink" href="#vendor-specific-capabilities" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">+-----------------+----------------+----------------+----------------+</span>
 <span class="o">|</span>  <span class="n">Version</span> <span class="p">(</span><span class="mh">0x02</span><span class="p">)</span> <span class="o">|</span>   <span class="n">Cap</span> <span class="n">Length</span>   <span class="o">|</span>  <span class="n">Next</span> <span class="n">Cap</span> <span class="n">Ptr</span>  <span class="o">|</span>  <span class="n">Cap</span> <span class="n">ID</span> <span class="p">(</span><span class="mh">0x09</span><span class="p">)</span> <span class="o">|</span>
@@ -150,9 +150,10 @@ ordering mode through some yet to be designed mechanism.</p>
 </div>
 <p>Version</p>
 <blockquote>
-<div>This refers to the version of the NPU config space.  Used by device
+<div><p>This refers to the version of the NPU config space.  Used by device
 drivers to determine which fields of the config space they can
-expect to be available.</div></blockquote>
+expect to be available.</p>
+</div></blockquote>
 <p>Procedure Control Register</p>
 <blockquote>
 <div><p>Used to start hardware procedures.</p>
@@ -165,20 +166,20 @@ procedure number depending on the procedure status field.</p>
 <p>Procedure Numbers:</p>
 <blockquote>
 <div><ol class="arabic simple" start="0">
-<li>Abort in-progress procedure</li>
-<li>NOP</li>
-<li>Unsupported procedure</li>
-<li>Unsupported procedure</li>
-<li>Naples PHY - RESET</li>
-<li>Naples PHY - TX_ZCAL</li>
-<li>Naples PHY - RX_DCCAL</li>
-<li>Naples PHY - TX_RXCAL_ENABLE</li>
-<li>Naples PHY - TX_RXCAL_DISABLE</li>
-<li>Naples PHY - RX_TRAINING</li>
-<li>Naples NPU - RESET</li>
-<li>Naples PHY - PHY preterminate</li>
-<li>Naples PHY - PHY terminated</li>
-<li>Witherspoon TL credit validation</li>
+<li><p>Abort in-progress procedure</p></li>
+<li><p>NOP</p></li>
+<li><p>Unsupported procedure</p></li>
+<li><p>Unsupported procedure</p></li>
+<li><p>Naples PHY - RESET</p></li>
+<li><p>Naples PHY - TX_ZCAL</p></li>
+<li><p>Naples PHY - RX_DCCAL</p></li>
+<li><p>Naples PHY - TX_RXCAL_ENABLE</p></li>
+<li><p>Naples PHY - TX_RXCAL_DISABLE</p></li>
+<li><p>Naples PHY - RX_TRAINING</p></li>
+<li><p>Naples NPU - RESET</p></li>
+<li><p>Naples PHY - PHY preterminate</p></li>
+<li><p>Naples PHY - PHY terminated</p></li>
+<li><p>Witherspoon TL credit validation</p></li>
 </ol>
 </div></blockquote>
 <p>Procedure 5 (TX_ZCAL) should only be run once. System firmware will
@@ -192,47 +193,51 @@ of the procedure number in the control register is complete and if
 it completed successfully.</p>
 <p>This register must be polled frequently to allow system firmware to
 execute the procedures.</p>
-<dl class="docutils">
-<dt>Fields:</dt>
-<dd>Bit 31 - Procedure in progress
+<dl class="simple">
+<dt>Fields:</dt><dd><p>Bit 31 - Procedure in progress
 Bit 30 - Procedure complete
-Bit 3-0 - Procedure completion code</dd>
-<dt>Procedure completion codes:</dt>
-<dd>0 - Procedure completed successfully.
+Bit 3-0 - Procedure completion code</p>
+</dd>
+<dt>Procedure completion codes:</dt><dd><p>0 - Procedure completed successfully.
 1 - Transient failure. Procedure should be rerun.
 2 - Permanent failure. Procedure will never complete successfully.
 3 - Procedure aborted.
-4 - Unsupported procedure.</dd>
+4 - Unsupported procedure.</p>
+</dd>
 </dl>
 </div></blockquote>
 <p>PCI Device Flag</p>
 <blockquote>
-<div>Bit 0 - set if the GPU PCIe device associated with this nvlink was found.
-bit 1 - set if the DL has been taken out of reset.</div></blockquote>
+<div><p>Bit 0 - set if the GPU PCIe device associated with this nvlink was found.
+bit 1 - set if the DL has been taken out of reset.</p>
+</div></blockquote>
 <p>Link Number</p>
 <blockquote>
-<div>Physical link number this emulated PCI device is associated
-with. One of 0, 1, 4 or 5 (links 2 &amp; 3 do not exist on Naples).</div></blockquote>
+<div><p>Physical link number this emulated PCI device is associated
+with. One of 0, 1, 4 or 5 (links 2 &amp; 3 do not exist on Naples).</p>
+</div></blockquote>
 <p>Reserved</p>
 <blockquote>
-<div>These fields must be ignored and no value should be assumed.</div></blockquote>
-</div>
-<div class="section" id="interrupts">
+<div><p>These fields must be ignored and no value should be assumed.</p>
+</div></blockquote>
+</section>
+<section id="interrupts">
 <h3>Interrupts<a class="headerlink" href="#interrupts" title="Permalink to this headline">¶</a></h3>
 <p>Each link has a single DL/TL interrupt assigned to it. These will be
 exposed as an LSI via the emulated PCI device. There are 4 links
 consuming 4 LSI interrupts. The 4 remaining interrupts supported by the
 corresponding PHB will be routed to OS platform for the purpose of error
 reporting.</p>
-</div>
-</div>
-<div class="section" id="device-tree-bindings">
+</section>
+</section>
+<section id="device-tree-bindings">
 <h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Permalink to this headline">¶</a></h2>
 <p>See <a class="reference internal" href="device-tree/nvlink.html#device-tree-nvlink"><span class="std std-ref">Nvlink Device Tree Bindings</span></a></p>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -269,17 +274,15 @@ reporting.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -296,13 +299,14 @@ reporting.</p>
         <li class="right" >
           <a href="memory.html" title="Memory in skiboot"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot d6d8386
- documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot e6cda17
+ documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL/Skiboot Nvlink Interface Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

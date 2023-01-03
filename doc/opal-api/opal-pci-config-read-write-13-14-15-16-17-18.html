@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL PCI Config Space Access &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL PCI Config Space Access &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-param-89-90.html" title="Get/Set System Parameters"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL PCI Config Space Access</a></li> 
       </ul>
     </div>  
 
@@ -45,110 +45,111 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-pci-config-space-access">
+  <section id="opal-pci-config-space-access">
 <span id="opal-pci-config"></span><h1>OPAL PCI Config Space Access<a class="headerlink" href="#opal-pci-config-space-access" title="Permalink to this headline">¶</a></h1>
 <p>PCI Config space is read or written to through OPAL calls. All of these calls</p>
-<div class="section" id="opal-pci-config-return-codes">
+<section id="opal-pci-config-return-codes">
 <span id="id1"></span><h2>OPAL_PCI_CONFIG_* Return codes<a class="headerlink" href="#opal-pci-config-return-codes" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>Read/Write operation completed successfully.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>Invalid parameter. e.g. invalid <cite>phb_id</cite> or <cite>bus_dev_func</cite>.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
-<dd>Invalid request for the hardware either permanently or in its
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Read/Write operation completed successfully.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid parameter. e.g. invalid <cite>phb_id</cite> or <cite>bus_dev_func</cite>.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>Invalid request for the hardware either permanently or in its
 current state. Can also be a hardware problem, e.g. fenced or
-config access is currently blocked.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>Unsupported operation. For example, phb4 doesn’t support ASB config
-space writes.</dd>
-<dt>Other return codes</dt>
-<dd>Should be handled gracefully. For example, for any return code other than
+config access is currently blocked.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Unsupported operation. For example, phb4 doesn’t support ASB config
+space writes.</p>
+</dd>
+<dt>Other return codes</dt><dd><p>Should be handled gracefully. For example, for any return code other than
 <a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a>, Linux will return all bits set for the specified size
-for a read, and will ignore the error on a write.</dd>
+for a read, and will ignore the error on a write.</p>
+</dd>
 </dl>
-<div class="section" id="opal-pci-config-read-byte">
+<section id="opal-pci-config-read-byte">
 <span id="id2"></span><h3>OPAL_PCI_CONFIG_READ_BYTE<a class="headerlink" href="#opal-pci-config-read-byte" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_CONFIG_READ_BYTE            13</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_config_read_byte</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
-                                  <span class="kt">uint64_t</span> <span class="n">bus_dev_func</span><span class="p">,</span>
-                                  <span class="kt">uint64_t</span> <span class="n">offset</span><span class="p">,</span>
-                                  <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_config_read_byte</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">bus_dev_func</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint8_t</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Reads a single byte from PCI config space,
 see <a class="reference internal" href="#opal-pci-config-return-codes"><span class="std std-ref">OPAL_PCI_CONFIG_* Return codes</span></a>.</p>
-</div>
-<div class="section" id="opal-pci-config-read-half-word">
+</section>
+<section id="opal-pci-config-read-half-word">
 <span id="id3"></span><h3>OPAL_PCI_CONFIG_READ_HALF_WORD<a class="headerlink" href="#opal-pci-config-read-half-word" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_CONFIG_READ_HALF_WORD       14</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_config_read_half_word</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
-                                       <span class="kt">uint64_t</span> <span class="n">bus_dev_func</span><span class="p">,</span>
-                                       <span class="kt">uint64_t</span> <span class="n">offset</span><span class="p">,</span>
-                                       <span class="kt">uint16_t</span> <span class="o">*</span><span class="n">data</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_config_read_half_word</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                       </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">bus_dev_func</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                       </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                       </span><span class="kt">uint16_t</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Reads a half word (16 bits) from PCI config space,
 see <a class="reference internal" href="#opal-pci-config-return-codes"><span class="std std-ref">OPAL_PCI_CONFIG_* Return codes</span></a>.</p>
-</div>
-<div class="section" id="opal-pci-config-read-word">
+</section>
+<section id="opal-pci-config-read-word">
 <span id="id4"></span><h3>OPAL_PCI_CONFIG_READ_WORD<a class="headerlink" href="#opal-pci-config-read-word" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_CONFIG_READ_WORD            15</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_config_read_word</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
-                                  <span class="kt">uint64_t</span> <span class="n">bus_dev_func</span><span class="p">,</span>
-                                  <span class="kt">uint64_t</span> <span class="n">offset</span><span class="p">,</span>
-                                  <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">data</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_config_read_word</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">bus_dev_func</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint32_t</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Reads a word (32 bits) from PCI config space,
 see <a class="reference internal" href="#opal-pci-config-return-codes"><span class="std std-ref">OPAL_PCI_CONFIG_* Return codes</span></a>.</p>
-</div>
-<div class="section" id="opal-pci-config-write-byte">
+</section>
+<section id="opal-pci-config-write-byte">
 <span id="id5"></span><h3>OPAL_PCI_CONFIG_WRITE_BYTE<a class="headerlink" href="#opal-pci-config-write-byte" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_CONFIG_WRITE_BYTE           16</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_config_write_byte</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
-                                   <span class="kt">uint64_t</span> <span class="n">bus_dev_func</span><span class="p">,</span>
-                                   <span class="kt">uint64_t</span> <span class="n">offset</span><span class="p">,</span>
-                                   <span class="kt">uint8_t</span> <span class="n">data</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_config_write_byte</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">bus_dev_func</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">data</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Writes a byte (8 bits) to PCI config space,
 see <a class="reference internal" href="#opal-pci-config-return-codes"><span class="std std-ref">OPAL_PCI_CONFIG_* Return codes</span></a>.</p>
-</div>
-<div class="section" id="opal-pci-config-write-half-word">
+</section>
+<section id="opal-pci-config-write-half-word">
 <span id="id6"></span><h3>OPAL_PCI_CONFIG_WRITE_HALF_WORD<a class="headerlink" href="#opal-pci-config-write-half-word" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_CONFIG_WRITE_HALF_WORD              17</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_config_read_half_word</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
-                                       <span class="kt">uint64_t</span> <span class="n">bus_dev_func</span><span class="p">,</span>
-                                       <span class="kt">uint64_t</span> <span class="n">offset</span><span class="p">,</span>
-                                       <span class="kt">uint16_t</span> <span class="n">data</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_config_read_half_word</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                       </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">bus_dev_func</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                       </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                       </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">data</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Writes a half word (16 bits) to PCI config space,
 see <a class="reference internal" href="#opal-pci-config-return-codes"><span class="std std-ref">OPAL_PCI_CONFIG_* Return codes</span></a>.</p>
-</div>
-<div class="section" id="opal-pci-config-write-word">
+</section>
+<section id="opal-pci-config-write-word">
 <span id="id7"></span><h3>OPAL_PCI_CONFIG_WRITE_WORD<a class="headerlink" href="#opal-pci-config-write-word" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_CONFIG_WRITE_WORD           18</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_config_read_word</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span>
-                                  <span class="kt">uint64_t</span> <span class="n">bus_dev_func</span><span class="p">,</span>
-                                  <span class="kt">uint64_t</span> <span class="n">offset</span><span class="p">,</span>
-                                  <span class="kt">uint32_t</span> <span class="n">data</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_config_read_word</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">bus_dev_func</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">data</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Writes a word (32 bits) to PCI config space,
 see <a class="reference internal" href="#opal-pci-config-return-codes"><span class="std std-ref">OPAL_PCI_CONFIG_* Return codes</span></a>.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -184,17 +185,15 @@ see <a class="reference internal" href="#opal-pci-config-return-codes"><span cla
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -211,14 +210,15 @@ see <a class="reference internal" href="#opal-pci-config-return-codes"><span cla
         <li class="right" >
           <a href="opal-param-89-90.html" title="Get/Set System Parameters"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL PCI Config Space Access</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

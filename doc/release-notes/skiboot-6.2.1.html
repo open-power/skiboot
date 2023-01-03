@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-6.2.1 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-6.2.1 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-6.2-rc2.html" title="skiboot-6.2-rc2"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.1</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-6-2-1">
+  <section id="skiboot-6-2-1">
 <span id="id1"></span><h1>skiboot-6.2.1<a class="headerlink" href="#skiboot-6-2-1" title="Permalink to this headline">¶</a></h1>
 <p>skiboot 6.2.1 was released on Wednesday February 20th, 2019. It replaces
 <a class="reference internal" href="skiboot-6.2.html#skiboot-6-2"><span class="std std-ref">skiboot-6.2</span></a> as the current stable release in the 6.2.x series.</p>
@@ -53,28 +53,26 @@
 due to the bug fixes it contains.</p>
 <p>Bug fixes included in this release are:</p>
 <ul>
-<li><p class="first">libflash/ecc: Fix compilation warning with gcc9</p>
+<li><p>libflash/ecc: Fix compilation warning with gcc9</p>
 <p>Fixes: <a class="reference external" href="https://github.com/open-power/skiboot/issues/218">https://github.com/open-power/skiboot/issues/218</a></p>
 </li>
-<li><p class="first">core/opal: Print PIR value in exit path, useful for debugging</p>
-</li>
-<li><p class="first">core/ipmi: Improve error message</p>
-</li>
-<li><p class="first">firmware-versions: Add test case for parsing VERSION</p>
+<li><p>core/opal: Print PIR value in exit path, useful for debugging</p></li>
+<li><p>core/ipmi: Improve error message</p></li>
+<li><p>firmware-versions: Add test case for parsing VERSION</p>
 <p>If we hit a entry in VERSION that is larger than our
 buffer size, we skip over it gracefully rather than overwriting the
 stack. This is only a problem if VERSION isn’t trusted, which as of
 4b8cc05a94513816d43fb8bd6178896b430af08f it is verified as part of
 Secure Boot.</p>
 </li>
-<li><p class="first">core/cpu: HID update race</p>
+<li><p>core/cpu: HID update race</p>
 <p>If the per-core HID register is updated concurrently by multiple
 threads, updates can get lost. This has been observed during fast
 reboot where the HILE bit does not get cleared on all cores, which
 can cause machine check exception interrupts to crash.</p>
 <p>Fix this by only updating HID on thread0.</p>
 </li>
-<li><p class="first">cpufeatures: Always advertise POWER8NVL as DD2</p>
+<li><p>cpufeatures: Always advertise POWER8NVL as DD2</p>
 <p>Despite the major version of PVR being 1 (0x004c0100) for POWER8NVL,
 these chips are functionally equalent to P8/P8E DD2 levels.</p>
 <p>This advertises POWER8NVL as DD2. As the result, skiboot adds
@@ -83,14 +81,14 @@ the linux kernel can use hypervisor doorbell messages to wake secondary
 threads; otherwise “KVM: CPU %d seems to be stuck” would appear because
 of missing LPCR_PECEDH.</p>
 </li>
-<li><p class="first">p9dsu: Fix p9dsu slot tables</p>
+<li><p>p9dsu: Fix p9dsu slot tables</p>
 <p>Set the attributes on the slot tables to account for
 builtin or pluggable etypes, this will allow pci
 enumeration to calculate subordinate buses.</p>
 <p>Update some slot label strings.</p>
 <p>Add WIO Slot5 which is standard on the ESS config.</p>
 </li>
-<li><p class="first">core/lock: Stop drop_my_locks() from always causing abort</p>
+<li><p>core/lock: Stop drop_my_locks() from always causing abort</p>
 <p>The loop in drop_my_locks() looks like this:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">while</span><span class="p">((</span><span class="n">l</span> <span class="o">=</span> <span class="n">list_pop</span><span class="p">(</span><span class="o">&amp;</span><span class="n">this_cpu</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">locks_held</span><span class="p">,</span> <span class="n">struct</span> <span class="n">lock</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="o">!=</span> <span class="n">NULL</span><span class="p">)</span> <span class="p">{</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">warn</span><span class="p">)</span>
@@ -113,14 +111,15 @@ CPU 0000 Backtrace:
 </div>
 <p>To fix this, change list_pop() to list_top().</p>
 </li>
-<li><p class="first">p9dsu: Fix p9dsu default variant</p>
+<li><p>p9dsu: Fix p9dsu default variant</p>
 <p>Add the default when no riser_id is returned from the ipmi query.</p>
 <p>Allow a little more time for BMC reply and cleanup some label strings.</p>
 </li>
 </ul>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -140,17 +139,15 @@ CPU 0000 Backtrace:
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -167,14 +164,15 @@ CPU 0000 Backtrace:
         <li class="right" >
           <a href="skiboot-6.2-rc2.html" title="skiboot-6.2-rc2"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-6.2.1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

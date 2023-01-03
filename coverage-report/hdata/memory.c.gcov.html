@@ -31,13 +31,13 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">152</td>
-            <td class="headerCovTableEntry">420</td>
-            <td class="headerCovTableEntryLo">36.2 %</td>
+            <td class="headerCovTableEntry">153</td>
+            <td class="headerCovTableEntry">421</td>
+            <td class="headerCovTableEntryLo">36.3 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">13</td>
@@ -993,7 +993,7 @@
 <a name="922"><span class="lineNum">     922 </span>                :<span class="lineCov">          2 :         prlog(PR_DEBUG, &quot;MS VPD: MSAC is at %p\n&quot;, msac);</span></a>
 <a name="923"><span class="lineNum">     923 </span>                :            : </a>
 <a name="924"><span class="lineNum">     924 </span>                :<span class="lineCov">          2 :         dt_add_property_u64(dt_root, DT_PRIVATE &quot;maxmem&quot;,</span></a>
-<a name="925"><span class="lineNum">     925 </span>                :            :                             be64_to_cpu(msac-&gt;max_configured_ms_address));</a>
+<a name="925"><span class="lineNum">     925 </span>                :<span class="lineCov">          2 :                             be64_to_cpu(msac-&gt;max_configured_ms_address));</span></a>
 <a name="926"><span class="lineNum">     926 </span>                :            : </a>
 <a name="927"><span class="lineNum">     927 </span>                :<span class="lineCov">          2 :         tcms = HDIF_get_idata(ms_vpd, MSVPD_IDATA_TOTAL_CONFIG_MS, &amp;size);</span></a>
 <a name="928"><span class="lineNum">     928 </span>                :<span class="lineCov">          2 :         if (!CHECK_SPPTR(tcms) || size &lt; sizeof(*tcms)) {</span></a>

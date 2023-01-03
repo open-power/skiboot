@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Starting and stopping secondary CPUs &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Starting and stopping secondary CPUs &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-slw-set-reg-100.html" title="OPAL_SLW_SET_REG"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Starting and stopping secondary CPUs</a></li> 
       </ul>
     </div>  
 
@@ -45,39 +45,39 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="starting-and-stopping-secondary-cpus">
+  <section id="starting-and-stopping-secondary-cpus">
 <h1>Starting and stopping secondary CPUs<a class="headerlink" href="#starting-and-stopping-secondary-cpus" title="Permalink to this headline">¶</a></h1>
 <p>In this context, each thread is a CPU. That is, you start and stop threads of
 CPUs.</p>
-<div class="section" id="opal-start-cpu">
+<section id="opal-start-cpu">
 <span id="id1"></span><h2>OPAL_START_CPU<a class="headerlink" href="#opal-start-cpu" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_START_CPU                               41</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_start_cpu_thread</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">server_no</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">start_address</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_start_cpu_thread</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">server_no</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">start_address</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
-<div class="section" id="returns">
+<section id="returns">
 <h3>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h3>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>The CPU was instructed to start executing instructions from the specified
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>The CPU was instructed to start executing instructions from the specified
 <cite>start_address</cite>.
 This is an <em>asynchronous</em> operation, so it may take a short period of
-time before the CPU actually starts at that address.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>Invalid CPU.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></dt>
-<dd>If the CPU thread is not in OPAL, or is being re-initialized through <a class="reference internal" href="opal-reinit-cpus-70.html#opal-reinit-cpus"><span class="std std-ref">OPAL_REINIT_CPUS</span></a></dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
-<dd>Something else went horribly wrong.</dd>
+time before the CPU actually starts at that address.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid CPU.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></dt><dd><p>If the CPU thread is not in OPAL, or is being re-initialized through <a class="reference internal" href="opal-reinit-cpus-70.html#opal-reinit-cpus"><span class="std std-ref">OPAL_REINIT_CPUS</span></a></p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Something else went horribly wrong.</p>
+</dd>
 </dl>
-</div>
-</div>
-<div class="section" id="opal-return-cpu">
+</section>
+</section>
+<section id="opal-return-cpu">
 <span id="id2"></span><h2>OPAL_RETURN_CPU<a class="headerlink" href="#opal-return-cpu" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_RETURN_CPU                              69</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_return_cpu</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_return_cpu</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>When OPAL first starts the host, all secondary CPUs are spinning in OPAL.
@@ -87,14 +87,15 @@ to set the HILE bit first).</p>
 as OPAL_REINIT_CPUS, (on some platforms) a firmware update or get the machine
 back into a similar state as to when the host OS was started (e.g. for kexec)
 you may also need to return control of the CPU to OPAL.</p>
-<div class="section" id="id3">
+<section id="id3">
 <h3>Returns<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>This call does <strong>not return</strong>. You need to OPAL_START_CPU.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -129,17 +130,15 @@ you may also need to return control of the CPU to OPAL.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -156,14 +155,15 @@ you may also need to return control of the CPU to OPAL.</p>
         <li class="right" >
           <a href="opal-slw-set-reg-100.html" title="OPAL_SLW_SET_REG"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Starting and stopping secondary CPUs</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

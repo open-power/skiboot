@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_PCI_SET_XIVE_PE &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_PCI_SET_XIVE_PE &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-pci-set-power-state-121.html" title="OPAL_PCI_SET_POWER_STATE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_XIVE_PE</a></li> 
       </ul>
     </div>  
 
@@ -45,11 +45,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-pci-set-xive-pe">
+  <section id="opal-pci-set-xive-pe">
 <span id="id1"></span><h1>OPAL_PCI_SET_XIVE_PE<a class="headerlink" href="#opal-pci-set-xive-pe" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_XIVE_PE                 37</span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_pci_set_xive_pe</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">phb_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">pe_number</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">xive_num</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_set_xive_pe</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pe_number</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">xive_num</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p><strong>WARNING:</strong> following documentation is from old sources, and is possibly
@@ -57,27 +57,28 @@ not representative of OPALv3 as implemented by skiboot. This should be
 used as a starting point for full documentation.</p>
 <p>The host calls this function to bind a PE to an XIVE. Only that PE may then
 signal an MSI that selects this XIVE.</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt>
-<dd>is the value from the PHB node ibm,opal-phbid property.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">pe_number</span></code></dt>
-<dd>is the index of a PE, from 0 to ibm,opal-num-pes minus 1.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">xive_number</span></code></dt>
-<dd>is the index, from 0 to ibm,opal,ibm-num-msis minus (num_lsis+1)</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">phb_id</span></code></dt><dd><p>is the value from the PHB node ibm,opal-phbid property.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pe_number</span></code></dt><dd><p>is the index of a PE, from 0 to ibm,opal-num-pes minus 1.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">xive_number</span></code></dt><dd><p>is the index, from 0 to ibm,opal,ibm-num-msis minus (num_lsis+1)</p>
+</dd>
 </dl>
 <p>This call maps the XIVR indexed by xive_num to the PE specified by
 pe_number. For ibm,opal-ioda HW, the pe_number must match the pe_number
 set in the MVE.</p>
 <p>Return value:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">OPAL_PARAMETER</span><span class="p">;</span>
-<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">set_xive_pe</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">OPAL_UNSUPPORTED</span><span class="p">;</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="p">)</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPAL_PARAMETER</span><span class="p">;</span><span class="w"></span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">set_xive_pe</span><span class="p">)</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPAL_UNSUPPORTED</span><span class="p">;</span><span class="w"></span>
 </pre></div>
 </div>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -97,17 +98,15 @@ set in the MVE.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -124,14 +123,15 @@ set in the MVE.</p>
         <li class="right" >
           <a href="opal-pci-set-power-state-121.html" title="OPAL_PCI_SET_POWER_STATE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_XIVE_PE</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

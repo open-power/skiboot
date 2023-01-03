@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">29</td>
-            <td class="headerCovTableEntry">427</td>
-            <td class="headerCovTableEntryLo">6.8 %</td>
+            <td class="headerCovTableEntry">431</td>
+            <td class="headerCovTableEntryLo">6.7 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">3</td>
@@ -470,7 +470,7 @@
 <a name="399"><span class="lineNum">     399 </span>                :            :                                                             int *poffset)</a>
 <a name="400"><span class="lineNum">     400 </span>                :            : {</a>
 <a name="401"><span class="lineNum">     401 </span>                :<span class="lineNoCov">          0 :         for (offset = fdt_first_property_offset(fdt, offset);</span></a>
-<a name="402"><span class="lineNum">     402 </span>                :            :              (offset &gt;= 0);</a>
+<a name="402"><span class="lineNum">     402 </span>                :<span class="lineNoCov">          0 :              (offset &gt;= 0);</span></a>
 <a name="403"><span class="lineNum">     403 </span>                :<span class="lineNoCov">          0 :              (offset = fdt_next_property_offset(fdt, offset))) {</span></a>
 <a name="404"><span class="lineNum">     404 </span>                :            :                 const struct fdt_property *prop;</a>
 <a name="405"><span class="lineNum">     405 </span>                :            : </a>
@@ -738,7 +738,7 @@
 <a name="667"><span class="lineNum">     667 </span>                :            :          * to the next node.  Still it's the easiest to implement</a>
 <a name="668"><span class="lineNum">     668 </span>                :            :          * approach; performance can come later. */</a>
 <a name="669"><span class="lineNum">     669 </span>                :<span class="lineNoCov">          0 :         for (offset = fdt_next_node(fdt, startoffset, NULL);</span></a>
-<a name="670"><span class="lineNum">     670 </span>                :            :              offset &gt;= 0;</a>
+<a name="670"><span class="lineNum">     670 </span>                :<span class="lineNoCov">          0 :              offset &gt;= 0;</span></a>
 <a name="671"><span class="lineNum">     671 </span>                :<span class="lineNoCov">          0 :              offset = fdt_next_node(fdt, offset, NULL)) {</span></a>
 <a name="672"><span class="lineNum">     672 </span>                :<span class="lineNoCov">          0 :                 val = fdt_getprop(fdt, offset, propname, &amp;len);</span></a>
 <a name="673"><span class="lineNum">     673 </span>                :<span class="lineNoCov">          0 :                 if (val &amp;&amp; (len == proplen)</span></a>
@@ -765,7 +765,7 @@
 <a name="694"><span class="lineNum">     694 </span>                :            :          * node.  Still it's the easiest to implement approach;</a>
 <a name="695"><span class="lineNum">     695 </span>                :            :          * performance can come later. */</a>
 <a name="696"><span class="lineNum">     696 </span>                :<span class="lineNoCov">          0 :         for (offset = fdt_next_node(fdt, -1, NULL);</span></a>
-<a name="697"><span class="lineNum">     697 </span>                :            :              offset &gt;= 0;</a>
+<a name="697"><span class="lineNum">     697 </span>                :<span class="lineNoCov">          0 :              offset &gt;= 0;</span></a>
 <a name="698"><span class="lineNum">     698 </span>                :<span class="lineNoCov">          0 :              offset = fdt_next_node(fdt, offset, NULL)) {</span></a>
 <a name="699"><span class="lineNum">     699 </span>                :<span class="lineNoCov">          0 :                 if (fdt_get_phandle(fdt, offset) == phandle)</span></a>
 <a name="700"><span class="lineNum">     700 </span>                :<span class="lineNoCov">          0 :                         return offset;</span></a>
@@ -917,7 +917,7 @@
 <a name="846"><span class="lineNum">     846 </span>                :            :          * making our way to the next node.  Still it's the easiest to</a>
 <a name="847"><span class="lineNum">     847 </span>                :            :          * implement approach; performance can come later. */</a>
 <a name="848"><span class="lineNum">     848 </span>                :<span class="lineNoCov">          0 :         for (offset = fdt_next_node(fdt, startoffset, NULL);</span></a>
-<a name="849"><span class="lineNum">     849 </span>                :            :              offset &gt;= 0;</a>
+<a name="849"><span class="lineNum">     849 </span>                :<span class="lineNoCov">          0 :              offset &gt;= 0;</span></a>
 <a name="850"><span class="lineNum">     850 </span>                :<span class="lineNoCov">          0 :              offset = fdt_next_node(fdt, offset, NULL)) {</span></a>
 <a name="851"><span class="lineNum">     851 </span>                :<span class="lineNoCov">          0 :                 err = fdt_node_check_compatible(fdt, offset, compatible);</span></a>
 <a name="852"><span class="lineNum">     852 </span>                :<span class="lineNoCov">          0 :                 if ((err &lt; 0) &amp;&amp; (err != -FDT_ERR_NOTFOUND))</span></a>

@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.1.6 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.1.6 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.1.5.html" title="skiboot-5.1.5"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.6</a></li> 
       </ul>
     </div>  
 
@@ -45,31 +45,31 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-1-6">
+  <section id="skiboot-5-1-6">
 <h1>skiboot-5.1.6<a class="headerlink" href="#skiboot-5-1-6" title="Permalink to this headline">¶</a></h1>
 <p>skiboot-5.1.6 was released on October 8th, 2015.</p>
 <p>skiboot-5.1.6 is the 7th stable release of 5.1, it follows skiboot-5.1.5
 (which was released October 1st, 2015).</p>
 <p>Skiboot 5.1.6 contains all fixes from skiboot-5.1.5 and is a minor bug
 fix release.</p>
-<div class="section" id="changes">
+<section id="changes">
 <h2>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h2>
 <p>Over skiboot-5.1.5, we have the following changes:</p>
-<div class="section" id="generic">
+<section id="generic">
 <h3>Generic:<a class="headerlink" href="#generic" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">Ensure we run pollers in cpu_wait_job()</p>
+<li><p>Ensure we run pollers in cpu_wait_job()</p>
 <p>In root causing a bug on AST BMC Alistair found that pollers weren’t
 being run for around 3800ms.</p>
 <p>This could show as not resetting the boot count sensor on successful
 boot.</p>
 </li>
 </ul>
-</div>
-<div class="section" id="ast-bmc-machines">
+</section>
+<section id="ast-bmc-machines">
 <h3>AST BMC Machines<a class="headerlink" href="#ast-bmc-machines" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">hw/bt.c: Check for timeout after checking for message response</p>
+<li><p>hw/bt.c: Check for timeout after checking for message response</p>
 <p>When deciding if a BT message has timed out we should first check for
 a message response. This will ensure that messages will not time out
 if there was a delay calling the pollers.</p>
@@ -77,11 +77,12 @@ if there was a delay calling the pollers.</p>
 boot.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -113,17 +114,15 @@ boot.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -140,14 +139,15 @@ boot.</p>
         <li class="right" >
           <a href="skiboot-5.1.5.html" title="skiboot-5.1.5"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.1.6</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

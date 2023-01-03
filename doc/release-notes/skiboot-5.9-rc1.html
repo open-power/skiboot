@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.9-rc1 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.9-rc1 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.9.html" title="skiboot-5.9"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc1</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-9-rc1">
+  <section id="skiboot-5-9-rc1">
 <span id="id1"></span><h1>skiboot-5.9-rc1<a class="headerlink" href="#skiboot-5-9-rc1" title="Permalink to this headline">¶</a></h1>
 <p>skiboot v5.9-rc1 was released on Wednesday October 11th 2017. It is the first
 release candidate of skiboot 5.9, which will become the new stable release
@@ -58,26 +58,26 @@ do not currently expect to do any 5.8.x stable releases.</p>
 being for all POWER8 and POWER9 platforms in op-build v1.20 (Due October 18th).
 This release will be targetted to early POWER9 systems.</p>
 <p>Over skiboot-5.8, we have the following changes:</p>
-<div class="section" id="new-features">
+<section id="new-features">
 <h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="power8">
+<section id="power8">
 <h3>POWER8<a class="headerlink" href="#power8" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">fast-reset by default (if possible)</p>
+<li><p>fast-reset by default (if possible)</p>
 <p>Currently, this is limited to POWER8 systems.</p>
 <p>A normal reboot will, rather than doing a full IPL, go through a
 fast reboot procedure. This reduces the “reboot to petitboot” time
 from minutes to a handful of seconds.</p>
 </li>
 </ul>
-</div>
-<div class="section" id="power9">
+</section>
+<section id="power9">
 <h3>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">POWER9 power management during boot</p>
+<li><p>POWER9 power management during boot</p>
 <p>Less power should be consumed during boot.</p>
 </li>
-<li><p class="first">OPAL_SIGNAL_SYSTEM_RESET for POWER9</p>
+<li><p>OPAL_SIGNAL_SYSTEM_RESET for POWER9</p>
 <p>This implements OPAL_SIGNAL_SYSTEM_RESET, using scom registers to
 quiesce the target thread and raise a system reset exception on it.
 It has been tested on DD2 with stop0 ESL=0 and ESL=1 shallow power
@@ -85,20 +85,20 @@ saving modes.</p>
 <p>DD1 is not implemented because it is sufficiently different as to
 make support difficult.</p>
 </li>
-<li><p class="first">Enable deep idle states for POWER9</p>
+<li><p>Enable deep idle states for POWER9</p>
 <ul>
-<li><p class="first">SLW: Add support for p9_stop_api</p>
+<li><p>SLW: Add support for p9_stop_api</p>
 <p>p9_stop_api’s are used to set SPR state on a core wakeup form a  deeper
 low power state. p9_stop_api uses  low level platform formware and
 self-restore microcode to restore the sprs to requested values.</p>
 <p>Code is taken from :
 <a class="reference external" href="https://github.com/open-power/hostboot/tree/master/src/import/chips/p9/procedures/utils/stopreg">https://github.com/open-power/hostboot/tree/master/src/import/chips/p9/procedures/utils/stopreg</a></p>
 </li>
-<li><p class="first">SLW: Removing timebase related flags for stop4</p>
+<li><p>SLW: Removing timebase related flags for stop4</p>
 <p>When a core enters stop4, it does not loose decrementer and time base.
 Hence removing flags OPAL_PM_DEC_STOP and OPAL_PM_TIMEBASE_STOP.</p>
 </li>
-<li><p class="first">SLW: Allow deep states if homer address is known</p>
+<li><p>SLW: Allow deep states if homer address is known</p>
 <p>Use a common variable has_wakeup_engine instead of has_slw to tell if
 the:
 - SLW image is populated in case of power8
@@ -106,18 +106,18 @@ the:
 <p>Currently we expect CME to be loaded if homer address is known ( except
 for simulators)</p>
 </li>
-<li><p class="first">SLW: Configure self-restore for HRMOR</p>
+<li><p>SLW: Configure self-restore for HRMOR</p>
 <p>Make a stop api call using libpore to restore HRMOR register. HRMOR needs
 to be cleared so that when thread exits stop, they arrives at linux
 system_reset vector (0x100).</p>
 </li>
-<li><p class="first">SLW: Add opal_slw_set_reg support for power9</p>
+<li><p>SLW: Add opal_slw_set_reg support for power9</p>
 <p>This OPAL call is made from Linux to OPAL to configure values in
 various SPRs after wakeup from a deep idle state.</p>
 </li>
 </ul>
 </li>
-<li><p class="first">PHB4: CAPP recovery</p>
+<li><p>PHB4: CAPP recovery</p>
 <p>CAPP recovery is initiated when a CAPP Machine Check is detected.
 The capp recovery procedure is initiated via a Hypervisor Maintenance
 interrupt (HMI).</p>
@@ -128,37 +128,37 @@ being asserted. The system continues running and the CAPP and PSL will
 be re-initialized.</p>
 <p>This implements CAPP recovery for POWER9 systems</p>
 </li>
-<li><p class="first">Add <code class="docutils literal notranslate"><span class="pre">wafer-location</span></code> property for POWER9</p>
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">wafer-location</span></code> property for POWER9</p>
 <p>Extract wafer-location from ECID and add property under xscom node.
 - bits  64:71 are the chip x location (7:0)
 - bits  72:79 are the chip y location (7:0)</p>
 <p>Sample output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
 <span class="n">ecid</span>             <span class="mi">019</span><span class="n">a00d4</span> <span class="mi">03100718</span> <span class="mi">852</span><span class="n">c0000</span> <span class="mi">00</span><span class="n">fd7911</span>
-<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-location</span>
+<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-location</span>
 <span class="n">wafer</span><span class="o">-</span><span class="n">location</span>   <span class="mi">00000085</span> <span class="mi">0000002</span><span class="n">c</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Add <code class="docutils literal notranslate"><span class="pre">wafer-id</span></code> property for POWER9</p>
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">wafer-id</span></code> property for POWER9</p>
 <p>Wafer id is derived from ECID data.
 - bits   4:63 are the wafer id ( ten 6 bit fields each containing a code)</p>
 <p>Sample output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
 <span class="n">ecid</span>             <span class="mi">019</span><span class="n">a00d4</span> <span class="mi">03100718</span> <span class="mi">852</span><span class="n">c0000</span> <span class="mi">00</span><span class="n">fd7911</span>
-<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-id</span>
+<span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop wafer-id</span>
 <span class="n">wafer</span><span class="o">-</span><span class="nb">id</span>         <span class="s2">&quot;6Q0DG340SO&quot;</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Add <code class="docutils literal notranslate"><span class="pre">ecid</span></code> property under <code class="docutils literal notranslate"><span class="pre">xscom</span></code> node for POWER9.
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">ecid</span></code> property under <code class="docutils literal notranslate"><span class="pre">xscom</span></code> node for POWER9.
 Sample output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="nd">@623fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">root</span><span class="nd">@wsp</span> <span class="n">xscom</span><span class="o">@</span><span class="mi">623</span><span class="n">fc00000000</span><span class="p">]</span><span class="c1"># lsprop ecid</span>
 <span class="n">ecid</span>             <span class="mi">019</span><span class="n">a00d4</span> <span class="mi">03100718</span> <span class="mi">852</span><span class="n">c0000</span> <span class="mi">00</span><span class="n">fd7911</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Add ibm,firmware-versions device tree node</p>
+<li><p>Add ibm,firmware-versions device tree node</p>
 <p>In P8, hostboot provides mini device tree. It contains <code class="docutils literal notranslate"><span class="pre">/ibm,firmware-versions</span></code>
 node which has various firmware component version details.</p>
 <p>In P9, OPAL is building device tree. This patch adds support to parse VERSION
@@ -178,17 +178,17 @@ section of PNOR and create <code class="docutils literal notranslate"><span clas
 </div>
 </li>
 </ul>
-</div>
-</div>
-<div class="section" id="id2">
+</section>
+</section>
+<section id="id2">
 <h2>POWER9<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">Disable Transactional Memory on Power9 DD 2.1</p>
+<li><p>Disable Transactional Memory on Power9 DD 2.1</p>
 <p>Update pa_features_p9[] to disable TM (Transactional Memory). On DD 2.1
 TM is not usable by Linux without other workarounds, so skiboot must
 disable it.</p>
 </li>
-<li><p class="first">xscom: Do not print error message for ‘chiplet offline’ return values</p>
+<li><p>xscom: Do not print error message for ‘chiplet offline’ return values</p>
 <p>xscom_read/write operations returns CHIPLET_OFFLINE when chiplet is offline.
 Some multicast xscom_read/write requests from HBRT results in xscom operation
 on offline chiplet(s) and printing below warnings in OPAL console:</p>
@@ -199,48 +199,47 @@ on offline chiplet(s) and printing below warnings in OPAL console:</p>
 <p>Some SCOM users can deal correctly with this error code (notably opal-prd),
 so the error message is (in practice) erroneous.</p>
 </li>
-<li><p class="first">IMC: Fix the core_imc_event_mask</p>
+<li><p>IMC: Fix the core_imc_event_mask</p>
 <p>CORE_IMC_EVENT_MASK is a scom that contains bits to control event sampling for
 different machine state for core imc. The current event-mask setting sample
 events only on host kernel (hypervisor) and host userspace.</p>
 <p>Patch to enable the sampling of events in other machine states (like guest
 kernel and guest userspace).</p>
 </li>
-<li><p class="first">IMC: Update the nest_pmus array with occ/gpe microcode uav updates</p>
+<li><p>IMC: Update the nest_pmus array with occ/gpe microcode uav updates</p>
 <p>OOC/gpe nest microcode maintains the list of individual nest units
 supported. Sync the recent updates to the UAV with nest_pmus array.</p>
 <p>For reference occ/gpr microcode link for the UAV:
 <a class="reference external" href="https://github.com/open-power/occ/blob/master/src/occ_gpe1/gpe1_24x7.h">https://github.com/open-power/occ/blob/master/src/occ_gpe1/gpe1_24x7.h</a></p>
 </li>
-<li><p class="first">Parse IOSLOT information from HDAT</p>
+<li><p>Parse IOSLOT information from HDAT</p>
 <p>Add structure definitions that describe the physical PCIe topology of
 a system and parse them into the device-tree based PCIe slot
 description.</p>
 </li>
-<li><p class="first">idle: user context state loss flags fix for stop states</p>
+<li><p>idle: user context state loss flags fix for stop states</p>
 <p>The “lite” stop variants with PSSCR[ESL]=PSSCR[EC]=1 do not lose user
 context, while the non-lite variants do (ESL: enable state loss).</p>
 <p>Some of the POWER9 idle states had these wrong.</p>
 </li>
 </ul>
-<div class="section" id="capi">
+<section id="capi">
 <h3>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">POWER9 DD2 update</p>
+<li><p>POWER9 DD2 update</p>
 <p>The CAPI initialization sequence has been updated in DD2.
 This patch adapts to the changes, retaining compatibility with DD1.
 The patch includes some changes to DD1 fix-ups as well.</p>
 </li>
-<li><p class="first">Load CAPP microcode for POWER9 DD2.0 and DD2.1</p>
-</li>
-<li><p class="first">capi: Mask Psl Credit timeout error for POWER9</p>
+<li><p>Load CAPP microcode for POWER9 DD2.0 and DD2.1</p></li>
+<li><p>capi: Mask Psl Credit timeout error for POWER9</p>
 <p>Mask the PSL credit timeout error in CAPP FIR Mask register
 bit(46). As per the h/w team this error is now deprecated and shouldn’t
 cause any fir-action for P9.</p>
 </li>
 </ul>
-</div>
-<div class="section" id="nvlink2">
+</section>
+<section id="nvlink2">
 <h3>NVLINK2<a class="headerlink" href="#nvlink2" title="Permalink to this headline">¶</a></h3>
 <p>A notabale change is that we now generate the device tree description of
 NVLINK based on the HDAT we get from hostboot. Since Hostboot will generate
@@ -249,118 +248,111 @@ HDAT based on VPD, you now <em>MUST</em> have correct VPD programmed or we will
 are not booting a Sequoia Witherspoon planar. In the case of booting with
 old VPD and/or Hostboot, we print a <strong>giant scary warning</strong> in order to scare you.</p>
 <ul>
-<li><p class="first">npu2: Read slot label from the HDAT link node</p>
+<li><p>npu2: Read slot label from the HDAT link node</p>
 <p>Binding GPU to emulated NPU PCI devices is done using the slot labels
 since the NPU devices do not have a patching slot node we need to
 copy the label in here.</p>
 </li>
-<li><p class="first">npu2: Copy link speed from the npu HDAT node</p>
+<li><p>npu2: Copy link speed from the npu HDAT node</p>
 <p>This needs to be in the PCI device node so the speed of the NVLink
 can be passed to the GPU driver.</p>
 </li>
-<li><p class="first">npu2: hw-procedures: Add settings to PHY_RESET</p>
+<li><p>npu2: hw-procedures: Add settings to PHY_RESET</p>
 <p>Set a few new values in the PHY_RESET procedure, as specified by our
 updated programming guide documentation.</p>
 </li>
-<li><p class="first">Parse NVLink information from HDAT</p>
+<li><p>Parse NVLink information from HDAT</p>
 <p>Add the per-chip structures that descibe how the A-Bus/NVLink/OpenCAPI
 phy is configured. This generates the <a class="reference external" href="mailto:npu&#37;&#52;&#48;xyz">npu<span>&#64;</span>xyz</a> nodes for each chip on
 systems that support it.</p>
 </li>
-<li><p class="first">npu2: Add vendor cap for IRQ testing</p>
+<li><p>npu2: Add vendor cap for IRQ testing</p>
 <p>Provide a way to test recoverable data link interrupts via a new
 vendor capability byte.</p>
 </li>
-<li><p class="first">npu2: Enable recoverable data link (no-stall) interrupts</p>
+<li><p>npu2: Enable recoverable data link (no-stall) interrupts</p>
 <p>Allow the NPU2 to trigger “recoverable data link” interrupts.</p>
 </li>
-<li><p class="first">npu2: Implement basic FLR (Function Level Reset)</p>
-</li>
-<li><p class="first">npu2: hw-procedures: Update PHY DC calibration procedure</p>
-</li>
-<li><p class="first">npu2: hw-procedures: Change rx_pr_phase_step value</p>
-</li>
+<li><p>npu2: Implement basic FLR (Function Level Reset)</p></li>
+<li><p>npu2: hw-procedures: Update PHY DC calibration procedure</p></li>
+<li><p>npu2: hw-procedures: Change rx_pr_phase_step value</p></li>
 </ul>
-</div>
-<div class="section" id="xive">
+</section>
+<section id="xive">
 <h3>XIVE<a class="headerlink" href="#xive" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">xive: Fix opal_xive_dump_tm() to access W2 properly.
-The HW only supported limited access sizes.</p>
-</li>
-<li><p class="first">xive: Make opal_xive_allocate_irq() properly try all chips</p>
+<li><p>xive: Fix opal_xive_dump_tm() to access W2 properly.
+The HW only supported limited access sizes.</p></li>
+<li><p>xive: Make opal_xive_allocate_irq() properly try all chips</p>
 <p>When requested via OPAL_XIVE_ANY_CHIP, we need to try all
 chips. We first try the current one (on which the caller
 sits) and if that fails, we iterate all chips until the
 allocation succeeds.</p>
 </li>
-<li><p class="first">xive: Fix initialization &amp; cleanup of HW thread contexts</p>
+<li><p>xive: Fix initialization &amp; cleanup of HW thread contexts</p>
 <p>Instead of trying to “pull” everything and clear VT (which didn’t
 work and caused some FIRs to be set), instead just clear and then
 set the PTER thread enable bit. This has the side effect of
 completely resetting the corresponding thread context.</p>
 <p>This fixes the spurrious XIVE FIRs reported by PRD and fircheck</p>
 </li>
-<li><p class="first">xive: Add debug option for detecting misrouted IPI in emulation</p>
+<li><p>xive: Add debug option for detecting misrouted IPI in emulation</p>
 <p>This is high overhead so we don’t enable it by default even
 in debug builds, it’s also a bit messy, but it allowed me to
 detect and debug a locking issue earlier so it can be useful.</p>
 </li>
-<li><p class="first">xive: Increase the interrupt “gap” on debug builds</p>
+<li><p>xive: Increase the interrupt “gap” on debug builds</p>
 <p>We normally allocate IPIs from 0x10. Make that 0x1000 on debug
 builds to limit the chances of overlapping with Linux interrupt
 numbers which makes debugging code that confuses them easier.</p>
 <p>Also add a warning in emulation if we get an interrupt in the
 queue whose number is below the gap.</p>
 </li>
-<li><p class="first">xive: Fix locking around cache scrub &amp; watch</p>
+<li><p>xive: Fix locking around cache scrub &amp; watch</p>
 <p>Thankfully the missing locking only affects debug code and
 init code that doesn’t run concurrently. Also adds a DEBUG
 option that checks the lock is properly held.</p>
 </li>
-<li><p class="first">xive: Workaround HW issue with scrub facility</p>
+<li><p>xive: Workaround HW issue with scrub facility</p>
 <p>Without this, we sometimes don’t observe from a CPU the
 values written to the ENDs or NVTs via the cache watch.</p>
 </li>
-<li><p class="first">xive: Add exerciser for cache watch/scrub facility in DEBUG builds</p>
-</li>
-<li><p class="first">xive: Make assertion in xive_eq_for_target() more informative</p>
-</li>
-<li><p class="first">xive: Add debug code to check initial cache updates</p>
-</li>
-<li><p class="first">xive: Ensure pressure relief interrupts are disabled</p>
+<li><p>xive: Add exerciser for cache watch/scrub facility in DEBUG builds</p></li>
+<li><p>xive: Make assertion in xive_eq_for_target() more informative</p></li>
+<li><p>xive: Add debug code to check initial cache updates</p></li>
+<li><p>xive: Ensure pressure relief interrupts are disabled</p>
 <p>We don’t use them and we hijack the VP field with their
 configuration to store the EQ reference, so make sure the
 kernel or guest can’t turn them back on by doing MMIO
 writes to ACK#</p>
 </li>
-<li><p class="first">xive: Don’t try setting the reserved ACK# field in VPs</p>
+<li><p>xive: Don’t try setting the reserved ACK# field in VPs</p>
 <p>That doesn’t work, the HW doesn’t implement it in the cache
 watch facility anyway.</p>
 </li>
-<li><p class="first">xive: Remove useless memory barriers in VP/EQ inits</p>
+<li><p>xive: Remove useless memory barriers in VP/EQ inits</p>
 <p>We no longer update “live” memory structures, we use a temporary
 copy on the stack and update the actual memory structure using
 the cache watch, so those barriers are pointless.</p>
 </li>
 </ul>
-</div>
-<div class="section" id="phb4">
+</section>
+<section id="phb4">
 <h3>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">phb4: Mask RXE_ARB: DEC Stage Valid Error</p>
+<li><p>phb4: Mask RXE_ARB: DEC Stage Valid Error</p>
 <p>Change the inits to mask out the RXE ARB: DEC Stage Valid Error (bit
 370. This has been a fatal error but should be informational only.</p>
 <p>This update will be in the next version of the phb4 workbook.</p>
 </li>
-<li><p class="first">phb4: Add additional adapter to retrain whitelist</p>
+<li><p>phb4: Add additional adapter to retrain whitelist</p>
 <p>The single port version of the ConnectX-5 has a different device ID 0x1017.
 Updated descriptions to match pciutils database.</p>
 </li>
-<li><p class="first">PHB4: Default to PCIe GEN3 on POWER9 DD2.00</p>
+<li><p>PHB4: Default to PCIe GEN3 on POWER9 DD2.00</p>
 <p>You can use the NVRAM override for DD2.00 screened parts.</p>
 </li>
-<li><p class="first">phb4: Retrain link if degraded</p>
+<li><p>phb4: Retrain link if degraded</p>
 <p>On P9 Scale Out (Nimbus) DD2.0 and Scale in (Cumulus) DD1.0 (and
 below) the PCIe PHY can lockup causing training issues. This can cause
 a degradation in speed or width in ~5% of training cases (depending on
@@ -383,12 +375,12 @@ This option may increase the boot time if used on a badly behaving
 card.</p>
 </li>
 </ul>
-</div>
-</div>
-<div class="section" id="ibm-fsp-platforms">
+</section>
+</section>
+<section id="ibm-fsp-platforms">
 <h2>IBM FSP platforms<a class="headerlink" href="#ibm-fsp-platforms" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">FSP/NVRAM: Handle “get vNVRAM statistics” command</p>
+<li><p>FSP/NVRAM: Handle “get vNVRAM statistics” command</p>
 <p>FSP sends MBOX command (cmd : 0xEB, subcmd : 0x05, mod : 0x00) to get vNVRAM
 statistics. OPAL doesn’t maintain any such statistics. Hence return
 FSP_STATUS_INVALID_SUBCMD.</p>
@@ -400,22 +392,21 @@ FSP_STATUS_INVALID_SUBCMD.</p>
 </pre></div>
 </div>
 </li>
-<li><p class="first">fsp: Move common prints to trace</p>
+<li><p>fsp: Move common prints to trace</p>
 <p>These two prints just end up filling the skiboot logs on any machine
 that’s been booted for more than a few hours.</p>
-<dl class="docutils">
-<dt>They have never been useful, so make them trace level. They were: ::</dt>
-<dd><p class="first last">SURV: Received heartbeat acknowledge from FSP
+<dl class="simple">
+<dt>They have never been useful, so make them trace level. They were: ::</dt><dd><p>SURV: Received heartbeat acknowledge from FSP
 SURV: Sending the heartbeat command to FSP</p>
 </dd>
 </dl>
 </li>
 </ul>
-</div>
-<div class="section" id="bmc-based-systems">
+</section>
+<section id="bmc-based-systems">
 <h2>BMC based systems<a class="headerlink" href="#bmc-based-systems" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">hw/lpc-uart: read from RBR to clear character timeout interrupts</p>
+<li><p>hw/lpc-uart: read from RBR to clear character timeout interrupts</p>
 <p>When using the aspeed SUART, we see a condition where the UART sends
 continuous character timeout interrupts. This change adds a (heavily
 commented) dummy read from the RBR to clear the interrupt condition on
@@ -423,15 +414,14 @@ init.</p>
 <p>This was observed on p9dsu systems, but likely applies to other systems
 using the SUART.</p>
 </li>
-<li><p class="first">astbmc: Add methods for handing Device Tree based slots
-e.g. ones from HDAT on POWER9.</p>
-</li>
+<li><p>astbmc: Add methods for handing Device Tree based slots
+e.g. ones from HDAT on POWER9.</p></li>
 </ul>
-</div>
-<div class="section" id="general">
+</section>
+<section id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">ipmi: Convert common debug prints to trace</p>
+<li><p>ipmi: Convert common debug prints to trace</p>
 <p>OPAL logs messages for every IPMI request from host. Sometime OPAL console
 is filled with only these messages. This path is pretty stable now and
 we have enough logs to cover bad path. Hence lets convert these debug
@@ -443,11 +433,11 @@ message to trace/info message. Examples are:</p>
 </pre></div>
 </div>
 </li>
-<li><p class="first">libflash/file: Handle short read()s and write()s correctly</p>
+<li><p>libflash/file: Handle short read()s and write()s correctly</p>
 <p>Currently we don’t move the buffer along for a short read() or write()
 and nor do we request only the remaining amount.</p>
 </li>
-<li><p class="first">hw/p8-i2c: Rework timeout handling</p>
+<li><p>hw/p8-i2c: Rework timeout handling</p>
 <p>Currently we treat a timeout as a hard failure and will automatically
 fail any transations that hit their timeout. This results in
 unnecessarily failing I2C requests if interrupts are dropped, etc.
@@ -458,7 +448,7 @@ handling to check the status and continue the transaction if it can.
 if it can while logging an error if it detects a timeout due to a
 dropped interrupt.</p>
 </li>
-<li><p class="first">core/flash: Only expect ELF header for BOOTKERNEL partition flash resource</p>
+<li><p>core/flash: Only expect ELF header for BOOTKERNEL partition flash resource</p>
 <p>When loading a flash resource which isn’t signed (secure and trusted
 boot) and which doesn’t have a subpartition, we assume it’s the
 BOOTKERNEL since previously this was the only such resource. Thus we
@@ -478,7 +468,7 @@ the FFS header. Also set the return code on error so we don’t
 erroneously return OPAL_SUCCESS. Add a check that the resource will fit
 in the supplied buffer to prevent buffer overrun.</p>
 </li>
-<li><p class="first">flash: Support adding the no-erase property to flash</p>
+<li><p>flash: Support adding the no-erase property to flash</p>
 <p>The mbox protocol explicitly states that an erase is not required
 before a write. This means that issuing an erase from userspace,
 through the mtd device, and back returns a successful operation
@@ -491,11 +481,11 @@ devices which do not require erases to be performed.</p>
 MTD_NO_ERASE flag from the device tree property.</p>
 </li>
 </ul>
-</div>
-<div class="section" id="utilities">
+</section>
+<section id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">external/gard: Clear entire guard partition instead of entry by entry</p>
+<li><p>external/gard: Clear entire guard partition instead of entry by entry</p>
 <p>When using the current implementation of the gard tool to ecc clear the
 entire GUARD partition it is done one gard record at a time. While this
 may be ok when accessing the actual flash this is very slow when done
@@ -507,51 +497,50 @@ entire buffer. Then we can do one big erase and write of the entire
 partition. This reduces the time to clear the guard partition to on the
 order of 4 seconds.</p>
 </li>
-<li><p class="first">opal-prd: Fix opal-prd command line options</p>
+<li><p>opal-prd: Fix opal-prd command line options</p>
 <p>HBRT OCC reset interface depends on service processor type.</p>
 <ul class="simple">
-<li>FSP: reset_pm_complex()</li>
-<li>BMC: process_occ_reset()</li>
+<li><p>FSP: reset_pm_complex()</p></li>
+<li><p>BMC: process_occ_reset()</p></li>
 </ul>
 <p>We have both <cite>occ</cite> and <cite>pm-complex</cite> command line interfaces.
 This patch adds support to dispaly appropriate message depending
 on system type.</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="6%" />
-<col width="39%" />
-<col width="55%" />
+<col style="width: 6%" />
+<col style="width: 39%" />
+<col style="width: 55%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">SP</th>
-<th class="head">Command</th>
-<th class="head">Action</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>SP</p></th>
+<th class="head"><p>Command</p></th>
+<th class="head"><p>Action</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>FSP</td>
-<td>opal-prd occ</td>
-<td>display error message</td>
+<tbody>
+<tr class="row-even"><td><p>FSP</p></td>
+<td><p>opal-prd occ</p></td>
+<td><p>display error message</p></td>
 </tr>
-<tr class="row-odd"><td>FSP</td>
-<td>opal-prd pm-complex</td>
-<td>Call pm_complex_reset()</td>
+<tr class="row-odd"><td><p>FSP</p></td>
+<td><p>opal-prd pm-complex</p></td>
+<td><p>Call pm_complex_reset()</p></td>
 </tr>
-<tr class="row-even"><td>BMC</td>
-<td>opal-prd occ</td>
-<td>Call process_occ_reset()</td>
+<tr class="row-even"><td><p>BMC</p></td>
+<td><p>opal-prd occ</p></td>
+<td><p>Call process_occ_reset()</p></td>
 </tr>
-<tr class="row-odd"><td>BMC</td>
-<td>opal-prd pm-complex</td>
-<td>display error message</td>
+<tr class="row-odd"><td><p>BMC</p></td>
+<td><p>opal-prd pm-complex</p></td>
+<td><p>display error message</p></td>
 </tr>
 </tbody>
 </table>
 </li>
-<li><p class="first">opal-prd: detect service processor type and
-then make appropriate occ reset call.</p>
-</li>
-<li><p class="first">pflash: Fix erase command for unaligned start address</p>
+<li><p>opal-prd: detect service processor type and
+then make appropriate occ reset call.</p></li>
+<li><p>pflash: Fix erase command for unaligned start address</p>
 <p>The erase_range() function handles erasing the flash for a given start
 address and length, and can handle an unaligned start address and
 length. However in the unaligned start address case we are incorrectly
@@ -561,14 +550,13 @@ address was then we probably want to do that before we overide the
 origin start address. So rearrange the code so that this is indeed the
 case.</p>
 </li>
-<li><p class="first">external/gard: Print an error if run on an FSP system</p>
-</li>
+<li><p>external/gard: Print an error if run on an FSP system</p></li>
 </ul>
-</div>
-<div class="section" id="simulators">
+</section>
+<section id="simulators">
 <h2>Simulators<a class="headerlink" href="#simulators" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">mambo: Add mambo socket program</p>
+<li><p>mambo: Add mambo socket program</p>
 <p>This adds a program that can be run inside a mambo simulator in linux
 userspace which enables TCP sockets to be proxied in and out of the
 simulator to the host.</p>
@@ -576,15 +564,15 @@ simulator to the host.</p>
 drivers/infrastructure to run.</p>
 <p>Run inside the simulator:</p>
 <ul class="simple">
-<li>to forward host ssh connections to sim ssh server:
+<li><p>to forward host ssh connections to sim ssh server:
 <code class="docutils literal notranslate"><span class="pre">./mambo-socket-proxy</span> <span class="pre">-h</span> <span class="pre">10022</span> <span class="pre">-s</span> <span class="pre">22</span></code>, then connect to port 10022
-on your host with <code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">-p</span> <span class="pre">10022</span> <span class="pre">localhost</span></code></li>
-<li>to allow http proxy access from inside the sim to local http proxy:
-<code class="docutils literal notranslate"><span class="pre">./mambo-socket-proxy</span> <span class="pre">-b</span> <span class="pre">proxy.mynetwork</span> <span class="pre">-h</span> <span class="pre">3128</span> <span class="pre">-s</span> <span class="pre">3128</span></code></li>
+on your host with <code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">-p</span> <span class="pre">10022</span> <span class="pre">localhost</span></code></p></li>
+<li><p>to allow http proxy access from inside the sim to local http proxy:
+<code class="docutils literal notranslate"><span class="pre">./mambo-socket-proxy</span> <span class="pre">-b</span> <span class="pre">proxy.mynetwork</span> <span class="pre">-h</span> <span class="pre">3128</span> <span class="pre">-s</span> <span class="pre">3128</span></code></p></li>
 </ul>
 <p>Multiple connections are supported.</p>
 </li>
-<li><p class="first">idle: disable stop*_lite POWER9 idle states for Mambo platform</p>
+<li><p>idle: disable stop*_lite POWER9 idle states for Mambo platform</p>
 <p>Mambo prior to Mambo.7.8.21 had a bug where the stop idle instruction
 with PSSCR[ESL]=PSSCR[EC]=0 would resume with MSR set as though it had
 taken a system reset interrupt.</p>
@@ -594,10 +582,11 @@ that, and causes the idle code to crash. Work around this by disabling
 lite stop states for the mambo platform for now.</p>
 </li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -641,17 +630,15 @@ lite stop states for the mambo platform for now.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -668,14 +655,15 @@ lite stop states for the mambo platform for now.</p>
         <li class="right" >
           <a href="skiboot-5.9.html" title="skiboot-5.9"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

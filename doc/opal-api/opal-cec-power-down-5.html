@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_CEC_POWER_DOWN &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_CEC_POWER_DOWN &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="index.html" title="OPAL API Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_CEC_POWER_DOWN</a></li> 
       </ul>
     </div>  
 
@@ -45,73 +45,73 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-cec-power-down">
+  <section id="opal-cec-power-down">
 <span id="id1"></span><h1>OPAL_CEC_POWER_DOWN<a class="headerlink" href="#opal-cec-power-down" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CEC_POWER_DOWN                  5</span>
 
-<span class="n">int64</span> <span class="n">opal_cec_power_down</span><span class="p">(</span><span class="n">uint64</span> <span class="n">request</span><span class="p">)</span>
+<span class="n">int64</span><span class="w"> </span><span class="n">opal_cec_power_down</span><span class="p">(</span><span class="n">uint64</span><span class="w"> </span><span class="n">request</span><span class="p">)</span><span class="w"></span>
 </pre></div>
 </div>
 <p>As powering down the system is likely an asynchronous operation that we
 have to wait for a service processor to do, <a class="reference internal" href="#opal-cec-power-down"><span class="std std-ref">OPAL_CEC_POWER_DOWN</span></a>
 should be called like the example code below:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">OPAL_BUSY</span><span class="p">;</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OPAL_BUSY</span><span class="p">;</span><span class="w"></span>
 
-<span class="k">do</span> <span class="p">{</span>
-  <span class="n">rc</span> <span class="o">=</span> <span class="n">opal_cec_power_down</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span>
-    <span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
-<span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="n">OPAL_BUSY</span> <span class="o">||</span> <span class="n">rc</span> <span class="o">==</span> <span class="n">OPAL_BUSY_EVENT</span><span class="p">);</span>
+<span class="k">do</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opal_cec_power_down</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">);</span><span class="w"></span>
 
-<span class="k">for</span> <span class="p">(;;)</span>
-  <span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(;;)</span><span class="w"></span>
+<span class="w">  </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
-<div class="section" id="arguments">
+<section id="arguments">
 <h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h2>
 <p><cite>uint64 request</cite> values as follows:</p>
-<dl class="docutils">
-<dt>0</dt>
-<dd>Power down normally</dd>
-<dt>1</dt>
-<dd>Power down immediately</dd>
+<dl class="simple">
+<dt>0</dt><dd><p>Power down normally</p>
+</dd>
+<dt>1</dt><dd><p>Power down immediately</p>
+</dd>
 </dl>
 <p>This OPAL call requests OPAL to power down the system. The exact difference
 between a normal and immediate shutdown is platform specific.</p>
 <p>Current Linux kernels just use power down normally (0). It is valid for a
 platform to only support some types of power down operations.</p>
-</div>
-<div class="section" id="return-values">
+</section>
+<section id="return-values">
 <h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>the power down request was successful.
+<dl>
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>the power down request was successful.
 This may/may not result in immediate power down. An OS should
 spin in a loop after getting <a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a> as it is likely that there
-will be a delay before instructions stop being executed.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt>
-<dd>unable to power down, try again later.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt>
-<dd>Unable to power down, call <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> and try again.</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>a parameter was incorrect</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt>
-<dd><p class="first">Something went wrong, and waiting and trying again is unlikely to be
+will be a delay before instructions stop being executed.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></dt><dd><p>unable to power down, try again later.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a></dt><dd><p>Unable to power down, call <a class="reference internal" href="opal-poll-events.html#opal-poll-events"><span class="std std-ref">OPAL_POLL_EVENTS</span></a> and try again.</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>a parameter was incorrect</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a></dt><dd><p>Something went wrong, and waiting and trying again is unlikely to be
 successful. Although, considering that in a shutdown code path, there’s
 unlikely to be any other valid option to take, retrying is perfectly valid.</p>
-<p class="last">In older OPAL versions (prior to skiboot v5.9), on IBM FSP systems, this
+<p>In older OPAL versions (prior to skiboot v5.9), on IBM FSP systems, this
 return code was returned erroneously instead of <a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a> during an
 FSP Reset/Reload.</p>
 </dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>this platform does not support being powered off. Practically speaking, this
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>this platform does not support being powered off. Practically speaking, this
 should <strong>never</strong> be returned, but in various simulation or bring-up situations,
-it’s plausible it is, so code should handle this gracefully.</dd>
+it’s plausible it is, so code should handle this gracefully.</p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -140,17 +140,15 @@ it’s plausible it is, so code should handle this gracefully.</dd>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -167,14 +165,15 @@ it’s plausible it is, so code should handle this gracefully.</dd>
         <li class="right" >
           <a href="index.html" title="OPAL API Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_CEC_POWER_DOWN</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

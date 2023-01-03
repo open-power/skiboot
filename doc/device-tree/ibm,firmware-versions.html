@@ -1,26 +1,25 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>ibm,firmware-versions node &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>ibm,firmware-versions node &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="ibm,opal" href="ibm,opal.html" />
-    <link rel="prev" title="ibm,cvc" href="ibm,cvc.html" /> 
+    <link rel="next" title="ibm,opal" href="ibm%2Copal.html" />
+    <link rel="prev" title="ibm,cvc" href="ibm%2Ccvc.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -29,14 +28,15 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="ibm,opal.html" title="ibm,opal"
+          <a href="ibm%2Copal.html" title="ibm,opal"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="ibm,cvc.html" title="ibm,cvc"
+          <a href="ibm%2Ccvc.html" title="ibm,cvc"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,firmware-versions node</a></li> 
       </ul>
     </div>  
 
@@ -45,72 +45,72 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ibm-firmware-versions-node">
+  <section id="ibm-firmware-versions-node">
 <h1>ibm,firmware-versions node<a class="headerlink" href="#ibm-firmware-versions-node" title="Permalink to this headline">¶</a></h1>
 <p>The <cite>ibm,firmware-versions</cite> node contains information on the versions of
 various firmware components as they were <strong>during boot</strong>. It <strong>does not</strong>
 change if there are pending or runtime updates. It represents (to the best
 of boot firmware’s ability) what versions of firmware were during this boot.</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="25%" />
-<col width="12%" />
-<col width="64%" />
+<col style="width: 25%" />
+<col style="width: 12%" />
+<col style="width: 64%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Property</th>
-<th class="head">Required</th>
-<th class="head">Value</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Value</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>version</td>
-<td>POWER9</td>
-<td>See below</td>
+<tbody>
+<tr class="row-even"><td><p>version</p></td>
+<td><p>POWER9</p></td>
+<td><p>See below</p></td>
 </tr>
-<tr class="row-odd"><td>skiboot</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-odd"><td><p>skiboot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-even"><td>occ</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-even"><td><p>occ</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-odd"><td>buildroot</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-odd"><td><p>buildroot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-even"><td>capp-ucode</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-even"><td><p>capp-ucode</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-odd"><td>petitboot</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-odd"><td><p>petitboot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-even"><td>open-power</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-even"><td><p>open-power</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-odd"><td>hostboot-binaries</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-odd"><td><p>hostboot-binaries</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-even"><td>MACHINE-xml</td>
-<td>N</td>
-<td>MACHINE (e.g. habanero) machine XML version</td>
+<tr class="row-even"><td><p>MACHINE-xml</p></td>
+<td><p>N</p></td>
+<td><p>MACHINE (e.g. habanero) machine XML version</p></td>
 </tr>
-<tr class="row-odd"><td>hostboot</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-odd"><td><p>hostboot</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
-<tr class="row-even"><td>linux</td>
-<td>N</td>
-<td>component version number</td>
+<tr class="row-even"><td><p>linux</p></td>
+<td><p>N</p></td>
+<td><p>component version number</p></td>
 </tr>
 </tbody>
 </table>
-<div class="section" id="version-property">
+<section id="version-property">
 <h2><code class="docutils literal notranslate"><span class="pre">version</span></code> property<a class="headerlink" href="#version-property" title="Permalink to this headline">¶</a></h2>
 <p>This property <strong>must</strong> exist on POWER9 and above systems. It <strong>may</strong> exist
 on POWER8 systems.</p>
@@ -121,9 +121,9 @@ That is, the version that is applicable when determining if a machine
 requires a firmware update.</p>
 <p>Examples (for three different platforms):</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">IBM-sandwich-20170217</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">open-power-habanero-v1.14-45-g78d89280c3f9-dirty</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">open-power-SUPERMICRO-P8DTU-V2.00.GA2-20161028</span></code></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IBM-sandwich-20170217</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">open-power-habanero-v1.14-45-g78d89280c3f9-dirty</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">open-power-SUPERMICRO-P8DTU-V2.00.GA2-20161028</span></code></p></li>
 </ul>
 <p>To compare two versions (for the purpose of determining if the current
 installed firmware is in need of updating to the one being compared against)
@@ -131,16 +131,16 @@ we need a defined set of rules on how to do this comparison.</p>
 <p>Version numbers are <strong>not</strong> intended to be compared across platforms.</p>
 <p>The version string may include a description at the start of it. This
 description can contain any set of characters but <strong>must not</strong> contain
-a ‘-‘ followed by a digit. It also <strong>must not</strong> contain ‘-v’ or ‘-V’ followed
+a ‘-’ followed by a digit. It also <strong>must not</strong> contain ‘-v’ or ‘-V’ followed
 by a digit.</p>
-<p>Each part of the version string is separated by a ‘-‘ character. Leading
+<p>Each part of the version string is separated by a ‘-’ character. Leading
 sections are ignored, until one starts with a digit (0-9) or a ‘v’ or ‘V’,
 followed by a digit. Where there is a leading ‘v’ or ‘V’, it is also stripped.</p>
 <p>For the above three examples, we’d be left with:</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">20170217</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">1.14-45-g78d89280c3f9-dirty</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">2.00.GA2-20161028</span></code></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">20170217</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1.14-45-g78d89280c3f9-dirty</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">2.00.GA2-20161028</span></code></p></li>
 </ul>
 <p>Each section is now compared until a difference is found. All comparisons
 are done <em>lexically</em>. The lexical comparison sorts in this order: tilde (~),
@@ -165,63 +165,63 @@ sections “-g78d89280c3f9” and “-g123456789abc” differ and for all compar
 familiar to those who are familiar with RPM and Debian package versioning.</p>
 <p>The below table shows comparisons between versions and what the result should
 be:</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="36%" />
-<col width="36%" />
-<col width="27%" />
+<col style="width: 36%" />
+<col style="width: 36%" />
+<col style="width: 27%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">A</th>
-<th class="head">B</th>
-<th class="head">Result</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>A</p></th>
+<th class="head"><p>B</p></th>
+<th class="head"><p>Result</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>1.14-45-g78d89280c3f9-dirty</td>
-<td>1.14-45-g78d89280c3f9-dirty</td>
-<td>Equal</td>
+<tbody>
+<tr class="row-even"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>Equal</p></td>
 </tr>
-<tr class="row-odd"><td>1.14-45-g78d89280c3f9-dirty</td>
-<td>1.14-45-g78d89280c3f9</td>
-<td>A &gt; B</td>
+<tr class="row-odd"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-45-g78d89280c3f9</p></td>
+<td><p>A &gt; B</p></td>
 </tr>
-<tr class="row-even"><td>1.14-45-g78d89280c3f9-dirty</td>
-<td>1.14-45-g123456789abc</td>
-<td>A &lt; B, A &gt; B, A != B</td>
+<tr class="row-even"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-45-g123456789abc</p></td>
+<td><p>A &lt; B, A &gt; B, A != B</p></td>
 </tr>
-<tr class="row-odd"><td>1.14-45-g78d89280c3f9-dirty</td>
-<td>1.14-46</td>
-<td>A &lt; B</td>
+<tr class="row-odd"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.14-46</p></td>
+<td><p>A &lt; B</p></td>
 </tr>
-<tr class="row-even"><td>1.14-45-g78d89280c3f9-dirty</td>
-<td>1.15</td>
-<td>A &lt; B</td>
+<tr class="row-even"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1.15</p></td>
+<td><p>A &lt; B</p></td>
 </tr>
-<tr class="row-odd"><td>1.14-45-g78d89280c3f9-dirty</td>
-<td>1:1.0</td>
-<td>A &lt; B</td>
+<tr class="row-odd"><td><p>1.14-45-g78d89280c3f9-dirty</p></td>
+<td><p>1:1.0</p></td>
+<td><p>A &lt; B</p></td>
 </tr>
-<tr class="row-even"><td>1.0</td>
-<td>1.0~daily20170201</td>
-<td>A &gt; B</td>
+<tr class="row-even"><td><p>1.0</p></td>
+<td><p>1.0~daily20170201</p></td>
+<td><p>A &gt; B</p></td>
 </tr>
-<tr class="row-odd"><td>1.0.1</td>
-<td>1.0~daily20170201</td>
-<td>A &gt; B</td>
+<tr class="row-odd"><td><p>1.0.1</p></td>
+<td><p>1.0~daily20170201</p></td>
+<td><p>A &gt; B</p></td>
 </tr>
-<tr class="row-even"><td>1.0</td>
-<td>1.0.1</td>
-<td>A &lt; B</td>
+<tr class="row-even"><td><p>1.0</p></td>
+<td><p>1.0.1</p></td>
+<td><p>A &lt; B</p></td>
 </tr>
-<tr class="row-odd"><td>1.0</td>
-<td>1.0beta</td>
-<td>A &lt; B</td>
+<tr class="row-odd"><td><p>1.0</p></td>
+<td><p>1.0beta</p></td>
+<td><p>A &lt; B</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="examples">
+</section>
+<section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
 <p>New style (required for POWER9 and above):</p>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,firmware-versions</span> <span class="p">{</span>
@@ -248,10 +248,11 @@ be:</p>
 <span class="p">};</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -267,10 +268,10 @@ be:</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="ibm,cvc.html"
+  <p class="topless"><a href="ibm%2Ccvc.html"
                         title="previous chapter">ibm,cvc</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="ibm,opal.html"
+  <p class="topless"><a href="ibm%2Copal.html"
                         title="next chapter">ibm,opal</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -280,17 +281,15 @@ be:</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -302,19 +301,20 @@ be:</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="ibm,opal.html" title="ibm,opal"
+          <a href="ibm%2Copal.html" title="ibm,opal"
              >next</a> |</li>
         <li class="right" >
-          <a href="ibm,cvc.html" title="ibm,cvc"
+          <a href="ibm%2Ccvc.html" title="ibm,cvc"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ibm,firmware-versions node</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_REINIT_CPUS &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_REINIT_CPUS &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-read-write-tpo-dpo-103-104-105.html" title="OPAL Timed Power On and Delayed Power Off"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_REINIT_CPUS</a></li> 
       </ul>
     </div>  
 
@@ -45,26 +45,26 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-reinit-cpus">
+  <section id="opal-reinit-cpus">
 <span id="id1"></span><h1>OPAL_REINIT_CPUS<a class="headerlink" href="#opal-reinit-cpus" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_REINIT_CPUS                     70</span>
 
-<span class="k">static</span> <span class="kt">int64_t</span> <span class="nf">opal_reinit_cpus</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">flags</span><span class="p">);</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_reinit_cpus</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">flags</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p>This OPAL call reinitializes some bit of CPU state across <em>ALL</em> CPUs.
 Consequently, all CPUs must be in OPAL for this call to succeed (either
 at boot time or after OPAL_RETURN_CPU is called).</p>
-<div class="section" id="arguments">
+<section id="arguments">
 <h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h2>
 <p>Currently, possible flags are:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span> <span class="p">{</span>
-      <span class="n">OPAL_REINIT_CPUS_HILE_BE</span>        <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">0</span><span class="p">),</span>
-      <span class="n">OPAL_REINIT_CPUS_HILE_LE</span>        <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">),</span>
-      <span class="n">OPAL_REINIT_CPUS_MMU_HASH</span>       <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">),</span>
-      <span class="n">OPAL_REINIT_CPUS_MMU_RADIX</span>      <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">),</span>
-      <span class="n">OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span><span class="p">),</span>
-<span class="p">};</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">OPAL_REINIT_CPUS_HILE_BE</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">OPAL_REINIT_CPUS_HILE_LE</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">OPAL_REINIT_CPUS_MMU_HASH</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">OPAL_REINIT_CPUS_MMU_RADIX</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Extra flags may be added in the future, so other bits <em>must</em> be 0.</p>
@@ -74,12 +74,12 @@ flags will return OPAL_UNSUPPORTED.</p>
 are support and other bits <em>MUST NOT</em> be set.</p>
 <p>On POWER9 CPUs, all options including OPAL_REINIT_CPUS_MMU_HASH and
 OPAL_REINIT_CPUS_MMU_RADIX.</p>
-<div class="section" id="opal-reinit-cpus-tm-suspend-disabled">
+<section id="opal-reinit-cpus-tm-suspend-disabled">
 <h3>OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED<a class="headerlink" href="#opal-reinit-cpus-tm-suspend-disabled" title="Permalink to this headline">¶</a></h3>
 <p>This flag requests that CPUs be configured with TM (Transactional Memory)
 suspend mode disabled. This may only be supported on some CPU versions.</p>
-</div>
-<div class="section" id="opal-reinit-cpus-mmu-hash-and-opal-reinit-cpus-mmu-radix">
+</section>
+<section id="opal-reinit-cpus-mmu-hash-and-opal-reinit-cpus-mmu-radix">
 <h3>OPAL_REINIT_CPUS_MMU_HASH and OPAL_REINIT_CPUS_MMU_RADIX<a class="headerlink" href="#opal-reinit-cpus-mmu-hash-and-opal-reinit-cpus-mmu-radix" title="Permalink to this headline">¶</a></h3>
 <p>Some processors may need to change a processor specific register in order to
 support Hash or Radix translation.</p>
@@ -89,20 +89,21 @@ the host OS rather than when in radix mode, half the TLB is taken for a Page
 Walk Cache (PWC).</p>
 <p>Future CPUs may or may not do anything with these flags, but a host OS must
 use them to ensure compatibility in the future.</p>
-</div>
-</div>
-<div class="section" id="returns">
+</section>
+</section>
+<section id="returns">
 <h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>Success!</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>Processor does not suport reinit flags.</dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success!</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>Processor does not suport reinit flags.</p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -135,17 +136,15 @@ use them to ensure compatibility in the future.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -162,14 +161,15 @@ use them to ensure compatibility in the future.</p>
         <li class="right" >
           <a href="opal-read-write-tpo-dpo-103-104-105.html" title="OPAL Timed Power On and Delayed Power Off"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_REINIT_CPUS</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

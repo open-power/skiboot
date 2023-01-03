@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>skiboot-5.9-rc4 &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>skiboot-5.9-rc4 &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="skiboot-5.9-rc3.html" title="skiboot-5.9-rc3"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc4</a></li> 
       </ul>
     </div>  
 
@@ -45,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="skiboot-5-9-rc4">
+  <section id="skiboot-5-9-rc4">
 <span id="id1"></span><h1>skiboot-5.9-rc4<a class="headerlink" href="#skiboot-5-9-rc4" title="Permalink to this headline">¶</a></h1>
 <p>skiboot v5.9-rc4 was released on Thursday October 19th 2017. It is the fourth
 release candidate of skiboot 5.9, which will become the new stable release
@@ -60,37 +60,36 @@ so we’re running a bit behind there).
 This release will be targetted to early POWER9 systems.</p>
 <p>Over <a class="reference internal" href="skiboot-5.9-rc3.html#skiboot-5-9-rc3"><span class="std std-ref">skiboot-5.9-rc3</span></a>, we have the following changes:</p>
 <ul>
-<li><p class="first">phb4: Fix PCIe GEN4 on DD2.1 and above</p>
-<dl class="docutils">
-<dt>In this change:</dt>
-<dd><p class="first last">eef0e197ab PHB4: Default to PCIe GEN3 on POWER9 DD2.00</p>
+<li><p>phb4: Fix PCIe GEN4 on DD2.1 and above</p>
+<dl class="simple">
+<dt>In this change:</dt><dd><p>eef0e197ab PHB4: Default to PCIe GEN3 on POWER9 DD2.00</p>
 </dd>
 </dl>
 <p>We clamped DD2.00 parts to GEN3 but unfortunately this change also
 applies to DD2.1 and above.</p>
 <p>This fixes this to only apply to DD2.00.</p>
 </li>
-<li><p class="first">occ-sensors : Add OCC inband sensor region to exports
-(useful for debugging)</p>
-</li>
+<li><p>occ-sensors : Add OCC inband sensor region to exports
+(useful for debugging)</p></li>
 </ul>
 <p>Two SRESET fixes:</p>
 <ul>
-<li><p class="first">core: direct-controls: Fix clearing of special wakeup</p>
+<li><p>core: direct-controls: Fix clearing of special wakeup</p>
 <p>‘special_wakeup_count’ is incremented on successfully asserting
 special wakeup. So we will never clear the special wakeup if we
 check ‘special_wakeup_count’ to be zero. Fix this issue by checking
 the ‘special_wakeup_count’ to 1 in dctl_clear_special_wakeup().</p>
 </li>
-<li><p class="first">core/direct-controls: increase special wakeup timeout on POWER9</p>
+<li><p>core/direct-controls: increase special wakeup timeout on POWER9</p>
 <p>Some instances have been observed where the special wakeup assert
 times out. The current timeout is too short for deeper sleep states.
 Hostboot uses 100ms, so match that.</p>
 </li>
 </ul>
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -110,17 +109,15 @@ Hostboot uses 100ms, so match that.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -137,14 +134,15 @@ Hostboot uses 100ms, so match that.</p>
         <li class="right" >
           <a href="skiboot-5.9-rc3.html" title="skiboot-5.9-rc3"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc4</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

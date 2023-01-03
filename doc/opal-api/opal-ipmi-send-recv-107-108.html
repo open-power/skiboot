@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_IPMI_SEND &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_IPMI_SEND &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-invalid-call--1.html" title="OPAL_INVALID_CALL"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_IPMI_SEND</a></li> 
       </ul>
     </div>  
 
@@ -45,102 +45,103 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-ipmi-send">
+  <section id="opal-ipmi-send">
 <span id="id1"></span><h1>OPAL_IPMI_SEND<a class="headerlink" href="#opal-ipmi-send" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_IPMI_SEND                          107</span>
 
-<span class="k">enum</span> <span class="p">{</span>
-             <span class="n">OPAL_IPMI_MSG_FORMAT_VERSION_1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-<span class="p">};</span>
+<span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">             </span><span class="n">OPAL_IPMI_MSG_FORMAT_VERSION_1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="k">struct</span> <span class="n">opal_ipmi_msg</span> <span class="p">{</span>
-             <span class="kt">uint8_t</span> <span class="n">version</span><span class="p">;</span>
-             <span class="kt">uint8_t</span> <span class="n">netfn</span><span class="p">;</span>
-             <span class="kt">uint8_t</span> <span class="n">cmd</span><span class="p">;</span>
-             <span class="kt">uint8_t</span> <span class="n">data</span><span class="p">[];</span>
-<span class="p">};</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">opal_ipmi_msg</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">version</span><span class="p">;</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">netfn</span><span class="p">;</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">cmd</span><span class="p">;</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">data</span><span class="p">[];</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="kt">int64_t</span> <span class="nf">opal_ipmi_send</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">interface</span><span class="p">,</span>
-                       <span class="k">struct</span> <span class="n">opal_ipmi_msg</span> <span class="o">*</span><span class="n">opal_ipmi_msg</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">msg_len</span><span class="p">);</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_ipmi_send</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">interface</span><span class="p">,</span><span class="w"></span>
+<span class="w">                       </span><span class="k">struct</span><span class="w"> </span><span class="nc">opal_ipmi_msg</span><span class="w"> </span><span class="o">*</span><span class="n">opal_ipmi_msg</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">msg_len</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="#opal-ipmi-send"><span class="std std-ref">OPAL_IPMI_SEND</span></a> call will send an IPMI message to the service processor.</p>
-<div class="section" id="parameters">
+<section id="parameters">
 <h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">interface</span></code></dt>
-<dd><code class="docutils literal notranslate"><span class="pre">interface</span></code> parameter is the value from the ipmi interface node <code class="docutils literal notranslate"><span class="pre">ibm,ipmi-interface-id</span></code></dd>
-<dt><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code></dt>
-<dd><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code> is the pointer to a <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_ipmi_msg</span></code> (see above)</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">msg_len</span></code></dt>
-<dd>ipmi message request size</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">interface</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">interface</span></code> parameter is the value from the ipmi interface node <code class="docutils literal notranslate"><span class="pre">ibm,ipmi-interface-id</span></code></p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code> is the pointer to a <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_ipmi_msg</span></code> (see above)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">msg_len</span></code></dt><dd><p>ipmi message request size</p>
+</dd>
 </dl>
-</div>
-<div class="section" id="return-values">
+</section>
+<section id="return-values">
 <h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd><code class="docutils literal notranslate"><span class="pre">msg</span></code> queued successfully</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>invalid ipmi message request length <code class="docutils literal notranslate"><span class="pre">msg_len</span></code></dd>
-<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt>
-<dd>backend support is not present as block transfer/service processor ipmi routines are not
-initialized which are used for communication</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>in-correct opal ipmi message format version <code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg-&gt;version</span></code></dd>
-<dt><a class="reference internal" href="return-codes.html#opal-resource"><span class="std std-ref">OPAL_RESOURCE</span></a></dt>
-<dd>insufficient resources to create <code class="docutils literal notranslate"><span class="pre">ipmi_msg</span></code> structure</dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p><code class="docutils literal notranslate"><span class="pre">msg</span></code> queued successfully</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>invalid ipmi message request length <code class="docutils literal notranslate"><span class="pre">msg_len</span></code></p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>backend support is not present as block transfer/service processor ipmi routines are not
+initialized which are used for communication</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>in-correct opal ipmi message format version <code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg-&gt;version</span></code></p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-resource"><span class="std std-ref">OPAL_RESOURCE</span></a></dt><dd><p>insufficient resources to create <code class="docutils literal notranslate"><span class="pre">ipmi_msg</span></code> structure</p>
+</dd>
 </dl>
-</div>
-</div>
-<div class="section" id="opal-ipmi-recv">
+</section>
+</section>
+<section id="opal-ipmi-recv">
 <span id="id2"></span><h1>OPAL_IPMI_RECV<a class="headerlink" href="#opal-ipmi-recv" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_IPMI_RECV                          108</span>
 
-<span class="k">enum</span> <span class="p">{</span>
-             <span class="n">OPAL_IPMI_MSG_FORMAT_VERSION_1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-<span class="p">};</span>
+<span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">             </span><span class="n">OPAL_IPMI_MSG_FORMAT_VERSION_1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="k">struct</span> <span class="n">opal_ipmi_msg</span> <span class="p">{</span>
-             <span class="kt">uint8_t</span> <span class="n">version</span><span class="p">;</span>
-             <span class="kt">uint8_t</span> <span class="n">netfn</span><span class="p">;</span>
-             <span class="kt">uint8_t</span> <span class="n">cmd</span><span class="p">;</span>
-             <span class="kt">uint8_t</span> <span class="n">data</span><span class="p">[];</span>
-<span class="p">};</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">opal_ipmi_msg</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">version</span><span class="p">;</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">netfn</span><span class="p">;</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">cmd</span><span class="p">;</span><span class="w"></span>
+<span class="w">             </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">data</span><span class="p">[];</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
 
-<span class="kt">int64_t</span> <span class="n">opal_ipmi_recv</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">interface</span><span class="p">,</span>
-                       <span class="k">struct</span> <span class="n">opal_ipmi_msg</span> <span class="o">*</span><span class="n">opal_ipmi_msg</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="o">*</span><span class="n">msg_len</span><span class="p">)</span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="n">opal_ipmi_recv</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">interface</span><span class="p">,</span><span class="w"></span>
+<span class="w">                       </span><span class="k">struct</span><span class="w"> </span><span class="nc">opal_ipmi_msg</span><span class="w"> </span><span class="o">*</span><span class="n">opal_ipmi_msg</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="o">*</span><span class="n">msg_len</span><span class="p">)</span><span class="w"></span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">OPAL_IPMI_RECV</span></code> call reads an ipmi message of type <code class="docutils literal notranslate"><span class="pre">ipmi_msg</span></code> from ipmi message
 queue <code class="docutils literal notranslate"><span class="pre">msgq</span></code> into host OS structure <code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code>.</p>
-<div class="section" id="id3">
+<section id="id3">
 <h2>Parameters<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">interface</span></code></dt>
-<dd><code class="docutils literal notranslate"><span class="pre">interface</span></code> parameter is the value from the ipmi interface node <code class="docutils literal notranslate"><span class="pre">ibm,ipmi-interface-id</span></code></dd>
-<dt><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code></dt>
-<dd><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code> is the pointer to a <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_ipmi_msg</span></code> (see above)</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">msg_len</span></code></dt>
-<dd><code class="docutils literal notranslate"><span class="pre">msg_len</span></code> is the pointer to ipmi message response size</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">interface</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">interface</span></code> parameter is the value from the ipmi interface node <code class="docutils literal notranslate"><span class="pre">ibm,ipmi-interface-id</span></code></p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg</span></code> is the pointer to a <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">opal_ipmi_msg</span></code> (see above)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">msg_len</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">msg_len</span></code> is the pointer to ipmi message response size</p>
+</dd>
 </dl>
-</div>
-<div class="section" id="id4">
+</section>
+<section id="id4">
 <h2>Return Values<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>ipmi message dequeued from <code class="docutils literal notranslate"><span class="pre">msgq</span></code> queue and memory taken by it got released successfully</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-empty"><span class="std std-ref">OPAL_EMPTY</span></a></dt>
-<dd><code class="docutils literal notranslate"><span class="pre">msgq</span></code> list is empty</dd>
-<dt>ref:<cite>OPAL_PARAMETER</cite></dt>
-<dd>invalid ipmi <code class="docutils literal notranslate"><span class="pre">interface</span></code> value</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt>
-<dd>incorrect opal ipmi message format version <code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg-&gt;version</span></code></dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>ipmi message dequeued from <code class="docutils literal notranslate"><span class="pre">msgq</span></code> queue and memory taken by it got released successfully</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-empty"><span class="std std-ref">OPAL_EMPTY</span></a></dt><dd><p><code class="docutils literal notranslate"><span class="pre">msgq</span></code> list is empty</p>
+</dd>
+<dt>ref:<cite>OPAL_PARAMETER</cite></dt><dd><p>invalid ipmi <code class="docutils literal notranslate"><span class="pre">interface</span></code> value</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a></dt><dd><p>incorrect opal ipmi message format version <code class="docutils literal notranslate"><span class="pre">opal_ipmi_msg-&gt;version</span></code></p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -174,17 +175,15 @@ queue <code class="docutils literal notranslate"><span class="pre">msgq</span></
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -201,14 +200,15 @@ queue <code class="docutils literal notranslate"><span class="pre">msgq</span></
         <li class="right" >
           <a href="opal-invalid-call--1.html" title="OPAL_INVALID_CALL"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_IPMI_SEND</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

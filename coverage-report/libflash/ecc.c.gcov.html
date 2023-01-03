@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2022-09-20 20:01:17</td>
+            <td class="headerValue">2023-01-03 19:55:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">13</td>
@@ -201,7 +201,7 @@
 <a name="130"><span class="lineNum">     130 </span>                :            :  */</a>
 <a name="131"><span class="lineNum">     131 </span>                :<span class="lineCov">        928 : static enum eccbitfields eccverify(uint64_t data, uint8_t ecc)</span></a>
 <a name="132"><span class="lineNum">     132 </span>                :            : {</a>
-<a name="133"><span class="lineNum">     133 </span>                :<span class="lineCov">       1378 :         return syndromematrix[eccgenerate(data) ^ ecc];</span></a>
+<a name="133"><span class="lineNum">     133 </span>                :<span class="lineCov">        928 :         return syndromematrix[eccgenerate(data) ^ ecc];</span></a>
 <a name="134"><span class="lineNum">     134 </span>                :            : }</a>
 <a name="135"><span class="lineNum">     135 </span>                :            : </a>
 <a name="136"><span class="lineNum">     136 </span>                :            : /* IBM bit ordering */</a>
@@ -251,12 +251,12 @@
 <a name="180"><span class="lineNum">     180 </span>                :<span class="lineCov">         10 :         return (struct ecc64 *)(((char *)p) + i);</span></a>
 <a name="181"><span class="lineNum">     181 </span>                :            : }</a>
 <a name="182"><span class="lineNum">     182 </span>                :            : </a>
-<a name="183"><span class="lineNum">     183 </span>                :<span class="lineCov">        214 : static uint64_t whole_ecc_bytes(uint64_t i)</span></a>
+<a name="183"><span class="lineNum">     183 </span>                :<span class="lineCov">        125 : static uint64_t whole_ecc_bytes(uint64_t i)</span></a>
 <a name="184"><span class="lineNum">     184 </span>                :            : {</a>
-<a name="185"><span class="lineNum">     185 </span>                :<span class="lineCov">        214 :         return i &amp; ~(BYTES_PER_ECC - 1);</span></a>
+<a name="185"><span class="lineNum">     185 </span>                :<span class="lineCov">        125 :         return i &amp; ~(BYTES_PER_ECC - 1);</span></a>
 <a name="186"><span class="lineNum">     186 </span>                :            : }</a>
 <a name="187"><span class="lineNum">     187 </span>                :            : </a>
-<a name="188"><span class="lineNum">     188 </span>                :<span class="lineCov">        107 : static uint64_t whole_ecc_structs(uint64_t i)</span></a>
+<a name="188"><span class="lineNum">     188 </span>                :<span class="lineCov">         18 : static uint64_t whole_ecc_structs(uint64_t i)</span></a>
 <a name="189"><span class="lineNum">     189 </span>                :            : {</a>
 <a name="190"><span class="lineNum">     190 </span>                :<span class="lineCov">        107 :         return whole_ecc_bytes(i) &gt;&gt; 3;</span></a>
 <a name="191"><span class="lineNum">     191 </span>                :            : }</a>

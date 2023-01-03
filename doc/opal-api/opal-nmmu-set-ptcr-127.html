@@ -1,21 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPAL_NMMU_SET_PTCR &#8212; skiboot d6d8386
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>OPAL_NMMU_SET_PTCR &#8212; skiboot e6cda17
  documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,9 +33,10 @@
         <li class="right" >
           <a href="opal-mpipl-173-174.html" title="OPAL MPIPL APIs"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_NMMU_SET_PTCR</a></li> 
       </ul>
     </div>  
 
@@ -45,35 +45,36 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="opal-nmmu-set-ptcr">
+  <section id="opal-nmmu-set-ptcr">
 <span id="id1"></span><h1>OPAL_NMMU_SET_PTCR<a class="headerlink" href="#opal-nmmu-set-ptcr" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_NMMU_SET_PTCR                   127</span>
 
-<span class="n">int64</span> <span class="nf">opal_nmmu_set_ptcr</span><span class="p">(</span><span class="n">uint64</span> <span class="n">chip_id</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">ptcr</span><span class="p">);</span>
+<span class="n">int64</span><span class="w"> </span><span class="nf">opal_nmmu_set_ptcr</span><span class="p">(</span><span class="n">uint64</span><span class="w"> </span><span class="n">chip_id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">ptcr</span><span class="p">);</span><span class="w"></span>
 </pre></div>
 </div>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">uint64</span> <span class="pre">chip_id</span></code></dt>
-<dd>either the chip id containing the nest mmu who’s ptcr should be set
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">uint64</span> <span class="pre">chip_id</span></code></dt><dd><p>either the chip id containing the nest mmu who’s ptcr should be set
 or alternatively -1ULL to indicate all nest mmu ptcr’s should be set to
-the same value.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">uint64</span> <span class="pre">ptcr</span></code></dt>
-<dd>ptcr value pointing to either the radix tables or hash tables.</dd>
+the same value.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">uint64</span> <span class="pre">ptcr</span></code></dt><dd><p>ptcr value pointing to either the radix tables or hash tables.</p>
+</dd>
 </dl>
 <p>This OPAL call sets up the Nest MMU by pointing it at the radix page
 table base or the hash page table base (HTABORG).</p>
-<div class="section" id="return-values">
+<section id="return-values">
 <h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt>
-<dd>the PTCR was updated successful</dd>
-<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt>
-<dd>a parameter was incorrect</dd>
+<dl class="simple">
+<dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>the PTCR was updated successful</p>
+</dd>
+<dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>a parameter was incorrect</p>
+</dd>
 </dl>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -101,17 +102,15 @@ table base or the hash page table base (HTABORG).</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -128,14 +127,15 @@ table base or the hash page table base (HTABORG).</p>
         <li class="right" >
           <a href="opal-mpipl-173-174.html" title="OPAL MPIPL APIs"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot d6d8386
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot e6cda17
  documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">OPAL_NMMU_SET_PTCR</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>
