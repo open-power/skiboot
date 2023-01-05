@@ -1,7 +1,6 @@
 #!/bin/bash
 
-QEMU_ARGS="-M powernv -nodefaults -device ipmi-bmc-sim,id=bmc0 -serial none"
-QEMU_ARGS+=" -device isa-serial,chardev=s1 -chardev stdio,id=s1,signal=off"
+QEMU_ARGS="-M powernv"
 QEMU_ARGS+=" -device pcie-pci-bridge,id=bridge1,bus=pcie.1,addr=0x0"
 QEMU_ARGS+=" -device ich9-ahci,id=sata0,bus=pcie.0,addr=0x0"
 QEMU_ARGS+=" -device e1000e,netdev=net0,bus=bridge1,addr=0x3 -netdev user,id=net0"
