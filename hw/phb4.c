@@ -3576,8 +3576,19 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			xscom_write(p->chip_id, p->pe_stk_xscom +
 				    XPEC_NEST_STK_PCI_NFIR_CLR, ~p->nfir_cache);
 
-			/* Re-read errors in PFIR and NFIR and reset any new
-			 * error reported.
+			/* Clear PHB from reset */
+			xscom_write(p->chip_id,
+				    p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET, 0x0);
+			p->flags &= ~PHB4_ETU_IN_RESET;
+
+			/*
+			 * Re-read errors in PFIR and NFIR and reset
+			 * any new error reported while the ETU was in
+			 * reset.
+			 * A xscom access when the ETU is in reset
+			 * will set PFIR bit 3 and the OCC is known to
+			 * access PHB performance counters, so such an
+			 * error is not uncommon.
 			 */
 			xscom_read(p->chip_id, p->pci_stk_xscom +
 				   XPEC_PCI_STK_PCI_FIR, &p->pfir_cache);
@@ -3585,20 +3596,13 @@ static int64_t phb4_creset(struct pci_slot *slot)
 				   XPEC_NEST_STK_PCI_NFIR, &p->nfir_cache);
 
 			if (p->pfir_cache || p->nfir_cache) {
-				PHBERR(p, "CRESET: PHB still fenced !!\n");
-				phb4_dump_pec_err_regs(p);
-
-				/* Reset the PHB errors */
 				xscom_write(p->chip_id, p->pci_stk_xscom +
-					    XPEC_PCI_STK_PCI_FIR, 0);
+					    XPEC_PCI_STK_PCI_FIR_CLR,
+					    ~p->pfir_cache);
 				xscom_write(p->chip_id, p->pe_stk_xscom +
-					    XPEC_NEST_STK_PCI_NFIR, 0);
+					    XPEC_NEST_STK_PCI_NFIR_CLR,
+					    ~p->nfir_cache);
 			}
-
-			/* Clear PHB from reset */
-			xscom_write(p->chip_id,
-				    p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET, 0x0);
-			p->flags &= ~PHB4_ETU_IN_RESET;
 
 			pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
 			/* After lifting PHB reset, wait while logic settles */
