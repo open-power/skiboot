@@ -1950,11 +1950,11 @@ static void phb4_read_phb_status(struct phb4 *p,
 
 
 	/* PEC NFIR, same as P8/PHB3 */
-	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &__64);
+	xscom_read(p->chip_id, p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR, &__64);
 	stat->nFir = cpu_to_be64(__64);
-	xscom_read(p->chip_id, p->pe_stk_xscom + 0x3, &__64);
+	xscom_read(p->chip_id, p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR_MSK, &__64);
 	stat->nFirMask = cpu_to_be64(__64);
-	xscom_read(p->chip_id, p->pe_stk_xscom + 0x8, &__64);
+	xscom_read(p->chip_id, p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR_WOF, &__64);
 	stat->nFirWOF = cpu_to_be64(__64);
 
 	/* PHB4 inbound and outbound error Regs */
@@ -3508,7 +3508,8 @@ static int64_t phb4_creset(struct pci_slot *slot)
 
 		phb4_prepare_link_change(slot, false);
 		/* Clear error inject register, preventing recursive errors */
-		xscom_write(p->chip_id, p->pe_xscom + 0x2, 0x0);
+		xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_ERR_INJECT,
+			    0x0);
 
 		/* Prevent HMI when PHB gets fenced as we are disabling CAPP */
 		if (p->flags & PHB4_CAPP_DISABLE &&
@@ -3522,7 +3523,8 @@ static int64_t phb4_creset(struct pci_slot *slot)
 
 		/* Force fence on the PHB to work around a non-existent PE */
 		if (!phb4_fenced(p))
-			xscom_write(p->chip_id, p->pe_stk_xscom + 0x2,
+			xscom_write(p->chip_id,
+				    p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR_SET,
 				    0x0000002000000000UL);
 
 		/*
@@ -3543,8 +3545,10 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			    0x8000000000000000UL);
 
 		/* Read errors in PFIR and NFIR */
-		xscom_read(p->chip_id, p->pci_stk_xscom + 0x0, &p->pfir_cache);
-		xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &p->nfir_cache);
+		xscom_read(p->chip_id, p->pci_stk_xscom + XPEC_PCI_STK_PCI_FIR,
+			   &p->pfir_cache);
+		xscom_read(p->chip_id, p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR,
+			   &p->nfir_cache);
 
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_WAIT_CQ);
 		slot->retries = 500;
@@ -3552,7 +3556,9 @@ static int64_t phb4_creset(struct pci_slot *slot)
 	case PHB4_SLOT_CRESET_WAIT_CQ:
 
 		// Wait until operations are complete
-		xscom_read(p->chip_id, p->pe_stk_xscom + 0xc, &pbcq_status);
+		xscom_read(p->chip_id,
+			   p->pe_stk_xscom + XPEC_NEST_STK_PBCQ_STAT,
+			   &pbcq_status);
 		if (!(pbcq_status & 0xC000000000000000UL)) {
 			PHBDBG(p, "CRESET: No pending transactions\n");
 
@@ -3565,10 +3571,10 @@ static int64_t phb4_creset(struct pci_slot *slot)
 				disable_capi_mode(p);
 
 			/* Clear errors in PFIR and NFIR */
-			xscom_write(p->chip_id, p->pci_stk_xscom + 0x1,
-				    ~p->pfir_cache);
-			xscom_write(p->chip_id, p->pe_stk_xscom + 0x1,
-				    ~p->nfir_cache);
+			xscom_write(p->chip_id, p->pci_stk_xscom +
+				    XPEC_PCI_STK_PCI_FIR_CLR, ~p->pfir_cache);
+			xscom_write(p->chip_id, p->pe_stk_xscom +
+				    XPEC_NEST_STK_PCI_NFIR_CLR, ~p->nfir_cache);
 
 			/* Re-read errors in PFIR and NFIR and reset any new
 			 * error reported.
