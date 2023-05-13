@@ -200,7 +200,6 @@ void ipmi_wdt_final_reset(void)
 #else
 	set_wdt(WDT_NO_ACTION, 100, 0, false, false);
 #endif
-	ipmi_set_boot_count();
 }
 
 void ipmi_wdt_init(void)

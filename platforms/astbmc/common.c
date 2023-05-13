@@ -502,6 +502,8 @@ void astbmc_early_init(void)
 void astbmc_exit(void)
 {
 	ipmi_wdt_final_reset();
+
+	ipmi_set_boot_count();
 }
 
 static const struct bmc_sw_config bmc_sw_ami = {
