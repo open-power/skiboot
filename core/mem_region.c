@@ -920,6 +920,40 @@ restart:
 	return p;
 }
 
+static struct mem_region *mem_to_region(void *mem)
+{
+	struct mem_region *region;
+
+	list_for_each(&regions, region, list) {
+		if (mem < region_start(region))
+			continue;
+		if (mem >= region_start(region) + region->len)
+			continue;
+		return region;
+	}
+	return NULL;
+}
+
+void __local_free(void *mem, const char *location)
+{
+	struct mem_region *region;
+
+	lock(&mem_region_lock);
+
+	region = mem_to_region(mem);
+	if (!region) {
+		prerror("MEM: local_free mem=%p no matching region.\n", mem);
+		unlock(&mem_region_lock);
+		return;
+	}
+
+	lock(&region->free_list_lock);
+	mem_free(region, mem, location);
+	unlock(&region->free_list_lock);
+
+	unlock(&mem_region_lock);
+}
+
 struct mem_region *find_mem_region(const char *name)
 {
 	struct mem_region *region;
