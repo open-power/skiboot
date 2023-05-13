@@ -574,6 +574,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		if (!occ_sensors_init())
 			dts_sensor_create_nodes(sensor_node);
 
+		opal_mpipl_init();
+
 	} else {
 		/* fdt will be rebuilt */
 		free(fdt);
@@ -637,10 +639,6 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	patch_traps(false);
 	cpu_set_hile_mode(false); /* Clear HILE on all CPUs */
-
-	/* init MPIPL */
-	if (!is_reboot)
-		opal_mpipl_init();
 
 	checksum_romem();
 
