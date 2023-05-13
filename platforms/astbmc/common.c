@@ -504,6 +504,12 @@ void astbmc_exit(void)
 	ipmi_wdt_final_reset();
 
 	ipmi_set_boot_count();
+
+	/*
+	 * Booting into an OS that may not call back into skiboot for
+	 * some time. Ensure all IPMI messages are processed first.
+	 */
+	ipmi_flush();
 }
 
 static const struct bmc_sw_config bmc_sw_ami = {

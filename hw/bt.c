@@ -519,9 +519,14 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 		       bt.irq_ok ? TIMER_POLL : msecs_to_tb(BT_DEFAULT_POLL_MS));
 }
 
-static void bt_ipmi_poll(void)
+static bool bt_ipmi_poll(void)
 {
+	if (!lpc_ok())
+		return false;
+
 	bt_poll(NULL, NULL, mftb());
+
+	return bt.queue_len > 0;
 }
 
 static void bt_add_msg(struct bt_msg *bt_msg)

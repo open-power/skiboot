@@ -159,7 +159,7 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 
 void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 {
-	void (*poll)(void) = msg->backend->poll;
+	bool (*poll)(void) = msg->backend->poll;
 
 	if (!ipmi_present())
 		return;
@@ -190,6 +190,15 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 			poll();
 		time_wait_ms(10);
 	}
+}
+
+void ipmi_flush(void)
+{
+	if (!ipmi_present())
+		return;
+
+	while (ipmi_backend->poll())
+		time_wait_ms(10);
 }
 
 static void ipmi_read_event_complete(struct ipmi_msg *msg)
