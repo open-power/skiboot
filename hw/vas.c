@@ -428,7 +428,7 @@ static int init_uwcm(struct proc_chip *chip)
 static inline void free_wcbs(struct proc_chip *chip)
 {
 	if (chip->vas->wcbs) {
-		free((void *)chip->vas->wcbs);
+		local_free((void *)chip->vas->wcbs);
 		chip->vas->wcbs = 0ULL;
 	}
 }
@@ -466,7 +466,7 @@ static int alloc_init_wcbs(struct proc_chip *chip)
 	return OPAL_SUCCESS;
 
 out:
-	free((void *)wcbs);
+	local_free((void *)wcbs);
 	return rc;
 }
 
