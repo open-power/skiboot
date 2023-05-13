@@ -220,17 +220,6 @@ static void ipmi_get_message_flags_complete(struct ipmi_msg *msg)
 
 	prlog(PR_DEBUG, "IPMI Get Message Flags: %02x\n", flags);
 
-	/* Once we see an interrupt we assume the payload has
-	 * booted. We disable the wdt and let the OS setup its own
-	 * wdt.
-	 *
-	 * This is also where we consider the OS to be booted, so we set
-	 * the boot count sensor */
-	if (flags & IPMI_MESSAGE_FLAGS_WATCHDOG_PRE_TIMEOUT) {
-		ipmi_wdt_stop();
-		ipmi_set_boot_count();
-	}
-
 	/* Message available in the event buffer? Queue a Read Event command
 	 * to retrieve it. The flag is cleared by performing a read */
 	if (flags & IPMI_MESSAGE_FLAGS_EVENT_BUFFER) {

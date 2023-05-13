@@ -269,9 +269,6 @@ void ipmi_parse_sel(struct ipmi_msg *msg);
 /* Starts the watchdog timer */
 void ipmi_wdt_init(void);
 
-/* Stop the wdt */
-void ipmi_wdt_stop(void);
-
 /* Reset the watchdog timer. Does not return until the timer has been
  * reset and does not schedule future resets. */
 void ipmi_wdt_final_reset(void);
