@@ -1681,7 +1681,6 @@ error_out:
 
 static int64_t opal_resync_timebase(void)
 {
-	/* Mambo and qemu doesn't simulate the chiptod */
 	if (chip_quirk(QUIRK_NO_CHIPTOD))
 		return OPAL_SUCCESS;
 
@@ -1829,13 +1828,16 @@ void chiptod_init(void)
 	bool sres;
 	int i;
 
-	/* Mambo and qemu doesn't simulate the chiptod */
 	if (chip_quirk(QUIRK_NO_CHIPTOD))
 		return;
 
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 0);
 
 	if (!chiptod_probe()) {
+		/* Not all QEMU models provide chiptod */
+		if (chip_quirk(QUIRK_QEMU))
+			return;
+
 		prerror("Failed ChipTOD detection !\n");
 		op_display(OP_FATAL, OP_MOD_CHIPTOD, 0);
 		abort();
@@ -1903,6 +1905,8 @@ void chiptod_init(void)
 
 	chiptod_init_topology_info();
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 4);
+
+	prlog(PR_NOTICE, "Synchronized all processors to common timebase.\n");
 }
 
 /* CAPP timebase sync */
