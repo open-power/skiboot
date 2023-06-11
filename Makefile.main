@@ -50,7 +50,7 @@ endif
 
 # Host tools and options
 HOSTCC=gcc
-HOSTEND=$(shell uname -m | sed -e 's/^i.*86$$/LITTLE/' -e 's/^x86.*/LITTLE/' -e 's/^ppc64le/LITTLE/' -e 's/^ppc.*/BIG/')
+HOSTEND=$(shell uname -m | sed -e 's/^i.*86$$/LITTLE/' -e 's/^x86.*/LITTLE/' -e 's/^ppc64le/LITTLE/' -e 's/^ppc.*/BIG/' -e 's/^riscv.*/LITTLE/')
 HOSTCFLAGS:=-O1 $(CWARNS) -DHAVE_$(HOSTEND)_ENDIAN -MMD
 HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-std=gnu11)
 HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-m64)
