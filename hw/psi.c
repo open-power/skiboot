@@ -879,8 +879,6 @@ static void psi_activate_phb(struct psi *psi)
 	       in_be64(psi->regs + PSIHB_CR));
 	printf("  PSIHB_SEMR   : %llx\n",
 	       in_be64(psi->regs + PSIHB_SEMR));
-	printf("  PSIHB_XIVR   : %llx\n",
-	       in_be64(psi->regs + PSIHB_XIVR));
 #endif
 }
 
