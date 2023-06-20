@@ -33,5 +33,11 @@
 
 #define 	UINT32_MAX	UINT_MAX
 #define 	INT32_MAX	INT_MAX
+#define		UINT16_MAX	USHRT_MAX
+#define		UINT8_MAX	UCHAR_MAX
+
+#ifndef SIZE_MAX
+#define SIZE_MAX (~0ull)
+#endif
 
 #endif
