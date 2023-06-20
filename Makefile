@@ -61,6 +61,8 @@ DEAD_CODE_ELIMINATION ?= 0
 CONFIG_FSP?=1
 # Try to build without POWER8 support
 CONFIG_P8?=1
+# Try to build without PLDM code
+CONFIG_PLDM?=0
 
 #
 # Where is the source directory, must be a full path (no ~)

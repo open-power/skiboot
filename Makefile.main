@@ -76,7 +76,7 @@ DBG=-g
 
 CPPFLAGS := -I$(SRC)/include -Iinclude -MMD -include $(SRC)/include/config.h
 CPPFLAGS += -I$(SRC)/libfdt -I$(SRC)/libflash -I$(SRC)/libxz -I$(SRC)/libc/include -I$(SRC)
-CPPFLAGS += -I$(SRC)/libpore
+CPPFLAGS += -I$(SRC)/libpore -I$(SRC)/libmctp
 CPPFLAGS += -D__SKIBOOT__ -nostdinc
 CPPFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 CPPFLAGS += -DBITS_PER_LONG=64
@@ -88,8 +88,10 @@ CPPFLAGS += -ffreestanding
 
 ifeq ($(LITTLE_ENDIAN),1)
 CPPFLAGS += -DHAVE_LITTLE_ENDIAN
+CPPFLAGS += -D__LITTLE_ENDIAN_BITFIELD
 else
 CPPFLAGS += -DHAVE_BIG_ENDIAN
+CPPFLAGS += -D__BIG_ENDIAN_BITFIELD
 endif
 
 ifeq ($(DEBUG),1)
@@ -164,6 +166,9 @@ endif
 # Add preprocessor defines for CONFIG_ options here
 ifeq ($(CONFIG_P8),1)
 CFLAGS += -DCONFIG_P8=1
+endif
+ifeq ($(CONFIG_PLDM),1)
+CFLAGS += -DCONFIG_PLDM=1
 endif
 
 CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
@@ -297,6 +302,9 @@ include $(SRC)/libc/Makefile.inc
 include $(SRC)/ccan/Makefile.inc
 include $(SRC)/$(DEVSRC)/Makefile.inc
 include $(SRC)/libstb/Makefile.inc
+ifeq ($(CONFIG_PLDM),1)
+include $(SRC)/libmctp/Makefile.inc
+endif
 
 # hack for travis-ci and coverity
 gard:
@@ -321,6 +329,9 @@ all: $(TARGET).lid.stb $(TARGET).lid.xz.stb
 
 OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBXZ) $(LIBFLASH) $(LIBSTB)
 OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) $(LIBPORE)
+ifeq ($(CONFIG_PLDM),1)
+OBJS += $(LIBMCTP)
+endif
 OBJS_NO_VER = $(OBJS)
 ALL_OBJS = $(OBJS) version.o
 
