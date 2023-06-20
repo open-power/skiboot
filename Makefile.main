@@ -304,6 +304,7 @@ include $(SRC)/$(DEVSRC)/Makefile.inc
 include $(SRC)/libstb/Makefile.inc
 ifeq ($(CONFIG_PLDM),1)
 include $(SRC)/libmctp/Makefile.inc
+include $(SRC)/pldm/libpldm/Makefile.inc
 endif
 
 # hack for travis-ci and coverity
@@ -330,7 +331,7 @@ all: $(TARGET).lid.stb $(TARGET).lid.xz.stb
 OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBXZ) $(LIBFLASH) $(LIBSTB)
 OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) $(LIBPORE)
 ifeq ($(CONFIG_PLDM),1)
-OBJS += $(LIBMCTP)
+OBJS += $(LIBMCTP) $(LIBPLDM)
 endif
 OBJS_NO_VER = $(OBJS)
 ALL_OBJS = $(OBJS) version.o
