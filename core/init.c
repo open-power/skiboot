@@ -1055,7 +1055,7 @@ static void probe_lpar_per_core(void)
 
 	if (core_thread_state & PPC_BIT(62)) {
 		lpar_per_core = true;
-		prlog(PR_WARNING, "LPAR-per-core mode detected. KVM may not be usable.");
+		prlog(PR_WARNING, "LPAR-per-core mode detected. KVM may not be usable.\n");
 	}
 }
 
