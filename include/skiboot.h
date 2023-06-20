@@ -79,6 +79,7 @@ static inline bool is_rodata(const void *p)
 #define pr_fmt(fmt) fmt
 #endif
 
+int vprlog(int log_level, const char *fmt, va_list ap);
 void _prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 #define prlog(l, f, ...) do { _prlog(l, pr_fmt(f), ##__VA_ARGS__); } while(0)
 #define prerror(fmt...)	do { prlog(PR_ERR, fmt); } while(0)
