@@ -774,7 +774,7 @@ static bool npu_fir_errors(struct phb *phb, int flat_chip_id,
 	struct npu *npu;
 	struct npu2 *npu2 = NULL;
 	struct npu2_dev *dev;
-	struct pau *pau;
+	struct pau *pau = NULL;
 
 	fir_regs = (phb->phb_type == phb_type_pcie_v3) ? 1 : 3;
 
