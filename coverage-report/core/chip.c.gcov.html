@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-06-06 19:00:36</td>
+            <td class="headerValue">2023-07-11 14:36:22</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">0</td>
@@ -258,16 +258,15 @@
 <a name="187"><span class="lineNum">     187 </span>                :<span class="lineNoCov">          0 :             dt_node_is_compatible(dt_root, &quot;qemu,powernv9&quot;) ||</span></a>
 <a name="188"><span class="lineNum">     188 </span>                :<span class="lineNoCov">          0 :             dt_node_is_compatible(dt_root, &quot;qemu,powernv10&quot;) ||</span></a>
 <a name="189"><span class="lineNum">     189 </span>                :<span class="lineNoCov">          0 :             dt_find_by_path(dt_root, &quot;/qemu&quot;)) {</span></a>
-<a name="190"><span class="lineNum">     190 </span>                :<span class="lineNoCov">          0 :                 proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_CHIPTOD</span></a>
-<a name="191"><span class="lineNum">     191 </span>                :            :                         | QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;</a>
-<a name="192"><span class="lineNum">     192 </span>                :<span class="lineNoCov">          0 :                 prlog(PR_NOTICE, &quot;CHIP: Detected QEMU simulator\n&quot;);</span></a>
-<a name="193"><span class="lineNum">     193 </span>                :            :         }</a>
-<a name="194"><span class="lineNum">     194 </span>                :            : </a>
-<a name="195"><span class="lineNum">     195 </span>                :            :         /* We walk the chips based on xscom nodes in the tree */</a>
-<a name="196"><span class="lineNum">     196 </span>                :<span class="lineNoCov">          0 :         dt_for_each_compatible(dt_root, xn, &quot;ibm,xscom&quot;) {</span></a>
-<a name="197"><span class="lineNum">     197 </span>                :<span class="lineNoCov">          0 :                 init_chip(xn);</span></a>
-<a name="198"><span class="lineNum">     198 </span>                :            :         }</a>
-<a name="199"><span class="lineNum">     199 </span>                :<span class="lineNoCov">          0 : }</span></a>
+<a name="190"><span class="lineNum">     190 </span>                :<span class="lineNoCov">          0 :                 proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;</span></a>
+<a name="191"><span class="lineNum">     191 </span>                :<span class="lineNoCov">          0 :                 prlog(PR_NOTICE, &quot;CHIP: Detected QEMU simulator\n&quot;);</span></a>
+<a name="192"><span class="lineNum">     192 </span>                :            :         }</a>
+<a name="193"><span class="lineNum">     193 </span>                :            : </a>
+<a name="194"><span class="lineNum">     194 </span>                :            :         /* We walk the chips based on xscom nodes in the tree */</a>
+<a name="195"><span class="lineNum">     195 </span>                :<span class="lineNoCov">          0 :         dt_for_each_compatible(dt_root, xn, &quot;ibm,xscom&quot;) {</span></a>
+<a name="196"><span class="lineNum">     196 </span>                :<span class="lineNoCov">          0 :                 init_chip(xn);</span></a>
+<a name="197"><span class="lineNum">     197 </span>                :            :         }</a>
+<a name="198"><span class="lineNum">     198 </span>                :<span class="lineNoCov">          0 : }</span></a>
 </pre>
       </td>
     </tr>
