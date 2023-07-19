@@ -21,6 +21,7 @@ try = $(shell set -e; if ($(1)) >/dev/null 2>&1; \
 	else echo "$(3)"; fi )
 
 try-cflag = $(call try,$(1) -Werror $(2) -x c -c /dev/null -o /dev/null,$(2))
+try-ldflag = $(call try,$(1) $(2) -v,$(2))
 test_cflag = $(call try,$(1) -Werror $(2) -x c -c /dev/null -o /dev/null,1,0)
 
 cc-name := $(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
@@ -190,6 +191,7 @@ LDFLAGS += -Wl,--oformat,elf64-powerpc
 LDFLAGS_FINAL = -m elf64lppc --no-multi-toc -N --build-id=none --whole-archive
 LDFLAGS_FINAL += -static -nostdlib -pie -Ttext-segment=$(LD_TEXT) --oformat=elf64-powerpc
 LDFLAGS_FINAL += --orphan-handling=warn
+LDFLAGS_FINAL += $(call try-ldflag,$(LD),--no-warn-rwx-segments)
 
 LDRFLAGS=-melf64ppc
 # Debug stuff
