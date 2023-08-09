@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-07-12 16:49:38</td>
+            <td class="headerValue">2023-08-09 21:24:26</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">0</td>
@@ -367,214 +367,208 @@
 <a name="296"><span class="lineNum">     296 </span>                :            :         int64_t (*get_option)(struct phb *phb, enum OpalPhbOption opt,</a>
 <a name="297"><span class="lineNum">     297 </span>                :            :                               __be64 *setting);</a>
 <a name="298"><span class="lineNum">     298 </span>                :            : </a>
-<a name="299"><span class="lineNum">     299 </span>                :            :         int64_t (*set_mve)(struct phb *phb, uint32_t mve_number,</a>
-<a name="300"><span class="lineNum">     300 </span>                :            :                            uint64_t pe_number);</a>
+<a name="299"><span class="lineNum">     299 </span>                :            :         int64_t (*set_xive_pe)(struct phb *phb, uint64_t pe_number,</a>
+<a name="300"><span class="lineNum">     300 </span>                :            :                                uint32_t xive_num);</a>
 <a name="301"><span class="lineNum">     301 </span>                :            : </a>
-<a name="302"><span class="lineNum">     302 </span>                :            :         int64_t (*set_mve_enable)(struct phb *phb, uint32_t mve_number,</a>
-<a name="303"><span class="lineNum">     303 </span>                :            :                                   uint32_t state);</a>
-<a name="304"><span class="lineNum">     304 </span>                :            : </a>
-<a name="305"><span class="lineNum">     305 </span>                :            :         int64_t (*set_xive_pe)(struct phb *phb, uint64_t pe_number,</a>
-<a name="306"><span class="lineNum">     306 </span>                :            :                                uint32_t xive_num);</a>
-<a name="307"><span class="lineNum">     307 </span>                :            : </a>
-<a name="308"><span class="lineNum">     308 </span>                :            :         int64_t (*get_msi_32)(struct phb *phb, uint64_t mve_number,</a>
-<a name="309"><span class="lineNum">     309 </span>                :            :                               uint32_t xive_num, uint8_t msi_range,</a>
-<a name="310"><span class="lineNum">     310 </span>                :            :                               uint32_t *msi_address, uint32_t *message_data);</a>
+<a name="302"><span class="lineNum">     302 </span>                :            :         int64_t (*get_msi_32)(struct phb *phb, uint64_t mve_number,</a>
+<a name="303"><span class="lineNum">     303 </span>                :            :                               uint32_t xive_num, uint8_t msi_range,</a>
+<a name="304"><span class="lineNum">     304 </span>                :            :                               uint32_t *msi_address, uint32_t *message_data);</a>
+<a name="305"><span class="lineNum">     305 </span>                :            : </a>
+<a name="306"><span class="lineNum">     306 </span>                :            :         int64_t (*get_msi_64)(struct phb *phb, uint64_t mve_number,</a>
+<a name="307"><span class="lineNum">     307 </span>                :            :                               uint32_t xive_num, uint8_t msi_range,</a>
+<a name="308"><span class="lineNum">     308 </span>                :            :                               uint64_t *msi_address, uint32_t *message_data);</a>
+<a name="309"><span class="lineNum">     309 </span>                :            : </a>
+<a name="310"><span class="lineNum">     310 </span>                :            :         int64_t (*ioda_reset)(struct phb *phb, bool purge);</a>
 <a name="311"><span class="lineNum">     311 </span>                :            : </a>
-<a name="312"><span class="lineNum">     312 </span>                :            :         int64_t (*get_msi_64)(struct phb *phb, uint64_t mve_number,</a>
-<a name="313"><span class="lineNum">     313 </span>                :            :                               uint32_t xive_num, uint8_t msi_range,</a>
-<a name="314"><span class="lineNum">     314 </span>                :            :                               uint64_t *msi_address, uint32_t *message_data);</a>
-<a name="315"><span class="lineNum">     315 </span>                :            : </a>
-<a name="316"><span class="lineNum">     316 </span>                :            :         int64_t (*ioda_reset)(struct phb *phb, bool purge);</a>
-<a name="317"><span class="lineNum">     317 </span>                :            : </a>
-<a name="318"><span class="lineNum">     318 </span>                :            :         int64_t (*papr_errinjct_reset)(struct phb *phb);</a>
-<a name="319"><span class="lineNum">     319 </span>                :            : </a>
-<a name="320"><span class="lineNum">     320 </span>                :            :         /*</a>
-<a name="321"><span class="lineNum">     321 </span>                :            :          * IODA2 PCI interfaces</a>
-<a name="322"><span class="lineNum">     322 </span>                :            :          */</a>
-<a name="323"><span class="lineNum">     323 </span>                :            :         int64_t (*pci_msi_eoi)(struct phb *phb, uint32_t hwirq);</a>
-<a name="324"><span class="lineNum">     324 </span>                :            : </a>
-<a name="325"><span class="lineNum">     325 </span>                :            :         /* TCE Kill abstraction */</a>
-<a name="326"><span class="lineNum">     326 </span>                :            :         int64_t (*tce_kill)(struct phb *phb, uint32_t kill_type,</a>
-<a name="327"><span class="lineNum">     327 </span>                :            :                             uint64_t pe_number, uint32_t tce_size,</a>
-<a name="328"><span class="lineNum">     328 </span>                :            :                             uint64_t dma_addr, uint32_t npages);</a>
+<a name="312"><span class="lineNum">     312 </span>                :            :         int64_t (*papr_errinjct_reset)(struct phb *phb);</a>
+<a name="313"><span class="lineNum">     313 </span>                :            : </a>
+<a name="314"><span class="lineNum">     314 </span>                :            :         /*</a>
+<a name="315"><span class="lineNum">     315 </span>                :            :          * IODA2 PCI interfaces</a>
+<a name="316"><span class="lineNum">     316 </span>                :            :          */</a>
+<a name="317"><span class="lineNum">     317 </span>                :            :         int64_t (*pci_msi_eoi)(struct phb *phb, uint32_t hwirq);</a>
+<a name="318"><span class="lineNum">     318 </span>                :            : </a>
+<a name="319"><span class="lineNum">     319 </span>                :            :         /* TCE Kill abstraction */</a>
+<a name="320"><span class="lineNum">     320 </span>                :            :         int64_t (*tce_kill)(struct phb *phb, uint32_t kill_type,</a>
+<a name="321"><span class="lineNum">     321 </span>                :            :                             uint64_t pe_number, uint32_t tce_size,</a>
+<a name="322"><span class="lineNum">     322 </span>                :            :                             uint64_t dma_addr, uint32_t npages);</a>
+<a name="323"><span class="lineNum">     323 </span>                :            : </a>
+<a name="324"><span class="lineNum">     324 </span>                :            :         /* Put phb in capi mode or pcie mode */</a>
+<a name="325"><span class="lineNum">     325 </span>                :            :         int64_t (*set_capi_mode)(struct phb *phb, uint64_t mode,</a>
+<a name="326"><span class="lineNum">     326 </span>                :            :                                  uint64_t pe_number);</a>
+<a name="327"><span class="lineNum">     327 </span>                :            : </a>
+<a name="328"><span class="lineNum">     328 </span>                :            :         int64_t (*set_capp_recovery)(struct phb *phb);</a>
 <a name="329"><span class="lineNum">     329 </span>                :            : </a>
-<a name="330"><span class="lineNum">     330 </span>                :            :         /* Put phb in capi mode or pcie mode */</a>
-<a name="331"><span class="lineNum">     331 </span>                :            :         int64_t (*set_capi_mode)(struct phb *phb, uint64_t mode,</a>
-<a name="332"><span class="lineNum">     332 </span>                :            :                                  uint64_t pe_number);</a>
+<a name="330"><span class="lineNum">     330 </span>                :            :         /* PCI peer-to-peer setup */</a>
+<a name="331"><span class="lineNum">     331 </span>                :            :         void (*set_p2p)(struct phb *phb, uint64_t mode, uint64_t flags,</a>
+<a name="332"><span class="lineNum">     332 </span>                :            :                         uint16_t pe_number);</a>
 <a name="333"><span class="lineNum">     333 </span>                :            : </a>
-<a name="334"><span class="lineNum">     334 </span>                :            :         int64_t (*set_capp_recovery)(struct phb *phb);</a>
-<a name="335"><span class="lineNum">     335 </span>                :            : </a>
-<a name="336"><span class="lineNum">     336 </span>                :            :         /* PCI peer-to-peer setup */</a>
-<a name="337"><span class="lineNum">     337 </span>                :            :         void (*set_p2p)(struct phb *phb, uint64_t mode, uint64_t flags,</a>
-<a name="338"><span class="lineNum">     338 </span>                :            :                         uint16_t pe_number);</a>
-<a name="339"><span class="lineNum">     339 </span>                :            : </a>
-<a name="340"><span class="lineNum">     340 </span>                :            :         /* Get/set PBCQ Tunnel BAR register */</a>
-<a name="341"><span class="lineNum">     341 </span>                :            :         void (*get_tunnel_bar)(struct phb *phb, uint64_t *addr);</a>
-<a name="342"><span class="lineNum">     342 </span>                :            :         int64_t (*set_tunnel_bar)(struct phb *phb, uint64_t addr);</a>
-<a name="343"><span class="lineNum">     343 </span>                :            : };</a>
-<a name="344"><span class="lineNum">     344 </span>                :            : </a>
-<a name="345"><span class="lineNum">     345 </span>                :            : enum phb_type {</a>
-<a name="346"><span class="lineNum">     346 </span>                :            :         phb_type_pci,</a>
-<a name="347"><span class="lineNum">     347 </span>                :            :         phb_type_pcix_v1,</a>
-<a name="348"><span class="lineNum">     348 </span>                :            :         phb_type_pcix_v2,</a>
-<a name="349"><span class="lineNum">     349 </span>                :            :         phb_type_pcie_v1,</a>
-<a name="350"><span class="lineNum">     350 </span>                :            :         phb_type_pcie_v2,</a>
-<a name="351"><span class="lineNum">     351 </span>                :            :         phb_type_pcie_v3,</a>
-<a name="352"><span class="lineNum">     352 </span>                :            :         phb_type_pcie_v4,</a>
-<a name="353"><span class="lineNum">     353 </span>                :            :         phb_type_npu_v2,</a>
-<a name="354"><span class="lineNum">     354 </span>                :            :         phb_type_npu_v2_opencapi,</a>
-<a name="355"><span class="lineNum">     355 </span>                :            :         phb_type_pau_opencapi,</a>
-<a name="356"><span class="lineNum">     356 </span>                :            : };</a>
+<a name="334"><span class="lineNum">     334 </span>                :            :         /* Get/set PBCQ Tunnel BAR register */</a>
+<a name="335"><span class="lineNum">     335 </span>                :            :         void (*get_tunnel_bar)(struct phb *phb, uint64_t *addr);</a>
+<a name="336"><span class="lineNum">     336 </span>                :            :         int64_t (*set_tunnel_bar)(struct phb *phb, uint64_t addr);</a>
+<a name="337"><span class="lineNum">     337 </span>                :            : };</a>
+<a name="338"><span class="lineNum">     338 </span>                :            : </a>
+<a name="339"><span class="lineNum">     339 </span>                :            : enum phb_type {</a>
+<a name="340"><span class="lineNum">     340 </span>                :            :         phb_type_pci,</a>
+<a name="341"><span class="lineNum">     341 </span>                :            :         phb_type_pcix_v1,</a>
+<a name="342"><span class="lineNum">     342 </span>                :            :         phb_type_pcix_v2,</a>
+<a name="343"><span class="lineNum">     343 </span>                :            :         phb_type_pcie_v1,</a>
+<a name="344"><span class="lineNum">     344 </span>                :            :         phb_type_pcie_v2,</a>
+<a name="345"><span class="lineNum">     345 </span>                :            :         phb_type_pcie_v3,</a>
+<a name="346"><span class="lineNum">     346 </span>                :            :         phb_type_pcie_v4,</a>
+<a name="347"><span class="lineNum">     347 </span>                :            :         phb_type_npu_v2,</a>
+<a name="348"><span class="lineNum">     348 </span>                :            :         phb_type_npu_v2_opencapi,</a>
+<a name="349"><span class="lineNum">     349 </span>                :            :         phb_type_pau_opencapi,</a>
+<a name="350"><span class="lineNum">     350 </span>                :            : };</a>
+<a name="351"><span class="lineNum">     351 </span>                :            : </a>
+<a name="352"><span class="lineNum">     352 </span>                :            : /* Generic PCI NVRAM flags */</a>
+<a name="353"><span class="lineNum">     353 </span>                :            : extern bool verbose_eeh;</a>
+<a name="354"><span class="lineNum">     354 </span>                :            : extern bool pci_tracing;</a>
+<a name="355"><span class="lineNum">     355 </span>                :            : </a>
+<a name="356"><span class="lineNum">     356 </span>                :            : void pci_nvram_init(void);</a>
 <a name="357"><span class="lineNum">     357 </span>                :            : </a>
-<a name="358"><span class="lineNum">     358 </span>                :            : /* Generic PCI NVRAM flags */</a>
-<a name="359"><span class="lineNum">     359 </span>                :            : extern bool verbose_eeh;</a>
-<a name="360"><span class="lineNum">     360 </span>                :            : extern bool pci_tracing;</a>
-<a name="361"><span class="lineNum">     361 </span>                :            : </a>
-<a name="362"><span class="lineNum">     362 </span>                :            : void pci_nvram_init(void);</a>
-<a name="363"><span class="lineNum">     363 </span>                :            : </a>
-<a name="364"><span class="lineNum">     364 </span>                :            : struct phb {</a>
-<a name="365"><span class="lineNum">     365 </span>                :            :         struct dt_node          *dt_node;</a>
-<a name="366"><span class="lineNum">     366 </span>                :            :         int                     opal_id;</a>
-<a name="367"><span class="lineNum">     367 </span>                :            :         uint32_t                scan_map;</a>
-<a name="368"><span class="lineNum">     368 </span>                :            :         enum phb_type           phb_type;</a>
-<a name="369"><span class="lineNum">     369 </span>                :            :         struct lock             lock;</a>
-<a name="370"><span class="lineNum">     370 </span>                :            :         struct list_head        devices;</a>
-<a name="371"><span class="lineNum">     371 </span>                :            :         struct list_head        virt_devices;</a>
-<a name="372"><span class="lineNum">     372 </span>                :            :         const struct phb_ops    *ops;</a>
-<a name="373"><span class="lineNum">     373 </span>                :            :         struct pci_lsi_state    lstate;</a>
-<a name="374"><span class="lineNum">     374 </span>                :            :         uint32_t                mps;</a>
-<a name="375"><span class="lineNum">     375 </span>                :            :         bitmap_t                *filter_map;</a>
+<a name="358"><span class="lineNum">     358 </span>                :            : struct phb {</a>
+<a name="359"><span class="lineNum">     359 </span>                :            :         struct dt_node          *dt_node;</a>
+<a name="360"><span class="lineNum">     360 </span>                :            :         int                     opal_id;</a>
+<a name="361"><span class="lineNum">     361 </span>                :            :         uint32_t                scan_map;</a>
+<a name="362"><span class="lineNum">     362 </span>                :            :         enum phb_type           phb_type;</a>
+<a name="363"><span class="lineNum">     363 </span>                :            :         struct lock             lock;</a>
+<a name="364"><span class="lineNum">     364 </span>                :            :         struct list_head        devices;</a>
+<a name="365"><span class="lineNum">     365 </span>                :            :         struct list_head        virt_devices;</a>
+<a name="366"><span class="lineNum">     366 </span>                :            :         const struct phb_ops    *ops;</a>
+<a name="367"><span class="lineNum">     367 </span>                :            :         struct pci_lsi_state    lstate;</a>
+<a name="368"><span class="lineNum">     368 </span>                :            :         uint32_t                mps;</a>
+<a name="369"><span class="lineNum">     369 </span>                :            :         bitmap_t                *filter_map;</a>
+<a name="370"><span class="lineNum">     370 </span>                :            : </a>
+<a name="371"><span class="lineNum">     371 </span>                :            :         /* PCI-X only slot info, for PCI-E this is in the RC bridge */</a>
+<a name="372"><span class="lineNum">     372 </span>                :            :         struct pci_slot         *slot;</a>
+<a name="373"><span class="lineNum">     373 </span>                :            : </a>
+<a name="374"><span class="lineNum">     374 </span>                :            :         /* Base location code used to generate the children one */</a>
+<a name="375"><span class="lineNum">     375 </span>                :            :         const char              *base_loc_code;</a>
 <a name="376"><span class="lineNum">     376 </span>                :            : </a>
-<a name="377"><span class="lineNum">     377 </span>                :            :         /* PCI-X only slot info, for PCI-E this is in the RC bridge */</a>
-<a name="378"><span class="lineNum">     378 </span>                :            :         struct pci_slot         *slot;</a>
-<a name="379"><span class="lineNum">     379 </span>                :            : </a>
-<a name="380"><span class="lineNum">     380 </span>                :            :         /* Base location code used to generate the children one */</a>
-<a name="381"><span class="lineNum">     381 </span>                :            :         const char              *base_loc_code;</a>
-<a name="382"><span class="lineNum">     382 </span>                :            : </a>
-<a name="383"><span class="lineNum">     383 </span>                :            :         /* Additional data the platform might need to attach */</a>
-<a name="384"><span class="lineNum">     384 </span>                :            :         void                    *platform_data;</a>
-<a name="385"><span class="lineNum">     385 </span>                :            : };</a>
-<a name="386"><span class="lineNum">     386 </span>                :            : </a>
-<a name="387"><span class="lineNum">     387 </span>                :            : static inline void phb_lock(struct phb *phb)</a>
-<a name="388"><span class="lineNum">     388 </span>                :            : {</a>
-<a name="389"><span class="lineNum">     389 </span>                :            :         lock(&amp;phb-&gt;lock);</a>
-<a name="390"><span class="lineNum">     390 </span>                :            : }</a>
-<a name="391"><span class="lineNum">     391 </span>                :            : </a>
-<a name="392"><span class="lineNum">     392 </span>                :            : static inline bool phb_try_lock(struct phb *phb)</a>
-<a name="393"><span class="lineNum">     393 </span>                :            : {</a>
-<a name="394"><span class="lineNum">     394 </span>                :            :         return try_lock(&amp;phb-&gt;lock);</a>
-<a name="395"><span class="lineNum">     395 </span>                :            : }</a>
-<a name="396"><span class="lineNum">     396 </span>                :            : </a>
-<a name="397"><span class="lineNum">     397 </span>                :            : static inline void phb_unlock(struct phb *phb)</a>
-<a name="398"><span class="lineNum">     398 </span>                :            : {</a>
-<a name="399"><span class="lineNum">     399 </span>                :            :         unlock(&amp;phb-&gt;lock);</a>
-<a name="400"><span class="lineNum">     400 </span>                :            : }</a>
-<a name="401"><span class="lineNum">     401 </span>                :            : </a>
-<a name="402"><span class="lineNum">     402 </span>                :            : bool pci_check_clear_freeze(struct phb *phb);</a>
-<a name="403"><span class="lineNum">     403 </span>                :            : </a>
-<a name="404"><span class="lineNum">     404 </span>                :            : /* Config space ops wrappers */</a>
-<a name="405"><span class="lineNum">     405 </span>                :<span class="lineNoCov">          0 : static inline int64_t pci_cfg_read8(struct phb *phb, uint32_t bdfn,</span></a>
-<a name="406"><span class="lineNum">     406 </span>                :            :                                     uint32_t offset, uint8_t *data)</a>
+<a name="377"><span class="lineNum">     377 </span>                :            :         /* Additional data the platform might need to attach */</a>
+<a name="378"><span class="lineNum">     378 </span>                :            :         void                    *platform_data;</a>
+<a name="379"><span class="lineNum">     379 </span>                :            : };</a>
+<a name="380"><span class="lineNum">     380 </span>                :            : </a>
+<a name="381"><span class="lineNum">     381 </span>                :            : static inline void phb_lock(struct phb *phb)</a>
+<a name="382"><span class="lineNum">     382 </span>                :            : {</a>
+<a name="383"><span class="lineNum">     383 </span>                :            :         lock(&amp;phb-&gt;lock);</a>
+<a name="384"><span class="lineNum">     384 </span>                :            : }</a>
+<a name="385"><span class="lineNum">     385 </span>                :            : </a>
+<a name="386"><span class="lineNum">     386 </span>                :            : static inline bool phb_try_lock(struct phb *phb)</a>
+<a name="387"><span class="lineNum">     387 </span>                :            : {</a>
+<a name="388"><span class="lineNum">     388 </span>                :            :         return try_lock(&amp;phb-&gt;lock);</a>
+<a name="389"><span class="lineNum">     389 </span>                :            : }</a>
+<a name="390"><span class="lineNum">     390 </span>                :            : </a>
+<a name="391"><span class="lineNum">     391 </span>                :            : static inline void phb_unlock(struct phb *phb)</a>
+<a name="392"><span class="lineNum">     392 </span>                :            : {</a>
+<a name="393"><span class="lineNum">     393 </span>                :            :         unlock(&amp;phb-&gt;lock);</a>
+<a name="394"><span class="lineNum">     394 </span>                :            : }</a>
+<a name="395"><span class="lineNum">     395 </span>                :            : </a>
+<a name="396"><span class="lineNum">     396 </span>                :            : bool pci_check_clear_freeze(struct phb *phb);</a>
+<a name="397"><span class="lineNum">     397 </span>                :            : </a>
+<a name="398"><span class="lineNum">     398 </span>                :            : /* Config space ops wrappers */</a>
+<a name="399"><span class="lineNum">     399 </span>                :<span class="lineNoCov">          0 : static inline int64_t pci_cfg_read8(struct phb *phb, uint32_t bdfn,</span></a>
+<a name="400"><span class="lineNum">     400 </span>                :            :                                     uint32_t offset, uint8_t *data)</a>
+<a name="401"><span class="lineNum">     401 </span>                :            : {</a>
+<a name="402"><span class="lineNum">     402 </span>                :<span class="lineNoCov">          0 :         return phb-&gt;ops-&gt;cfg_read8(phb, bdfn, offset, data);</span></a>
+<a name="403"><span class="lineNum">     403 </span>                :            : }</a>
+<a name="404"><span class="lineNum">     404 </span>                :            : </a>
+<a name="405"><span class="lineNum">     405 </span>                :            : static inline int64_t pci_cfg_read16(struct phb *phb, uint32_t bdfn,</a>
+<a name="406"><span class="lineNum">     406 </span>                :            :                                      uint32_t offset, uint16_t *data)</a>
 <a name="407"><span class="lineNum">     407 </span>                :            : {</a>
-<a name="408"><span class="lineNum">     408 </span>                :<span class="lineNoCov">          0 :         return phb-&gt;ops-&gt;cfg_read8(phb, bdfn, offset, data);</span></a>
+<a name="408"><span class="lineNum">     408 </span>                :            :         return phb-&gt;ops-&gt;cfg_read16(phb, bdfn, offset, data);</a>
 <a name="409"><span class="lineNum">     409 </span>                :            : }</a>
 <a name="410"><span class="lineNum">     410 </span>                :            : </a>
-<a name="411"><span class="lineNum">     411 </span>                :            : static inline int64_t pci_cfg_read16(struct phb *phb, uint32_t bdfn,</a>
-<a name="412"><span class="lineNum">     412 </span>                :            :                                      uint32_t offset, uint16_t *data)</a>
+<a name="411"><span class="lineNum">     411 </span>                :            : static inline int64_t pci_cfg_read32(struct phb *phb, uint32_t bdfn,</a>
+<a name="412"><span class="lineNum">     412 </span>                :            :                                      uint32_t offset, uint32_t *data)</a>
 <a name="413"><span class="lineNum">     413 </span>                :            : {</a>
-<a name="414"><span class="lineNum">     414 </span>                :            :         return phb-&gt;ops-&gt;cfg_read16(phb, bdfn, offset, data);</a>
+<a name="414"><span class="lineNum">     414 </span>                :            :         return phb-&gt;ops-&gt;cfg_read32(phb, bdfn, offset, data);</a>
 <a name="415"><span class="lineNum">     415 </span>                :            : }</a>
 <a name="416"><span class="lineNum">     416 </span>                :            : </a>
-<a name="417"><span class="lineNum">     417 </span>                :            : static inline int64_t pci_cfg_read32(struct phb *phb, uint32_t bdfn,</a>
-<a name="418"><span class="lineNum">     418 </span>                :            :                                      uint32_t offset, uint32_t *data)</a>
+<a name="417"><span class="lineNum">     417 </span>                :            : static inline int64_t pci_cfg_write8(struct phb *phb, uint32_t bdfn,</a>
+<a name="418"><span class="lineNum">     418 </span>                :            :                                      uint32_t offset, uint8_t data)</a>
 <a name="419"><span class="lineNum">     419 </span>                :            : {</a>
-<a name="420"><span class="lineNum">     420 </span>                :            :         return phb-&gt;ops-&gt;cfg_read32(phb, bdfn, offset, data);</a>
+<a name="420"><span class="lineNum">     420 </span>                :            :         return phb-&gt;ops-&gt;cfg_write8(phb, bdfn, offset, data);</a>
 <a name="421"><span class="lineNum">     421 </span>                :            : }</a>
 <a name="422"><span class="lineNum">     422 </span>                :            : </a>
-<a name="423"><span class="lineNum">     423 </span>                :            : static inline int64_t pci_cfg_write8(struct phb *phb, uint32_t bdfn,</a>
-<a name="424"><span class="lineNum">     424 </span>                :            :                                      uint32_t offset, uint8_t data)</a>
+<a name="423"><span class="lineNum">     423 </span>                :            : static inline int64_t pci_cfg_write16(struct phb *phb, uint32_t bdfn,</a>
+<a name="424"><span class="lineNum">     424 </span>                :            :                                       uint32_t offset, uint16_t data)</a>
 <a name="425"><span class="lineNum">     425 </span>                :            : {</a>
-<a name="426"><span class="lineNum">     426 </span>                :            :         return phb-&gt;ops-&gt;cfg_write8(phb, bdfn, offset, data);</a>
+<a name="426"><span class="lineNum">     426 </span>                :            :         return phb-&gt;ops-&gt;cfg_write16(phb, bdfn, offset, data);</a>
 <a name="427"><span class="lineNum">     427 </span>                :            : }</a>
 <a name="428"><span class="lineNum">     428 </span>                :            : </a>
-<a name="429"><span class="lineNum">     429 </span>                :            : static inline int64_t pci_cfg_write16(struct phb *phb, uint32_t bdfn,</a>
-<a name="430"><span class="lineNum">     430 </span>                :            :                                       uint32_t offset, uint16_t data)</a>
+<a name="429"><span class="lineNum">     429 </span>                :            : static inline int64_t pci_cfg_write32(struct phb *phb, uint32_t bdfn,</a>
+<a name="430"><span class="lineNum">     430 </span>                :            :                                       uint32_t offset, uint32_t data)</a>
 <a name="431"><span class="lineNum">     431 </span>                :            : {</a>
-<a name="432"><span class="lineNum">     432 </span>                :            :         return phb-&gt;ops-&gt;cfg_write16(phb, bdfn, offset, data);</a>
+<a name="432"><span class="lineNum">     432 </span>                :            :         return phb-&gt;ops-&gt;cfg_write32(phb, bdfn, offset, data);</a>
 <a name="433"><span class="lineNum">     433 </span>                :            : }</a>
 <a name="434"><span class="lineNum">     434 </span>                :            : </a>
-<a name="435"><span class="lineNum">     435 </span>                :            : static inline int64_t pci_cfg_write32(struct phb *phb, uint32_t bdfn,</a>
-<a name="436"><span class="lineNum">     436 </span>                :            :                                       uint32_t offset, uint32_t data)</a>
-<a name="437"><span class="lineNum">     437 </span>                :            : {</a>
-<a name="438"><span class="lineNum">     438 </span>                :            :         return phb-&gt;ops-&gt;cfg_write32(phb, bdfn, offset, data);</a>
-<a name="439"><span class="lineNum">     439 </span>                :            : }</a>
-<a name="440"><span class="lineNum">     440 </span>                :            : </a>
-<a name="441"><span class="lineNum">     441 </span>                :            : /* Utilities */</a>
-<a name="442"><span class="lineNum">     442 </span>                :            : extern void pci_remove_bus(struct phb *phb, struct list_head *list);</a>
-<a name="443"><span class="lineNum">     443 </span>                :            : extern uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,</a>
-<a name="444"><span class="lineNum">     444 </span>                :            :                             struct list_head *list, struct pci_device *parent,</a>
-<a name="445"><span class="lineNum">     445 </span>                :            :                             bool scan_downstream);</a>
-<a name="446"><span class="lineNum">     446 </span>                :            : extern void pci_add_device_nodes(struct phb *phb,</a>
-<a name="447"><span class="lineNum">     447 </span>                :            :                                  struct list_head *list,</a>
-<a name="448"><span class="lineNum">     448 </span>                :            :                                  struct dt_node *parent_node,</a>
-<a name="449"><span class="lineNum">     449 </span>                :            :                                  struct pci_lsi_state *lstate,</a>
-<a name="450"><span class="lineNum">     450 </span>                :            :                                  uint8_t swizzle);</a>
-<a name="451"><span class="lineNum">     451 </span>                :            : extern int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t cap);</a>
-<a name="452"><span class="lineNum">     452 </span>                :            : extern int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t cap,</a>
-<a name="453"><span class="lineNum">     453 </span>                :            :                              uint8_t *version);</a>
-<a name="454"><span class="lineNum">     454 </span>                :            : extern void pci_init_capabilities(struct phb *phb, struct pci_device *pd);</a>
-<a name="455"><span class="lineNum">     455 </span>                :            : extern bool pci_wait_crs(struct phb *phb, uint16_t bdfn, uint32_t *out_vdid);</a>
-<a name="456"><span class="lineNum">     456 </span>                :            : extern void pci_restore_slot_bus_configs(struct pci_slot *slot);</a>
-<a name="457"><span class="lineNum">     457 </span>                :            : extern void pci_device_init(struct phb *phb, struct pci_device *pd);</a>
-<a name="458"><span class="lineNum">     458 </span>                :            : extern struct pci_device *pci_walk_dev(struct phb *phb,</a>
-<a name="459"><span class="lineNum">     459 </span>                :            :                                        struct pci_device *pd,</a>
-<a name="460"><span class="lineNum">     460 </span>                :            :                                        int (*cb)(struct phb *,</a>
-<a name="461"><span class="lineNum">     461 </span>                :            :                                                  struct pci_device *,</a>
-<a name="462"><span class="lineNum">     462 </span>                :            :                                                  void *),</a>
-<a name="463"><span class="lineNum">     463 </span>                :            :                                        void *userdata);</a>
-<a name="464"><span class="lineNum">     464 </span>                :            : extern struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn);</a>
-<a name="465"><span class="lineNum">     465 </span>                :            : extern void pci_restore_bridge_buses(struct phb *phb, struct pci_device *pd);</a>
-<a name="466"><span class="lineNum">     466 </span>                :            : extern struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,</a>
-<a name="467"><span class="lineNum">     467 </span>                :            :                                         uint32_t start, uint32_t len);</a>
-<a name="468"><span class="lineNum">     468 </span>                :            : extern int64_t pci_handle_cfg_filters(struct phb *phb, uint32_t bdfn,</a>
-<a name="469"><span class="lineNum">     469 </span>                :            :                                       uint32_t offset, uint32_t len,</a>
-<a name="470"><span class="lineNum">     470 </span>                :            :                                       uint32_t *data, bool write);</a>
-<a name="471"><span class="lineNum">     471 </span>                :            : extern struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,</a>
-<a name="472"><span class="lineNum">     472 </span>                :            :                                         uint32_t start, uint32_t len,</a>
-<a name="473"><span class="lineNum">     473 </span>                :            :                                         uint32_t flags, pci_cfg_reg_func func);</a>
+<a name="435"><span class="lineNum">     435 </span>                :            : /* Utilities */</a>
+<a name="436"><span class="lineNum">     436 </span>                :            : extern void pci_remove_bus(struct phb *phb, struct list_head *list);</a>
+<a name="437"><span class="lineNum">     437 </span>                :            : extern uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,</a>
+<a name="438"><span class="lineNum">     438 </span>                :            :                             struct list_head *list, struct pci_device *parent,</a>
+<a name="439"><span class="lineNum">     439 </span>                :            :                             bool scan_downstream);</a>
+<a name="440"><span class="lineNum">     440 </span>                :            : extern void pci_add_device_nodes(struct phb *phb,</a>
+<a name="441"><span class="lineNum">     441 </span>                :            :                                  struct list_head *list,</a>
+<a name="442"><span class="lineNum">     442 </span>                :            :                                  struct dt_node *parent_node,</a>
+<a name="443"><span class="lineNum">     443 </span>                :            :                                  struct pci_lsi_state *lstate,</a>
+<a name="444"><span class="lineNum">     444 </span>                :            :                                  uint8_t swizzle);</a>
+<a name="445"><span class="lineNum">     445 </span>                :            : extern int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t cap);</a>
+<a name="446"><span class="lineNum">     446 </span>                :            : extern int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t cap,</a>
+<a name="447"><span class="lineNum">     447 </span>                :            :                              uint8_t *version);</a>
+<a name="448"><span class="lineNum">     448 </span>                :            : extern void pci_init_capabilities(struct phb *phb, struct pci_device *pd);</a>
+<a name="449"><span class="lineNum">     449 </span>                :            : extern bool pci_wait_crs(struct phb *phb, uint16_t bdfn, uint32_t *out_vdid);</a>
+<a name="450"><span class="lineNum">     450 </span>                :            : extern void pci_restore_slot_bus_configs(struct pci_slot *slot);</a>
+<a name="451"><span class="lineNum">     451 </span>                :            : extern void pci_device_init(struct phb *phb, struct pci_device *pd);</a>
+<a name="452"><span class="lineNum">     452 </span>                :            : extern struct pci_device *pci_walk_dev(struct phb *phb,</a>
+<a name="453"><span class="lineNum">     453 </span>                :            :                                        struct pci_device *pd,</a>
+<a name="454"><span class="lineNum">     454 </span>                :            :                                        int (*cb)(struct phb *,</a>
+<a name="455"><span class="lineNum">     455 </span>                :            :                                                  struct pci_device *,</a>
+<a name="456"><span class="lineNum">     456 </span>                :            :                                                  void *),</a>
+<a name="457"><span class="lineNum">     457 </span>                :            :                                        void *userdata);</a>
+<a name="458"><span class="lineNum">     458 </span>                :            : extern struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn);</a>
+<a name="459"><span class="lineNum">     459 </span>                :            : extern void pci_restore_bridge_buses(struct phb *phb, struct pci_device *pd);</a>
+<a name="460"><span class="lineNum">     460 </span>                :            : extern struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,</a>
+<a name="461"><span class="lineNum">     461 </span>                :            :                                         uint32_t start, uint32_t len);</a>
+<a name="462"><span class="lineNum">     462 </span>                :            : extern int64_t pci_handle_cfg_filters(struct phb *phb, uint32_t bdfn,</a>
+<a name="463"><span class="lineNum">     463 </span>                :            :                                       uint32_t offset, uint32_t len,</a>
+<a name="464"><span class="lineNum">     464 </span>                :            :                                       uint32_t *data, bool write);</a>
+<a name="465"><span class="lineNum">     465 </span>                :            : extern struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,</a>
+<a name="466"><span class="lineNum">     466 </span>                :            :                                         uint32_t start, uint32_t len,</a>
+<a name="467"><span class="lineNum">     467 </span>                :            :                                         uint32_t flags, pci_cfg_reg_func func);</a>
+<a name="468"><span class="lineNum">     468 </span>                :            : </a>
+<a name="469"><span class="lineNum">     469 </span>                :            : /* Manage PHBs */</a>
+<a name="470"><span class="lineNum">     470 </span>                :            : #define OPAL_DYNAMIC_PHB_ID (~0)</a>
+<a name="471"><span class="lineNum">     471 </span>                :            : extern int64_t pci_register_phb(struct phb *phb, int opal_id);</a>
+<a name="472"><span class="lineNum">     472 </span>                :            : extern int64_t pci_unregister_phb(struct phb *phb);</a>
+<a name="473"><span class="lineNum">     473 </span>                :            : extern struct phb *pci_get_phb(uint64_t phb_id);</a>
 <a name="474"><span class="lineNum">     474 </span>                :            : </a>
-<a name="475"><span class="lineNum">     475 </span>                :            : /* Manage PHBs */</a>
-<a name="476"><span class="lineNum">     476 </span>                :            : #define OPAL_DYNAMIC_PHB_ID (~0)</a>
-<a name="477"><span class="lineNum">     477 </span>                :            : extern int64_t pci_register_phb(struct phb *phb, int opal_id);</a>
-<a name="478"><span class="lineNum">     478 </span>                :            : extern int64_t pci_unregister_phb(struct phb *phb);</a>
-<a name="479"><span class="lineNum">     479 </span>                :            : extern struct phb *pci_get_phb(uint64_t phb_id);</a>
-<a name="480"><span class="lineNum">     480 </span>                :            : </a>
-<a name="481"><span class="lineNum">     481 </span>                :            : static inline struct phb *__pci_next_phb_idx(uint64_t *phb_id) {</a>
-<a name="482"><span class="lineNum">     482 </span>                :            :         struct phb *phb = NULL;</a>
-<a name="483"><span class="lineNum">     483 </span>                :            :         while (phb == NULL &amp;&amp; *phb_id &lt;= last_phb_id) {</a>
-<a name="484"><span class="lineNum">     484 </span>                :            :                 phb = pci_get_phb((*phb_id)++);</a>
-<a name="485"><span class="lineNum">     485 </span>                :            :         }</a>
-<a name="486"><span class="lineNum">     486 </span>                :            :         return phb;</a>
-<a name="487"><span class="lineNum">     487 </span>                :            : }</a>
-<a name="488"><span class="lineNum">     488 </span>                :            : </a>
-<a name="489"><span class="lineNum">     489 </span>                :            : #define for_each_phb(phb)                                       \</a>
-<a name="490"><span class="lineNum">     490 </span>                :            :         for (uint64_t __phb_idx = 0;                            \</a>
-<a name="491"><span class="lineNum">     491 </span>                :            :              (phb = __pci_next_phb_idx(&amp;__phb_idx)) ; )</a>
+<a name="475"><span class="lineNum">     475 </span>                :            : static inline struct phb *__pci_next_phb_idx(uint64_t *phb_id) {</a>
+<a name="476"><span class="lineNum">     476 </span>                :            :         struct phb *phb = NULL;</a>
+<a name="477"><span class="lineNum">     477 </span>                :            :         while (phb == NULL &amp;&amp; *phb_id &lt;= last_phb_id) {</a>
+<a name="478"><span class="lineNum">     478 </span>                :            :                 phb = pci_get_phb((*phb_id)++);</a>
+<a name="479"><span class="lineNum">     479 </span>                :            :         }</a>
+<a name="480"><span class="lineNum">     480 </span>                :            :         return phb;</a>
+<a name="481"><span class="lineNum">     481 </span>                :            : }</a>
+<a name="482"><span class="lineNum">     482 </span>                :            : </a>
+<a name="483"><span class="lineNum">     483 </span>                :            : #define for_each_phb(phb)                                       \</a>
+<a name="484"><span class="lineNum">     484 </span>                :            :         for (uint64_t __phb_idx = 0;                            \</a>
+<a name="485"><span class="lineNum">     485 </span>                :            :              (phb = __pci_next_phb_idx(&amp;__phb_idx)) ; )</a>
+<a name="486"><span class="lineNum">     486 </span>                :            : </a>
+<a name="487"><span class="lineNum">     487 </span>                :            : /* Device tree */</a>
+<a name="488"><span class="lineNum">     488 </span>                :            : extern void pci_std_swizzle_irq_map(struct dt_node *dt_node,</a>
+<a name="489"><span class="lineNum">     489 </span>                :            :                                     struct pci_device *pd,</a>
+<a name="490"><span class="lineNum">     490 </span>                :            :                                     struct pci_lsi_state *lstate,</a>
+<a name="491"><span class="lineNum">     491 </span>                :            :                                     uint8_t swizzle);</a>
 <a name="492"><span class="lineNum">     492 </span>                :            : </a>
-<a name="493"><span class="lineNum">     493 </span>                :            : /* Device tree */</a>
-<a name="494"><span class="lineNum">     494 </span>                :            : extern void pci_std_swizzle_irq_map(struct dt_node *dt_node,</a>
-<a name="495"><span class="lineNum">     495 </span>                :            :                                     struct pci_device *pd,</a>
-<a name="496"><span class="lineNum">     496 </span>                :            :                                     struct pci_lsi_state *lstate,</a>
-<a name="497"><span class="lineNum">     497 </span>                :            :                                     uint8_t swizzle);</a>
-<a name="498"><span class="lineNum">     498 </span>                :            : </a>
-<a name="499"><span class="lineNum">     499 </span>                :            : /* Initialize all PCI slots */</a>
-<a name="500"><span class="lineNum">     500 </span>                :            : extern void pci_init_slots(void);</a>
-<a name="501"><span class="lineNum">     501 </span>                :            : extern int64_t pci_reset(void);</a>
-<a name="502"><span class="lineNum">     502 </span>                :            : </a>
-<a name="503"><span class="lineNum">     503 </span>                :            : extern void opal_pci_eeh_set_evt(uint64_t phb_id);</a>
-<a name="504"><span class="lineNum">     504 </span>                :            : extern void opal_pci_eeh_clear_evt(uint64_t phb_id);</a>
-<a name="505"><span class="lineNum">     505 </span>                :            : </a>
-<a name="506"><span class="lineNum">     506 </span>                :            : #endif /* __PCI_H */</a>
+<a name="493"><span class="lineNum">     493 </span>                :            : /* Initialize all PCI slots */</a>
+<a name="494"><span class="lineNum">     494 </span>                :            : extern void pci_init_slots(void);</a>
+<a name="495"><span class="lineNum">     495 </span>                :            : extern int64_t pci_reset(void);</a>
+<a name="496"><span class="lineNum">     496 </span>                :            : </a>
+<a name="497"><span class="lineNum">     497 </span>                :            : extern void opal_pci_eeh_set_evt(uint64_t phb_id);</a>
+<a name="498"><span class="lineNum">     498 </span>                :            : extern void opal_pci_eeh_clear_evt(uint64_t phb_id);</a>
+<a name="499"><span class="lineNum">     499 </span>                :            : </a>
+<a name="500"><span class="lineNum">     500 </span>                :            : #endif /* __PCI_H */</a>
 </pre>
       </td>
     </tr>

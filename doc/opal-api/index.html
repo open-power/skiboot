@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>OPAL API Documentation &#8212; skiboot 8fe7ea7
+    <title>OPAL API Documentation &#8212; skiboot 3d634a1
  documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="../device-tree/ibm%2Cpowerpc-cpu-features/design.html" title="ibm,powerpc-cpu-features Design"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 8fe7ea7
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 3d634a1
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL API Documentation</a></li> 
       </ul>
@@ -270,18 +270,6 @@ Implemented</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="opal-pci-set-peltv-32.html#opal-pci-set-peltv"><span class="std std-ref">OPAL_PCI_SET_PELTV</span></a></p></td>
 <td><p>32</p></td>
-<td><p>v1.0 (Initial Release)</p></td>
-<td><p>POWER8</p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="opal-pci-set-mve-33.html#opal-pci-set-mve"><span class="std std-ref">OPAL_PCI_SET_MVE</span></a></p></td>
-<td><p>33</p></td>
-<td><p>v1.0 (Initial Release)</p></td>
-<td><p>POWER8</p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="opal-pci-set-mve-enable-34.html#opal-pci-set-mve-enable"><span class="std std-ref">OPAL_PCI_SET_MVE_ENABLE</span></a></p></td>
-<td><p>34</p></td>
 <td><p>v1.0 (Initial Release)</p></td>
 <td><p>POWER8</p></td>
 <td></td>
@@ -1239,8 +1227,6 @@ unused.</p></td>
 <li class="toctree-l1"><a class="reference internal" href="opal-pci-poll-62.html">OPAL_PCI_POLL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="opal-pci-reinit-53.html">OPAL_PCI_REINIT</a></li>
 <li class="toctree-l1"><a class="reference internal" href="opal-pci-reset-49.html">OPAL_PCI_RESET</a></li>
-<li class="toctree-l1"><a class="reference internal" href="opal-pci-set-mve-33.html">OPAL_PCI_SET_MVE</a></li>
-<li class="toctree-l1"><a class="reference internal" href="opal-pci-set-mve-enable-34.html">OPAL_PCI_SET_MVE_ENABLE</a></li>
 <li class="toctree-l1"><a class="reference internal" href="opal-pci-set-p2p-157.html">OPAL_PCI_SET_P2P</a></li>
 <li class="toctree-l1"><a class="reference internal" href="opal-pci-set-pe-31.html">OPAL_PCI_SET_PE</a></li>
 <li class="toctree-l1"><a class="reference internal" href="opal-pci-set-peltv-32.html">OPAL_PCI_SET_PELTV</a></li>
@@ -1288,119 +1274,128 @@ unused.</p></td>
 removed and no longer supported.</p>
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 46%" />
+<col style="width: 47%" />
 <col style="width: 7%" />
-<col style="width: 23%" />
-<col style="width: 23%" />
+<col style="width: 6%" />
+<col style="width: 17%" />
+<col style="width: 7%" />
+<col style="width: 11%" />
+<col style="width: 4%" />
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Name</p></td>
 <td><p>API
 Token</p></td>
-<td><p>Introduced</p></td>
-<td><p>Removed</p></td>
+<td colspan="2"><p>Introduced</p></td>
+<td colspan="3"><p>Removed</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-get-completion-token-status"><span class="std std-ref">OPAL_GET_COMPLETION_TOKEN_STATUS</span></a></p></td>
 <td><p>21</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-pci-shpc"><span class="std std-ref">OPAL_PCI_SHPC</span></a></p></td>
 <td><p>24</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-pci-set-phb-table-memory"><span class="std std-ref">OPAL_PCI_SET_PHB_TABLE_MEMORY</span></a></p></td>
 <td><p>30</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-pci-get-xive-reissue"><span class="std std-ref">OPAL_PCI_GET_XIVE_REISSUE</span></a></p></td>
 <td><p>35</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-pci-get-xive-reissue"><span class="std std-ref">OPAL_PCI_GET_XIVE_REISSUE</span></a></p></td>
 <td><p>36</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-pci-fence-phb"><span class="std std-ref">OPAL_PCI_FENCE_PHB</span></a></p></td>
 <td><p>52</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-pci-mask-pe-error"><span class="std std-ref">OPAL_PCI_MASK_PE_ERROR</span></a></p></td>
 <td><p>54</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-set-slot-led-status"><span class="std std-ref">OPAL_SET_SLOT_LED_STATUS</span></a></p></td>
 <td><p>55</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-set-system-attention-led"><span class="std std-ref">OPAL_SET_SYSTEM_ATTENTION_LED</span></a></p></td>
 <td><p>57</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-reserved1"><span class="std std-ref">OPAL_RESERVED1</span></a></p></td>
 <td><p>58</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-reserved2"><span class="std std-ref">OPAL_RESERVED2</span></a></p></td>
 <td><p>59</p></td>
-<td><p>Never</p></td>
-<td></td>
+<td colspan="2"><p>Never</p></td>
+<td colspan="3"></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-elog-send"><span class="std std-ref">OPAL_ELOG_SEND</span></a></p></td>
 <td><p>92</p></td>
-<td><p>pre-v1.0</p></td>
-<td><p>pre-v1.0</p></td>
+<td colspan="2"><p>pre-v1.0</p></td>
+<td colspan="3"><p>pre-v1.0</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-pci-get-phb-diag-data"><span class="std std-ref">OPAL_PCI_GET_PHB_DIAG_DATA</span></a></p></td>
 <td><p>51</p></td>
-<td><p>pre-v1.0</p></td>
-<td><p>pre-v1.0, with last
+<td colspan="2"><p>pre-v1.0</p></td>
+<td colspan="3"><p>pre-v1.0, with last
 remnants removed in
 <a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-get-xive-source"><span class="std std-ref">OPAL_GET_XIVE_SOURCE</span></a></p></td>
 <td><p>38</p></td>
-<td><p>v1.0 Initial Release</p></td>
-<td><p><a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a></p></td>
+<td colspan="2"><p>v1.0 Initial Release</p></td>
+<td colspan="3"><p><a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-write-oppanel"><span class="std std-ref">OPAL_WRITE_OPPANEL</span></a></p></td>
 <td><p>43</p></td>
-<td><p>pre-v1.0</p></td>
-<td><p>pre-v1.0</p></td>
+<td colspan="2"><p>pre-v1.0</p></td>
+<td colspan="3"><p>pre-v1.0</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-old-i2c-request"><span class="std std-ref">OPAL_OLD_I2C_REQUEST</span></a></p></td>
 <td><p>106</p></td>
-<td><p>v4.0</p></td>
-<td><p>v4.0</p></td>
+<td colspan="2"><p>v4.0</p></td>
+<td colspan="3"><p>v4.0</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-register-opal-exception-handler"><span class="std std-ref">OPAL_REGISTER_OPAL_EXCEPTION_HANDLER</span></a></p></td>
 <td><p>22</p></td>
-<td><p>v1.0 Initial Release</p></td>
-<td><p><a class="reference internal" href="../release-notes/skiboot-5.0.html#skiboot-5-0"><span class="std std-ref">skiboot 5.0</span></a></p></td>
+<td colspan="2"><p>v1.0 Initial Release</p></td>
+<td colspan="3"><p><a class="reference internal" href="../release-notes/skiboot-5.0.html#skiboot-5-0"><span class="std std-ref">skiboot 5.0</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#opal-pci-set-hub-tce-memory"><span class="std std-ref">OPAL_PCI_SET_HUB_TCE_MEMORY</span></a></p></td>
 <td><p>11</p></td>
-<td><p>pre-v1.0</p></td>
-<td><p><a class="reference internal" href="../release-notes/skiboot-5.2.0.html#skiboot-5-2-0"><span class="std std-ref">skiboot-5.2.0</span></a></p></td>
+<td colspan="2"><p>pre-v1.0</p></td>
+<td colspan="3"><p><a class="reference internal" href="../release-notes/skiboot-5.2.0.html#skiboot-5-2-0"><span class="std std-ref">skiboot-5.2.0</span></a></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#opal-pci-set-phb-tce-memory"><span class="std std-ref">OPAL_PCI_SET_PHB_TCE_MEMORY</span></a></p></td>
 <td><p>12</p></td>
-<td><p>pre-v1.0</p></td>
-<td><p><a class="reference internal" href="../release-notes/skiboot-5.2.0.html#skiboot-5-2-0"><span class="std std-ref">skiboot-5.2.0</span></a></p></td>
+<td colspan="2"><p>pre-v1.0</p></td>
+<td colspan="3"><p><a class="reference internal" href="../release-notes/skiboot-5.2.0.html#skiboot-5-2-0"><span class="std std-ref">skiboot-5.2.0</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="opal-pci-eeh-freeze-status-23.html#opal-pci-eeh-freeze-status2"><span class="std std-ref">OPAL_PCI_EEH_FREEZE_STATUS2</span></a></p></td>
 <td><p>61</p></td>
-<td><p>v1.0 Initial Release</p></td>
-<td><p><a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a></p></td>
+<td colspan="2"><p>v1.0 Initial Release</p></td>
+<td colspan="3"><p><a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#opal-pci-set-mve"><span class="std std-ref">OPAL_PCI_SET_MVE</span></a></p></td>
+<td colspan="6"><p>33   | v1.0 Initial Release  | <a class="reference internal" href="../release-notes/skiboot-7.1.html#skiboot-7-1"><span class="std std-ref">skiboot-7.1</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#opal-pci-set-mve-enable"><span class="std std-ref">OPAL_PCI_SET_MVE_ENABLE</span></a></p></td>
+<td colspan="6"><p>34   | v1.0 Initial Release  | <a class="reference internal" href="../release-notes/skiboot-7.1.html#skiboot-7-1"><span class="std std-ref">skiboot-7.1</span></a></p></td>
 </tr>
 </tbody>
 </table>
@@ -1542,11 +1537,21 @@ and these systems were only ever used with OPAL inside IBM for development
 and bring-up purposes.</p>
 <p>Support for p5ioc was removed from the Linux kernel in v4.6-rc1.</p>
 </section>
+<section id="opal-pci-set-mve">
+<span id="id20"></span><h3>OPAL_PCI_SET_MVE<a class="headerlink" href="#opal-pci-set-mve" title="Permalink to this headline">¶</a></h3>
+<p>Dead code, as the callback did nothing after the P7IOC code was removed in
+skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/skiboot-7.1.html#skiboot-7-1"><span class="std std-ref">skiboot-7.1</span></a>.</p>
+</section>
+<section id="opal-pci-set-mve-enable">
+<span id="id21"></span><h3>OPAL_PCI_SET_MVE_ENABLE<a class="headerlink" href="#opal-pci-set-mve-enable" title="Permalink to this headline">¶</a></h3>
+<p>Dead code, as the callback did nothing after the P7IOC code was removed in
+skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/skiboot-7.1.html#skiboot-7-1"><span class="std std-ref">skiboot-7.1</span></a>.</p>
+</section>
 </section>
 <section id="future-calls">
 <h2>Future Calls<a class="headerlink" href="#future-calls" title="Permalink to this headline">¶</a></h2>
 <section id="opal-elog-write">
-<span id="id20"></span><h3>OPAL_ELOG_WRITE<a class="headerlink" href="#opal-elog-write" title="Permalink to this headline">¶</a></h3>
+<span id="id22"></span><h3>OPAL_ELOG_WRITE<a class="headerlink" href="#opal-elog-write" title="Permalink to this headline">¶</a></h3>
 <p>May be implemented in the future to complement the <a class="reference internal" href="opal-elog-71-72-73-74-75.html#opal-elog-read"><span class="std std-ref">OPAL_ELOG_READ</span></a> call.</p>
 </section>
 </section>
@@ -1584,6 +1589,8 @@ and bring-up purposes.</p>
 <li><a class="reference internal" href="#opal-register-opal-exception-handler">OPAL_REGISTER_OPAL_EXCEPTION_HANDLER</a></li>
 <li><a class="reference internal" href="#opal-pci-set-hub-tce-memory">OPAL_PCI_SET_HUB_TCE_MEMORY</a></li>
 <li><a class="reference internal" href="#opal-pci-set-phb-tce-memory">OPAL_PCI_SET_PHB_TCE_MEMORY</a></li>
+<li><a class="reference internal" href="#opal-pci-set-mve">OPAL_PCI_SET_MVE</a></li>
+<li><a class="reference internal" href="#opal-pci-set-mve-enable">OPAL_PCI_SET_MVE_ENABLE</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#future-calls">Future Calls</a><ul>
@@ -1633,7 +1640,7 @@ and bring-up purposes.</p>
         <li class="right" >
           <a href="../device-tree/ibm%2Cpowerpc-cpu-features/design.html" title="ibm,powerpc-cpu-features Design"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 8fe7ea7
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 3d634a1
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL API Documentation</a></li> 
       </ul>
