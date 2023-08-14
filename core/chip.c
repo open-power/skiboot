@@ -190,6 +190,10 @@ void init_chips(void)
 		proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;
 		prlog(PR_NOTICE, "CHIP: Detected QEMU simulator\n");
 	}
+	if (dt_find_by_path(dt_root, "/bml")) {
+		proc_chip_quirks |= QUIRK_BML;
+		prlog(PR_NOTICE, "CHIP: Detected BML\n");
+	}
 
 	/* We walk the chips based on xscom nodes in the tree */
 	dt_for_each_compatible(dt_root, xn, "ibm,xscom") {

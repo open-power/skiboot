@@ -651,7 +651,7 @@ void imc_catalog_preload(void)
 	int ret = OPAL_SUCCESS;
 	compress_buf_size = MAX_COMPRESSED_IMC_DTB_SIZE;
 
-	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+	if (proc_chip_quirks & (QUIRK_MAMBO_CALLOUTS | QUIRK_BML))
 		return;
 
 	/* Enable only for power 9/10 */
@@ -789,13 +789,13 @@ void imc_init(void)
 	struct dt_node *dev;
 	int err_flag = -1;
 
-	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
+	if (proc_chip_quirks & (QUIRK_MAMBO_CALLOUTS | QUIRK_BML)) {
 		dev = dt_find_compatible_node(dt_root, NULL,
 					"ibm,opal-in-memory-counters");
 		if (!dev)
 			return;
 
-		goto imc_mambo;
+		goto imc_mambo_bml;
 	}
 
 	/* Enable only for power 9/10 */
@@ -838,7 +838,7 @@ void imc_init(void)
 		goto err;
 	}
 
-imc_mambo:
+imc_mambo_bml:
 	if (setup_imc_scoms()) {
 		prerror("IMC: Failed to setup the scoms\n");
 		goto err;
@@ -859,7 +859,7 @@ imc_mambo:
 	/* Update the base_addr and chip-id for nest nodes */
 	imc_dt_update_nest_node(dev);
 
-	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+	if (proc_chip_quirks & (QUIRK_MAMBO_CALLOUTS | QUIRK_BML))
 		return;
 
 	/*
