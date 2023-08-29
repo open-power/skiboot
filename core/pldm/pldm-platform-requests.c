@@ -44,6 +44,51 @@ static void pdr_init_complete(bool success)
 	pdr_ready = true;
 }
 
+/*
+ * Search the matching record and return the effecter id.
+ * PDR type = PLDM_STATE_EFFECTER_PDR
+ */
+static int find_effecter_id_by_state_set_Id(uint16_t entity_type,
+					    uint16_t state_set_id,
+					    uint16_t *effecter_id,
+					    uint16_t terminus_handle)
+{
+	struct state_effecter_possible_states *possible_states;
+	struct pldm_state_effecter_pdr *state_effecter_pdr;
+	const pldm_pdr_record *record = NULL;
+	uint8_t *outData = NULL;
+	uint32_t size;
+
+	do {
+		/* Find (first) PDR record by PLDM_STATE_EFFECTER_PDR type
+		 * if record not NULL, then search will begin from this
+		 * record's next record
+		 */
+		record = pldm_pdr_find_record_by_type(
+				pdrs_repo, /* PDR repo handle */
+				PLDM_STATE_EFFECTER_PDR,
+				record, /* PDR record handle */
+				&outData, &size);
+
+		if (record) {
+			state_effecter_pdr = (struct pldm_state_effecter_pdr *) outData;
+
+			*effecter_id = le16_to_cpu(state_effecter_pdr->effecter_id);
+
+			possible_states = (struct state_effecter_possible_states *)
+				state_effecter_pdr->possible_states;
+
+			if ((le16_to_cpu(state_effecter_pdr->entity_type) == entity_type) &&
+			    (le16_to_cpu(state_effecter_pdr->terminus_handle) == terminus_handle) &&
+			    (le16_to_cpu(possible_states->state_set_id) == state_set_id))
+				return OPAL_SUCCESS;
+		}
+
+	} while (record);
+
+	return OPAL_PARAMETER;
+}
+
 struct set_effecter_state_response {
 	uint8_t completion_code;
 };
@@ -124,6 +169,38 @@ static int set_state_effecter_states_req(uint16_t effecter_id,
 	free(tx);
 	free(response_msg);
 	return OPAL_SUCCESS;
+}
+
+/*
+ * entity_type:  System Firmware
+ * state_set:    Software Termination Status(129)
+ * states:       Graceful Restart Requested(6)
+ */
+int pldm_platform_restart(void)
+{
+	set_effecter_state_field field;
+	uint16_t effecter_id;
+	int rc;
+
+	if (!pdr_ready)
+		return OPAL_HARDWARE;
+
+	rc = find_effecter_id_by_state_set_Id(
+				PLDM_ENTITY_SYS_FIRMWARE,
+				PLDM_STATE_SET_SW_TERMINATION_STATUS,
+				&effecter_id, BMC_TID);
+	if (rc) {
+		prlog(PR_ERR, "%s - effecter id not found\n", __func__);
+		return rc;
+	}
+
+	field.set_request = PLDM_REQUEST_SET;
+	field.effecter_state = PLDM_SW_TERM_GRACEFUL_RESTART_REQUESTED;
+
+	prlog(PR_INFO, "sending system firmware Graceful Restart request (effecter_id: %d)\n",
+			effecter_id);
+
+	return set_state_effecter_states_req(effecter_id, &field, true);
 }
 
 struct get_pdr_response {
