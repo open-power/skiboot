@@ -70,4 +70,9 @@ int pldm_platform_send_progress_state_change(
  */
 void pldm_rtc_init(void);
 
+/**
+ * Register ipmi host interface access callbacks
+ */
+void pldm_opal_init(void);
+
 #endif /* __PLDM_H__ */
