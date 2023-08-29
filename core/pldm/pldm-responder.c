@@ -6,11 +6,13 @@
 #include <bitmap.h>
 #include <cpu.h>
 #include <opal.h>
+#include <opal-msg.h>
 #include <stdio.h>
 #include <string.h>
 #include <debug_descriptor.h>
 #include <libpldm/platform.h>
 #include <libpldm/platform_oem_ibm.h>
+#include <libpldm/state_set.h>
 #include <libpldm/utils.h>
 #include "pldm.h"
 
@@ -708,6 +710,120 @@ static struct pldm_cmd pldm_platform_get_state_sensor_readings = {
 	.handler = platform_get_state_sensor_readings,
 };
 
+#define SOFT_OFF		0x00
+#define SOFT_REBOOT		0x01
+#define CHASSIS_PWR_DOWN	0x00
+#define DEFAULT_CHIP_ID		0
+
+/*
+ * SetStateEffecterStates (0x39)
+ * The SetStateEffecterStates command is used to set the state of one
+ * or more effecters within a PLDM State Effecter.
+ */
+static int platform_set_state_effecter_states_handler(const struct pldm_rx_data *rx)
+{
+	set_effecter_state_field field[8];
+	uint8_t comp_effecter_count;
+	uint16_t effecter_id;
+	int rc, i;
+
+	/* decode SetStateEffecterStates request data */
+	rc = decode_set_state_effecter_states_req(
+				rx->msg,
+				PLDM_SET_STATE_EFFECTER_STATES_REQ_BYTES,
+				&effecter_id,
+				&comp_effecter_count,
+				field);
+	if (rc) {
+		prlog(PR_ERR, "Failed to decode SetStateEffecterStates request, rc = %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	/* invoke the appropriate callback handler */
+	prlog(PR_DEBUG, "%s - effecter_id: %d, comp_effecter_count: %d\n",
+			__func__, effecter_id, comp_effecter_count);
+
+	for (i = 0; i < comp_effecter_count; i++) {
+		/* other set_request not supported */
+		if (field[i].set_request != PLDM_REQUEST_SET) {
+			prlog(PR_ERR, "Got invalid set request 0x%x in "
+				      "SetStateEffecterStates request\n",
+				      field[i].set_request);
+			cc_resp(rx, rx->hdrinf.pldm_type,
+				rx->hdrinf.command,
+				PLDM_PLATFORM_INVALID_STATE_VALUE);
+			return OPAL_PARAMETER;
+		}
+
+		switch (field[i].effecter_state) {
+		case PLDM_SW_TERM_GRACEFUL_SHUTDOWN_REQUESTED:
+		case PLDM_STATE_SET_SYS_POWER_STATE_OFF_SOFT_GRACEFUL:
+			prlog(PR_NOTICE, "Soft shutdown requested\n");
+			cc_resp(rx, PLDM_PLATFORM,
+				PLDM_SET_STATE_EFFECTER_STATES,
+				PLDM_SUCCESS);
+
+			if (opal_booting() && platform.cec_power_down) {
+				prlog(PR_NOTICE, "Host not up, shutting down now\n");
+				platform.cec_power_down(CHASSIS_PWR_DOWN);
+			} else {
+				opal_queue_msg(OPAL_MSG_SHUTDOWN,
+					       NULL, NULL,
+					       cpu_to_be64(SOFT_OFF));
+			}
+
+			break;
+
+		case PLDM_SW_TERM_GRACEFUL_RESTART_REQUESTED:
+			prlog(PR_NOTICE, "Soft reboot requested\n");
+			cc_resp(rx, PLDM_PLATFORM,
+				PLDM_SET_STATE_EFFECTER_STATES,
+				PLDM_SUCCESS);
+
+			if (opal_booting() && platform.cec_reboot) {
+				prlog(PR_NOTICE, "Host not up, rebooting now\n");
+				platform.cec_reboot();
+			} else {
+				opal_queue_msg(OPAL_MSG_SHUTDOWN,
+					       NULL, NULL,
+					       cpu_to_be64(SOFT_REBOOT));
+			}
+
+			break;
+
+		case PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET:
+		case PLDM_STATE_SET_BOOT_RESTART_CAUSE_HARD_RESET:
+			prlog(PR_NOTICE, "OCC reset requested\n");
+			cc_resp(rx, PLDM_PLATFORM,
+				PLDM_SET_STATE_EFFECTER_STATES,
+				PLDM_SUCCESS);
+
+			/* invoke the appropriate callback handler */
+			prd_occ_reset(DEFAULT_CHIP_ID); /* FIXME, others chip ? */
+			break;
+
+		default:
+			prlog(PR_ERR, "Got invalid effecter state 0x%x in "
+				      "SetStateEffecterStates request\n",
+				      field[i].effecter_state);
+			cc_resp(rx, rx->hdrinf.pldm_type,
+				rx->hdrinf.command,
+				PLDM_PLATFORM_INVALID_STATE_VALUE);
+			return OPAL_PARAMETER;
+		}
+	}
+
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_platform_set_state_effecter_states = {
+	.name = "PLDM_SET_STATE_EFFECTER_STATES",
+	.pldm_cmd_id = PLDM_SET_STATE_EFFECTER_STATES,
+	.handler = platform_set_state_effecter_states_handler,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -753,6 +869,7 @@ int pldm_responder_init(void)
 	add_cmd(&pldm_platform_type, &pldm_platform_set_event_receiver);
 	add_cmd(&pldm_platform_type, &pldm_platform_event_message);
 	add_cmd(&pldm_platform_type, &pldm_platform_get_state_sensor_readings);
+	add_cmd(&pldm_platform_type, &pldm_platform_set_state_effecter_states);
 
 	return OPAL_SUCCESS;
 }
