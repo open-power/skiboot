@@ -792,6 +792,7 @@ static int platform_set_state_effecter_states_handler(const struct pldm_rx_data 
 					       cpu_to_be64(SOFT_REBOOT));
 			}
 
+			pldm_platform_initiate_shutdown();
 			break;
 
 		case PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET:

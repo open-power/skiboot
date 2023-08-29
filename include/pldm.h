@@ -6,6 +6,7 @@
 #define __PLDM_H__
 
 #include <skiboot.h>
+#include <pldm/include/libpldm/state_set.h>
 
 /**
  * Handle PLDM messages received from MCTP
@@ -34,6 +35,11 @@ int pldm_platform_power_off(void);
 int pldm_platform_restart(void);
 
 /**
+ * Send a system firmware Graceful Shutdown request
+ */
+int pldm_platform_initiate_shutdown(void);
+
+/**
  * Update the firmware version device-tree field
  */
 int pldm_fru_dt_add_bmc_version(void);
@@ -52,5 +58,11 @@ bool pldm_lid_files_exit(struct blocklevel_device *bl);
  * Initialize and reset the watchdog
  */
 int pldm_watchdog_init(void);
+
+/**
+ * Update boot progress state
+ */
+int pldm_platform_send_progress_state_change(
+		enum pldm_state_set_boot_progress_state_values state);
 
 #endif /* __PLDM_H__ */

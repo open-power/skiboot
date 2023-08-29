@@ -73,6 +73,51 @@ int pldm_platform_pdr_find_record(uint32_t record_handle,
 }
 
 /*
+ * Search the matching record and return the sensor id.
+ * PDR type = PLDM_STATE_SENSOR_PDR
+ */
+static int find_sensor_id_by_state_set_Id(uint16_t entity_type,
+					  uint16_t state_set_id,
+					  uint16_t *sensor_id,
+					  uint16_t terminus_handle)
+{
+	struct state_sensor_possible_states *possible_states;
+	struct pldm_state_sensor_pdr *state_sensor_pdr;
+	const pldm_pdr_record *record = NULL;
+	uint8_t *outData = NULL;
+	uint32_t size;
+
+	do {
+		/* Find (first) PDR record by PLDM_STATE_SENSOR_PDR type
+		 * if record not NULL, then search will begin from this
+		 * record's next record
+		 */
+		record = pldm_pdr_find_record_by_type(
+				pdrs_repo, /* PDR repo handle */
+				PLDM_STATE_SENSOR_PDR,
+				record, /* PDR record handle */
+				&outData, &size);
+
+		if (record) {
+			state_sensor_pdr = (struct pldm_state_sensor_pdr *) outData;
+
+			*sensor_id = le16_to_cpu(state_sensor_pdr->sensor_id);
+
+			possible_states = (struct state_sensor_possible_states *)
+				state_sensor_pdr->possible_states;
+
+			if ((le16_to_cpu(state_sensor_pdr->entity_type) == entity_type) &&
+			    (le16_to_cpu(state_sensor_pdr->terminus_handle) == terminus_handle) &&
+			    (le16_to_cpu(possible_states->state_set_id) == state_set_id))
+				return OPAL_SUCCESS;
+		}
+
+	} while (record);
+
+	return OPAL_PARAMETER;
+}
+
+/*
  * Search the matching record and return the effecter id.
  * PDR type = PLDM_STATE_EFFECTER_PDR
  */
@@ -261,6 +306,228 @@ int pldm_platform_restart(void)
 			effecter_id);
 
 	return set_state_effecter_states_req(effecter_id, &field, true);
+}
+
+static int send_sensor_state_changed_event(uint16_t state_set_id,
+					   uint16_t sensor_id,
+					   uint8_t sensor_offset,
+					   uint8_t sensor_state,
+					   bool no_timeout)
+{
+	size_t event_data_size = 0, actual_event_data_size;
+	size_t response_len, payload_len, data_size;
+	uint8_t *event_data = NULL;
+	struct pldm_tx_data *tx;
+	void *response_msg;
+	int rc, i;
+
+	struct pldm_platform_event_message_req event_message_req = {
+		.format_version = PLDM_PLATFORM_EVENT_MESSAGE_FORMAT_VERSION,
+		.tid = HOST_TID,
+		.event_class = PLDM_SENSOR_EVENT,
+	};
+
+	struct pldm_platform_event_message_resp response;
+
+	prlog(PR_DEBUG, "%s - state_set_id: %d, sensor_id: %d, sensor_state: %d\n",
+			__func__, state_set_id, sensor_id, sensor_state);
+
+	/*
+	 * The first time around this loop, event_data is nullptr which
+	 * instructs the encoder to not actually do the encoding, but
+	 * rather fill out actual_change_records_size with the correct
+	 * size, stop and return PLDM_SUCCESS. Then we allocate the
+	 * proper amount of memory and call the encoder again, which
+	 * will cause it to actually encode the message.
+	 */
+	for (i = 0; i < 2; i++) {
+		rc = encode_sensor_event_data(
+			(struct pldm_sensor_event_data *)event_data,
+			event_data_size,
+			sensor_id,
+			PLDM_STATE_SENSOR_STATE,
+			sensor_offset,
+			sensor_state,
+			sensor_state,
+			&actual_event_data_size);
+		if (rc) {
+			prlog(PR_ERR, "encode PldmSensorChgEventData Error, rc: %d\n", rc);
+			return OPAL_PARAMETER;
+		}
+
+		if (event_data == NULL) {
+			event_data_size = actual_event_data_size;
+			event_data = zalloc(event_data_size);
+			if (!event_data) {
+				prlog(PR_ERR, "failed to allocate event data (size: 0x%lx)\n", event_data_size);
+				return OPAL_NO_MEM;
+			}
+		}
+	}
+
+	/* Send the event request */
+	payload_len = PLDM_PLATFORM_EVENT_MESSAGE_MIN_REQ_BYTES + event_data_size;
+
+	data_size = sizeof(struct pldm_msg_hdr) +
+		    sizeof(struct pldm_platform_event_message_req) +
+		    event_data_size;
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size - 1;
+
+	/* Encode the platform event message request */
+	rc = encode_platform_event_message_req(
+			DEFAULT_INSTANCE_ID,
+			event_message_req.format_version,
+			event_message_req.tid,
+			event_message_req.event_class,
+			(const uint8_t *)event_data,
+			event_data_size,
+			(struct pldm_msg *)tx->data,
+			payload_len);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode PlatformEventMessage Error, rc: %d\n", rc);
+		free(event_data);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+	free(event_data);
+
+	/* Send and get the response message bytes.
+	 * It may happen that for some commands, the responder does not
+	 * have time to respond.
+	 */
+	if (no_timeout) {
+		rc = pldm_mctp_message_tx(tx);
+		if (rc)
+			prlog(PR_ERR, "Failed to send PlatformEventMessage request, rc = %d\n", rc);
+		free(tx);
+		return rc;
+	}
+
+	/* Send and get the response message bytes */
+	rc = pldm_requester_queue_and_wait(tx,
+					   &response_msg, &response_len);
+	if (rc) {
+		prlog(PR_ERR, "Communication Error, req: PlatformEventMessage, rc: %d\n", rc);
+		free(tx);
+		return rc;
+	}
+	free(tx);
+
+	/* Decode the message */
+	payload_len = response_len - sizeof(struct pldm_msg_hdr);
+	rc = decode_platform_event_message_resp(
+				response_msg,
+				payload_len,
+				&response.completion_code,
+				&response.platform_event_status);
+	if (rc != PLDM_SUCCESS || response.completion_code != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Decode PlatformEventMessage Error, rc: %d, cc: %d, pes: %d\n",
+			      rc, response.completion_code,
+			      response.platform_event_status);
+		free(response_msg);
+		return OPAL_PARAMETER;
+	}
+
+	free(response_msg);
+
+	return OPAL_SUCCESS;
+}
+
+#define BOOT_STATE_SENSOR_INDEX 0
+
+int pldm_platform_send_progress_state_change(
+		enum pldm_state_set_boot_progress_state_values state)
+{
+	struct state_sensor_possible_states *possible_states;
+	struct pldm_state_sensor_pdr *sensor_pdr = NULL;
+	const pldm_pdr_record *record = NULL;
+	uint16_t terminus_handle;
+	uint8_t *outData = NULL;
+	uint16_t sensor_id = 0;
+	uint32_t size;
+
+	if (!pdr_ready)
+		return OPAL_HARDWARE;
+
+	prlog(PR_INFO, "Setting boot progress, state: %d\n", state);
+
+	do {
+		/* Find (first) PDR record by PLDM_STATE_SENSOR_PDR type
+		 * if record not NULL, then search will begin from this
+		 * record's next record
+		 */
+		record = pldm_pdr_find_record_by_type(
+				pdrs_repo, /* PDR repo handle */
+				PLDM_STATE_SENSOR_PDR,
+				record, /* PDR record handle */
+				&outData, &size);
+
+		if (record) {
+			sensor_pdr = (struct pldm_state_sensor_pdr *) outData;
+			terminus_handle = le16_to_cpu(sensor_pdr->terminus_handle);
+
+			if ((le16_to_cpu(sensor_pdr->entity_type) == PLDM_ENTITY_SYS_BOARD) &&
+			    (terminus_handle == HOST_TID)) {
+				possible_states = (struct state_sensor_possible_states *)
+							sensor_pdr->possible_states;
+
+				if (le16_to_cpu(possible_states->state_set_id) ==
+						PLDM_STATE_SET_BOOT_PROGRESS){
+					sensor_id = le16_to_cpu(sensor_pdr->sensor_id);
+					break;
+				}
+			}
+		}
+
+	} while (record);
+
+	if (sensor_id == 0)
+		return OPAL_PARAMETER;
+
+	return send_sensor_state_changed_event(
+			PLDM_STATE_SET_BOOT_PROGRESS,
+			sensor_id,
+			BOOT_STATE_SENSOR_INDEX,
+			state,
+			false);
+}
+
+#define SW_TERM_GRACEFUL_SHUTDOWN_INDEX 0
+
+/*
+ * entity_type:  System Firmware
+ * state_set:    Software Termination Status(129)
+ * states:       Graceful Shutdown Requested(7)
+ */
+int pldm_platform_initiate_shutdown(void)
+{
+	uint16_t sensor_id;
+	int rc;
+
+	if (!pdr_ready)
+		return OPAL_HARDWARE;
+
+	rc = find_sensor_id_by_state_set_Id(
+				PLDM_ENTITY_SYSTEM_CHASSIS,
+				PLDM_STATE_SET_SW_TERMINATION_STATUS,
+				&sensor_id, HOST_TID);
+	if (rc) {
+		prlog(PR_ERR, "%s - sensor id not found\n", __func__);
+		return rc;
+	}
+
+	prlog(PR_INFO, "sending system firmware Graceful Shutdown request (sensor_id: %d)\n",
+			sensor_id);
+
+	return send_sensor_state_changed_event(
+			PLDM_STATE_SET_SW_TERMINATION_STATUS,
+			sensor_id,
+			SW_TERM_GRACEFUL_SHUTDOWN_INDEX,
+			PLDM_SW_TERM_GRACEFUL_SHUTDOWN,
+			true);
 }
 
 static int add_state_sensor_pdr(pldm_pdr *repo,
