@@ -52,6 +52,8 @@ int pldm_responder_handle_request(struct pldm_rx_data *rx);
 int pldm_responder_init(void);
 
 /* Requester support */
+int pldm_fru_init(void);
+
 int pldm_bios_find_lid_by_attr_name(const char *name, char **lid);
 int pldm_bios_get_lids_id(char **lid_ids_string);
 int pldm_bios_init(void);
