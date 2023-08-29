@@ -1038,6 +1038,87 @@ static struct pldm_cmd pldm_fru_get_record_table_metadata = {
 	.handler = fru_get_record_table_metadata_handler,
 };
 
+/*
+ * GetFRURecordTable (0X02)
+ * The GetFRURecordTable command is used to get the FRU Record Table
+ * data. This command is defined to allow the FRU Record Table data to
+ * be transferred using a sequence of one or more command/response
+ * messages.
+ */
+static int fru_get_record_table_handler(const struct pldm_rx_data *rx)
+{
+	struct pldm_get_fru_record_table_resp *resp;
+	void *fru_record_table_bytes;
+	uint32_t fru_record_table_size;
+	struct pldm_tx_data *tx;
+	struct pldm_msg *msg;
+	size_t data_size;
+	int rc;
+
+	/* The getFruRecordTable requests do have request data, but it's
+	 * only related to multi-part transfers which we don't support
+	 * and which the BMC will not send us.
+	 */
+
+	/* get local fru record table */
+	rc = pldm_fru_get_local_table(&fru_record_table_bytes, &fru_record_table_size);
+	if (rc) {
+		prlog(PR_ERR, "Failed to get Fru Record Table\n");
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_PARAMETER;
+	}
+
+	/* create a PLDM response message for GetFRURecordTable */
+	data_size = sizeof(struct pldm_msg_hdr) +
+		    sizeof(struct pldm_get_fru_record_table_resp) +
+		    fru_record_table_size;
+
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size - 1;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_fru_record_table_resp(
+				rx->hdrinf.instance,
+				PLDM_SUCCESS,
+				0, // No next transfer handle
+				PLDM_START_AND_END,
+				(struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetFruRecordTable Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	msg = (struct pldm_msg *)tx->data;
+	resp = (struct pldm_get_fru_record_table_resp *)(msg->payload);
+	memcpy(resp->fru_record_table_data,
+	       fru_record_table_bytes,
+	       fru_record_table_size);
+
+	/* send PLDM message over MCTP */
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetFruRecordTable response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_fru_get_record_table = {
+	.name = "PLDM_GET_FRU_RECORD_TABLE",
+	.pldm_cmd_id = PLDM_GET_FRU_RECORD_TABLE,
+	.handler = fru_get_record_table_handler,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -1089,6 +1170,7 @@ int pldm_responder_init(void)
 	/* Register fru commands we'll respond to - DSP0257 */
 	add_type(&pldm_fru_type);
 	add_cmd(&pldm_fru_type, &pldm_fru_get_record_table_metadata);
+	add_cmd(&pldm_fru_type, &pldm_fru_get_record_table);
 
 	return OPAL_SUCCESS;
 }

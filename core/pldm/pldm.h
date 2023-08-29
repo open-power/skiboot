@@ -83,6 +83,8 @@ int pldm_fru_get_bmc_version(void *bv, int len);
 void pldm_fru_set_local_table(uint32_t *table_length,
 			      uint16_t *total_record_set_identifiers,
 			      uint16_t *total_table_records);
+int pldm_fru_get_local_table(void **fru_record_table_bytes,
+			     uint32_t *fru_record_table_size);
 int pldm_fru_init(void);
 
 int pldm_bios_find_lid_by_attr_name(const char *name, char **lid);

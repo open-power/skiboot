@@ -269,6 +269,18 @@ void pldm_fru_set_local_table(uint32_t *table_length,
 	local_fru_table_length = *table_length;
 }
 
+int pldm_fru_get_local_table(void **fru_record_table_bytes,
+			     uint32_t *fru_record_table_size)
+{
+	if (!local_fru_record_table)
+		return OPAL_PARAMETER;
+
+	*fru_record_table_bytes = local_fru_record_table;
+	*fru_record_table_size = local_fru_table_length;
+
+	return OPAL_SUCCESS;
+}
+
 int pldm_fru_init(void)
 {
 	int rc;
