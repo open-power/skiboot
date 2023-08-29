@@ -237,6 +237,8 @@ static struct pldm_cmd pldm_base_get_types = {
 /*
  * Extended error codes defined for the Base command set.
  */
+#define INVALID_DATA_TRANSFER_HANDLE           0x80
+#define INVALID_TRANSFER_OPERATION_FLAG        0x81
 #define INVALID_PLDM_TYPE_IN_REQUEST_DATA      0x83
 #define INVALID_PLDM_VERSION_IN_REQUEST_DATA   0x84
 
@@ -332,6 +334,97 @@ static struct pldm_cmd pldm_base_get_commands = {
 	.handler = base_get_commands_handler,
 };
 
+/*
+ * GetPLDMVersion (0x03)
+ * The GetPLDMVersion command can be used to retrieve the PLDM base
+ * specification versions that the PLDM terminus supports, as well as
+ * the PLDM Type specification versions supported for each PLDM Type.
+ */
+static int base_get_version_handler(const struct pldm_rx_data *rx)
+{
+	uint32_t version_data[2];
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_get_version_resp) + sizeof(version_data);
+	const struct pldm_type *type;
+	struct pldm_tx_data *tx;
+	uint8_t type_id, opflag;
+	uint32_t xfer_handle;
+	size_t payload_len;
+	int rc;
+
+	payload_len = rx->msg_len - sizeof(struct pldm_msg_hdr);
+	rc = decode_get_version_req(rx->msg, payload_len,
+				    &xfer_handle,
+				    &opflag,
+				    &type_id);
+	if (rc) {
+		prlog(PR_ERR, "Failed to decode GetPLDMVersion request, rc = %d", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	/* reject multipart requests */
+	if (opflag != PLDM_GET_FIRSTPART) {
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			INVALID_TRANSFER_OPERATION_FLAG);
+		return OPAL_PARAMETER;
+	}
+
+	type = find_type(type_id);
+	if (!type) {
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			INVALID_PLDM_TYPE_IN_REQUEST_DATA);
+		return OPAL_PARAMETER;
+	}
+
+	/* pack a scratch buffer with our version(s) and CRC32 the lot */
+	memcpy(&version_data[0], &type->version, 4);
+
+	version_data[1] = cpu_to_le32(crc32(&type->version, 4));
+
+	/* create a PLDM response for GetPLDMVersion */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_version_resp(rx->hdrinf.instance,
+				     PLDM_SUCCESS,
+				     0x0, /* no handle */
+				     PLDM_START_AND_END,
+				     (ver32_t *) version_data,
+				     sizeof(version_data),
+				     (struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetPLDMVersion Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	/* send PLDM message over MCTP */
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetPLDMVersion response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_base_get_version = {
+	.name = "PLDM_GET_PLDM_VERSION",
+	.pldm_cmd_id = PLDM_GET_PLDM_VERSION,
+	.handler = base_get_version_handler,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -370,6 +463,7 @@ int pldm_responder_init(void)
 	add_cmd(&pldm_base_type, &pldm_base_get_tid);
 	add_cmd(&pldm_base_type, &pldm_base_get_types);
 	add_cmd(&pldm_base_type, &pldm_base_get_commands);
+	add_cmd(&pldm_base_type, &pldm_base_get_version);
 
 	return OPAL_SUCCESS;
 }
