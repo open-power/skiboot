@@ -625,6 +625,89 @@ static struct pldm_cmd pldm_platform_event_message = {
 	.handler = platform_event_message,
 };
 
+/*
+ * GetStateSensorReadings (0x21)
+ * The GetStateSensorReadings command can return readings for multiple
+ * state sensors (a PLDM State Sensor that returns more than one set of
+ * state information is called a composite state sensor).
+ */
+static int platform_get_state_sensor_readings(const struct pldm_rx_data *rx)
+{
+	bitfield8_t sensor_rearm;
+	struct pldm_tx_data *tx;
+	uint16_t sensor_id;
+	uint8_t reserved;
+	size_t data_size;
+	int rc;
+
+	get_sensor_state_field sensor_state = {
+		.sensor_op_state = PLDM_SENSOR_UNKNOWN,
+		.present_state = 0,
+		.previous_state = 0,
+		.event_state = 0
+	};
+
+	/* decode GetStateSensorReadings request data */
+	rc = decode_get_state_sensor_readings_req(
+				rx->msg,
+				PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES,
+				&sensor_id,
+				&sensor_rearm,
+				&reserved);
+	if (rc) {
+		prlog(PR_ERR, "Failed to decode GetStateSensorReadings request, rc = %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	prlog(PR_DEBUG, "%s - sensor_id: %d, sensor_rearm: %x\n",
+			__func__, sensor_id, sensor_rearm.byte);
+
+	/* send state sensor reading response */
+	data_size = sizeof(struct pldm_msg_hdr) +
+		    sizeof(struct pldm_get_state_sensor_readings_resp) +
+		    (sizeof(get_sensor_state_field) * 1);
+
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_state_sensor_readings_resp(
+					rx->hdrinf.instance,
+					PLDM_SUCCESS,
+					1, /* sensor count of 1 */
+					&sensor_state,
+					(struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetStateSensorReadings response Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	/* send PLDM message over MCTP */
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetStateSensorReadings response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_platform_get_state_sensor_readings = {
+	.name = "PLDM_GET_STATE_SENSOR_READINGS",
+	.pldm_cmd_id = PLDM_GET_STATE_SENSOR_READINGS,
+	.handler = platform_get_state_sensor_readings,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -669,6 +752,7 @@ int pldm_responder_init(void)
 	add_type(&pldm_platform_type);
 	add_cmd(&pldm_platform_type, &pldm_platform_set_event_receiver);
 	add_cmd(&pldm_platform_type, &pldm_platform_event_message);
+	add_cmd(&pldm_platform_type, &pldm_platform_get_state_sensor_readings);
 
 	return OPAL_SUCCESS;
 }
