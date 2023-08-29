@@ -74,7 +74,7 @@ out:
 
 int pldm_mctp_init(void)
 {
-	int nbr_elt = 7, rc = OPAL_SUCCESS;
+	int nbr_elt = 8, rc = OPAL_SUCCESS;
 
 	int (*pldm_config[])(void) = {
 		ast_mctp_init,		/* MCTP Binding */
@@ -84,6 +84,7 @@ int pldm_mctp_init(void)
 		pldm_platform_init,	/* Get PDRs data */
 		pldm_bios_init,		/* Get Bios data */
 		pldm_fru_init,		/* Get Fru data */
+		pldm_file_io_init,	/* Get FILE IO data */
 	};
 
 	const char *pldm_config_error[] = {
@@ -94,6 +95,7 @@ int pldm_mctp_init(void)
 		"Failed to retrieve Data Records",
 		"Failed to retrieve Bios data",
 		"Failed to retrieve Fru data",
+		"Failed to retrieve File io data",
 	};
 
 	prlog(PR_NOTICE, "%s - Getting PLDM data\n", __func__);

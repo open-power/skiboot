@@ -52,6 +52,8 @@ int pldm_responder_handle_request(struct pldm_rx_data *rx);
 int pldm_responder_init(void);
 
 /* Requester support */
+int pldm_file_io_init(void);
+
 int pldm_fru_get_bmc_version(void *bv, int len);
 int pldm_fru_init(void);
 
