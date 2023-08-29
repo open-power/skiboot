@@ -31,6 +31,11 @@
 #define MBOX_IO_COUNT 6
 #define MBOX_LPC_IRQ 9
 
+/* MCTP config */
+#define MCTP_IO_BASE	0xca2
+#define MCTP_IO_COUNT	2
+#define MCTP_LPC_IRQ	11
+
 void astbmc_ext_irq_serirq_cpld(unsigned int chip_id)
 {
 	lpc_all_interrupts(chip_id);
@@ -227,6 +232,37 @@ static void astbmc_fixup_dt_system_id(void)
 	dt_add_property_strings(dt_root, "system-id", "unavailable");
 }
 
+#ifdef CONFIG_PLDM
+static void astbmc_fixup_dt_mctp(struct dt_node *lpc)
+{
+	struct dt_node *mctp;
+	char namebuf[32];
+
+	if (!lpc)
+		return;
+
+	/* First check if the mbox interface is already there */
+	dt_for_each_child(lpc, mctp) {
+		if (dt_node_is_compatible(mctp, "mctp"))
+			return;
+	}
+
+	snprintf(namebuf, sizeof(namebuf), "mctp@i%x", MCTP_IO_BASE);
+	mctp = dt_new(lpc, namebuf);
+
+	dt_add_property_cells(mctp, "reg",
+			      1, /* IO space */
+			      MCTP_IO_BASE, MCTP_IO_COUNT);
+	dt_add_property_strings(mctp, "compatible", "mctp");
+
+	/* Mark it as reserved to avoid Linux trying to claim it */
+	dt_add_property_strings(mctp, "status", "reserved");
+
+	dt_add_property_cells(mctp, "interrupts", MCTP_LPC_IRQ);
+	dt_add_property_cells(mctp, "interrupt-parent", lpc->phandle);
+}
+#endif
+
 static void astbmc_fixup_dt_bt(struct dt_node *lpc)
 {
 	struct dt_node *bt;
@@ -403,6 +439,11 @@ static void astbmc_fixup_dt(void)
 
 	/* BT is not in HB either */
 	astbmc_fixup_dt_bt(primary_lpc);
+
+#ifdef CONFIG_PLDM
+	/* Fixup the MCTP, that might be missing from HB */
+	astbmc_fixup_dt_mctp(primary_lpc);
+#endif
 
 	/* The pel logging code needs a system-id property to work so
 	   make sure we have one. */
