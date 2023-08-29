@@ -9,6 +9,7 @@
 #include <xscom.h>
 #include <ast.h>
 #include <ipmi.h>
+#include <pldm.h>
 #include <bt.h>
 #include <errorlog.h>
 #include <lpc.h>
@@ -109,6 +110,36 @@ static int astbmc_fru_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_PLDM
+int astbmc_pldm_init(void)
+{
+	int rc = OPAL_SUCCESS;
+
+	/* PLDM over MCTP */
+	rc = pldm_mctp_init();
+	if (!rc) {
+		/* Initialize PNOR/NVRAM */
+		rc = pnor_pldm_init();
+
+		if (!rc) {
+			pldm_watchdog_init();
+			pldm_rtc_init();
+			pldm_opal_init();
+		}
+	}
+
+	/* Initialize elog */
+	elog_init();
+
+	/* Setup UART console for use by Linux via OPAL API */
+	set_opal_console(&uart_opal_con);
+
+	if (rc)
+		prlog(PR_WARNING, "Failed to configure PLDM\n");
+
+	return rc;
+}
+#endif
 
 void astbmc_init(void)
 {
@@ -542,6 +573,9 @@ void astbmc_early_init(void)
 
 void astbmc_exit(void)
 {
+#ifdef CONFIG_PLDM
+	return;
+#endif
 	ipmi_wdt_final_reset();
 
 	ipmi_set_boot_count();

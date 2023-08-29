@@ -4,6 +4,7 @@
 #include <skiboot.h>
 #include <console.h>
 #include <device.h>
+#include <ast.h>
 #include <ipmi.h>
 
 #include <platforms/astbmc/astbmc.h>
@@ -80,7 +81,12 @@ static void qemu_init(void)
 	if (!bt_device_present) {
 		set_opal_console(&uart_opal_con);
 	} else {
+#ifdef CONFIG_PLDM
+		/* need to be checked according platform: P10, P11 ... */
+		astbmc_pldm_init();
+#else
 		astbmc_init();
+#endif
 	}
 }
 
