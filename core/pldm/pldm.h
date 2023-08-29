@@ -7,6 +7,7 @@
 
 #include <ast.h>
 #include <base.h>
+#include <utils.h>
 #include <pldm.h>
 
 #define PLDM_MSG_SIZE(x) (sizeof(struct pldm_msg_hdr) + sizeof(x))
@@ -51,6 +52,8 @@ int pldm_responder_handle_request(struct pldm_rx_data *rx);
 int pldm_responder_init(void);
 
 /* Requester support */
+int pldm_bios_find_lid_by_attr_name(const char *name, char **lid);
+int pldm_bios_get_lids_id(char **lid_ids_string);
 int pldm_bios_init(void);
 
 uint8_t pldm_base_get_bmc_tid(void);
