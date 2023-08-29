@@ -22,6 +22,11 @@ int pldm_mctp_init(void);
 void pldm_mctp_exit(void);
 
 /**
+ * Send a system chassis Off-Soft Graceful request
+ */
+int pldm_platform_power_off(void);
+
+/**
  * Send a system firmware Graceful Restart request
  */
 int pldm_platform_restart(void);

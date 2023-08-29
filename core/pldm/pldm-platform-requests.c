@@ -172,6 +172,38 @@ static int set_state_effecter_states_req(uint16_t effecter_id,
 }
 
 /*
+ * entity_type:  System chassis (main enclosure)
+ * state_set:    System Power State (260)
+ * states:       Off-Soft Graceful(9)
+ */
+int pldm_platform_power_off(void)
+{
+	set_effecter_state_field field;
+	uint16_t effecter_id;
+	int rc;
+
+	if (!pdr_ready)
+		return OPAL_HARDWARE;
+
+	rc = find_effecter_id_by_state_set_Id(
+				PLDM_ENTITY_SYSTEM_CHASSIS,
+				PLDM_STATE_SET_SYSTEM_POWER_STATE,
+				&effecter_id, BMC_TID);
+	if (rc) {
+		prlog(PR_ERR, "%s - effecter id not found\n", __func__);
+		return rc;
+	}
+
+	field.set_request = PLDM_REQUEST_SET;
+	field.effecter_state = PLDM_STATE_SET_SYS_POWER_STATE_OFF_SOFT_GRACEFUL;
+
+	prlog(PR_INFO, "sending system chassis Off-Soft Graceful request (effecter_id: %d)\n",
+			effecter_id);
+
+	return set_state_effecter_states_req(effecter_id, &field, true);
+}
+
+/*
  * entity_type:  System Firmware
  * state_set:    Software Termination Status(129)
  * states:       Graceful Restart Requested(6)
