@@ -9,6 +9,8 @@
 #include <base.h>
 #include <pldm.h>
 
+#define PLDM_MSG_SIZE(x) (sizeof(struct pldm_msg_hdr) + sizeof(x))
+
 struct pldm_tx_data {
 	/* Contains an message header and payload of an MCTP packet.
 	 * Size of data[]
@@ -40,5 +42,9 @@ int pldm_mctp_message_tx(struct pldm_tx_data *tx);
 
 int pldm_mctp_message_rx(uint8_t eid, bool tag_owner, uint8_t msg_tag,
 			 const uint8_t *buf, int len);
+
+/* Responder support */
+int pldm_responder_handle_request(struct pldm_rx_data *rx);
+int pldm_responder_init(void);
 
 #endif /* __COREPLDM_H__ */

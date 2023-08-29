@@ -53,6 +53,17 @@ int pldm_mctp_message_rx(uint8_t eid, bool tag_owner, uint8_t msg_tag,
 		goto out;
 	}
 
+	switch (rx->hdrinf.msg_type) {
+	case PLDM_REQUEST:
+		rc = pldm_responder_handle_request(rx);
+	break;
+	default:
+		prlog(PR_ERR, "%s: message not supported (msg type: 0%x)\n",
+			      __func__, rx->hdrinf.msg_type);
+		rc = OPAL_PARAMETER;
+	break;
+	}
+
 out:
 	free(rx);
 	return rc;
@@ -60,14 +71,16 @@ out:
 
 int pldm_mctp_init(void)
 {
-	int nbr_elt = 1, rc = OPAL_SUCCESS;
+	int nbr_elt = 2, rc = OPAL_SUCCESS;
 
 	int (*pldm_config[])(void) = {
 		ast_mctp_init,		/* MCTP Binding */
+		pldm_responder_init,	/* Register mandatory commands we'll respond to */
 	};
 
 	const char *pldm_config_error[] = {
 		"Failed to bind MCTP",
+		"Failed to register mandatory commands",
 	};
 
 	prlog(PR_NOTICE, "%s - Getting PLDM data\n", __func__);

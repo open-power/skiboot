@@ -7,7 +7,7 @@ SUBDIRS += $(PLDM_DIR)
 CPPFLAGS += -I$(SRC)/pldm/include/
 CPPFLAGS += -I$(SRC)/pldm/include/libpldm/oem/ibm/
 
-PLDM_OBJS = pldm-mctp.o
+PLDM_OBJS = pldm-mctp.o pldm-responder.o
 
 PLDM = $(PLDM_DIR)/built-in.a
 $(PLDM): $(PLDM_OBJS:%=$(PLDM_DIR)/%)
