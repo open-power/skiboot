@@ -436,6 +436,11 @@ static int pldm_platform_load_pdrs(void)
 	return encode_and_queue_get_pdr_req(pdrs);
 }
 
+int pldm_platform_reload_pdrs(void)
+{
+	return pldm_platform_load_pdrs();
+}
+
 static int pdrs_init(void)
 {
 	int rc;

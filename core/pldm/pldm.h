@@ -74,6 +74,7 @@ int pldm_bios_init(void);
 uint8_t pldm_base_get_bmc_tid(void);
 int pldm_base_get_tid_req(void);
 
+int pldm_platform_reload_pdrs(void);
 int pldm_platform_init(void);
 void pldm_platform_exit(void);
 

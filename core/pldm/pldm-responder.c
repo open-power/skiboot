@@ -10,6 +10,7 @@
 #include <string.h>
 #include <debug_descriptor.h>
 #include <libpldm/platform.h>
+#include <libpldm/platform_oem_ibm.h>
 #include <libpldm/utils.h>
 #include "pldm.h"
 
@@ -418,7 +419,9 @@ static int base_get_version_handler(const struct pldm_rx_data *rx)
 	}
 
 	free(tx);
-	return OPAL_SUCCESS;
+
+	/* BMC has certainly rebooted, so reload the PDRs */
+	return pldm_platform_reload_pdrs();
 }
 
 static struct pldm_cmd pldm_base_get_version = {
@@ -510,6 +513,118 @@ static struct pldm_cmd pldm_platform_set_event_receiver = {
 	.handler = platform_set_event_receiver_handler,
 };
 
+/*
+ * PlatformEventMessage (0x10)
+ * PLDM Event Messages are sent as PLDM request messages to the Event
+ * Receiver using the PlatformEventMessage command.
+ */
+static int platform_event_message(const struct pldm_rx_data *rx)
+{
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_platform_event_message_resp);
+	struct pldm_bios_attribute_update_event_req *request;
+	uint8_t format_version, tid, event_class;
+	uint8_t *bios_attribute_handles;
+	uint8_t cc = PLDM_SUCCESS;
+	size_t event_data_offset;
+	struct pldm_tx_data *tx;
+	int rc, i;
+
+	/* decode PlatformEventMessage request data */
+	rc = decode_platform_event_message_req(
+				rx->msg,
+				sizeof(struct pldm_platform_event_message_req),
+				&format_version,
+				&tid,
+				&event_class,
+				&event_data_offset);
+	if (rc) {
+		prlog(PR_ERR, "Failed to decode PlatformEventMessage request, rc = %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	prlog(PR_DEBUG, "%s - format_version: %d, "
+			"tid: %d "
+			"event_class: %d "
+			"event_data: 0x%lx\n",
+			__func__,
+			format_version, tid,
+			event_class, event_data_offset);
+
+	/* we don't support any other event than the PDR Repo Changed event */
+	if ((event_class != PLDM_PDR_REPOSITORY_CHG_EVENT) &&
+	    (event_class != PLDM_EVENT_TYPE_OEM_EVENT_BIOS_ATTRIBUTE_UPDATE)) {
+		prlog(PR_ERR, "%s - Invalid event class %d in platform event handler\n",
+			      __func__, event_class);
+		cc = PLDM_ERROR;
+	}
+
+	/* Encode the platform event request */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_platform_event_message_resp(
+					rx->hdrinf.instance,
+					cc,
+					PLDM_EVENT_NO_LOGGING,
+					(struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode PlatformEventMessage Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	/* send PLDM message over MCTP */
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send PlatformEventMessage response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	/* invoke the appropriate callback handler */
+	if (event_class == PLDM_PDR_REPOSITORY_CHG_EVENT) {
+		free(tx);
+		return pldm_platform_reload_pdrs();
+	}
+
+	/* When the attribute value changes for any BIOS attribute, then
+	 * PlatformEventMessage command with OEM event type
+	 * PLDM_EVENT_TYPE_OEM_EVENT_BIOS_ATTRIBUTE_UPDATE is send to
+	 * host with the list of BIOS attribute handles.
+	 */
+	if (event_class == PLDM_EVENT_TYPE_OEM_EVENT_BIOS_ATTRIBUTE_UPDATE) {
+		request = (struct pldm_bios_attribute_update_event_req *)rx->msg->payload;
+		bios_attribute_handles = (uint8_t *)request->bios_attribute_handles;
+
+		prlog(PR_DEBUG, "%s - OEM_EVENT_BIOS_ATTRIBUTE_UPDATE, handles: %d\n",
+				__func__, request->num_handles);
+
+		/* list of BIOS attribute handles */
+		for (i = 0; i < request->num_handles; i++) {
+			prlog(PR_DEBUG, "%s - OEM_EVENT_BIOS_ATTRIBUTE_UPDATE: handle(%d): %d\n",
+					__func__, i, *bios_attribute_handles);
+			bios_attribute_handles += sizeof(uint16_t);
+		}
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_platform_event_message = {
+	.name = "PLDM_PLATFORM_EVENT_MESSAGE",
+	.pldm_cmd_id = PLDM_PLATFORM_EVENT_MESSAGE,
+	.handler = platform_event_message,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -553,6 +668,7 @@ int pldm_responder_init(void)
 	/* Register platform commands we'll respond to - DSP0248 */
 	add_type(&pldm_platform_type);
 	add_cmd(&pldm_platform_type, &pldm_platform_set_event_receiver);
+	add_cmd(&pldm_platform_type, &pldm_platform_event_message);
 
 	return OPAL_SUCCESS;
 }
