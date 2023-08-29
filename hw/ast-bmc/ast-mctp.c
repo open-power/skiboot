@@ -12,6 +12,7 @@
 #include <device.h>
 #include <ast.h>
 #include <console.h>
+#include <pldm.h>
 #include <libmctp.h>
 #include <libmctp-cmds.h>
 #include <libmctp-log.h>
@@ -286,6 +287,23 @@ static void message_rx(uint8_t eid, bool tag_owner,
 	prlog(PR_TRACE, "message received: msg type: %x, len %zd"
 			" (eid: %d), rx tag %d owner %d\n",
 			 *msg, len, eid, tag_owner, msg_tag);
+
+	/* The first byte defines the type of MCTP packet payload
+	 * contained in the message data portion of the MCTP message.
+	 * (See DSP0236 for more details about MCTP packet fields).
+	 * For now we only support PLDM over MCTP.
+	 */
+	switch (*msg) {
+	case MCTP_MSG_TYPE_PLDM:
+		/* handle the PLDM message */
+		pldm_mctp_message_rx(eid, tag_owner, msg_tag,
+				     msg + sizeof(uint8_t),
+				     len - sizeof(uint8_t));
+		break;
+	default:
+		prlog(PR_ERR, "%s - not a pldm message type (type: %x)\n",
+			      __func__, *msg);
+	}
 }
 
 /*

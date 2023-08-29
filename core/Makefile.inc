@@ -22,8 +22,12 @@ endif
 
 CORE=core/built-in.a
 
+ifeq ($(CONFIG_PLDM),1)
+include $(SRC)/core/pldm/Makefile.inc
+endif
+
 CFLAGS_SKIP_core/relocate.o = -pg -fstack-protector-all
 CFLAGS_SKIP_core/relocate.o += -fstack-protector -fstack-protector-strong
 CFLAGS_SKIP_core/relocate.o += -fprofile-arcs -ftest-coverage
 
-$(CORE): $(CORE_OBJS:%=core/%)
+$(CORE): $(CORE_OBJS:%=core/%) $(PLDM)
