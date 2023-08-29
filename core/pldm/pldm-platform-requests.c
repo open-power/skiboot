@@ -260,6 +260,130 @@ int pldm_platform_restart(void)
 	return set_state_effecter_states_req(effecter_id, &field, true);
 }
 
+static int send_repository_changed_event(uint32_t num_changed_pdrs,
+					 uint32_t *record_handle)
+{
+	size_t actual_change_records_size = 0;
+	uint8_t number_of_change_entries[1];
+	size_t max_change_records_size = 0;
+	size_t response_len, payload_len;
+	uint8_t event_data_operation[1];
+	uint32_t *change_entries[1];
+	uint8_t *event_data = NULL;
+	struct pldm_tx_data *tx;
+	void *response_msg;
+	size_t data_size;
+	int rc, i;
+
+	struct pldm_platform_event_message_req event_message_req = {
+		.format_version = PLDM_PLATFORM_EVENT_MESSAGE_FORMAT_VERSION,
+		.tid = HOST_TID,
+		.event_class = PLDM_PDR_REPOSITORY_CHG_EVENT,
+	};
+
+	struct pldm_platform_event_message_resp response;
+
+	prlog(PR_DEBUG, "%s - num_changed_pdrs: %d\n", __func__, num_changed_pdrs);
+
+	if (num_changed_pdrs == 0)
+		return OPAL_PARAMETER;
+
+	/* encode the platform change event data */
+	event_data_operation[0] = PLDM_RECORDS_ADDED;
+	number_of_change_entries[0] = num_changed_pdrs;
+	change_entries[0] = record_handle;
+
+	/*
+	 * The first time around this loop, event_data is nullptr which
+	 * instructs the encoder to not actually do the encoding, but
+	 * rather fill out actual_change_records_size with the correct
+	 * size, stop and return PLDM_SUCCESS. Then we allocate the
+	 * proper amount of memory and call the encoder again, which
+	 * will cause it to actually encode the message.
+	 */
+	for (i = 0; i < 2; i++) {
+		rc = encode_pldm_pdr_repository_chg_event_data(
+					FORMAT_IS_PDR_HANDLES,
+					1, /* only one change record (RECORDS_ADDED) */
+					event_data_operation,
+					number_of_change_entries,
+					(const uint32_t * const*)change_entries,
+					(struct pldm_pdr_repository_chg_event_data *)event_data,
+					&actual_change_records_size,
+					max_change_records_size);
+		if (rc) {
+			prlog(PR_ERR, "Encode PldmPdrRepositoryChgEventData Error, rc: %d\n", rc);
+			return OPAL_PARAMETER;
+		}
+
+		if (event_data == NULL) {
+			max_change_records_size = actual_change_records_size;
+			event_data = zalloc(max_change_records_size);
+			if (!event_data) {
+				prlog(PR_ERR, "failed to allocate event data (size: 0x%lx)\n", max_change_records_size);
+				return OPAL_NO_MEM;
+			}
+		}
+	}
+
+	/* Send the event request */
+	payload_len = PLDM_PLATFORM_EVENT_MESSAGE_MIN_REQ_BYTES + max_change_records_size;
+
+	data_size = sizeof(struct pldm_msg_hdr) +
+		    sizeof(struct pldm_platform_event_message_req) +
+		    max_change_records_size;
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size - 1;
+
+	/* Encode the platform event message request */
+	rc = encode_platform_event_message_req(
+			DEFAULT_INSTANCE_ID,
+			event_message_req.format_version,
+			event_message_req.tid,
+			event_message_req.event_class,
+			(const uint8_t *)event_data,
+			max_change_records_size,
+			(struct pldm_msg *)tx->data,
+			payload_len);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode PlatformEventMessage Error, rc: %d\n", rc);
+		free(event_data);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+	free(event_data);
+
+	/* Send and get the response message bytes */
+	rc = pldm_requester_queue_and_wait(tx, &response_msg, &response_len);
+	if (rc) {
+		prlog(PR_ERR, "Communication Error, req: PlatformEventMessage, rc: %d\n", rc);
+		free(tx);
+		return rc;
+	}
+	free(tx);
+
+	/* Decode the message */
+	payload_len = response_len - sizeof(struct pldm_msg_hdr);
+	rc = decode_platform_event_message_resp(
+				response_msg,
+				payload_len,
+				&response.completion_code,
+				&response.platform_event_status);
+	if (rc != PLDM_SUCCESS || response.completion_code != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Decode PlatformEventMessage Error, rc: %d, cc: %d, pes: %d\n",
+			      rc, response.completion_code,
+			      response.platform_event_status);
+		free(response_msg);
+		return OPAL_PARAMETER;
+	}
+
+	free(response_msg);
+
+	return OPAL_SUCCESS;
+}
+
 struct get_pdr_response {
 	uint8_t completion_code;
 	uint32_t next_record_hndl;
