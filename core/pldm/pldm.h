@@ -51,6 +51,8 @@ int pldm_responder_handle_request(struct pldm_rx_data *rx);
 int pldm_responder_init(void);
 
 /* Requester support */
+int pldm_bios_init(void);
+
 uint8_t pldm_base_get_bmc_tid(void);
 int pldm_base_get_tid_req(void);
 

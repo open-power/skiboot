@@ -74,7 +74,7 @@ out:
 
 int pldm_mctp_init(void)
 {
-	int nbr_elt = 5, rc = OPAL_SUCCESS;
+	int nbr_elt = 6, rc = OPAL_SUCCESS;
 
 	int (*pldm_config[])(void) = {
 		ast_mctp_init,		/* MCTP Binding */
@@ -82,6 +82,7 @@ int pldm_mctp_init(void)
 		pldm_requester_init,	/* Requester implementation */
 		pldm_base_get_tid_req,	/* Get BMC tid */
 		pldm_platform_init,	/* Get PDRs data */
+		pldm_bios_init,		/* Get Bios data */
 	};
 
 	const char *pldm_config_error[] = {
@@ -90,6 +91,7 @@ int pldm_mctp_init(void)
 		"Failed to configure requister",
 		"Failed to retrieve BMC Tid",
 		"Failed to retrieve Data Records",
+		"Failed to retrieve Bios data",
 	};
 
 	prlog(PR_NOTICE, "%s - Getting PLDM data\n", __func__);
