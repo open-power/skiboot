@@ -101,6 +101,14 @@ void ast_setup_sio_mbox(uint16_t io_base, uint8_t irq);
 #define BMC_EID  8
 #define HOST_EID 9
 
+/*
+ * Skiboot's PLDM Terminus ID.
+ * BMC TID is 1, HB is 2, Skiboot is 3.
+ */
+#define BMC_TID  1
+#define HB_TID   2
+#define HOST_TID 3
+
 enum mctp_msg_type {
 	MCTP_MSG_TYPE_CONTROL = 0x00,
 	MCTP_MSG_TYPE_PLDM    = 0x01,

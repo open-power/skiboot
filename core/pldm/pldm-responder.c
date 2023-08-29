@@ -105,6 +105,17 @@ static void add_type(struct pldm_type *new_type)
 	      new_type->name, new_type->pldm_type_id);
 }
 
+static void add_cmd(struct pldm_type *type, struct pldm_cmd *new_cmd)
+{
+	assert(new_cmd->pldm_cmd_id < 256); /* limited by GetPLDMCommands */
+	assert(new_cmd->handler);
+	assert(!find_cmd(type, new_cmd->pldm_cmd_id));
+
+	list_add_tail(&type->commands, &new_cmd->link);
+	prlog(PR_DEBUG, "Registered command %s (%d) under %s\n",
+		new_cmd->name, new_cmd->pldm_cmd_id, type->name);
+}
+
 /*
  * PLDM Base commands support
  */
@@ -112,6 +123,54 @@ static struct pldm_type pldm_base_type = {
 	.name = "base",
 	.pldm_type_id = PLDM_BASE,
 	.version = { 0xF1, 0xF0, 0xF0, 0x00 },
+};
+
+/*
+ * GetTID command (0x02)
+ * The GetTID command is used to retrieve the present Terminus ID (TID)
+ * setting for a PLDM Terminus.
+ */
+static int base_get_tid_handler(const struct pldm_rx_data *rx)
+{
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_get_tid_resp);
+	struct pldm_tx_data *tx;
+	int rc;
+
+	/* create a PLDM response message for GetTID */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_tid_resp(rx->hdrinf.instance,
+				 PLDM_SUCCESS,
+				 HOST_TID,
+				 (struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetTID Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetTID response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_base_get_tid = {
+	.name = "PLDM_GET_TID",
+	.pldm_cmd_id = PLDM_GET_TID,
+	.handler = base_get_tid_handler,
 };
 
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
@@ -149,6 +208,7 @@ int pldm_responder_init(void)
 {
 	/* Register mandatory commands we'll respond to - DSP0240 */
 	add_type(&pldm_base_type);
+	add_cmd(&pldm_base_type, &pldm_base_get_tid);
 
 	return OPAL_SUCCESS;
 }
