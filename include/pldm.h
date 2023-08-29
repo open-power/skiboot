@@ -48,4 +48,9 @@ int pldm_lid_files_init(struct blocklevel_device **bl);
  */
 bool pldm_lid_files_exit(struct blocklevel_device *bl);
 
+/**
+ * Initialize and reset the watchdog
+ */
+int pldm_watchdog_init(void);
+
 #endif /* __PLDM_H__ */
