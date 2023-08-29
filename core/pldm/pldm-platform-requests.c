@@ -44,6 +44,88 @@ static void pdr_init_complete(bool success)
 	pdr_ready = true;
 }
 
+struct set_effecter_state_response {
+	uint8_t completion_code;
+};
+
+/*
+ * Create and send a PLDM request message for SetStateEffecterStates.
+ */
+static int set_state_effecter_states_req(uint16_t effecter_id,
+					 set_effecter_state_field *field,
+					 bool no_timeout)
+{
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_set_state_effecter_states_req);
+	struct set_effecter_state_response response;
+	size_t response_len, payload_len;
+	struct pldm_tx_data *tx = NULL;
+	void *response_msg;
+	int rc;
+
+	struct pldm_set_state_effecter_states_req states_req = {
+		.effecter_id = effecter_id,
+		.comp_effecter_count = 1
+	};
+
+	/* Encode the state effecter states request */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+
+	rc = encode_set_state_effecter_states_req(
+			DEFAULT_INSTANCE_ID,
+			states_req.effecter_id,
+			states_req.comp_effecter_count,
+			field,
+			(struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode SetStateEffecter Error, rc: %d\n",
+			      rc);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	/* Send and get the response message bytes.
+	 * It may happen that for some commands, the responder does not
+	 * have time to respond.
+	 */
+	if (no_timeout) {
+		rc = pldm_mctp_message_tx(tx);
+		if (rc)
+			prlog(PR_ERR, "Failed to send SetStateEffecter request, rc = %d\n", rc);
+		free(tx);
+		return rc;
+	}
+
+	/* Send and get the response message bytes */
+	rc = pldm_requester_queue_and_wait(tx, &response_msg, &response_len);
+	if (rc) {
+		prlog(PR_ERR, "Communication Error, req: SetStateEffecter, rc: %d\n", rc);
+		free(tx);
+		return rc;
+	}
+
+	/* Decode the message */
+	payload_len = response_len - sizeof(struct pldm_msg_hdr);
+
+	rc = decode_set_state_effecter_states_resp(
+				response_msg,
+				payload_len,
+				&response.completion_code);
+	if (rc != PLDM_SUCCESS || response.completion_code != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Decode SetStateEffecter Error, rc: %d, cc: %d\n",
+			      rc, response.completion_code);
+		free(tx);
+		free(response_msg);
+		return OPAL_PARAMETER;
+	}
+
+	free(tx);
+	free(response_msg);
+	return OPAL_SUCCESS;
+}
+
 struct get_pdr_response {
 	uint8_t completion_code;
 	uint32_t next_record_hndl;
