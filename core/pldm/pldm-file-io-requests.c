@@ -168,6 +168,132 @@ int pldm_file_io_read_file(uint32_t file_handle, uint32_t file_length,
 }
 
 /*
+ * Send/receive a PLDM WriteFile request message.
+ */
+static int write_file_req(uint32_t file_handle, uint32_t pos,
+			  const void *buf, uint64_t len)
+{
+	void *response_msg, *current_ptr, *payload_data;
+	uint32_t total_write, resp_length, request_length;
+	size_t response_len, payload_len;
+	uint8_t completion_code;
+	struct pldm_tx_data *tx;
+	int num_transfers;
+	int rc, i;
+
+	struct pldm_write_file_req file_req = {
+		.file_handle = file_handle,
+		.offset = pos,
+		.length = len,
+	};
+
+	if (!len)
+		return OPAL_PARAMETER;
+
+	if ((pos) && (pos > len))
+		return OPAL_PARAMETER;
+
+	/* init request */
+	request_length = sizeof(struct pldm_msg_hdr) +
+			 sizeof(struct pldm_write_file_req) +
+			 len;
+
+	tx = zalloc(sizeof(struct pldm_tx_data) + request_length);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = request_length - 1;
+
+	payload_data = ((struct pldm_msg *)tx->data)->payload
+			+ offsetof(struct pldm_write_file_req, file_data);
+
+	memcpy(payload_data, buf, len);
+	current_ptr = payload_data;
+	num_transfers = 1;
+	total_write = 0;
+
+	if (len > MAX_TRANSFER_SIZE_BYTES) {
+		num_transfers = (len + MAX_TRANSFER_SIZE_BYTES - 1) /
+				MAX_TRANSFER_SIZE_BYTES;
+		file_req.length = MAX_TRANSFER_SIZE_BYTES;
+	}
+
+	prlog(PR_TRACE, "%s - file_handle: %d, offset: 0x%x, len: 0x%x, num_transfers: %d\n",
+			__func__, file_handle, file_req.offset,
+			file_req.length, num_transfers);
+
+	for (i = 0; i < num_transfers; i++) {
+		file_req.offset = pos + (i * MAX_TRANSFER_SIZE_BYTES);
+
+		/* Encode the file request */
+		rc = encode_write_file_req(
+				DEFAULT_INSTANCE_ID,
+				file_req.file_handle,
+				file_req.offset,
+				file_req.length,
+				(struct pldm_msg *)tx->data);
+		if (rc != PLDM_SUCCESS) {
+			prlog(PR_ERR, "Encode WriteFileReq Error, rc: %d\n", rc);
+			free(tx);
+			return OPAL_PARAMETER;
+		}
+
+		/* Send and get the response message bytes */
+		rc = pldm_requester_queue_and_wait(tx,
+						   &response_msg,
+						   &response_len);
+		if (rc) {
+			prlog(PR_ERR, "Communication Error, req: WriteFileReq, rc: %d\n", rc);
+			free(tx);
+			return rc;
+		}
+
+		/* Decode the message */
+		payload_len = response_len - sizeof(struct pldm_msg_hdr);
+		rc = decode_write_file_resp(
+				response_msg,
+				payload_len,
+				&completion_code,
+				&resp_length);
+		if (rc != PLDM_SUCCESS || completion_code != PLDM_SUCCESS) {
+			prlog(PR_ERR, "Decode WriteFileResp Error, rc: %d, cc: %d\n",
+				      rc, completion_code);
+			free(tx);
+			free(response_msg);
+			return OPAL_PARAMETER;
+		}
+
+		if (resp_length == 0) {
+			free(response_msg);
+			break;
+		}
+
+		total_write += resp_length;
+		current_ptr += resp_length;
+		free(response_msg);
+
+		if (total_write == len)
+			break;
+		else if (resp_length != file_req.length) {
+			/* end of file */
+			break;
+		} else if (MAX_TRANSFER_SIZE_BYTES > (len - total_write))
+			file_req.length = len - total_write;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+int pldm_file_io_write_file(uint32_t file_handle, uint32_t pos,
+			    const void *buf, uint64_t len)
+{
+	if (!file_io_ready)
+		return OPAL_HARDWARE;
+
+	return write_file_req(file_handle, pos, buf, len);
+}
+
+/*
  * Send/receive a PLDM GetFileTable request message.
  * The file table contains the list of files available and
  * their attributes.

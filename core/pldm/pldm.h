@@ -54,6 +54,8 @@ int pldm_responder_init(void);
 /* Requester support */
 int pldm_file_io_read_file(uint32_t file_handle, uint32_t file_length,
 			   uint32_t pos, void *buf, uint64_t len);
+int pldm_file_io_write_file(uint32_t file_handle, uint32_t pos,
+			    const void *buf, uint64_t len);
 int pldm_file_io_init(void);
 
 int pldm_fru_get_bmc_version(void *bv, int len);
