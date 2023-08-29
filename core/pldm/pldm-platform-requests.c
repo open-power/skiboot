@@ -28,6 +28,9 @@ struct pldm_pdrs {
 };
 
 struct pldm_pdrs *pdrs;
+/* assign specific sensor/effecter IDs */
+#define PLDM_SENSOR_SE_ID_RANGE_START 0x6666
+static int sensor_effecter_id = PLDM_SENSOR_SE_ID_RANGE_START;
 
 static void pdr_init_complete(bool success)
 {
@@ -260,6 +263,287 @@ int pldm_platform_restart(void)
 	return set_state_effecter_states_req(effecter_id, &field, true);
 }
 
+static int add_state_sensor_pdr(pldm_pdr *repo,
+				uint32_t *record_handle,
+				uint16_t entity_type,
+				uint16_t state_set_id,
+				uint32_t states)
+{
+	struct state_sensor_possible_states *possible_states;
+	struct pldm_state_sensor_pdr *pdr;
+	uint8_t DEFAULT_CONTAINER_ID = 0;
+	size_t state_size, pdr_size, actual_pdr_size = 0;
+	uint8_t *state_storage;
+	uint32_t swapped;
+	int rc;
+
+	/* fill in possible states structure */
+	state_size = sizeof(struct state_sensor_possible_states)
+		     + sizeof(states)
+		     - sizeof(bitfield8_t);
+	state_storage = zalloc(state_size);
+	if (!state_storage) {
+		prlog(PR_ERR, "failed to allocate storage data (size: 0x%lx)\n", state_size);
+		return OPAL_NO_MEM;
+	}
+
+	possible_states = (struct state_sensor_possible_states *) state_storage;
+	possible_states->state_set_id = state_set_id;
+	possible_states->possible_states_size = sizeof(states);
+
+	/* need to swap the byte order for little endian order */
+	swapped = htole32(states);
+	memcpy(possible_states->states, &swapped, sizeof(swapped));
+
+	pdr_size = sizeof(struct pldm_state_sensor_pdr) + state_size;
+	pdr = zalloc(pdr_size);
+	if (!pdr) {
+		prlog(PR_ERR, "failed to allocate sensor pdr (size: 0x%lx)\n", pdr_size);
+		free(state_storage);
+		return OPAL_NO_MEM;
+	}
+
+	/* header */
+	pdr->hdr.record_handle = 0; /* ask libpldm to fill this out */
+	pdr->hdr.version = 0; /* will be filled out by the encoder */
+	pdr->hdr.type = 0; /* will be filled out by the encoder */
+	pdr->hdr.record_change_num = 0;
+	pdr->hdr.length = 0; /* will be filled out by the encoder */
+
+	/* body */
+	pdr->terminus_handle = HOST_TID;
+	pdr->sensor_id = sensor_effecter_id++;
+	pdr->entity_type = entity_type;
+	pdr->entity_instance = 1;
+	pdr->container_id = DEFAULT_CONTAINER_ID;
+	pdr->sensor_init = PLDM_NO_INIT;
+	pdr->sensor_auxiliary_names_pdr = false;
+	pdr->composite_sensor_count = 1;
+
+	rc = encode_state_sensor_pdr(pdr, pdr_size,
+				     possible_states,
+				     state_size,
+				     &actual_pdr_size);
+
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "%s - Failed to encode state sensor PDR, rc: %d\n",
+			      __func__, rc);
+		free(state_storage);
+		free(pdr);
+		return rc;
+	}
+
+	*record_handle = pldm_pdr_add(repo,
+				      (const uint8_t *) pdr,
+				      actual_pdr_size,
+				      0, false, HOST_TID);
+
+	free(state_storage);
+	free(pdr);
+
+	return OPAL_SUCCESS;
+}
+
+/*
+ * Add boot progress record in the repository.
+ */
+static uint32_t add_sensor_sw_term_pdr(pldm_pdr *repo,
+				       uint32_t *record_handle)
+{
+	int rc;
+
+	rc = add_state_sensor_pdr(
+			repo,
+			record_handle,
+			PLDM_ENTITY_SYSTEM_CHASSIS,
+			PLDM_STATE_SET_SW_TERMINATION_STATUS,
+			enum_bit(PLDM_SW_TERM_NORMAL) |
+			enum_bit(PLDM_SW_TERM_GRACEFUL_SHUTDOWN_REQUESTED) |
+			enum_bit(PLDM_SW_TERM_GRACEFUL_SHUTDOWN));
+	if (rc) {
+		prlog(PR_ERR, "%s - Failed to add states sensor PDR, rc: %d\n",
+			      __func__, rc);
+		return rc;
+	}
+
+	prlog(PR_DEBUG, "Add state sensor pdr (record handle: %d)\n",
+			*record_handle);
+
+	return OPAL_SUCCESS;
+}
+
+/*
+ * Add boot progress record in the repository.
+ */
+static uint32_t add_boot_progress_pdr(pldm_pdr *repo,
+				      uint32_t *record_handle)
+{
+	int rc;
+
+	rc = add_state_sensor_pdr(
+			repo,
+			record_handle,
+			PLDM_ENTITY_SYS_BOARD,
+			PLDM_STATE_SET_BOOT_PROGRESS,
+			enum_bit(PLDM_STATE_SET_BOOT_PROG_STATE_COMPLETED) |
+			enum_bit(PLDM_STATE_SET_BOOT_PROG_STATE_PCI_RESORUCE_CONFIG) |
+			enum_bit(PLDM_STATE_SET_BOOT_PROG_STATE_STARTING_OP_SYS));
+	if (rc) {
+		prlog(PR_ERR, "%s - Failed to add boot progress PDR, rc: %d\n",
+			      __func__, rc);
+		return rc;
+	}
+
+	prlog(PR_DEBUG, "Add boot progress pdr (record handle: %d)\n",
+			*record_handle);
+
+	return OPAL_SUCCESS;
+}
+
+static int add_state_effecter_pdr(pldm_pdr *repo,
+				  uint32_t *record_handle,
+				  uint16_t entity_type,
+				  uint16_t state_set_id,
+				  uint32_t states)
+{
+	struct state_effecter_possible_states *possible_states;
+	struct pldm_state_effecter_pdr *pdr;
+	uint8_t DEFAULT_CONTAINER_ID = 0;
+	size_t state_size, pdr_size, actual_pdr_size = 0;
+	uint8_t *state_storage;
+	uint32_t swapped;
+	int rc;
+
+	/* fill in possible states structure */
+	state_size = sizeof(struct state_effecter_possible_states)
+		     + sizeof(states)
+		     - sizeof(bitfield8_t);
+	state_storage = zalloc(state_size);
+	if (!state_storage) {
+		prlog(PR_ERR, "failed to allocate storage data (size: 0x%lx)\n", state_size);
+		return OPAL_NO_MEM;
+	}
+
+	possible_states = (struct state_effecter_possible_states *) state_storage;
+	possible_states->state_set_id = state_set_id;
+	possible_states->possible_states_size = sizeof(states);
+
+	/* need to swap the byte order for little endian order */
+	swapped = htole32(states);
+	memcpy(possible_states->states, &swapped, sizeof(swapped));
+
+	pdr_size = sizeof(struct pldm_state_effecter_pdr) + state_size;
+	pdr = zalloc(pdr_size);
+	if (!pdr) {
+		prlog(PR_ERR, "failed to allocate sensor pdr (size: 0x%lx)\n", pdr_size);
+		free(state_storage);
+		return OPAL_NO_MEM;
+	}
+
+	/* header */
+	pdr->hdr.record_handle = 0; /* ask libpldm to fill this out */
+	pdr->hdr.version = 0; /* will be filled out by the encoder */
+	pdr->hdr.type = 0; /* will be filled out by the encoder */
+	pdr->hdr.record_change_num = 0;
+	pdr->hdr.length = 0; /* will be filled out by the encoder */
+
+	/* body */
+	pdr->terminus_handle = HOST_TID;
+	pdr->effecter_id = sensor_effecter_id++;
+	pdr->entity_type = entity_type;
+	pdr->entity_instance = 1;
+	pdr->container_id = DEFAULT_CONTAINER_ID;
+	pdr->effecter_semantic_id = 0; /* PLDM defines no semantic IDs yet */
+	pdr->effecter_init = PLDM_NO_INIT;
+	pdr->has_description_pdr = false;
+	pdr->composite_effecter_count = 1;
+
+	rc = encode_state_effecter_pdr(pdr, pdr_size, possible_states,
+				       state_size, &actual_pdr_size);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "%s - Failed to encode state effecter PDR, rc: %d\n",
+			      __func__, rc);
+		free(state_storage);
+		free(pdr);
+		return rc;
+	}
+
+	*record_handle = pldm_pdr_add(repo,
+				      (const uint8_t *) pdr,
+				      actual_pdr_size,
+				      0, false, HOST_TID);
+
+	free(state_storage);
+	free(pdr);
+
+	return OPAL_SUCCESS;
+}
+
+/*
+ * Add state software termination record in the repository.
+ */
+static uint32_t add_state_sw_term_pdr(pldm_pdr *repo,
+				      uint32_t *record_handle)
+{
+	int rc;
+
+	rc = add_state_effecter_pdr(
+			repo,
+			record_handle,
+			PLDM_ENTITY_SYSTEM_CHASSIS,
+			PLDM_STATE_SET_SW_TERMINATION_STATUS,
+			enum_bit(PLDM_SW_TERM_GRACEFUL_SHUTDOWN_REQUESTED));
+	if (rc) {
+		prlog(PR_ERR, "%s - Failed to add boot progress PDR, rc: %d\n",
+			      __func__, rc);
+		return rc;
+	}
+
+	prlog(PR_DEBUG, "Add state software termination pdr (record handle: %d)\n",
+			*record_handle);
+
+	return OPAL_SUCCESS;
+}
+
+/*
+ * Add terminus locator record in the repository.
+ */
+static int add_terminus_locator_pdr(pldm_pdr *repo,
+				    uint32_t *record_handle)
+{
+	struct pldm_terminus_locator_type_mctp_eid *locator_value;
+	struct pldm_terminus_locator_pdr pdr;
+	uint8_t DEFAULT_CONTAINER_ID = 0;
+	uint32_t size;
+
+	pdr.hdr.record_handle = 0; /* record_handle will be generated for us */
+	pdr.hdr.version = 1;
+	pdr.hdr.type = PLDM_TERMINUS_LOCATOR_PDR;
+	pdr.hdr.record_change_num = 0;
+	pdr.hdr.length = htole16(sizeof(struct pldm_terminus_locator_pdr) -
+				  sizeof(struct pldm_pdr_hdr));
+	pdr.terminus_handle = htole16(HOST_TID);
+	pdr.validity = PLDM_TL_PDR_VALID;
+	pdr.tid = HOST_TID;
+	pdr.container_id = DEFAULT_CONTAINER_ID;
+	pdr.terminus_locator_type = PLDM_TERMINUS_LOCATOR_TYPE_MCTP_EID;
+	pdr.terminus_locator_value_size = sizeof(struct pldm_terminus_locator_type_mctp_eid);
+	locator_value = (struct pldm_terminus_locator_type_mctp_eid *)pdr.terminus_locator_value;
+	locator_value->eid = HOST_EID;
+
+	size = sizeof(struct pldm_terminus_locator_pdr) +
+	       sizeof(struct pldm_terminus_locator_type_mctp_eid);
+
+	*record_handle = pldm_pdr_add(repo,
+				      (const uint8_t *)(&pdr), size,
+				      0, false, HOST_TID);
+
+	prlog(PR_DEBUG, "Add terminus locator pdr (record handle: %d)\n",
+			 *record_handle);
+
+	return OPAL_SUCCESS;
+}
+
 static int send_repository_changed_event(uint32_t num_changed_pdrs,
 					 uint32_t *record_handle)
 {
@@ -382,6 +666,45 @@ static int send_repository_changed_event(uint32_t num_changed_pdrs,
 	free(response_msg);
 
 	return OPAL_SUCCESS;
+}
+
+static int add_hosted_pdrs(pldm_pdr *repo)
+{
+	static uint32_t records_handle[2];
+	uint8_t hosted_pdrs = 0;
+	uint32_t record_handle;
+	int rc = OPAL_SUCCESS;
+
+	rc = add_state_sw_term_pdr(repo, &record_handle);
+	if (!rc) {
+		records_handle[hosted_pdrs] = record_handle;
+		hosted_pdrs++;
+	}
+
+	rc = add_sensor_sw_term_pdr(repo, &record_handle);
+	if (!rc) {
+		records_handle[hosted_pdrs] = record_handle;
+		hosted_pdrs++;
+	}
+
+	rc = add_boot_progress_pdr(repo, &record_handle);
+	if (!rc) {
+		records_handle[hosted_pdrs] = record_handle;
+		hosted_pdrs++;
+	}
+
+	rc = add_terminus_locator_pdr(repo, &record_handle);
+	if (!rc) {
+		records_handle[hosted_pdrs] = record_handle;
+		hosted_pdrs++;
+	}
+
+	/* tell BMC that these PDRs have changed */
+	rc = send_repository_changed_event(hosted_pdrs, records_handle);
+	if (rc)
+		prlog(PR_ERR, "%s - Failed to update hosted PDRs\n", __func__);
+
+	return rc;
 }
 
 struct get_pdr_response {
@@ -626,6 +949,11 @@ int pldm_platform_init(void)
 
 	/* retrieve all PDRs */
 	rc = pdrs_init();
+	if (rc)
+		goto err;
+
+	/* add hosted pdrs */
+	rc = add_hosted_pdrs(pdrs_repo);
 	if (rc)
 		goto err;
 

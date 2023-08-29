@@ -35,6 +35,21 @@ struct pldm_tx_data {
 	uint8_t data[1];
 };
 
+/* Return an integer with a bit set in the position corresponding to
+ * the given enumeration (starting from 0 = the least significant
+ * bit) and zeroes in the other positions.
+ * Used for libpldm enumeration constants.
+ *
+ *
+ * @example enum_bit(0) = 0x00000001
+ * @example enum_bit(1) = 0x00000002
+ * @example enum_bit(4) = 0x00000010
+ */
+inline uint32_t enum_bit(unsigned int enumeration)
+{
+	return 1 << enumeration;
+}
+
 struct pldm_rx_data {
 	struct pldm_header_info hdrinf; /* parsed message header */
 
