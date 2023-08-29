@@ -52,6 +52,9 @@ int pldm_responder_handle_request(struct pldm_rx_data *rx);
 int pldm_responder_init(void);
 
 /* Requester support */
+int pldm_find_file_handle_by_lid_id(const char *lid_id,
+				    uint32_t *file_handle,
+				    uint32_t *file_length);
 int pldm_file_io_read_file(uint32_t file_handle, uint32_t file_length,
 			   uint32_t pos, void *buf, uint64_t len);
 int pldm_file_io_write_file(uint32_t file_handle, uint32_t pos,

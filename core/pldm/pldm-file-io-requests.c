@@ -34,6 +34,82 @@ static void file_io_init_complete(bool success)
 	file_io_ready = true;
 }
 
+#define CHKSUM_PADDING 8
+
+/*
+ * Retrieve the file handle and file length from the file attribute
+ * table.
+ */
+static int find_file_handle_by_lid_id(const char *lid_id,
+				      uint32_t *file_handle,
+				      uint32_t *file_length)
+{
+	const struct pldm_file_attr_table_entry *file_entry;
+	char *startptr, *endptr;
+	uint16_t file_name_length;
+
+	if ((file_attr_table == NULL) || (file_attr_length == 0))
+		return OPAL_HARDWARE;
+
+	startptr = (char *)file_attr_table;
+	endptr = startptr + file_attr_length - CHKSUM_PADDING;
+	*file_handle = 0;
+	*file_length = 0;
+
+	while (startptr < endptr) {
+		/* file entry:
+		 *   4 Bytes: file handle
+		 *   2 Bytes: file name length
+		 *   <file name length> Bytes: file name
+		 *   4 Bytes: file length
+		 */
+		file_entry = (struct pldm_file_attr_table_entry *)startptr;
+
+		*file_handle = le32_to_cpu(file_entry->file_handle);
+		startptr += sizeof(uint32_t);
+
+		file_name_length = le16_to_cpu(file_entry->file_name_length);
+		startptr += sizeof(file_name_length);
+
+		if (!strncmp(startptr, lid_id, strlen(lid_id))) {
+			startptr += file_name_length;
+			*file_length = le32_to_cpu(*(uint32_t *)startptr);
+			break;
+		}
+		startptr += file_name_length;
+		startptr += sizeof(uint32_t);
+		startptr += sizeof(bitfield32_t);
+	}
+
+	if (*file_length == 0) {
+		prlog(PR_ERR, "%s - lid_id: %s, no file handle found\n",
+			      __func__, lid_id);
+		*file_handle = 0xff;
+		*file_length = 0;
+		return OPAL_PARAMETER;
+	}
+
+	prlog(PR_DEBUG, "%s - lid_id: %s, file_handle: %d, file_length: %d\n",
+			__func__, lid_id, *file_handle, *file_length);
+
+	return OPAL_SUCCESS;
+}
+
+/*
+ * Retrieve the file handle and file length based on lid id.
+ */
+int pldm_find_file_handle_by_lid_id(const char *lid_id,
+				    uint32_t *file_handle,
+				    uint32_t *file_length)
+{
+	if (!file_io_ready)
+		return OPAL_HARDWARE;
+
+	return find_file_handle_by_lid_id(lid_id,
+					  file_handle,
+					  file_length);
+}
+
 /* maximum currently transfer size for PLDM */
 #define KILOBYTE 1024ul
 #define MAX_TRANSFER_SIZE_BYTES (127 * KILOBYTE)
