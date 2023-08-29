@@ -5,6 +5,8 @@
 #ifndef __PLDM_H__
 #define __PLDM_H__
 
+#include <skiboot.h>
+
 /**
  * Handle PLDM messages received from MCTP
  */
@@ -35,5 +37,10 @@ int pldm_platform_restart(void);
  * Update the firmware version device-tree field
  */
 int pldm_fru_dt_add_bmc_version(void);
+
+/**
+ * Convert lid ids data to pnor structure
+ */
+int pldm_lid_files_init(struct blocklevel_device **bl);
 
 #endif /* __PLDM_H__ */
