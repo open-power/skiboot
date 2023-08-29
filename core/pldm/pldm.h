@@ -78,6 +78,10 @@ int pldm_platform_reload_pdrs(void);
 int pldm_platform_init(void);
 void pldm_platform_exit(void);
 
+int pldm_platform_pdr_find_record(uint32_t record_handle,
+				  uint8_t **pdr_data,
+				  uint32_t *pdr_data_size,
+				  uint32_t *next_record_handle);
 int pldm_requester_handle_response(struct pldm_rx_data *rx);
 int pldm_requester_queue(struct pldm_tx_data *tx,
 			 void (*complete)(struct pldm_rx_data *rx, void *data),

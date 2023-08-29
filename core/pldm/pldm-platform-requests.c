@@ -45,6 +45,31 @@ static void pdr_init_complete(bool success)
 }
 
 /*
+ * Find PDR record by record handle.
+ */
+int pldm_platform_pdr_find_record(uint32_t record_handle,
+				  uint8_t **pdr_data,
+				  uint32_t *pdr_data_size,
+				  uint32_t *next_record_handle)
+{
+	const pldm_pdr_record *pdr_record;
+
+	if (!pdr_ready)
+		return OPAL_HARDWARE;
+
+	pdr_record = pldm_pdr_find_record(pdrs_repo,
+					  record_handle,
+					  pdr_data,
+					  pdr_data_size,
+					  next_record_handle);
+
+	if (!pdr_record)
+		return OPAL_PARAMETER;
+
+	return OPAL_SUCCESS;
+}
+
+/*
  * Search the matching record and return the effecter id.
  * PDR type = PLDM_STATE_EFFECTER_PDR
  */
