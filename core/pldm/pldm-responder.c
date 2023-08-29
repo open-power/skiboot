@@ -234,6 +234,104 @@ static struct pldm_cmd pldm_base_get_types = {
 	.handler = base_get_types_handler,
 };
 
+/*
+ * Extended error codes defined for the Base command set.
+ */
+#define INVALID_PLDM_TYPE_IN_REQUEST_DATA      0x83
+#define INVALID_PLDM_VERSION_IN_REQUEST_DATA   0x84
+
+/*
+ * GetPLDMCommands (0x05)
+ * The GetPLDMCommands command can be used to discover the PLDM command
+ * capabilities supported by aPLDM terminus for a specific PLDM Type and
+ * version as a responder.
+ */
+static int base_get_commands_handler(const struct pldm_rx_data *rx)
+{
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_get_commands_resp);
+	bitmap_elem_t cmd_map[BITMAP_ELEMS(PLDM_MAX_CMDS_PER_TYPE)];
+	const struct pldm_type *type;
+	const struct pldm_cmd *iter;
+	struct pldm_tx_data *tx;
+	size_t payload_len;
+	ver32_t version;
+	uint8_t type_id;
+	int rc;
+
+	payload_len = rx->msg_len - sizeof(struct pldm_msg_hdr);
+	rc = decode_get_commands_req(rx->msg, payload_len,
+				     &type_id, &version);
+	if (rc) {
+		prlog(PR_ERR, "Failed to decode GetPLDMCommands request, rc = %d", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	type = find_type(type_id);
+	if (!type) {
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			INVALID_PLDM_TYPE_IN_REQUEST_DATA);
+		return OPAL_PARAMETER;
+	}
+
+	if (memcmp(&type->version, &version, sizeof(version))) {
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			INVALID_PLDM_VERSION_IN_REQUEST_DATA);
+		return OPAL_PARAMETER;
+	}
+
+	/* build the supported type list from the registered type
+	 * handlers
+	 */
+	memset(cmd_map, 0, sizeof(cmd_map));
+	list_for_each(&type->commands, iter, link)
+		bitmap_set_bit(cmd_map, iter->pldm_cmd_id);
+
+	/* fix the endian */
+	for (int i = 0; i < BITMAP_ELEMS(PLDM_MAX_CMDS_PER_TYPE); i++)
+		cmd_map[i] = cpu_to_le64(cmd_map[i]);
+
+	/* create a PLDM response message for GetPLDMCommands */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_commands_resp(rx->hdrinf.instance,
+				      PLDM_SUCCESS,
+				      (bitfield8_t *)cmd_map,
+				      (struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetPLDMCommands Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	/* send PLDM message over MCTP */
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetPLDMCommands response, rc = %d\n", rc);
+		return OPAL_HARDWARE;
+		free(tx);
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_base_get_commands = {
+	.name = "PLDM_GET_PLDM_COMMANDS",
+	.pldm_cmd_id = PLDM_GET_PLDM_COMMANDS,
+	.handler = base_get_commands_handler,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -271,6 +369,7 @@ int pldm_responder_init(void)
 	add_type(&pldm_base_type);
 	add_cmd(&pldm_base_type, &pldm_base_get_tid);
 	add_cmd(&pldm_base_type, &pldm_base_get_types);
+	add_cmd(&pldm_base_type, &pldm_base_get_commands);
 
 	return OPAL_SUCCESS;
 }
