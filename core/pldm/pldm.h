@@ -47,4 +47,13 @@ int pldm_mctp_message_rx(uint8_t eid, bool tag_owner, uint8_t msg_tag,
 int pldm_responder_handle_request(struct pldm_rx_data *rx);
 int pldm_responder_init(void);
 
+/* Requester support */
+int pldm_requester_handle_response(struct pldm_rx_data *rx);
+int pldm_requester_queue(struct pldm_tx_data *tx,
+			 void (*complete)(struct pldm_rx_data *rx, void *data),
+			 void *complete_data);
+int pldm_requester_queue_and_wait(struct pldm_tx_data *tx,
+				  void **msg, size_t *msg_size);
+int pldm_requester_init(void);
+
 #endif /* __COREPLDM_H__ */
