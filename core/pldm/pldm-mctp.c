@@ -74,18 +74,22 @@ out:
 
 int pldm_mctp_init(void)
 {
-	int nbr_elt = 3, rc = OPAL_SUCCESS;
+	int nbr_elt = 5, rc = OPAL_SUCCESS;
 
 	int (*pldm_config[])(void) = {
 		ast_mctp_init,		/* MCTP Binding */
 		pldm_responder_init,	/* Register mandatory commands we'll respond to */
 		pldm_requester_init,	/* Requester implementation */
+		pldm_base_get_tid_req,	/* Get BMC tid */
+		pldm_platform_init,	/* Get PDRs data */
 	};
 
 	const char *pldm_config_error[] = {
 		"Failed to bind MCTP",
 		"Failed to register mandatory commands",
 		"Failed to configure requister",
+		"Failed to retrieve BMC Tid",
+		"Failed to retrieve Data Records",
 	};
 
 	prlog(PR_NOTICE, "%s - Getting PLDM data\n", __func__);
@@ -105,5 +109,7 @@ out:
 
 void pldm_mctp_exit(void)
 {
+	pldm_platform_exit();
+
 	ast_mctp_exit();
 }

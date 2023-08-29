@@ -8,6 +8,7 @@ CPPFLAGS += -I$(SRC)/pldm/include/
 CPPFLAGS += -I$(SRC)/pldm/include/libpldm/oem/ibm/
 
 PLDM_OBJS = pldm-mctp.o pldm-responder.o pldm-requester.o
+PLDM_OBJS += pldm-base-requests.o pldm-platform-requests.o
 
 PLDM = $(PLDM_DIR)/built-in.a
 $(PLDM): $(PLDM_OBJS:%=$(PLDM_DIR)/%)

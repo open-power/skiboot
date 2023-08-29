@@ -11,6 +11,9 @@
 
 #define PLDM_MSG_SIZE(x) (sizeof(struct pldm_msg_hdr) + sizeof(x))
 
+/* For all of the encode functions just pass in a default ID (0x00) */
+#define DEFAULT_INSTANCE_ID 0
+
 struct pldm_tx_data {
 	/* Contains an message header and payload of an MCTP packet.
 	 * Size of data[]
@@ -48,6 +51,12 @@ int pldm_responder_handle_request(struct pldm_rx_data *rx);
 int pldm_responder_init(void);
 
 /* Requester support */
+uint8_t pldm_base_get_bmc_tid(void);
+int pldm_base_get_tid_req(void);
+
+int pldm_platform_init(void);
+void pldm_platform_exit(void);
+
 int pldm_requester_handle_response(struct pldm_rx_data *rx);
 int pldm_requester_queue(struct pldm_tx_data *tx,
 			 void (*complete)(struct pldm_rx_data *rx, void *data),
