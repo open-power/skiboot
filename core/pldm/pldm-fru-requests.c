@@ -14,6 +14,9 @@
 static void *fru_record_table;
 static size_t fru_record_length;
 
+static void *local_fru_record_table;
+static size_t local_fru_table_length;
+
 static bool fru_ready;
 static char *bmc_version;
 
@@ -209,6 +212,61 @@ int pldm_fru_dt_add_bmc_version(void)
 out:
 	free(record_table);
 	return rc;
+}
+
+#define RECORD_SET_ID 100
+
+void pldm_fru_set_local_table(uint32_t *table_length,
+			      uint16_t *total_record_set_identifiers,
+			      uint16_t *total_table_records)
+{
+	struct pldm_fru_record_data_format *record;
+	struct pldm_fru_record_tlv *fru_tlv;
+	size_t fru_table_size, record_size;
+	char fru_product[] = "IBM, skiboot";
+
+	if (local_fru_record_table) {
+		*table_length = local_fru_table_length;
+		*total_record_set_identifiers =  1;
+		*total_table_records = 1;
+		return;
+	}
+
+	/* allocate fru table */
+	fru_table_size = sizeof(struct pldm_fru_record_data_format) +
+			 sizeof(struct pldm_fru_record_tlv) +
+			 strlen(fru_product);
+	local_fru_record_table = zalloc(fru_table_size);
+	if (!local_fru_record_table) {
+		prlog(PR_ERR, "%s: failed to allocate fru record table\n",
+			      __func__);
+		return;
+	}
+
+	/* fill fru record data */
+	record = (struct pldm_fru_record_data_format *)local_fru_record_table;
+	record->record_set_id = htole16(RECORD_SET_ID);
+	record->record_type = PLDM_FRU_RECORD_TYPE_GENERAL;
+	record->num_fru_fields = 1;
+	record->encoding_type = PLDM_FRU_ENCODING_ASCII;
+
+	/* to start, set the size as the start of the TLV structs */
+	record_size = offsetof(struct pldm_fru_record_data_format, tlvs);
+
+	/* TLVs data */
+	fru_tlv = (struct pldm_fru_record_tlv *)(local_fru_record_table + record_size);
+	fru_tlv->type = PLDM_FRU_FIELD_TYPE_OTHER;
+	fru_tlv->length = strlen(fru_product);
+	memcpy(fru_tlv->value, fru_product, fru_tlv->length);
+
+	/* increment record_size by total size of this TLV */
+	record_size += (offsetof(struct pldm_fru_record_tlv, value) + fru_tlv->length);
+
+	*table_length = record_size;
+	*total_record_set_identifiers =  1;
+	*total_table_records = 1;
+
+	local_fru_table_length = *table_length;
 }
 
 int pldm_fru_init(void)

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <debug_descriptor.h>
+#include <libpldm/fru.h>
 #include <libpldm/platform.h>
 #include <libpldm/platform_oem_ibm.h>
 #include <libpldm/state_set.h>
@@ -946,6 +947,97 @@ static struct pldm_cmd pldm_platform_get_pdr = {
 	.handler = platform_get_pdr_handle,
 };
 
+/*
+ * PLDM Fru commands support
+ */
+static struct pldm_type pldm_fru_type = {
+	.name = "fru",
+	.pldm_type_id = PLDM_FRU,
+};
+
+/* currently we support version 1.0 of fru table */
+#define SUPPORTED_FRU_VERSION_MAJOR 1
+#define SUPPORTED_FRU_VERSION_MINOR 0
+
+/* Used by the metadata request handler for the value of
+ * FRUTableMaximumSize
+ * 0 means SetFRURecordTable command is not supported (see DSP 0257
+ * v1.0.0 Table 9)
+ */
+#define FRU_TABLE_MAX_SIZE_UNSUPPORTED 0
+
+/*
+ * GetFRURecordTableMetadata (0X01)
+ * The GetFRURecordTableMetadata command is used to get the FRU Record
+ * Table metadata information that includes the FRU Record major
+ * version, the FRU Record minor version, the size of the largest FRU
+ * Record data, total length of the FRU Record Table, total number of
+ * FRU Record Data structures, and the integrity checksum on the FRU
+ * Record Table data.
+ */
+static int fru_get_record_table_metadata_handler(const struct pldm_rx_data *rx)
+{
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_get_fru_record_table_metadata_resp);
+	uint16_t total_record_set_identifiers, total_table_records;
+	uint32_t fru_table_length;
+	struct pldm_tx_data *tx;
+	int rc;
+
+	/*
+	 * GetFRURecordTableMetadata requests
+	 * don't have any payload, so no need to decode them
+	 */
+
+	/* add specific fru record */
+	pldm_fru_set_local_table(&fru_table_length,
+				 &total_record_set_identifiers,
+				 &total_table_records);
+
+	/* create a PLDM response message for GetFRURecordTableMetadata */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_fru_record_table_metadata_resp(
+				rx->hdrinf.instance,
+				PLDM_SUCCESS,
+				SUPPORTED_FRU_VERSION_MAJOR,
+				SUPPORTED_FRU_VERSION_MINOR,
+				FRU_TABLE_MAX_SIZE_UNSUPPORTED,
+				fru_table_length,
+				total_record_set_identifiers,
+				total_table_records,
+				0, // checksum, not calculated
+				(struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetFRURecordTableMetadata Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	/* send PLDM message over MCTP */
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetFRURecordTableMetadata response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_fru_get_record_table_metadata = {
+	.name = "PLDM_GET_FRU_RECORD_TABLE_METADATA",
+	.pldm_cmd_id = PLDM_GET_FRU_RECORD_TABLE_METADATA,
+	.handler = fru_get_record_table_metadata_handler,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -993,6 +1085,10 @@ int pldm_responder_init(void)
 	add_cmd(&pldm_platform_type, &pldm_platform_get_state_sensor_readings);
 	add_cmd(&pldm_platform_type, &pldm_platform_set_state_effecter_states);
 	add_cmd(&pldm_platform_type, &pldm_platform_get_pdr);
+
+	/* Register fru commands we'll respond to - DSP0257 */
+	add_type(&pldm_fru_type);
+	add_cmd(&pldm_fru_type, &pldm_fru_get_record_table_metadata);
 
 	return OPAL_SUCCESS;
 }

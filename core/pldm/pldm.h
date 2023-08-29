@@ -80,6 +80,9 @@ int pldm_file_io_write_file(uint32_t file_handle, uint32_t pos,
 int pldm_file_io_init(void);
 
 int pldm_fru_get_bmc_version(void *bv, int len);
+void pldm_fru_set_local_table(uint32_t *table_length,
+			      uint16_t *total_record_set_identifiers,
+			      uint16_t *total_table_records);
 int pldm_fru_init(void);
 
 int pldm_bios_find_lid_by_attr_name(const char *name, char **lid);
