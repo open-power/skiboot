@@ -102,6 +102,12 @@ extern int64_t lpc_probe_write(enum OpalLPCAddressType addr_type, uint32_t addr,
 extern int64_t lpc_probe_read(enum OpalLPCAddressType addr_type, uint32_t addr,
 			      uint32_t *data, uint32_t sz);
 
+/*
+ * helpers for doing a bulk io to firmware space.
+ */
+extern int64_t lpc_fw_read(uint32_t addr, void *buf, uint32_t sz);
+extern int64_t lpc_fw_write(uint32_t addr, const void *buf, uint32_t sz);
+
 /* Mark LPC bus as used by console */
 extern void lpc_used_by_console(void);
 
