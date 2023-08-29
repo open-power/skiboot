@@ -15,6 +15,9 @@
 /* For all of the encode functions just pass in a default ID (0x00) */
 #define DEFAULT_INSTANCE_ID 0
 
+extern bool watchdog_armed;
+extern int watchdog_period_sec;
+
 struct pldm_tx_data {
 	/* Contains an message header and payload of an MCTP packet.
 	 * Size of data[]

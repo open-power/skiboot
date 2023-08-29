@@ -8,6 +8,8 @@
 #include <opal.h>
 #include <stdio.h>
 #include <string.h>
+#include <debug_descriptor.h>
+#include <libpldm/platform.h>
 #include <libpldm/utils.h>
 #include "pldm.h"
 
@@ -425,6 +427,89 @@ static struct pldm_cmd pldm_base_get_version = {
 	.handler = base_get_version_handler,
 };
 
+/*
+ * PLDM Platform commands support
+ */
+static struct pldm_type pldm_platform_type = {
+	.name = "platform",
+	.pldm_type_id = PLDM_PLATFORM,
+};
+
+#define MIN_WATCHDOG_TIMEOUT_SEC 15
+
+/*
+ * SetEventReceiver (0x04)
+ * The SetEventReceiver command is used to set the address of the Event
+ * Receiver into a terminus that generates event messages. It is also
+ * used to globally enable or disable whether event messages are
+ * generated from the terminus.
+ */
+static int platform_set_event_receiver_handler(const struct pldm_rx_data *rx)
+{
+	uint8_t event_message_global_enable, transport_protocol_type;
+	uint8_t event_receiver_address_info, cc = PLDM_SUCCESS;
+	uint16_t heartbeat_timer;
+	int rc = OPAL_SUCCESS;
+
+	/* decode SetEventReceiver request data */
+	rc = decode_set_event_receiver_req(
+				rx->msg,
+				PLDM_SET_EVENT_RECEIVER_REQ_BYTES,
+				&event_message_global_enable,
+				&transport_protocol_type,
+				&event_receiver_address_info,
+				&heartbeat_timer);
+	if (rc) {
+		prlog(PR_ERR, "Failed to decode SetEventReceiver request, rc = %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	/* invoke the appropriate callback handler */
+	prlog(PR_DEBUG, "%s - event_message_global_enable: %d, "
+			"transport_protocol_type: %d "
+			"event_receiver_address_info: %d "
+			"heartbeat_timer: %d\n",
+			__func__,
+			event_message_global_enable,
+			transport_protocol_type,
+			event_receiver_address_info,
+			heartbeat_timer);
+
+	if (event_message_global_enable !=
+		PLDM_EVENT_MESSAGE_GLOBAL_ENABLE_ASYNC_KEEP_ALIVE) {
+
+		prlog(PR_ERR, "%s - invalid value for message global enable received: %d\n",
+			      __func__, event_message_global_enable);
+		cc = PLDM_PLATFORM_ENABLE_METHOD_NOT_SUPPORTED;
+	}
+
+	if (heartbeat_timer < MIN_WATCHDOG_TIMEOUT_SEC) {
+		prlog(PR_ERR, "%s - BMC requested watchdog timeout that's too small: %d\n",
+			      __func__, heartbeat_timer);
+		cc = PLDM_PLATFORM_HEARTBEAT_FREQUENCY_TOO_HIGH;
+	} else {
+		/* set the internal watchdog period to what BMC indicated */
+		watchdog_period_sec = heartbeat_timer;
+	}
+
+	/* send the response to BMC */
+	cc_resp(rx, PLDM_PLATFORM, PLDM_SET_EVENT_RECEIVER, cc);
+
+	/* no error happened above, so arm the watchdog and set the default timeout */
+	if (cc == PLDM_SUCCESS)
+		watchdog_armed = true;
+
+	return rc;
+}
+
+static struct pldm_cmd pldm_platform_set_event_receiver = {
+	.name = "PLDM_SET_EVENT_RECEIVER",
+	.pldm_cmd_id = PLDM_SET_EVENT_RECEIVER,
+	.handler = platform_set_event_receiver_handler,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -464,6 +549,10 @@ int pldm_responder_init(void)
 	add_cmd(&pldm_base_type, &pldm_base_get_types);
 	add_cmd(&pldm_base_type, &pldm_base_get_commands);
 	add_cmd(&pldm_base_type, &pldm_base_get_version);
+
+	/* Register platform commands we'll respond to - DSP0248 */
+	add_type(&pldm_platform_type);
+	add_cmd(&pldm_platform_type, &pldm_platform_set_event_receiver);
 
 	return OPAL_SUCCESS;
 }
