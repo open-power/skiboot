@@ -824,6 +824,128 @@ static struct pldm_cmd pldm_platform_set_state_effecter_states = {
 	.handler = platform_set_state_effecter_states_handler,
 };
 
+/*
+ * GetPDR (0x51)
+ * The GetPDR command is used to retrieve individual PDRs from a PDR
+ * Repository. The record is identified by the PDR recordHandle value
+ * that is passed in the request.
+ */
+static int platform_get_pdr_handle(const struct pldm_rx_data *rx)
+{
+	uint32_t data_transfer_handle, pdr_data_size = 0;
+	uint32_t record_handle, next_record_handle;
+	uint16_t request_count, record_change_number;
+	uint8_t transfer_op_flag, *pdr_data = NULL;
+	size_t payload_len, data_size;
+	struct pldm_tx_data *tx;
+	int rc;
+
+	payload_len = rx->msg_len - sizeof(struct pldm_msg_hdr);
+	rc = decode_get_pdr_req(rx->msg,
+				payload_len,
+				&record_handle,
+				&data_transfer_handle,
+				&transfer_op_flag,
+				&request_count,
+				&record_change_number);
+	if (rc) {
+		prlog(PR_ERR, "Failed to decode GetPDR request, rc = %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	if (data_transfer_handle != 0) {
+		/* We don't support multipart transfers */
+		prlog(PR_ERR, "Got invalid data transfer handle 0x%x in GetPDR request\n",
+			      data_transfer_handle);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			PLDM_PLATFORM_INVALID_DATA_TRANSFER_HANDLE);
+		return OPAL_PARAMETER;
+	}
+
+	if (transfer_op_flag != PLDM_GET_FIRSTPART) {
+		prlog(PR_ERR, "Got invalid transfer op flag 0x%x in GetPDR request\n",
+			      transfer_op_flag);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			PLDM_PLATFORM_INVALID_TRANSFER_OPERATION_FLAG);
+		return OPAL_PARAMETER;
+	}
+
+	if (record_change_number != 0) {
+		prlog(PR_ERR, "Got invalid record change number 0x%x in GetPDR request\n",
+			      record_change_number);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			PLDM_PLATFORM_INVALID_RECORD_CHANGE_NUMBER);
+		return OPAL_PARAMETER;
+	}
+
+	/* find PDR record by record handle */
+	prlog(PR_INFO, "BMC requesting PDR handle %d\n", record_handle);
+
+	rc = pldm_platform_pdr_find_record(record_handle,
+					   &pdr_data,
+					   &pdr_data_size,
+					   &next_record_handle);
+	if (rc) {
+		prlog(PR_ERR, "Got invalid record handle 0x%x in GetPDR request\n",
+			      record_handle);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command,
+			PLDM_PLATFORM_INVALID_RECORD_HANDLE);
+		return OPAL_PARAMETER;
+	}
+
+	/* create a PLDM response message for GetPDR */
+	data_size = sizeof(struct pldm_msg_hdr) +
+		    sizeof(struct pldm_get_pdr_resp) +
+		    pdr_data_size;
+
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size - 1;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_pdr_resp(rx->hdrinf.instance,
+				 PLDM_SUCCESS,
+				 next_record_handle,
+				 0, /* No remaining data */
+				 PLDM_START_AND_END,
+				 pdr_data_size,
+				 pdr_data,
+				 0, /* CRC not used for START_AND_END */
+				 (struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetPDR Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	/* send PLDM message over MCTP */
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetPDR response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_platform_get_pdr = {
+	.name = "PLDM_GET_PDR",
+	.pldm_cmd_id = PLDM_GET_PDR,
+	.handler = platform_get_pdr_handle,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -870,6 +992,7 @@ int pldm_responder_init(void)
 	add_cmd(&pldm_platform_type, &pldm_platform_event_message);
 	add_cmd(&pldm_platform_type, &pldm_platform_get_state_sensor_readings);
 	add_cmd(&pldm_platform_type, &pldm_platform_set_state_effecter_states);
+	add_cmd(&pldm_platform_type, &pldm_platform_get_pdr);
 
 	return OPAL_SUCCESS;
 }
