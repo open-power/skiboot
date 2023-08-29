@@ -43,4 +43,9 @@ int pldm_fru_dt_add_bmc_version(void);
  */
 int pldm_lid_files_init(struct blocklevel_device **bl);
 
+/**
+ * Remove lid ids data
+ */
+bool pldm_lid_files_exit(struct blocklevel_device *bl);
+
 #endif /* __PLDM_H__ */
