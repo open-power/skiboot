@@ -173,6 +173,67 @@ static struct pldm_cmd pldm_base_get_tid = {
 	.handler = base_get_tid_handler,
 };
 
+/*
+ * GetPLDMTypes (0x04)
+ * The GetPLDMTypes command can be used to discover the PLDM type
+ * capabilities supported by a PLDM terminus and to get a list of the
+ * PLDM types that are supported.
+ */
+static int base_get_types_handler(const struct pldm_rx_data *rx)
+{
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_get_types_resp);
+	bitmap_elem_t type_map[BITMAP_ELEMS(PLDM_MAX_TYPES)];
+	struct pldm_tx_data *tx;
+	struct pldm_type *iter;
+	int rc;
+
+	/* build the supported type list from the registered type
+	 * handlers
+	 */
+	memset(type_map, 0, sizeof(type_map));
+	list_for_each(&pldm_type_list, iter, link)
+		bitmap_set_bit(type_map, iter->pldm_type_id);
+
+	for (int i = 0; i < BITMAP_ELEMS(PLDM_MAX_TYPES); i++)
+		type_map[i] = cpu_to_le64(type_map[i]);
+
+	/* create a PLDM response message for GetPLDMTypes */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+	tx->tag_owner = true;
+	tx->msg_tag = rx->msg_tag;
+
+	rc = encode_get_types_resp(rx->hdrinf.instance,
+				   PLDM_SUCCESS,
+				   (bitfield8_t *)type_map,
+				   (struct pldm_msg *)tx->data);
+	if (rc != PLDM_SUCCESS) {
+		prlog(PR_ERR, "Encode GetPLDMTypes Error, rc: %d\n", rc);
+		cc_resp(rx, rx->hdrinf.pldm_type,
+			rx->hdrinf.command, PLDM_ERROR);
+		free(tx);
+		return OPAL_PARAMETER;
+	}
+
+	rc = pldm_mctp_message_tx(tx);
+	if (rc) {
+		prlog(PR_ERR, "Failed to send GetPLDMTypes response, rc = %d\n", rc);
+		free(tx);
+		return OPAL_HARDWARE;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+static struct pldm_cmd pldm_base_get_types = {
+	.name = "PLDM_GET_PLDM_TYPES",
+	.pldm_cmd_id = PLDM_GET_PLDM_TYPES,
+	.handler = base_get_types_handler,
+};
+
 int pldm_responder_handle_request(struct pldm_rx_data *rx)
 {
 	const struct pldm_type *type;
@@ -209,6 +270,7 @@ int pldm_responder_init(void)
 	/* Register mandatory commands we'll respond to - DSP0240 */
 	add_type(&pldm_base_type);
 	add_cmd(&pldm_base_type, &pldm_base_get_tid);
+	add_cmd(&pldm_base_type, &pldm_base_get_types);
 
 	return OPAL_SUCCESS;
 }
