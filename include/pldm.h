@@ -65,4 +65,9 @@ int pldm_watchdog_init(void);
 int pldm_platform_send_progress_state_change(
 		enum pldm_state_set_boot_progress_state_values state);
 
+/**
+ * Configure real-time clock
+ */
+void pldm_rtc_init(void);
+
 #endif /* __PLDM_H__ */
