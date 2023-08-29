@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <timebase.h>
 #include <libpldm/file_io.h>
 #include "pldm.h"
 
@@ -31,6 +32,139 @@ static void file_io_init_complete(bool success)
 
 	/* Mark ready */
 	file_io_ready = true;
+}
+
+/* maximum currently transfer size for PLDM */
+#define KILOBYTE 1024ul
+#define MAX_TRANSFER_SIZE_BYTES (127 * KILOBYTE)
+
+/*
+ * Send/receive a PLDM ReadFile request message.
+ */
+static int read_file_req(uint32_t file_handle, uint32_t file_length,
+			 uint32_t pos, void *buf, uint64_t len)
+{
+	size_t data_size = PLDM_MSG_SIZE(struct pldm_read_file_req);
+	size_t response_len, payload_len, file_data_offset;
+	uint8_t completion_code;
+	struct pldm_tx_data *tx;
+	uint32_t resp_length;
+	uint64_t total_read;
+	void *response_msg;
+	int num_transfers;
+	void *curr_buf;
+	int rc, i;
+
+	struct pldm_read_file_req file_req = {
+		.file_handle = file_handle,
+		.offset = pos,
+		.length = len
+	};
+
+	if (!file_length)
+		return OPAL_PARAMETER;
+
+	if ((!len) || ((len + pos) > file_length))
+		return OPAL_PARAMETER;
+
+	num_transfers = 1;
+	curr_buf = buf;
+	total_read = 0;
+
+	if (file_req.length > MAX_TRANSFER_SIZE_BYTES) {
+		num_transfers = (file_req.length + MAX_TRANSFER_SIZE_BYTES - 1) /
+				MAX_TRANSFER_SIZE_BYTES;
+		file_req.length = MAX_TRANSFER_SIZE_BYTES;
+	}
+
+	prlog(PR_TRACE, "%s - file_handle: %d, offset: 0x%x, len: 0x%llx num_transfers: %d\n",
+			__func__, file_handle, file_req.offset,
+			len, num_transfers);
+
+	/* init request */
+	tx = zalloc(sizeof(struct pldm_tx_data) + data_size);
+	if (!tx)
+		return OPAL_NO_MEM;
+	tx->data_size = data_size;
+
+	for (i = 0; i < num_transfers; i++) {
+		file_req.offset = pos + (i * MAX_TRANSFER_SIZE_BYTES);
+
+		/* Encode the file request */
+		rc = encode_read_file_req(
+				DEFAULT_INSTANCE_ID,
+				file_req.file_handle,
+				file_req.offset,
+				file_req.length,
+				(struct pldm_msg *)tx->data);
+		if (rc != PLDM_SUCCESS) {
+			prlog(PR_ERR, "Encode ReadFileReq Error, rc: %d\n",
+				      rc);
+			free(tx);
+			return OPAL_PARAMETER;
+		}
+
+		/* Send and get the response message bytes */
+		rc = pldm_requester_queue_and_wait(tx,
+						   &response_msg, &response_len);
+		if (rc) {
+			prlog(PR_ERR, "Communication Error, req: ReadFileReq, rc: %d\n", rc);
+			free(tx);
+			return rc;
+		}
+
+		/* Decode the message */
+		payload_len = response_len - sizeof(struct pldm_msg_hdr);
+		rc = decode_read_file_resp(
+				response_msg,
+				payload_len,
+				&completion_code,
+				&resp_length,
+				&file_data_offset);
+		if (rc != PLDM_SUCCESS || completion_code != PLDM_SUCCESS) {
+			prlog(PR_ERR, "Decode ReadFileResp Error, rc: %d, cc: %d\n",
+				      rc, completion_code);
+			free(tx);
+			free(response_msg);
+			return OPAL_PARAMETER;
+		}
+
+		if (resp_length == 0) {
+			free(response_msg);
+			break;
+		}
+
+		memcpy(curr_buf,
+		       ((struct pldm_msg *)response_msg)->payload + file_data_offset,
+		       resp_length);
+
+		total_read += resp_length;
+		curr_buf += resp_length;
+		free(response_msg);
+
+		prlog(PR_TRACE, "%s - file_handle: %d, resp_length: 0x%x, total_read: 0x%llx\n",
+			__func__, file_handle, resp_length, total_read);
+
+		if (total_read >= len)
+			break;
+		else if (resp_length != file_req.length) {
+			/* end of file */
+			break;
+		} else if (MAX_TRANSFER_SIZE_BYTES > (len - total_read))
+			file_req.length = len - total_read;
+	}
+
+	free(tx);
+	return OPAL_SUCCESS;
+}
+
+int pldm_file_io_read_file(uint32_t file_handle, uint32_t file_length,
+			   uint32_t pos, void *buf, uint64_t len)
+{
+	if (!file_io_ready)
+		return OPAL_HARDWARE;
+
+	return read_file_req(file_handle, file_length, pos, buf, len);
 }
 
 /*
