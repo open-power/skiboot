@@ -15,6 +15,7 @@ static void *fru_record_table;
 static size_t fru_record_length;
 
 static bool fru_ready;
+static char *bmc_version;
 
 static void fru_init_complete(bool success)
 {
@@ -31,6 +32,22 @@ static void fru_init_complete(bool success)
 
 	/* Mark ready */
 	fru_ready = true;
+}
+
+int pldm_fru_get_bmc_version(void *bv, int len)
+{
+	if (bv == NULL)
+		return OPAL_PARAMETER;
+
+	if (bmc_version == NULL)
+		return OPAL_PARAMETER;
+
+	if (strlen(bmc_version) > (len + 1))
+		return OPAL_PARAMETER;
+
+	memcpy(bv, bmc_version, strlen(bmc_version) + 1);
+
+	return OPAL_SUCCESS;
 }
 
 static int get_fru_record_table_req(void **record_table_data,
@@ -123,6 +140,74 @@ out:
 	free(tx);
 	free(table_data);
 	free(response_msg);
+	return rc;
+}
+
+int pldm_fru_dt_add_bmc_version(void)
+{
+	struct pldm_fru_record_data_format *data;
+	struct pldm_fru_record_tlv *tlv;
+	struct dt_node *dt_fw_version;
+	uint8_t *record_table;
+	int rc = OPAL_SUCCESS;
+	size_t record_size;
+
+	if (!fru_ready)
+		return OPAL_HARDWARE;
+
+	if (!fru_record_table)
+		return OPAL_HARDWARE;
+
+	dt_fw_version = dt_find_by_name(dt_root, "ibm,firmware-versions");
+	if (!dt_fw_version)
+		return OPAL_HARDWARE;
+
+	/* retrieve the bmc information with
+	 * "FRU Record Set Identifier": 1,
+	 * "FRU Record Type": "General(1)"
+	 * "FRU Field Type": Version
+	 *
+	 * we can not know size of the record table got by options
+	 * in advance, but it must be less than the source table. So
+	 * it's safe to use sizeof the source table.
+	 */
+	record_table = zalloc(fru_record_length);
+	if (!record_table)
+		return OPAL_NO_MEM;
+
+	record_size = fru_record_length;
+	get_fru_record_by_option(
+			fru_record_table,
+			fru_record_length,
+			record_table,
+			&record_size,
+			1,
+			PLDM_FRU_RECORD_TYPE_GENERAL,
+			PLDM_FRU_FIELD_TYPE_VERSION);
+
+	if (record_size == 0) {
+		prlog(PR_ERR, "%s - no FRU type version found\n", __func__);
+		rc = OPAL_PARAMETER;
+		goto out;
+	}
+
+	/* get tlv value */
+	data = (struct pldm_fru_record_data_format *)record_table;
+	tlv = (struct pldm_fru_record_tlv *)data->tlvs;
+	prlog(PR_DEBUG, "%s - value: %s\n", __func__, tlv->value);
+
+	dt_add_property_string(dt_fw_version, "bmc-firmware-version",
+			       tlv->value);
+
+	/* store the bmc version */
+	bmc_version = zalloc(tlv->length + 1);
+	if (!bmc_version)
+		rc = OPAL_NO_MEM;
+	else
+		memcpy(bmc_version, tlv->value, tlv->length);
+
+out:
+	free(record_table);
 	return rc;
 }
 

@@ -31,4 +31,9 @@ int pldm_platform_power_off(void);
  */
 int pldm_platform_restart(void);
 
+/**
+ * Update the firmware version device-tree field
+ */
+int pldm_fru_dt_add_bmc_version(void);
+
 #endif /* __PLDM_H__ */
