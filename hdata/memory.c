@@ -243,7 +243,7 @@ static void add_bus_freq_to_ram_area(struct dt_node *ram_node, u32 chip_id)
 		return;
 	}
 
-	for_each_pcia(pcia) {
+	for_each_pcia(spiras, pcia) {
 		const struct sppcia_core_unique *id;
 
 		id = HDIF_get_idata(pcia, SPPCIA_IDATA_CORE_UNIQUE, &size);

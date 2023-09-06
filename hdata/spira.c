@@ -529,7 +529,7 @@ static void add_xscom_add_pcia_assoc(struct dt_node *np, uint32_t pcid)
 	if (!hdr)
 		return;
 
-	for_each_pcia(hdr) {
+	for_each_pcia(spiras, hdr) {
 		const struct sppcia_core_unique *id;
 
 		id = HDIF_get_idata(hdr, SPPCIA_IDATA_CORE_UNIQUE, &size);

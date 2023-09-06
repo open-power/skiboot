@@ -190,7 +190,7 @@ bool pcia_parse(void)
 	dt_add_property_cells(cpus, "#address-cells", 1);
 	dt_add_property_cells(cpus, "#size-cells", 0);
 
-	for_each_pcia(pcia) {
+	for_each_pcia(spiras, pcia) {
 		const struct sppcia_core_unique *id;
 		u32 size, ve_flags;
 		bool okay;
