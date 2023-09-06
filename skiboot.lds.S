@@ -66,11 +66,6 @@ SECTIONS
 		KEEP(*(.naca.data))
 	}
 
-	. = SPIRA_OFF;
-	.spira : {
-		KEEP(*(.spira.data))
-	}
-
 	. = SPIRAH_OFF;
 	.spirah : {
 		KEEP(*(.spirah.data))

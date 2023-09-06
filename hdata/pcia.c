@@ -15,8 +15,8 @@
 
 static unsigned int pcia_index(const void *pcia)
 {
-	return (pcia - (void *)get_hdif(&spira.ntuples.pcia, "SPPCIA"))
-		/ be32_to_cpu(spira.ntuples.pcia.alloc_len);
+	return (pcia - (void *)get_hdif(&spiras->ntuples.pcia, "SPPCIA"))
+		/ be32_to_cpu(spiras->ntuples.pcia.alloc_len);
 }
 
 static const struct sppcia_cpu_thread *find_tada(const void *pcia,
@@ -180,7 +180,7 @@ bool pcia_parse(void)
 	const void *pcia;
 	struct dt_node *cpus;
 
-	pcia = get_hdif(&spira.ntuples.pcia, "SPPCIA");
+	pcia = get_hdif(&spiras->ntuples.pcia, "SPPCIA");
 	if (!pcia)
 		return false;
 

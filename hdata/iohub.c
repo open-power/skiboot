@@ -868,7 +868,7 @@ void io_parse(void)
 	unsigned int i, size;
 
 	/* Look for IO Hubs */
-	if (!get_hdif(&spira.ntuples.cec_iohub_fru, "IO HUB")) {
+	if (!get_hdif(&spiras->ntuples.cec_iohub_fru, "IO HUB")) {
 		prerror("CEC: Cannot locate IO Hub FRU data !\n");
 		return;
 	}
@@ -881,7 +881,7 @@ void io_parse(void)
 	 * increment it for each chip. Works for the machines I have here
 	 */
 
-	for_each_ntuple_idx(&spira.ntuples.cec_iohub_fru, sp_iohubs, i,
+	for_each_ntuple_idx(&spiras->ntuples.cec_iohub_fru, sp_iohubs, i,
 			    CECHUB_FRU_HDIF_SIG) {
 		const struct cechub_hub_fru_id *fru_id_data;
 		unsigned int type;
