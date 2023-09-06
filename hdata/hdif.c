@@ -10,7 +10,7 @@ const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
 	const struct HDIF_common_hdr *hdr = hdif;
 	const struct HDIF_idata_ptr *iptr;
 
-	if (be16_to_cpu(hdr->d1f0) != 0xd1f0) {
+	if (!HDIF_check(hdif, NULL)) {
 		prerror("HDIF: Bad header format !\n");
 		backtrace();
 		return NULL;
