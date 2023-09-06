@@ -157,6 +157,12 @@ HDIF_child_arr(const struct HDIF_common_hdr *hdif, unsigned int idx)
 {
 	struct HDIF_child_ptr *children;
 
+	if (!HDIF_check(hdif, NULL)) {
+		prerror("HDIF: Bad header format !\n");
+		backtrace();
+		return NULL;
+	}
+
 	children = (void *)hdif + be32_to_cpu(hdif->child_off);
 
 	if (idx >= be16_to_cpu(hdif->child_count)) {
@@ -176,6 +182,12 @@ struct HDIF_common_hdr *HDIF_child(const struct HDIF_common_hdr *hdif,
 	void *base = (void *)hdif;
 	struct HDIF_common_hdr *ret;
 	long child_off;
+
+	if (!HDIF_check(hdif, NULL)) {
+		prerror("HDIF: Bad header format !\n");
+		backtrace();
+		return NULL;
+	}
 
 	/* child must be in hdif's child array */
 	child_off = (void *)child - (base + be32_to_cpu(hdif->child_off));
