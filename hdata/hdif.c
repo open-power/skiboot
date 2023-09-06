@@ -4,10 +4,9 @@
 #include "hdif.h"
 #include <stack.h>
 
-const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
-			   unsigned int *size)
+static const struct HDIF_idata_ptr *
+HDIF_idata(const struct HDIF_common_hdr *hdif, unsigned int idx)
 {
-	const struct HDIF_common_hdr *hdr = hdif;
 	const struct HDIF_idata_ptr *iptr;
 
 	if (!HDIF_check(hdif, NULL)) {
@@ -16,14 +15,25 @@ const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
 		return NULL;
 	}
 
-	if (di >= be16_to_cpu(hdr->idptr_count)) {
+	if (idx >= be16_to_cpu(hdif->idptr_count)) {
 		prlog(PR_DEBUG, "HDIF: idata %d out of range for %.6s!\n",
-			di, hdr->id);
+			idx, hdif->id);
 		return NULL;
 	}
 
-	iptr = (void *)hdif + be32_to_cpu(hdr->idptr_off)
-		+ di * sizeof(struct HDIF_idata_ptr);
+	iptr = (void *)hdif + be32_to_cpu(hdif->idptr_off);
+
+	return &iptr[idx];
+}
+
+const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
+			   unsigned int *size)
+{
+	const struct HDIF_idata_ptr *iptr;
+
+	iptr = HDIF_idata(hdif, di);
+	if (!iptr)
+		return NULL;
 
 	if (size)
 		*size = be32_to_cpu(iptr->size);
