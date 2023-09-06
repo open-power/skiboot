@@ -180,7 +180,7 @@ bool pcia_parse(void)
 	const void *pcia;
 	struct dt_node *cpus;
 
-	pcia = get_hdif(&spiras->ntuples.pcia, "SPPCIA");
+	pcia = get_hdif(&spiras->ntuples.pcia, SPPCIA_HDIF_SIG);
 	if (!pcia)
 		return false;
 
