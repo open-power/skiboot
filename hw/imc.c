@@ -67,14 +67,14 @@ static char const *nest_pmus[] = {
 	"mba5",
 	"mba6",
 	"mba7",
-	"cen0",
-	"cen1",
-	"cen2",
-	"cen3",
-	"cen4",
-	"cen5",
-	"cen6",
-	"cen7",
+	"centaur0",
+	"centaur1",
+	"centaur2",
+	"centaur3",
+	"centaur4",
+	"centaur5",
+	"centaur6",
+	"centaur7",
 	"xlink0",
 	"xlink1",
 	"xlink2",
@@ -412,7 +412,7 @@ static void disable_unavailable_units(struct dt_node *dev)
 	for (i = 0; i < ARRAY_SIZE(nest_pmus); i++) {
 		if (!(PPC_BITMASK(i, i) & avl_vec)) {
 			/* Check if the device node exists */
-			target = dt_find_by_name(dev, nest_pmus[i]);
+			target = dt_find_by_name_before_addr(dev, nest_pmus[i]);
 			if (!target)
 				continue;
 			/* Remove the device node */
