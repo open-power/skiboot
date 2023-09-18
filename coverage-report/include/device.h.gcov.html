@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-08-09 21:24:26</td>
+            <td class="headerValue">2023-09-18 13:49:48</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">4</td>
@@ -130,9 +130,9 @@
 <a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">          7 :         last_phandle = phandle;</span></a>
 <a name="60"><span class="lineNum">      60 </span>                :<span class="lineCov">          7 : }</span></a>
 <a name="61"><span class="lineNum">      61 </span>                :            : </a>
-<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        891 : static inline u32 new_phandle(void)</span></a>
+<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        894 : static inline u32 new_phandle(void)</span></a>
 <a name="63"><span class="lineNum">      63 </span>                :            : {</a>
-<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        891 :         return ++last_phandle;</span></a>
+<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        894 :         return ++last_phandle;</span></a>
 <a name="65"><span class="lineNum">      65 </span>                :            : }</a>
 <a name="66"><span class="lineNum">      66 </span>                :            : </a>
 <a name="67"><span class="lineNum">      67 </span>                :            : /* Add a child node. */</a>
@@ -255,88 +255,91 @@
 <a name="184"><span class="lineNum">     184 </span>                :            : /* Find a child node by name */</a>
 <a name="185"><span class="lineNum">     185 </span>                :            : struct dt_node *dt_find_by_name(struct dt_node *root, const char *name);</a>
 <a name="186"><span class="lineNum">     186 </span>                :            : </a>
-<a name="187"><span class="lineNum">     187 </span>                :            : /* Find a node by phandle */</a>
-<a name="188"><span class="lineNum">     188 </span>                :            : struct dt_node *dt_find_by_phandle(struct dt_node *root, u32 phandle);</a>
+<a name="187"><span class="lineNum">     187 </span>                :            : /* Find a child node by name and substring */</a>
+<a name="188"><span class="lineNum">     188 </span>                :            : struct dt_node *dt_find_by_name_before_addr(struct dt_node *root, const char *name);</a>
 <a name="189"><span class="lineNum">     189 </span>                :            : </a>
-<a name="190"><span class="lineNum">     190 </span>                :            : /* Find a property by name. */</a>
-<a name="191"><span class="lineNum">     191 </span>                :            : const struct dt_property *dt_find_property(const struct dt_node *node,\</a>
-<a name="192"><span class="lineNum">     192 </span>                :            :                                            const char *name);</a>
-<a name="193"><span class="lineNum">     193 </span>                :            : const struct dt_property *dt_require_property(const struct dt_node *node,</a>
-<a name="194"><span class="lineNum">     194 </span>                :            :                                               const char *name, int wanted_len);</a>
-<a name="195"><span class="lineNum">     195 </span>                :            : </a>
-<a name="196"><span class="lineNum">     196 </span>                :            : /* non-const variant */</a>
-<a name="197"><span class="lineNum">     197 </span>                :            : struct dt_property *__dt_find_property(struct dt_node *node, const char *name);</a>
+<a name="190"><span class="lineNum">     190 </span>                :            : /* Find a node by phandle */</a>
+<a name="191"><span class="lineNum">     191 </span>                :            : struct dt_node *dt_find_by_phandle(struct dt_node *root, u32 phandle);</a>
+<a name="192"><span class="lineNum">     192 </span>                :            : </a>
+<a name="193"><span class="lineNum">     193 </span>                :            : /* Find a property by name. */</a>
+<a name="194"><span class="lineNum">     194 </span>                :            : const struct dt_property *dt_find_property(const struct dt_node *node,\</a>
+<a name="195"><span class="lineNum">     195 </span>                :            :                                            const char *name);</a>
+<a name="196"><span class="lineNum">     196 </span>                :            : const struct dt_property *dt_require_property(const struct dt_node *node,</a>
+<a name="197"><span class="lineNum">     197 </span>                :            :                                               const char *name, int wanted_len);</a>
 <a name="198"><span class="lineNum">     198 </span>                :            : </a>
-<a name="199"><span class="lineNum">     199 </span>                :            : /* Find a property by name, check if it's the same as val. */</a>
-<a name="200"><span class="lineNum">     200 </span>                :            : bool dt_has_node_property(const struct dt_node *node,</a>
-<a name="201"><span class="lineNum">     201 </span>                :            :                           const char *name, const char *val);</a>
-<a name="202"><span class="lineNum">     202 </span>                :            : </a>
-<a name="203"><span class="lineNum">     203 </span>                :            : /* Free a node (and any children). */</a>
-<a name="204"><span class="lineNum">     204 </span>                :            : void dt_free(struct dt_node *node);</a>
+<a name="199"><span class="lineNum">     199 </span>                :            : /* non-const variant */</a>
+<a name="200"><span class="lineNum">     200 </span>                :            : struct dt_property *__dt_find_property(struct dt_node *node, const char *name);</a>
+<a name="201"><span class="lineNum">     201 </span>                :            : </a>
+<a name="202"><span class="lineNum">     202 </span>                :            : /* Find a property by name, check if it's the same as val. */</a>
+<a name="203"><span class="lineNum">     203 </span>                :            : bool dt_has_node_property(const struct dt_node *node,</a>
+<a name="204"><span class="lineNum">     204 </span>                :            :                           const char *name, const char *val);</a>
 <a name="205"><span class="lineNum">     205 </span>                :            : </a>
-<a name="206"><span class="lineNum">     206 </span>                :            : /* Parse an initial fdt */</a>
-<a name="207"><span class="lineNum">     207 </span>                :            : void dt_expand(const void *fdt);</a>
-<a name="208"><span class="lineNum">     208 </span>                :            : int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node) __warn_unused_result;</a>
-<a name="209"><span class="lineNum">     209 </span>                :            : </a>
-<a name="210"><span class="lineNum">     210 </span>                :            : /* Simplified accessors */</a>
-<a name="211"><span class="lineNum">     211 </span>                :            : u64 dt_prop_get_u64(const struct dt_node *node, const char *prop);</a>
-<a name="212"><span class="lineNum">     212 </span>                :            : u64 dt_prop_get_u64_def(const struct dt_node *node, const char *prop, u64 def);</a>
-<a name="213"><span class="lineNum">     213 </span>                :            : u32 dt_prop_get_u32(const struct dt_node *node, const char *prop);</a>
-<a name="214"><span class="lineNum">     214 </span>                :            : u32 dt_prop_get_u32_def(const struct dt_node *node, const char *prop, u32 def);</a>
-<a name="215"><span class="lineNum">     215 </span>                :            : const void *dt_prop_get(const struct dt_node *node, const char *prop);</a>
-<a name="216"><span class="lineNum">     216 </span>                :            : const void *dt_prop_get_def(const struct dt_node *node, const char *prop,</a>
-<a name="217"><span class="lineNum">     217 </span>                :            :                             void *def);</a>
-<a name="218"><span class="lineNum">     218 </span>                :            : const void *dt_prop_get_def_size(const struct dt_node *node, const char *prop,</a>
-<a name="219"><span class="lineNum">     219 </span>                :            :                                 void *def, size_t *len);</a>
-<a name="220"><span class="lineNum">     220 </span>                :            : u32 dt_prop_get_cell(const struct dt_node *node, const char *prop, u32 cell);</a>
-<a name="221"><span class="lineNum">     221 </span>                :            : u32 dt_prop_get_cell_def(const struct dt_node *node, const char *prop, u32 cell, u32 def);</a>
-<a name="222"><span class="lineNum">     222 </span>                :            : </a>
-<a name="223"><span class="lineNum">     223 </span>                :            : /* Parsing helpers */</a>
-<a name="224"><span class="lineNum">     224 </span>                :            : u32 dt_n_address_cells(const struct dt_node *node);</a>
-<a name="225"><span class="lineNum">     225 </span>                :            : u32 dt_n_size_cells(const struct dt_node *node);</a>
-<a name="226"><span class="lineNum">     226 </span>                :            : u64 dt_get_number(const void *pdata, unsigned int cells);</a>
-<a name="227"><span class="lineNum">     227 </span>                :            : </a>
-<a name="228"><span class="lineNum">     228 </span>                :            : /* Find an ibm,chip-id property in this node; if not found, walk up the parent</a>
-<a name="229"><span class="lineNum">     229 </span>                :            :  * nodes. */</a>
-<a name="230"><span class="lineNum">     230 </span>                :            : u32 dt_get_chip_id(const struct dt_node *node);</a>
-<a name="231"><span class="lineNum">     231 </span>                :            : </a>
-<a name="232"><span class="lineNum">     232 </span>                :            : /* Same as dt_get_chip_id except Returns -1 if no chip-id property exists. */</a>
-<a name="233"><span class="lineNum">     233 </span>                :            : u32 __dt_get_chip_id(const struct dt_node *node);</a>
+<a name="206"><span class="lineNum">     206 </span>                :            : /* Free a node (and any children). */</a>
+<a name="207"><span class="lineNum">     207 </span>                :            : void dt_free(struct dt_node *node);</a>
+<a name="208"><span class="lineNum">     208 </span>                :            : </a>
+<a name="209"><span class="lineNum">     209 </span>                :            : /* Parse an initial fdt */</a>
+<a name="210"><span class="lineNum">     210 </span>                :            : void dt_expand(const void *fdt);</a>
+<a name="211"><span class="lineNum">     211 </span>                :            : int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node) __warn_unused_result;</a>
+<a name="212"><span class="lineNum">     212 </span>                :            : </a>
+<a name="213"><span class="lineNum">     213 </span>                :            : /* Simplified accessors */</a>
+<a name="214"><span class="lineNum">     214 </span>                :            : u64 dt_prop_get_u64(const struct dt_node *node, const char *prop);</a>
+<a name="215"><span class="lineNum">     215 </span>                :            : u64 dt_prop_get_u64_def(const struct dt_node *node, const char *prop, u64 def);</a>
+<a name="216"><span class="lineNum">     216 </span>                :            : u32 dt_prop_get_u32(const struct dt_node *node, const char *prop);</a>
+<a name="217"><span class="lineNum">     217 </span>                :            : u32 dt_prop_get_u32_def(const struct dt_node *node, const char *prop, u32 def);</a>
+<a name="218"><span class="lineNum">     218 </span>                :            : const void *dt_prop_get(const struct dt_node *node, const char *prop);</a>
+<a name="219"><span class="lineNum">     219 </span>                :            : const void *dt_prop_get_def(const struct dt_node *node, const char *prop,</a>
+<a name="220"><span class="lineNum">     220 </span>                :            :                             void *def);</a>
+<a name="221"><span class="lineNum">     221 </span>                :            : const void *dt_prop_get_def_size(const struct dt_node *node, const char *prop,</a>
+<a name="222"><span class="lineNum">     222 </span>                :            :                                 void *def, size_t *len);</a>
+<a name="223"><span class="lineNum">     223 </span>                :            : u32 dt_prop_get_cell(const struct dt_node *node, const char *prop, u32 cell);</a>
+<a name="224"><span class="lineNum">     224 </span>                :            : u32 dt_prop_get_cell_def(const struct dt_node *node, const char *prop, u32 cell, u32 def);</a>
+<a name="225"><span class="lineNum">     225 </span>                :            : </a>
+<a name="226"><span class="lineNum">     226 </span>                :            : /* Parsing helpers */</a>
+<a name="227"><span class="lineNum">     227 </span>                :            : u32 dt_n_address_cells(const struct dt_node *node);</a>
+<a name="228"><span class="lineNum">     228 </span>                :            : u32 dt_n_size_cells(const struct dt_node *node);</a>
+<a name="229"><span class="lineNum">     229 </span>                :            : u64 dt_get_number(const void *pdata, unsigned int cells);</a>
+<a name="230"><span class="lineNum">     230 </span>                :            : </a>
+<a name="231"><span class="lineNum">     231 </span>                :            : /* Find an ibm,chip-id property in this node; if not found, walk up the parent</a>
+<a name="232"><span class="lineNum">     232 </span>                :            :  * nodes. */</a>
+<a name="233"><span class="lineNum">     233 </span>                :            : u32 dt_get_chip_id(const struct dt_node *node);</a>
 <a name="234"><span class="lineNum">     234 </span>                :            : </a>
-<a name="235"><span class="lineNum">     235 </span>                :            : /* Address accessors (&quot;reg&quot; properties parsing). No translation,</a>
-<a name="236"><span class="lineNum">     236 </span>                :            :  * only support &quot;simple&quot; address forms (1 or 2 cells). Asserts</a>
-<a name="237"><span class="lineNum">     237 </span>                :            :  * if address doesn't exist</a>
-<a name="238"><span class="lineNum">     238 </span>                :            :  */</a>
-<a name="239"><span class="lineNum">     239 </span>                :            : u64 dt_get_address(const struct dt_node *node, unsigned int index,</a>
-<a name="240"><span class="lineNum">     240 </span>                :            :                    u64 *out_size);</a>
-<a name="241"><span class="lineNum">     241 </span>                :            : </a>
-<a name="242"><span class="lineNum">     242 </span>                :            : /* Count &quot;reg&quot; property entries */</a>
-<a name="243"><span class="lineNum">     243 </span>                :            : unsigned int dt_count_addresses(const struct dt_node *node);</a>
+<a name="235"><span class="lineNum">     235 </span>                :            : /* Same as dt_get_chip_id except Returns -1 if no chip-id property exists. */</a>
+<a name="236"><span class="lineNum">     236 </span>                :            : u32 __dt_get_chip_id(const struct dt_node *node);</a>
+<a name="237"><span class="lineNum">     237 </span>                :            : </a>
+<a name="238"><span class="lineNum">     238 </span>                :            : /* Address accessors (&quot;reg&quot; properties parsing). No translation,</a>
+<a name="239"><span class="lineNum">     239 </span>                :            :  * only support &quot;simple&quot; address forms (1 or 2 cells). Asserts</a>
+<a name="240"><span class="lineNum">     240 </span>                :            :  * if address doesn't exist</a>
+<a name="241"><span class="lineNum">     241 </span>                :            :  */</a>
+<a name="242"><span class="lineNum">     242 </span>                :            : u64 dt_get_address(const struct dt_node *node, unsigned int index,</a>
+<a name="243"><span class="lineNum">     243 </span>                :            :                    u64 *out_size);</a>
 <a name="244"><span class="lineNum">     244 </span>                :            : </a>
-<a name="245"><span class="lineNum">     245 </span>                :            : /* Address translation</a>
-<a name="246"><span class="lineNum">     246 </span>                :            :  *</a>
-<a name="247"><span class="lineNum">     247 </span>                :            :  * WARNING: Current implementation is simplified and will not</a>
-<a name="248"><span class="lineNum">     248 </span>                :            :  * handle complex address formats with address space indicators</a>
-<a name="249"><span class="lineNum">     249 </span>                :            :  * nor will it handle &quot;ranges&quot; translations yet... (XX TODO)</a>
-<a name="250"><span class="lineNum">     250 </span>                :            :  */</a>
-<a name="251"><span class="lineNum">     251 </span>                :            : u64 dt_translate_address(const struct dt_node *node, unsigned int index,</a>
-<a name="252"><span class="lineNum">     252 </span>                :            :                          u64 *out_size);</a>
-<a name="253"><span class="lineNum">     253 </span>                :            : </a>
-<a name="254"><span class="lineNum">     254 </span>                :            : /* compare function used to sort child nodes by name when added to the</a>
-<a name="255"><span class="lineNum">     255 </span>                :            :  * tree. This is mainly here for testing.</a>
-<a name="256"><span class="lineNum">     256 </span>                :            :  */</a>
-<a name="257"><span class="lineNum">     257 </span>                :            : int dt_cmp_subnodes(const struct dt_node *a,  const struct dt_node *b);</a>
-<a name="258"><span class="lineNum">     258 </span>                :            : </a>
-<a name="259"><span class="lineNum">     259 </span>                :            : struct dt_node *__dt_find_by_name_addr(struct dt_node *parent, const char *name,</a>
-<a name="260"><span class="lineNum">     260 </span>                :            :                                 const char *addr);</a>
-<a name="261"><span class="lineNum">     261 </span>                :            : struct dt_node *dt_find_by_name_addr(struct dt_node *parent, const char *name,</a>
-<a name="262"><span class="lineNum">     262 </span>                :            :                                 uint64_t addr);</a>
-<a name="263"><span class="lineNum">     263 </span>                :            : </a>
-<a name="264"><span class="lineNum">     264 </span>                :            : /* phandle fixup helper */</a>
-<a name="265"><span class="lineNum">     265 </span>                :            : void dt_adjust_subtree_phandle(struct dt_node *subtree,</a>
-<a name="266"><span class="lineNum">     266 </span>                :            :                                 const char** (get_properties_to_fix)(struct dt_node *n));</a>
-<a name="267"><span class="lineNum">     267 </span>                :            : </a>
-<a name="268"><span class="lineNum">     268 </span>                :            : #endif /* __DEVICE_H */</a>
+<a name="245"><span class="lineNum">     245 </span>                :            : /* Count &quot;reg&quot; property entries */</a>
+<a name="246"><span class="lineNum">     246 </span>                :            : unsigned int dt_count_addresses(const struct dt_node *node);</a>
+<a name="247"><span class="lineNum">     247 </span>                :            : </a>
+<a name="248"><span class="lineNum">     248 </span>                :            : /* Address translation</a>
+<a name="249"><span class="lineNum">     249 </span>                :            :  *</a>
+<a name="250"><span class="lineNum">     250 </span>                :            :  * WARNING: Current implementation is simplified and will not</a>
+<a name="251"><span class="lineNum">     251 </span>                :            :  * handle complex address formats with address space indicators</a>
+<a name="252"><span class="lineNum">     252 </span>                :            :  * nor will it handle &quot;ranges&quot; translations yet... (XX TODO)</a>
+<a name="253"><span class="lineNum">     253 </span>                :            :  */</a>
+<a name="254"><span class="lineNum">     254 </span>                :            : u64 dt_translate_address(const struct dt_node *node, unsigned int index,</a>
+<a name="255"><span class="lineNum">     255 </span>                :            :                          u64 *out_size);</a>
+<a name="256"><span class="lineNum">     256 </span>                :            : </a>
+<a name="257"><span class="lineNum">     257 </span>                :            : /* compare function used to sort child nodes by name when added to the</a>
+<a name="258"><span class="lineNum">     258 </span>                :            :  * tree. This is mainly here for testing.</a>
+<a name="259"><span class="lineNum">     259 </span>                :            :  */</a>
+<a name="260"><span class="lineNum">     260 </span>                :            : int dt_cmp_subnodes(const struct dt_node *a,  const struct dt_node *b);</a>
+<a name="261"><span class="lineNum">     261 </span>                :            : </a>
+<a name="262"><span class="lineNum">     262 </span>                :            : struct dt_node *__dt_find_by_name_addr(struct dt_node *parent, const char *name,</a>
+<a name="263"><span class="lineNum">     263 </span>                :            :                                 const char *addr);</a>
+<a name="264"><span class="lineNum">     264 </span>                :            : struct dt_node *dt_find_by_name_addr(struct dt_node *parent, const char *name,</a>
+<a name="265"><span class="lineNum">     265 </span>                :            :                                 uint64_t addr);</a>
+<a name="266"><span class="lineNum">     266 </span>                :            : </a>
+<a name="267"><span class="lineNum">     267 </span>                :            : /* phandle fixup helper */</a>
+<a name="268"><span class="lineNum">     268 </span>                :            : void dt_adjust_subtree_phandle(struct dt_node *subtree,</a>
+<a name="269"><span class="lineNum">     269 </span>                :            :                                 const char** (get_properties_to_fix)(struct dt_node *n));</a>
+<a name="270"><span class="lineNum">     270 </span>                :            : </a>
+<a name="271"><span class="lineNum">     271 </span>                :            : #endif /* __DEVICE_H */</a>
 </pre>
       </td>
     </tr>

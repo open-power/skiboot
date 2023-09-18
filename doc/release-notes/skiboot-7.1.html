@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>skiboot-7.1 &#8212; skiboot 3d634a1
+    <title>skiboot-7.1 &#8212; skiboot 9104584
  documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="skiboot-7.0.html" title="skiboot-7.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 3d634a1
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 9104584
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-7.1</a></li> 
@@ -43,6 +43,11 @@
             
   <section id="skiboot-7-1">
 <span id="id1"></span><h1>skiboot-7.1<a class="headerlink" href="#skiboot-7-1" title="Permalink to this headline">¶</a></h1>
+<p>skiboot v7.1 was released on Monday Sep 18th 2023. It is the first release of
+the skiboot 7.1 series, which becomes the new stable release following the
+<a class="reference internal" href="skiboot-7.0.html#skiboot-7-0"><span class="std std-ref">skiboot-7.0</span></a> release, first released Tuesday Oct 26th 2021.</p>
+<p>Changes in this release are mostly bug fixes, refactoring improvements, and
+some code deprecation/obsoletion.</p>
 <section id="new-features">
 <h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
 <section id="removed-opal-calls">
@@ -50,6 +55,12 @@
 <p>The OPAL_PCI_SET_MVE_ENABLE and OPAL_PCI_SET_MVE calls were removed, as they
 were noops. Support for IODA1 and both calls was removed from the Linux kernel
 in v6.5-rc1.</p>
+</section>
+<section id="optional-power8-support">
+<h3>Optional POWER8 support<a class="headerlink" href="#optional-power8-support" title="Permalink to this headline">¶</a></h3>
+<p>Most POWER8 code has been conditionalized, making it possible to omit support by
+building with <cite>CONFIG_P8=0</cite>. The result is a smaller binary targeting POWER9 as
+the baseline CPU.</p>
 </section>
 </section>
 </section>
@@ -66,6 +77,7 @@ in v6.5-rc1.</p>
 <li><a class="reference internal" href="#">skiboot-7.1</a><ul>
 <li><a class="reference internal" href="#new-features">New Features</a><ul>
 <li><a class="reference internal" href="#removed-opal-calls">Removed OPAL calls</a></li>
+<li><a class="reference internal" href="#optional-power8-support">Optional POWER8 support</a></li>
 </ul>
 </li>
 </ul>
@@ -105,7 +117,7 @@ in v6.5-rc1.</p>
         <li class="right" >
           <a href="skiboot-7.0.html" title="skiboot-7.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 3d634a1
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot 9104584
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-7.1</a></li> 
