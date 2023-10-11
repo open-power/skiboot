@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-09-18 13:49:48</td>
+            <td class="headerValue">2023-10-11 21:12:14</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">12</td>
@@ -209,14 +209,14 @@
 <a name="138"><span class="lineNum">     138 </span>                :            :         return ((uint16_t)bp[0] &lt;&lt; 8) | bp[1];</a>
 <a name="139"><span class="lineNum">     139 </span>                :            : }</a>
 <a name="140"><span class="lineNum">     140 </span>                :            : </a>
-<a name="141"><span class="lineNum">     141 </span>                :<span class="lineCov">     119701 : static inline uint32_t fdt32_ld(const fdt32_t *p)</span></a>
+<a name="141"><span class="lineNum">     141 </span>                :<span class="lineCov">      39510 : static inline uint32_t fdt32_ld(const fdt32_t *p)</span></a>
 <a name="142"><span class="lineNum">     142 </span>                :            : {</a>
-<a name="143"><span class="lineNum">     143 </span>                :<span class="lineCov">     119701 :         const uint8_t *bp = (const uint8_t *)p;</span></a>
+<a name="143"><span class="lineNum">     143 </span>                :<span class="lineCov">      39510 :         const uint8_t *bp = (const uint8_t *)p;</span></a>
 <a name="144"><span class="lineNum">     144 </span>                :            : </a>
-<a name="145"><span class="lineNum">     145 </span>                :<span class="lineCov">     119701 :         return ((uint32_t)bp[0] &lt;&lt; 24)</span></a>
-<a name="146"><span class="lineNum">     146 </span>                :<span class="lineCov">     119701 :                 | ((uint32_t)bp[1] &lt;&lt; 16)</span></a>
-<a name="147"><span class="lineNum">     147 </span>                :<span class="lineCov">     119701 :                 | ((uint32_t)bp[2] &lt;&lt; 8)</span></a>
-<a name="148"><span class="lineNum">     148 </span>                :<span class="lineCov">     119701 :                 | bp[3];</span></a>
+<a name="145"><span class="lineNum">     145 </span>                :<span class="lineCov">      39510 :         return ((uint32_t)bp[0] &lt;&lt; 24)</span></a>
+<a name="146"><span class="lineNum">     146 </span>                :<span class="lineCov">      39510 :                 | ((uint32_t)bp[1] &lt;&lt; 16)</span></a>
+<a name="147"><span class="lineNum">     147 </span>                :<span class="lineCov">      39510 :                 | ((uint32_t)bp[2] &lt;&lt; 8)</span></a>
+<a name="148"><span class="lineNum">     148 </span>                :<span class="lineCov">      39510 :                 | bp[3];</span></a>
 <a name="149"><span class="lineNum">     149 </span>                :            : }</a>
 <a name="150"><span class="lineNum">     150 </span>                :            : </a>
 <a name="151"><span class="lineNum">     151 </span>                :            : static inline void fdt32_st(void *property, uint32_t value)</a>
@@ -334,16 +334,16 @@
 <a name="263"><span class="lineNum">     263 </span>                :            :                 struct fdt_header *fdth = (struct fdt_header *)fdt; \</a>
 <a name="264"><span class="lineNum">     264 </span>                :            :                 fdth-&gt;name = cpu_to_fdt32(val); \</a>
 <a name="265"><span class="lineNum">     265 </span>                :            :         }</a>
-<a name="266"><span class="lineNum">     266 </span>                :<span class="lineCov">          4 : fdt_set_hdr_(magic);</span></a>
-<a name="267"><span class="lineNum">     267 </span>                :<span class="lineCov">          4 : fdt_set_hdr_(totalsize);</span></a>
-<a name="268"><span class="lineNum">     268 </span>                :<span class="lineCov">         10 : fdt_set_hdr_(off_dt_struct);</span></a>
-<a name="269"><span class="lineNum">     269 </span>                :<span class="lineCov">          6 : fdt_set_hdr_(off_dt_strings);</span></a>
-<a name="270"><span class="lineNum">     270 </span>                :<span class="lineCov">          2 : fdt_set_hdr_(off_mem_rsvmap);</span></a>
-<a name="271"><span class="lineNum">     271 </span>                :<span class="lineCov">          2 : fdt_set_hdr_(version);</span></a>
-<a name="272"><span class="lineNum">     272 </span>                :<span class="lineCov">          4 : fdt_set_hdr_(last_comp_version);</span></a>
+<a name="266"><span class="lineNum">     266 </span>                :<span class="lineCov">          2 : fdt_set_hdr_(magic);</span></a>
+<a name="267"><span class="lineNum">     267 </span>                :<span class="lineCov">          2 : fdt_set_hdr_(totalsize);</span></a>
+<a name="268"><span class="lineNum">     268 </span>                :<span class="lineCov">          5 : fdt_set_hdr_(off_dt_struct);</span></a>
+<a name="269"><span class="lineNum">     269 </span>                :<span class="lineCov">          3 : fdt_set_hdr_(off_dt_strings);</span></a>
+<a name="270"><span class="lineNum">     270 </span>                :<span class="lineCov">          1 : fdt_set_hdr_(off_mem_rsvmap);</span></a>
+<a name="271"><span class="lineNum">     271 </span>                :<span class="lineCov">          1 : fdt_set_hdr_(version);</span></a>
+<a name="272"><span class="lineNum">     272 </span>                :<span class="lineCov">          2 : fdt_set_hdr_(last_comp_version);</span></a>
 <a name="273"><span class="lineNum">     273 </span>                :            : fdt_set_hdr_(boot_cpuid_phys);</a>
-<a name="274"><span class="lineNum">     274 </span>                :<span class="lineCov">        198 : fdt_set_hdr_(size_dt_strings);</span></a>
-<a name="275"><span class="lineNum">     275 </span>                :<span class="lineCov">       3285 : fdt_set_hdr_(size_dt_struct);</span></a>
+<a name="274"><span class="lineNum">     274 </span>                :<span class="lineCov">         99 : fdt_set_hdr_(size_dt_strings);</span></a>
+<a name="275"><span class="lineNum">     275 </span>                :<span class="lineCov">       1007 : fdt_set_hdr_(size_dt_struct);</span></a>
 <a name="276"><span class="lineNum">     276 </span>                :            : #undef fdt_set_hdr_</a>
 <a name="277"><span class="lineNum">     277 </span>                :            : </a>
 <a name="278"><span class="lineNum">     278 </span>                :            : /**</a>
@@ -1541,10 +1541,10 @@
 <a name="1470"><span class="lineNum">    1470 </span>                :            : int fdt_finish_reservemap(void *fdt);</a>
 <a name="1471"><span class="lineNum">    1471 </span>                :            : int fdt_begin_node(void *fdt, const char *name);</a>
 <a name="1472"><span class="lineNum">    1472 </span>                :            : int fdt_property(void *fdt, const char *name, const void *val, int len);</a>
-<a name="1473"><span class="lineNum">    1473 </span>                :<span class="lineCov">        236 : static inline int fdt_property_u32(void *fdt, const char *name, uint32_t val)</span></a>
+<a name="1473"><span class="lineNum">    1473 </span>                :<span class="lineCov">         80 : static inline int fdt_property_u32(void *fdt, const char *name, uint32_t val)</span></a>
 <a name="1474"><span class="lineNum">    1474 </span>                :            : {</a>
-<a name="1475"><span class="lineNum">    1475 </span>                :<span class="lineCov">        236 :         fdt32_t tmp = cpu_to_fdt32(val);</span></a>
-<a name="1476"><span class="lineNum">    1476 </span>                :<span class="lineCov">        236 :         return fdt_property(fdt, name, &amp;tmp, sizeof(tmp));</span></a>
+<a name="1475"><span class="lineNum">    1475 </span>                :<span class="lineCov">         80 :         fdt32_t tmp = cpu_to_fdt32(val);</span></a>
+<a name="1476"><span class="lineNum">    1476 </span>                :<span class="lineCov">         80 :         return fdt_property(fdt, name, &amp;tmp, sizeof(tmp));</span></a>
 <a name="1477"><span class="lineNum">    1477 </span>                :            : }</a>
 <a name="1478"><span class="lineNum">    1478 </span>                :            : static inline int fdt_property_u64(void *fdt, const char *name, uint64_t val)</a>
 <a name="1479"><span class="lineNum">    1479 </span>                :            : {</a>
@@ -1553,9 +1553,9 @@
 <a name="1482"><span class="lineNum">    1482 </span>                :            : }</a>
 <a name="1483"><span class="lineNum">    1483 </span>                :            : </a>
 <a name="1484"><span class="lineNum">    1484 </span>                :            : #ifndef SWIG /* Not available in Python */</a>
-<a name="1485"><span class="lineNum">    1485 </span>                :<span class="lineCov">        236 : static inline int fdt_property_cell(void *fdt, const char *name, uint32_t val)</span></a>
+<a name="1485"><span class="lineNum">    1485 </span>                :<span class="lineCov">         80 : static inline int fdt_property_cell(void *fdt, const char *name, uint32_t val)</span></a>
 <a name="1486"><span class="lineNum">    1486 </span>                :            : {</a>
-<a name="1487"><span class="lineNum">    1487 </span>                :<span class="lineCov">        236 :         return fdt_property_u32(fdt, name, val);</span></a>
+<a name="1487"><span class="lineNum">    1487 </span>                :<span class="lineCov">         80 :         return fdt_property_u32(fdt, name, val);</span></a>
 <a name="1488"><span class="lineNum">    1488 </span>                :            : }</a>
 <a name="1489"><span class="lineNum">    1489 </span>                :            : #endif</a>
 <a name="1490"><span class="lineNum">    1490 </span>                :            : </a>

@@ -31,13 +31,13 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">4</td>
-            <td class="headerCovTableEntry">4</td>
-            <td class="headerCovTableEntryHi">100.0 %</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntryLo">71.4 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-09-18 13:49:48</td>
+            <td class="headerValue">2023-10-11 21:12:14</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -134,87 +134,91 @@
 <a name="63"><span class="lineNum">      63 </span>                :            :         .size   = CPU_TO_BE32(_size),                   \</a>
 <a name="64"><span class="lineNum">      64 </span>                :            : }</a>
 <a name="65"><span class="lineNum">      65 </span>                :            : </a>
-<a name="66"><span class="lineNum">      66 </span>                :<span class="lineCov">        558 : static inline bool HDIF_check(const void *hdif, const char id[])</span></a>
+<a name="66"><span class="lineNum">      66 </span>                :<span class="lineCov">       1300 : static inline bool HDIF_check(const void *hdif, const char *id)</span></a>
 <a name="67"><span class="lineNum">      67 </span>                :            : {</a>
-<a name="68"><span class="lineNum">      68 </span>                :<span class="lineCov">        558 :         const struct HDIF_common_hdr *hdr = hdif;</span></a>
+<a name="68"><span class="lineNum">      68 </span>                :<span class="lineCov">       1300 :         const struct HDIF_common_hdr *hdr = hdif;</span></a>
 <a name="69"><span class="lineNum">      69 </span>                :            : </a>
-<a name="70"><span class="lineNum">      70 </span>                :<span class="lineCov">       1116 :         return hdr-&gt;d1f0 == CPU_TO_BE16(0xd1f0) &amp;&amp;</span></a>
-<a name="71"><span class="lineNum">      71 </span>                :<span class="lineCov">        558 :                 memcmp(hdr-&gt;id, id, sizeof(hdr-&gt;id)) == 0;</span></a>
-<a name="72"><span class="lineNum">      72 </span>                :            : }</a>
-<a name="73"><span class="lineNum">      73 </span>                :            : </a>
-<a name="74"><span class="lineNum">      74 </span>                :            : /* HDIF_get_idata - Get a pointer to internal data block</a>
-<a name="75"><span class="lineNum">      75 </span>                :            :  *</a>
-<a name="76"><span class="lineNum">      76 </span>                :            :  * @hdif  : HDIF structure pointer</a>
-<a name="77"><span class="lineNum">      77 </span>                :            :  * @di    : Index of the idata pointer</a>
-<a name="78"><span class="lineNum">      78 </span>                :            :  * @size  : Return the data size (or NULL if ignored)</a>
-<a name="79"><span class="lineNum">      79 </span>                :            :  */</a>
-<a name="80"><span class="lineNum">      80 </span>                :            : extern const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif,</a>
-<a name="81"><span class="lineNum">      81 </span>                :            :                                   unsigned int di,</a>
-<a name="82"><span class="lineNum">      82 </span>                :            :                                   unsigned int *size);</a>
-<a name="83"><span class="lineNum">      83 </span>                :            : </a>
-<a name="84"><span class="lineNum">      84 </span>                :            : /* HDIF_get_iarray - Get a pointer to an elemnt of an internal data array</a>
-<a name="85"><span class="lineNum">      85 </span>                :            :  *</a>
-<a name="86"><span class="lineNum">      86 </span>                :            :  * @hdif  : HDIF structure pointer</a>
-<a name="87"><span class="lineNum">      87 </span>                :            :  * @di    : Index of the idata pointer</a>
-<a name="88"><span class="lineNum">      88 </span>                :            :  * @ai    : Index in the resulting array</a>
-<a name="89"><span class="lineNum">      89 </span>                :            :  * @size  : Return the entry actual size (or NULL if ignored)</a>
-<a name="90"><span class="lineNum">      90 </span>                :            :  */</a>
-<a name="91"><span class="lineNum">      91 </span>                :            : extern const void *HDIF_get_iarray_item(const struct HDIF_common_hdr *hdif,</a>
-<a name="92"><span class="lineNum">      92 </span>                :            :                                         unsigned int di,</a>
-<a name="93"><span class="lineNum">      93 </span>                :            :                                         unsigned int ai, unsigned int *size);</a>
-<a name="94"><span class="lineNum">      94 </span>                :            : </a>
-<a name="95"><span class="lineNum">      95 </span>                :            : /* HDIF_get_iarray - Get a pointer to an internal array header</a>
-<a name="96"><span class="lineNum">      96 </span>                :            :  *</a>
-<a name="97"><span class="lineNum">      97 </span>                :            :  * @hdif  : HDIF structure pointer</a>
-<a name="98"><span class="lineNum">      98 </span>                :            :  * @di    : Index of the idata pointer</a>
-<a name="99"><span class="lineNum">      99 </span>                :            :  * @ai    : Index in the resulting array</a>
-<a name="100"><span class="lineNum">     100 </span>                :            :  * @size  : Return the entry actual size (or NULL if ignored)</a>
-<a name="101"><span class="lineNum">     101 </span>                :            :  */</a>
-<a name="102"><span class="lineNum">     102 </span>                :            : extern const struct HDIF_array_hdr *HDIF_get_iarray(</a>
-<a name="103"><span class="lineNum">     103 </span>                :            :                 const struct HDIF_common_hdr *hdif, unsigned int di,</a>
-<a name="104"><span class="lineNum">     104 </span>                :            :                 unsigned int *items);</a>
-<a name="105"><span class="lineNum">     105 </span>                :            : </a>
-<a name="106"><span class="lineNum">     106 </span>                :            : extern const void *HDIF_iarray_item(const struct HDIF_array_hdr *hdif,</a>
-<a name="107"><span class="lineNum">     107 </span>                :            :                                 unsigned int index);</a>
-<a name="108"><span class="lineNum">     108 </span>                :            : </a>
-<a name="109"><span class="lineNum">     109 </span>                :            : #define HDIF_iarray_for_each(arr, idx, ptr) \</a>
-<a name="110"><span class="lineNum">     110 </span>                :            :         for (idx = 0, ptr = HDIF_iarray_item(arr, idx); \</a>
-<a name="111"><span class="lineNum">     111 </span>                :            :                 ptr; idx++, ptr = HDIF_iarray_item(arr, idx))</a>
+<a name="70"><span class="lineNum">      70 </span>                :<span class="lineCov">       1300 :         if (hdr-&gt;d1f0 != CPU_TO_BE16(0xd1f0))</span></a>
+<a name="71"><span class="lineNum">      71 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="72"><span class="lineNum">      72 </span>                :<span class="lineCov">       1300 :         if (id &amp;&amp; memcmp(hdr-&gt;id, id, sizeof(hdr-&gt;id)) != 0)</span></a>
+<a name="73"><span class="lineNum">      73 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="74"><span class="lineNum">      74 </span>                :            : </a>
+<a name="75"><span class="lineNum">      75 </span>                :<span class="lineCov">       1300 :         return true;</span></a>
+<a name="76"><span class="lineNum">      76 </span>                :            : }</a>
+<a name="77"><span class="lineNum">      77 </span>                :            : </a>
+<a name="78"><span class="lineNum">      78 </span>                :            : /* HDIF_get_idata - Get a pointer to internal data block</a>
+<a name="79"><span class="lineNum">      79 </span>                :            :  *</a>
+<a name="80"><span class="lineNum">      80 </span>                :            :  * @hdif  : HDIF structure pointer</a>
+<a name="81"><span class="lineNum">      81 </span>                :            :  * @di    : Index of the idata pointer</a>
+<a name="82"><span class="lineNum">      82 </span>                :            :  * @size  : Return the data size (or NULL if ignored)</a>
+<a name="83"><span class="lineNum">      83 </span>                :            :  */</a>
+<a name="84"><span class="lineNum">      84 </span>                :            : extern const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif,</a>
+<a name="85"><span class="lineNum">      85 </span>                :            :                                   unsigned int di,</a>
+<a name="86"><span class="lineNum">      86 </span>                :            :                                   unsigned int *size);</a>
+<a name="87"><span class="lineNum">      87 </span>                :            : </a>
+<a name="88"><span class="lineNum">      88 </span>                :            : /* HDIF_get_iarray - Get a pointer to an elemnt of an internal data array</a>
+<a name="89"><span class="lineNum">      89 </span>                :            :  *</a>
+<a name="90"><span class="lineNum">      90 </span>                :            :  * @hdif  : HDIF structure pointer</a>
+<a name="91"><span class="lineNum">      91 </span>                :            :  * @di    : Index of the idata pointer</a>
+<a name="92"><span class="lineNum">      92 </span>                :            :  * @ai    : Index in the resulting array</a>
+<a name="93"><span class="lineNum">      93 </span>                :            :  * @size  : Return the entry actual size (or NULL if ignored)</a>
+<a name="94"><span class="lineNum">      94 </span>                :            :  */</a>
+<a name="95"><span class="lineNum">      95 </span>                :            : extern const void *HDIF_get_iarray_item(const struct HDIF_common_hdr *hdif,</a>
+<a name="96"><span class="lineNum">      96 </span>                :            :                                         unsigned int di,</a>
+<a name="97"><span class="lineNum">      97 </span>                :            :                                         unsigned int ai, unsigned int *size);</a>
+<a name="98"><span class="lineNum">      98 </span>                :            : </a>
+<a name="99"><span class="lineNum">      99 </span>                :            : /* HDIF_get_iarray - Get a pointer to an internal array header</a>
+<a name="100"><span class="lineNum">     100 </span>                :            :  *</a>
+<a name="101"><span class="lineNum">     101 </span>                :            :  * @hdif  : HDIF structure pointer</a>
+<a name="102"><span class="lineNum">     102 </span>                :            :  * @di    : Index of the idata pointer</a>
+<a name="103"><span class="lineNum">     103 </span>                :            :  * @ai    : Index in the resulting array</a>
+<a name="104"><span class="lineNum">     104 </span>                :            :  * @size  : Return the entry actual size (or NULL if ignored)</a>
+<a name="105"><span class="lineNum">     105 </span>                :            :  */</a>
+<a name="106"><span class="lineNum">     106 </span>                :            : extern const struct HDIF_array_hdr *HDIF_get_iarray(</a>
+<a name="107"><span class="lineNum">     107 </span>                :            :                 const struct HDIF_common_hdr *hdif, unsigned int di,</a>
+<a name="108"><span class="lineNum">     108 </span>                :            :                 unsigned int *items);</a>
+<a name="109"><span class="lineNum">     109 </span>                :            : </a>
+<a name="110"><span class="lineNum">     110 </span>                :            : extern const void *HDIF_iarray_item(const struct HDIF_array_hdr *hdif,</a>
+<a name="111"><span class="lineNum">     111 </span>                :            :                                 unsigned int index);</a>
 <a name="112"><span class="lineNum">     112 </span>                :            : </a>
-<a name="113"><span class="lineNum">     113 </span>                :            : /* HDIF_get_iarray_size - Get the number of elements of an internal data array</a>
-<a name="114"><span class="lineNum">     114 </span>                :            :  *</a>
-<a name="115"><span class="lineNum">     115 </span>                :            :  * @hdif  : HDIF structure pointer</a>
-<a name="116"><span class="lineNum">     116 </span>                :            :  * @di    : Index of the idata pointer</a>
-<a name="117"><span class="lineNum">     117 </span>                :            :  *</a>
-<a name="118"><span class="lineNum">     118 </span>                :            :  * A negative result means an error</a>
-<a name="119"><span class="lineNum">     119 </span>                :            :  */</a>
-<a name="120"><span class="lineNum">     120 </span>                :            : extern int HDIF_get_iarray_size(const struct HDIF_common_hdr *hdif,</a>
-<a name="121"><span class="lineNum">     121 </span>                :            :                                 unsigned int di);</a>
-<a name="122"><span class="lineNum">     122 </span>                :            : </a>
-<a name="123"><span class="lineNum">     123 </span>                :            : /* HDIF_child_arr - Get a child array from this HDIF.</a>
-<a name="124"><span class="lineNum">     124 </span>                :            :  *</a>
-<a name="125"><span class="lineNum">     125 </span>                :            :  * @hdif  : HDIF structure pointer</a>
-<a name="126"><span class="lineNum">     126 </span>                :            :  * @idx   : the child to get</a>
-<a name="127"><span class="lineNum">     127 </span>                :            :  *</a>
-<a name="128"><span class="lineNum">     128 </span>                :            :  * NULL means an error (not that many children).</a>
-<a name="129"><span class="lineNum">     129 </span>                :            :  */</a>
-<a name="130"><span class="lineNum">     130 </span>                :            : extern struct HDIF_child_ptr *</a>
-<a name="131"><span class="lineNum">     131 </span>                :            : HDIF_child_arr(const struct HDIF_common_hdr *hdif, unsigned int idx);</a>
-<a name="132"><span class="lineNum">     132 </span>                :            : </a>
-<a name="133"><span class="lineNum">     133 </span>                :            : /* HDIF_child - Deref a child_ptr entry.</a>
-<a name="134"><span class="lineNum">     134 </span>                :            :  *</a>
-<a name="135"><span class="lineNum">     135 </span>                :            :  * @hdif  : HDIF structure pointer</a>
-<a name="136"><span class="lineNum">     136 </span>                :            :  * @child : the child returned from HDIF_child_arr</a>
-<a name="137"><span class="lineNum">     137 </span>                :            :  * @idx   : the index of the child to get (&lt; child-&gt;count).</a>
-<a name="138"><span class="lineNum">     138 </span>                :            :  * @eyecatcher: the 6-char ID expected for this child.</a>
-<a name="139"><span class="lineNum">     139 </span>                :            :  *</a>
-<a name="140"><span class="lineNum">     140 </span>                :            :  * NULL means an error.</a>
-<a name="141"><span class="lineNum">     141 </span>                :            :  */</a>
-<a name="142"><span class="lineNum">     142 </span>                :            : extern struct HDIF_common_hdr *HDIF_child(const struct HDIF_common_hdr *hdif,</a>
-<a name="143"><span class="lineNum">     143 </span>                :            :                                           const struct HDIF_child_ptr *child,</a>
-<a name="144"><span class="lineNum">     144 </span>                :            :                                           unsigned int idx,</a>
-<a name="145"><span class="lineNum">     145 </span>                :            :                                           const char *eyecatcher);</a>
-<a name="146"><span class="lineNum">     146 </span>                :            : #endif /* __HDIF_H */</a>
+<a name="113"><span class="lineNum">     113 </span>                :            : #define HDIF_iarray_for_each(arr, idx, ptr) \</a>
+<a name="114"><span class="lineNum">     114 </span>                :            :         for (idx = 0, ptr = HDIF_iarray_item(arr, idx); \</a>
+<a name="115"><span class="lineNum">     115 </span>                :            :                 ptr; idx++, ptr = HDIF_iarray_item(arr, idx))</a>
+<a name="116"><span class="lineNum">     116 </span>                :            : </a>
+<a name="117"><span class="lineNum">     117 </span>                :            : /* HDIF_get_iarray_size - Get the number of elements of an internal data array</a>
+<a name="118"><span class="lineNum">     118 </span>                :            :  *</a>
+<a name="119"><span class="lineNum">     119 </span>                :            :  * @hdif  : HDIF structure pointer</a>
+<a name="120"><span class="lineNum">     120 </span>                :            :  * @di    : Index of the idata pointer</a>
+<a name="121"><span class="lineNum">     121 </span>                :            :  *</a>
+<a name="122"><span class="lineNum">     122 </span>                :            :  * A negative result means an error</a>
+<a name="123"><span class="lineNum">     123 </span>                :            :  */</a>
+<a name="124"><span class="lineNum">     124 </span>                :            : extern int HDIF_get_iarray_size(const struct HDIF_common_hdr *hdif,</a>
+<a name="125"><span class="lineNum">     125 </span>                :            :                                 unsigned int di);</a>
+<a name="126"><span class="lineNum">     126 </span>                :            : </a>
+<a name="127"><span class="lineNum">     127 </span>                :            : /* HDIF_child_arr - Get a child array from this HDIF.</a>
+<a name="128"><span class="lineNum">     128 </span>                :            :  *</a>
+<a name="129"><span class="lineNum">     129 </span>                :            :  * @hdif  : HDIF structure pointer</a>
+<a name="130"><span class="lineNum">     130 </span>                :            :  * @idx   : the child to get</a>
+<a name="131"><span class="lineNum">     131 </span>                :            :  *</a>
+<a name="132"><span class="lineNum">     132 </span>                :            :  * NULL means an error (not that many children).</a>
+<a name="133"><span class="lineNum">     133 </span>                :            :  */</a>
+<a name="134"><span class="lineNum">     134 </span>                :            : extern struct HDIF_child_ptr *</a>
+<a name="135"><span class="lineNum">     135 </span>                :            : HDIF_child_arr(const struct HDIF_common_hdr *hdif, unsigned int idx);</a>
+<a name="136"><span class="lineNum">     136 </span>                :            : </a>
+<a name="137"><span class="lineNum">     137 </span>                :            : /* HDIF_child - Deref a child_ptr entry.</a>
+<a name="138"><span class="lineNum">     138 </span>                :            :  *</a>
+<a name="139"><span class="lineNum">     139 </span>                :            :  * @hdif  : HDIF structure pointer</a>
+<a name="140"><span class="lineNum">     140 </span>                :            :  * @child : the child returned from HDIF_child_arr</a>
+<a name="141"><span class="lineNum">     141 </span>                :            :  * @idx   : the index of the child to get (&lt; child-&gt;count).</a>
+<a name="142"><span class="lineNum">     142 </span>                :            :  * @eyecatcher: the 6-char ID expected for this child.</a>
+<a name="143"><span class="lineNum">     143 </span>                :            :  *</a>
+<a name="144"><span class="lineNum">     144 </span>                :            :  * NULL means an error.</a>
+<a name="145"><span class="lineNum">     145 </span>                :            :  */</a>
+<a name="146"><span class="lineNum">     146 </span>                :            : extern struct HDIF_common_hdr *HDIF_child(const struct HDIF_common_hdr *hdif,</a>
+<a name="147"><span class="lineNum">     147 </span>                :            :                                           const struct HDIF_child_ptr *child,</a>
+<a name="148"><span class="lineNum">     148 </span>                :            :                                           unsigned int idx,</a>
+<a name="149"><span class="lineNum">     149 </span>                :            :                                           const char *eyecatcher);</a>
+<a name="150"><span class="lineNum">     150 </span>                :            : #endif /* __HDIF_H */</a>
 </pre>
       </td>
     </tr>

@@ -31,13 +31,13 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">208</td>
-            <td class="headerCovTableEntry">274</td>
-            <td class="headerCovTableEntryMed">75.9 %</td>
+            <td class="headerCovTableEntry">207</td>
+            <td class="headerCovTableEntry">273</td>
+            <td class="headerCovTableEntryMed">75.8 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-09-18 13:49:48</td>
+            <td class="headerValue">2023-10-11 21:12:14</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">17</td>
@@ -258,13 +258,13 @@
 <a name="187"><span class="lineNum">     187 </span>                :            :         {&quot;WD&quot;, &quot;water_device&quot;},</a>
 <a name="188"><span class="lineNum">     188 </span>                :            : };</a>
 <a name="189"><span class="lineNum">     189 </span>                :            : </a>
-<a name="190"><span class="lineNum">     190 </span>                :<span class="lineCov">        157 : static const char *vpd_map_name(const char *vpd_name)</span></a>
+<a name="190"><span class="lineNum">     190 </span>                :<span class="lineCov">         68 : static const char *vpd_map_name(const char *vpd_name)</span></a>
 <a name="191"><span class="lineNum">     191 </span>                :            : {</a>
 <a name="192"><span class="lineNum">     192 </span>                :            :         int i;</a>
 <a name="193"><span class="lineNum">     193 </span>                :            : </a>
-<a name="194"><span class="lineNum">     194 </span>                :<span class="lineCov">       5430 :         for (i = 0; i &lt; ARRAY_SIZE(vpd_key_table); i++)</span></a>
-<a name="195"><span class="lineNum">     195 </span>                :<span class="lineCov">       5430 :                 if (!strcmp(vpd_key_table[i].keyword, vpd_name))</span></a>
-<a name="196"><span class="lineNum">     196 </span>                :<span class="lineCov">        157 :                         return vpd_key_table[i].description;</span></a>
+<a name="194"><span class="lineNum">     194 </span>                :<span class="lineCov">       2324 :         for (i = 0; i &lt; ARRAY_SIZE(vpd_key_table); i++)</span></a>
+<a name="195"><span class="lineNum">     195 </span>                :<span class="lineCov">       2324 :                 if (!strcmp(vpd_key_table[i].keyword, vpd_name))</span></a>
+<a name="196"><span class="lineNum">     196 </span>                :<span class="lineCov">         68 :                         return vpd_key_table[i].description;</span></a>
 <a name="197"><span class="lineNum">     197 </span>                :            : </a>
 <a name="198"><span class="lineNum">     198 </span>                :<span class="lineNoCov">          0 :         prlog(PR_WARNING, &quot;VPD: Could not map FRU ID %s to a known name\n&quot;,</span></a>
 <a name="199"><span class="lineNum">     199 </span>                :            :               vpd_name);</a>
@@ -272,56 +272,56 @@
 <a name="201"><span class="lineNum">     201 </span>                :<span class="lineNoCov">          0 :         return &quot;Unknown&quot;;</span></a>
 <a name="202"><span class="lineNum">     202 </span>                :            : }</a>
 <a name="203"><span class="lineNum">     203 </span>                :            : </a>
-<a name="204"><span class="lineNum">     204 </span>                :<span class="lineCov">         24 : static const struct card_info *card_info_lookup(char *ccin)</span></a>
+<a name="204"><span class="lineNum">     204 </span>                :<span class="lineCov">         10 : static const struct card_info *card_info_lookup(char *ccin)</span></a>
 <a name="205"><span class="lineNum">     205 </span>                :            : {</a>
 <a name="206"><span class="lineNum">     206 </span>                :            :         int i;</a>
-<a name="207"><span class="lineNum">     207 </span>                :<span class="lineCov">        474 :         for(i = 0; i &lt; ARRAY_SIZE(card_table); i++)</span></a>
+<a name="207"><span class="lineNum">     207 </span>                :<span class="lineCov">        177 :         for(i = 0; i &lt; ARRAY_SIZE(card_table); i++)</span></a>
 <a name="208"><span class="lineNum">     208 </span>                :            :                 /* CCIN is always 4 bytes in size */</a>
-<a name="209"><span class="lineNum">     209 </span>                :<span class="lineCov">        466 :                 if (!strncmp(card_table[i].ccin, ccin, 4))</span></a>
-<a name="210"><span class="lineNum">     210 </span>                :<span class="lineCov">         16 :                         return &amp;card_table[i];</span></a>
-<a name="211"><span class="lineNum">     211 </span>                :<span class="lineCov">          8 :         return NULL;</span></a>
+<a name="209"><span class="lineNum">     209 </span>                :<span class="lineCov">        174 :                 if (!strncmp(card_table[i].ccin, ccin, 4))</span></a>
+<a name="210"><span class="lineNum">     210 </span>                :<span class="lineCov">          7 :                         return &amp;card_table[i];</span></a>
+<a name="211"><span class="lineNum">     211 </span>                :<span class="lineCov">          3 :         return NULL;</span></a>
 <a name="212"><span class="lineNum">     212 </span>                :            : }</a>
 <a name="213"><span class="lineNum">     213 </span>                :            : </a>
 <a name="214"><span class="lineNum">     214 </span>                :            : /* Discard trailing spaces and populate device tree */</a>
-<a name="215"><span class="lineNum">     215 </span>                :<span class="lineCov">        218 : static struct dt_property *dt_add_prop_sanitize_val(struct dt_node *node,</span></a>
+<a name="215"><span class="lineNum">     215 </span>                :<span class="lineCov">         90 : static struct dt_property *dt_add_prop_sanitize_val(struct dt_node *node,</span></a>
 <a name="216"><span class="lineNum">     216 </span>                :            :                              const char *name, const char *val, int vlen)</a>
 <a name="217"><span class="lineNum">     217 </span>                :            : {</a>
-<a name="218"><span class="lineNum">     218 </span>                :<span class="lineCov">        218 :         char *prop = zalloc(vlen + 1);</span></a>
+<a name="218"><span class="lineNum">     218 </span>                :<span class="lineCov">         90 :         char *prop = zalloc(vlen + 1);</span></a>
 <a name="219"><span class="lineNum">     219 </span>                :            :         int i;</a>
-<a name="220"><span class="lineNum">     220 </span>                :<span class="lineCov">        218 :         struct dt_property *p = NULL;</span></a>
+<a name="220"><span class="lineNum">     220 </span>                :<span class="lineCov">         90 :         struct dt_property *p = NULL;</span></a>
 <a name="221"><span class="lineNum">     221 </span>                :            : </a>
-<a name="222"><span class="lineNum">     222 </span>                :<span class="lineCov">        218 :         if (!prop)</span></a>
+<a name="222"><span class="lineNum">     222 </span>                :<span class="lineCov">         90 :         if (!prop)</span></a>
 <a name="223"><span class="lineNum">     223 </span>                :<span class="lineNoCov">          0 :                 return p;</span></a>
 <a name="224"><span class="lineNum">     224 </span>                :            : </a>
-<a name="225"><span class="lineNum">     225 </span>                :<span class="lineCov">        218 :         memcpy(prop, val, vlen);</span></a>
-<a name="226"><span class="lineNum">     226 </span>                :<span class="lineCov">        226 :         for (i = vlen - 1; i &gt;= 0; i--) {</span></a>
-<a name="227"><span class="lineNum">     227 </span>                :<span class="lineCov">        226 :                 if (prop[i] != 0x20) {</span></a>
-<a name="228"><span class="lineNum">     228 </span>                :<span class="lineCov">        218 :                         prop[i + 1] = '\0';</span></a>
-<a name="229"><span class="lineNum">     229 </span>                :<span class="lineCov">        218 :                         break;</span></a>
+<a name="225"><span class="lineNum">     225 </span>                :<span class="lineCov">         90 :         memcpy(prop, val, vlen);</span></a>
+<a name="226"><span class="lineNum">     226 </span>                :<span class="lineCov">         94 :         for (i = vlen - 1; i &gt;= 0; i--) {</span></a>
+<a name="227"><span class="lineNum">     227 </span>                :<span class="lineCov">         94 :                 if (prop[i] != 0x20) {</span></a>
+<a name="228"><span class="lineNum">     228 </span>                :<span class="lineCov">         90 :                         prop[i + 1] = '\0';</span></a>
+<a name="229"><span class="lineNum">     229 </span>                :<span class="lineCov">         90 :                         break;</span></a>
 <a name="230"><span class="lineNum">     230 </span>                :            :                 }</a>
 <a name="231"><span class="lineNum">     231 </span>                :            :         }</a>
 <a name="232"><span class="lineNum">     232 </span>                :            : </a>
-<a name="233"><span class="lineNum">     233 </span>                :<span class="lineCov">        218 :         if (i &gt;= 0 &amp;&amp; !dt_find_property(node, name))</span></a>
-<a name="234"><span class="lineNum">     234 </span>                :<span class="lineCov">        218 :                 p = dt_add_property_string(node, name, prop);</span></a>
+<a name="233"><span class="lineNum">     233 </span>                :<span class="lineCov">         90 :         if (i &gt;= 0 &amp;&amp; !dt_find_property(node, name))</span></a>
+<a name="234"><span class="lineNum">     234 </span>                :<span class="lineCov">         90 :                 p = dt_add_property_string(node, name, prop);</span></a>
 <a name="235"><span class="lineNum">     235 </span>                :            : </a>
-<a name="236"><span class="lineNum">     236 </span>                :<span class="lineCov">        218 :         free(prop);</span></a>
-<a name="237"><span class="lineNum">     237 </span>                :<span class="lineCov">        218 :         return p;</span></a>
+<a name="236"><span class="lineNum">     236 </span>                :<span class="lineCov">         90 :         free(prop);</span></a>
+<a name="237"><span class="lineNum">     237 </span>                :<span class="lineCov">         90 :         return p;</span></a>
 <a name="238"><span class="lineNum">     238 </span>                :            : }</a>
 <a name="239"><span class="lineNum">     239 </span>                :            : </a>
 <a name="240"><span class="lineNum">     240 </span>                :            : /*</a>
 <a name="241"><span class="lineNum">     241 </span>                :            :  * OpenPower system does not provide processor vendor name under FRU VPD.</a>
 <a name="242"><span class="lineNum">     242 </span>                :            :  * Parse processor module VPD to get vendor detail</a>
 <a name="243"><span class="lineNum">     243 </span>                :            :  */</a>
-<a name="244"><span class="lineNum">     244 </span>                :<span class="lineCov">          6 : void dt_add_proc_vendor(struct dt_node *proc_node,</span></a>
+<a name="244"><span class="lineNum">     244 </span>                :<span class="lineCov">          2 : void dt_add_proc_vendor(struct dt_node *proc_node,</span></a>
 <a name="245"><span class="lineNum">     245 </span>                :            :                         const void *mvpd, unsigned int mvpd_sz)</a>
 <a name="246"><span class="lineNum">     246 </span>                :            : {</a>
 <a name="247"><span class="lineNum">     247 </span>                :            :         const void *kw;</a>
 <a name="248"><span class="lineNum">     248 </span>                :            :         uint8_t sz;</a>
 <a name="249"><span class="lineNum">     249 </span>                :            : </a>
-<a name="250"><span class="lineNum">     250 </span>                :<span class="lineCov">          6 :         kw = vpd_find(mvpd, mvpd_sz, &quot;VINI&quot;, &quot;VN&quot;, &amp;sz);</span></a>
-<a name="251"><span class="lineNum">     251 </span>                :<span class="lineCov">          6 :         if (kw)</span></a>
+<a name="250"><span class="lineNum">     250 </span>                :<span class="lineCov">          2 :         kw = vpd_find(mvpd, mvpd_sz, &quot;VINI&quot;, &quot;VN&quot;, &amp;sz);</span></a>
+<a name="251"><span class="lineNum">     251 </span>                :<span class="lineCov">          2 :         if (kw)</span></a>
 <a name="252"><span class="lineNum">     252 </span>                :<span class="lineNoCov">          0 :                 dt_add_prop_sanitize_val(proc_node, &quot;vendor&quot;, kw, sz);</span></a>
-<a name="253"><span class="lineNum">     253 </span>                :<span class="lineCov">          6 : }</span></a>
+<a name="253"><span class="lineNum">     253 </span>                :<span class="lineCov">          2 : }</span></a>
 <a name="254"><span class="lineNum">     254 </span>                :            : </a>
 <a name="255"><span class="lineNum">     255 </span>                :            : /*</a>
 <a name="256"><span class="lineNum">     256 </span>                :            :  * For OpenPOWER, we only decipher OPFR records. While OP HDAT have VINI</a>
@@ -365,26 +365,26 @@
 <a name="294"><span class="lineNum">     294 </span>                :            : /*</a>
 <a name="295"><span class="lineNum">     295 </span>                :            :  * For CPUs, parse the VRML data.</a>
 <a name="296"><span class="lineNum">     296 </span>                :            :  */</a>
-<a name="297"><span class="lineNum">     297 </span>                :<span class="lineCov">          6 : static void vpd_vrml_parse(struct dt_node *node,</span></a>
+<a name="297"><span class="lineNum">     297 </span>                :<span class="lineCov">          2 : static void vpd_vrml_parse(struct dt_node *node,</span></a>
 <a name="298"><span class="lineNum">     298 </span>                :            :                 const void *fruvpd, unsigned int fruvpd_sz)</a>
 <a name="299"><span class="lineNum">     299 </span>                :            : {</a>
 <a name="300"><span class="lineNum">     300 </span>                :            :         const void *kw;</a>
 <a name="301"><span class="lineNum">     301 </span>                :            :         uint8_t sz;</a>
 <a name="302"><span class="lineNum">     302 </span>                :            : </a>
 <a name="303"><span class="lineNum">     303 </span>                :            :         /* Part number */</a>
-<a name="304"><span class="lineNum">     304 </span>                :<span class="lineCov">          6 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VRML&quot;, &quot;PN&quot;, &amp;sz);</span></a>
-<a name="305"><span class="lineNum">     305 </span>                :<span class="lineCov">          6 :         if (kw)</span></a>
-<a name="306"><span class="lineNum">     306 </span>                :<span class="lineCov">          6 :                 dt_add_prop_sanitize_val(node, &quot;part-number&quot;, kw, sz);</span></a>
+<a name="304"><span class="lineNum">     304 </span>                :<span class="lineCov">          2 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VRML&quot;, &quot;PN&quot;, &amp;sz);</span></a>
+<a name="305"><span class="lineNum">     305 </span>                :<span class="lineCov">          2 :         if (kw)</span></a>
+<a name="306"><span class="lineNum">     306 </span>                :<span class="lineCov">          2 :                 dt_add_prop_sanitize_val(node, &quot;part-number&quot;, kw, sz);</span></a>
 <a name="307"><span class="lineNum">     307 </span>                :            : </a>
 <a name="308"><span class="lineNum">     308 </span>                :            :         /* Serial number */</a>
-<a name="309"><span class="lineNum">     309 </span>                :<span class="lineCov">          6 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VRML&quot;, &quot;SN&quot;, &amp;sz);</span></a>
-<a name="310"><span class="lineNum">     310 </span>                :<span class="lineCov">          6 :         if (kw)</span></a>
-<a name="311"><span class="lineNum">     311 </span>                :<span class="lineCov">          6 :                 dt_add_prop_sanitize_val(node, &quot;serial-number&quot;, kw, sz);</span></a>
+<a name="309"><span class="lineNum">     309 </span>                :<span class="lineCov">          2 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VRML&quot;, &quot;SN&quot;, &amp;sz);</span></a>
+<a name="310"><span class="lineNum">     310 </span>                :<span class="lineCov">          2 :         if (kw)</span></a>
+<a name="311"><span class="lineNum">     311 </span>                :<span class="lineCov">          2 :                 dt_add_prop_sanitize_val(node, &quot;serial-number&quot;, kw, sz);</span></a>
 <a name="312"><span class="lineNum">     312 </span>                :            : </a>
-<a name="313"><span class="lineNum">     313 </span>                :<span class="lineCov">          6 :         return;</span></a>
+<a name="313"><span class="lineNum">     313 </span>                :<span class="lineCov">          2 :         return;</span></a>
 <a name="314"><span class="lineNum">     314 </span>                :            : }</a>
 <a name="315"><span class="lineNum">     315 </span>                :            : </a>
-<a name="316"><span class="lineNum">     316 </span>                :<span class="lineCov">         24 : static void vpd_vini_parse(struct dt_node *node,</span></a>
+<a name="316"><span class="lineNum">     316 </span>                :<span class="lineCov">         10 : static void vpd_vini_parse(struct dt_node *node,</span></a>
 <a name="317"><span class="lineNum">     317 </span>                :            :                            const void *fruvpd, unsigned int fruvpd_sz)</a>
 <a name="318"><span class="lineNum">     318 </span>                :            : {</a>
 <a name="319"><span class="lineNum">     319 </span>                :            :         const void *kw;</a>
@@ -393,58 +393,58 @@
 <a name="322"><span class="lineNum">     322 </span>                :            :         const struct card_info *cinfo;</a>
 <a name="323"><span class="lineNum">     323 </span>                :            : </a>
 <a name="324"><span class="lineNum">     324 </span>                :            :         /* FRU Stocking Part Number */</a>
-<a name="325"><span class="lineNum">     325 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;FN&quot;, &amp;sz);</span></a>
-<a name="326"><span class="lineNum">     326 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
-<a name="327"><span class="lineNum">     327 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;fru-number&quot;, kw, sz);</span></a>
+<a name="325"><span class="lineNum">     325 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;FN&quot;, &amp;sz);</span></a>
+<a name="326"><span class="lineNum">     326 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
+<a name="327"><span class="lineNum">     327 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;fru-number&quot;, kw, sz);</span></a>
 <a name="328"><span class="lineNum">     328 </span>                :            : </a>
 <a name="329"><span class="lineNum">     329 </span>                :            :         /* Serial Number */</a>
-<a name="330"><span class="lineNum">     330 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;SN&quot;, &amp;sz);</span></a>
-<a name="331"><span class="lineNum">     331 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
-<a name="332"><span class="lineNum">     332 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;serial-number&quot;, kw, sz);</span></a>
+<a name="330"><span class="lineNum">     330 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;SN&quot;, &amp;sz);</span></a>
+<a name="331"><span class="lineNum">     331 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
+<a name="332"><span class="lineNum">     332 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;serial-number&quot;, kw, sz);</span></a>
 <a name="333"><span class="lineNum">     333 </span>                :            : </a>
 <a name="334"><span class="lineNum">     334 </span>                :            :         /* Part Number */</a>
-<a name="335"><span class="lineNum">     335 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;PN&quot;, &amp;sz);</span></a>
-<a name="336"><span class="lineNum">     336 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
-<a name="337"><span class="lineNum">     337 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;part-number&quot;, kw, sz);</span></a>
+<a name="335"><span class="lineNum">     335 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;PN&quot;, &amp;sz);</span></a>
+<a name="336"><span class="lineNum">     336 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
+<a name="337"><span class="lineNum">     337 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;part-number&quot;, kw, sz);</span></a>
 <a name="338"><span class="lineNum">     338 </span>                :            : </a>
 <a name="339"><span class="lineNum">     339 </span>                :            :         /* Vendor Name */</a>
-<a name="340"><span class="lineNum">     340 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;VN&quot;, &amp;sz);</span></a>
-<a name="341"><span class="lineNum">     341 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
+<a name="340"><span class="lineNum">     340 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;VN&quot;, &amp;sz);</span></a>
+<a name="341"><span class="lineNum">     341 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
 <a name="342"><span class="lineNum">     342 </span>                :<span class="lineNoCov">          0 :                 dt_add_prop_sanitize_val(node, &quot;vendor&quot;, kw, sz);</span></a>
 <a name="343"><span class="lineNum">     343 </span>                :            : </a>
 <a name="344"><span class="lineNum">     344 </span>                :            :         /* CCIN Extension */</a>
-<a name="345"><span class="lineNum">     345 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;CE&quot;, &amp;sz);</span></a>
-<a name="346"><span class="lineNum">     346 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
-<a name="347"><span class="lineNum">     347 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;ccin-extension&quot;, kw, sz);</span></a>
+<a name="345"><span class="lineNum">     345 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;CE&quot;, &amp;sz);</span></a>
+<a name="346"><span class="lineNum">     346 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
+<a name="347"><span class="lineNum">     347 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;ccin-extension&quot;, kw, sz);</span></a>
 <a name="348"><span class="lineNum">     348 </span>                :            : </a>
 <a name="349"><span class="lineNum">     349 </span>                :            :         /* HW Version info */</a>
-<a name="350"><span class="lineNum">     350 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;HW&quot;, &amp;sz);</span></a>
-<a name="351"><span class="lineNum">     351 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
-<a name="352"><span class="lineNum">     352 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;hw-version&quot;, kw, sz);</span></a>
+<a name="350"><span class="lineNum">     350 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;HW&quot;, &amp;sz);</span></a>
+<a name="351"><span class="lineNum">     351 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
+<a name="352"><span class="lineNum">     352 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;hw-version&quot;, kw, sz);</span></a>
 <a name="353"><span class="lineNum">     353 </span>                :            : </a>
 <a name="354"><span class="lineNum">     354 </span>                :            :         /* Card type info */</a>
-<a name="355"><span class="lineNum">     355 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;CT&quot;, &amp;sz);</span></a>
-<a name="356"><span class="lineNum">     356 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
-<a name="357"><span class="lineNum">     357 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;card-type&quot;, kw, sz);</span></a>
+<a name="355"><span class="lineNum">     355 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;CT&quot;, &amp;sz);</span></a>
+<a name="356"><span class="lineNum">     356 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
+<a name="357"><span class="lineNum">     357 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;card-type&quot;, kw, sz);</span></a>
 <a name="358"><span class="lineNum">     358 </span>                :            : </a>
 <a name="359"><span class="lineNum">     359 </span>                :            :         /* HW characteristics info */</a>
-<a name="360"><span class="lineNum">     360 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;B3&quot;, &amp;sz);</span></a>
-<a name="361"><span class="lineNum">     361 </span>                :<span class="lineCov">         24 :         if (kw)</span></a>
-<a name="362"><span class="lineNum">     362 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;hw-characteristics&quot;, kw, sz);</span></a>
+<a name="360"><span class="lineNum">     360 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;B3&quot;, &amp;sz);</span></a>
+<a name="361"><span class="lineNum">     361 </span>                :<span class="lineCov">         10 :         if (kw)</span></a>
+<a name="362"><span class="lineNum">     362 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;hw-characteristics&quot;, kw, sz);</span></a>
 <a name="363"><span class="lineNum">     363 </span>                :            : </a>
 <a name="364"><span class="lineNum">     364 </span>                :            :         /* Customer Card Identification Number (CCIN) */</a>
-<a name="365"><span class="lineNum">     365 </span>                :<span class="lineCov">         24 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;CC&quot;, &amp;sz);</span></a>
-<a name="366"><span class="lineNum">     366 </span>                :<span class="lineCov">         24 :         if (kw) {</span></a>
-<a name="367"><span class="lineNum">     367 </span>                :<span class="lineCov">         24 :                 dt_add_prop_sanitize_val(node, &quot;ccin&quot;, kw, sz);</span></a>
+<a name="365"><span class="lineNum">     365 </span>                :<span class="lineCov">         10 :         kw = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;CC&quot;, &amp;sz);</span></a>
+<a name="366"><span class="lineNum">     366 </span>                :<span class="lineCov">         10 :         if (kw) {</span></a>
+<a name="367"><span class="lineNum">     367 </span>                :<span class="lineCov">         10 :                 dt_add_prop_sanitize_val(node, &quot;ccin&quot;, kw, sz);</span></a>
 <a name="368"><span class="lineNum">     368 </span>                :            : </a>
-<a name="369"><span class="lineNum">     369 </span>                :<span class="lineCov">         24 :                 cinfo = card_info_lookup((char *)kw);</span></a>
-<a name="370"><span class="lineNum">     370 </span>                :<span class="lineCov">         24 :                 if (cinfo) {</span></a>
-<a name="371"><span class="lineNum">     371 </span>                :<span class="lineCov">         16 :                         dt_add_property_string(node,</span></a>
-<a name="372"><span class="lineNum">     372 </span>                :<span class="lineCov">         16 :                                        &quot;description&quot;, cinfo-&gt;description);</span></a>
+<a name="369"><span class="lineNum">     369 </span>                :<span class="lineCov">         10 :                 cinfo = card_info_lookup((char *)kw);</span></a>
+<a name="370"><span class="lineNum">     370 </span>                :<span class="lineCov">         10 :                 if (cinfo) {</span></a>
+<a name="371"><span class="lineNum">     371 </span>                :<span class="lineCov">          7 :                         dt_add_property_string(node,</span></a>
+<a name="372"><span class="lineNum">     372 </span>                :<span class="lineCov">          7 :                                        &quot;description&quot;, cinfo-&gt;description);</span></a>
 <a name="373"><span class="lineNum">     373 </span>                :            :                 } else {</a>
-<a name="374"><span class="lineNum">     374 </span>                :<span class="lineCov">          8 :                         desc = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;DR&quot;, &amp;sz);</span></a>
-<a name="375"><span class="lineNum">     375 </span>                :<span class="lineCov">          8 :                         if (desc) {</span></a>
-<a name="376"><span class="lineNum">     376 </span>                :<span class="lineCov">          8 :                                 dt_add_prop_sanitize_val(node,</span></a>
+<a name="374"><span class="lineNum">     374 </span>                :<span class="lineCov">          3 :                         desc = vpd_find(fruvpd, fruvpd_sz, &quot;VINI&quot;, &quot;DR&quot;, &amp;sz);</span></a>
+<a name="375"><span class="lineNum">     375 </span>                :<span class="lineCov">          3 :                         if (desc) {</span></a>
+<a name="376"><span class="lineNum">     376 </span>                :<span class="lineCov">          3 :                                 dt_add_prop_sanitize_val(node,</span></a>
 <a name="377"><span class="lineNum">     377 </span>                :            :                                                      &quot;description&quot;, desc, sz);</a>
 <a name="378"><span class="lineNum">     378 </span>                :            :                         } else {</a>
 <a name="379"><span class="lineNum">     379 </span>                :<span class="lineNoCov">          0 :                                 dt_add_property_string(node, &quot;description&quot;, &quot;Unknown&quot;);</span></a>
@@ -455,30 +455,30 @@
 <a name="384"><span class="lineNum">     384 </span>                :            :                 }</a>
 <a name="385"><span class="lineNum">     385 </span>                :            :         }</a>
 <a name="386"><span class="lineNum">     386 </span>                :            : </a>
-<a name="387"><span class="lineNum">     387 </span>                :<span class="lineCov">         24 :         return;</span></a>
+<a name="387"><span class="lineNum">     387 </span>                :<span class="lineCov">         10 :         return;</span></a>
 <a name="388"><span class="lineNum">     388 </span>                :            : }</a>
 <a name="389"><span class="lineNum">     389 </span>                :            : </a>
-<a name="390"><span class="lineNum">     390 </span>                :<span class="lineCov">        139 : static bool valid_child_entry(const struct slca_entry *entry)</span></a>
+<a name="390"><span class="lineNum">     390 </span>                :<span class="lineCov">         69 : static bool valid_child_entry(const struct slca_entry *entry)</span></a>
 <a name="391"><span class="lineNum">     391 </span>                :            : {</a>
-<a name="392"><span class="lineNum">     392 </span>                :<span class="lineCov">        139 :         if ((entry-&gt;install_indic == SLCA_INSTALL_INSTALLED) &amp;&amp;</span></a>
-<a name="393"><span class="lineNum">     393 </span>                :<span class="lineCov">         66 :                 (entry-&gt;vpd_collected == SLCA_VPD_COLLECTED))</span></a>
-<a name="394"><span class="lineNum">     394 </span>                :<span class="lineCov">         66 :                 return true;</span></a>
+<a name="392"><span class="lineNum">     392 </span>                :<span class="lineCov">         69 :         if ((entry-&gt;install_indic == SLCA_INSTALL_INSTALLED) &amp;&amp;</span></a>
+<a name="393"><span class="lineNum">     393 </span>                :<span class="lineCov">         29 :                 (entry-&gt;vpd_collected == SLCA_VPD_COLLECTED))</span></a>
+<a name="394"><span class="lineNum">     394 </span>                :<span class="lineCov">         29 :                 return true;</span></a>
 <a name="395"><span class="lineNum">     395 </span>                :            : </a>
-<a name="396"><span class="lineNum">     396 </span>                :<span class="lineCov">         73 :         return false;</span></a>
+<a name="396"><span class="lineNum">     396 </span>                :<span class="lineCov">         40 :         return false;</span></a>
 <a name="397"><span class="lineNum">     397 </span>                :            : }</a>
 <a name="398"><span class="lineNum">     398 </span>                :            : </a>
-<a name="399"><span class="lineNum">     399 </span>                :<span class="lineCov">         30 : void vpd_data_parse(struct dt_node *node, const void *fruvpd, u32 fruvpd_sz)</span></a>
+<a name="399"><span class="lineNum">     399 </span>                :<span class="lineCov">         12 : void vpd_data_parse(struct dt_node *node, const void *fruvpd, u32 fruvpd_sz)</span></a>
 <a name="400"><span class="lineNum">     400 </span>                :            : {</a>
-<a name="401"><span class="lineNum">     401 </span>                :<span class="lineCov">         30 :         if (vpd_find_record(fruvpd, fruvpd_sz, &quot;OPFR&quot;, NULL))</span></a>
+<a name="401"><span class="lineNum">     401 </span>                :<span class="lineCov">         12 :         if (vpd_find_record(fruvpd, fruvpd_sz, &quot;OPFR&quot;, NULL))</span></a>
 <a name="402"><span class="lineNum">     402 </span>                :<span class="lineNoCov">          0 :                 vpd_opfr_parse(node, fruvpd, fruvpd_sz);</span></a>
-<a name="403"><span class="lineNum">     403 </span>                :<span class="lineCov">         30 :         else if (vpd_find_record(fruvpd, fruvpd_sz, &quot;VRML&quot;, NULL))</span></a>
-<a name="404"><span class="lineNum">     404 </span>                :<span class="lineCov">          6 :                 vpd_vrml_parse(node, fruvpd, fruvpd_sz);</span></a>
+<a name="403"><span class="lineNum">     403 </span>                :<span class="lineCov">         12 :         else if (vpd_find_record(fruvpd, fruvpd_sz, &quot;VRML&quot;, NULL))</span></a>
+<a name="404"><span class="lineNum">     404 </span>                :<span class="lineCov">          2 :                 vpd_vrml_parse(node, fruvpd, fruvpd_sz);</span></a>
 <a name="405"><span class="lineNum">     405 </span>                :            :         else</a>
-<a name="406"><span class="lineNum">     406 </span>                :<span class="lineCov">         24 :                 vpd_vini_parse(node, fruvpd, fruvpd_sz);</span></a>
-<a name="407"><span class="lineNum">     407 </span>                :<span class="lineCov">         30 : }</span></a>
+<a name="406"><span class="lineNum">     406 </span>                :<span class="lineCov">         10 :                 vpd_vini_parse(node, fruvpd, fruvpd_sz);</span></a>
+<a name="407"><span class="lineNum">     407 </span>                :<span class="lineCov">         12 : }</span></a>
 <a name="408"><span class="lineNum">     408 </span>                :            : </a>
 <a name="409"><span class="lineNum">     409 </span>                :            : /* Create the /vpd node and add its children */</a>
-<a name="410"><span class="lineNum">     410 </span>                :<span class="lineCov">          2 : void dt_init_vpd_node(void)</span></a>
+<a name="410"><span class="lineNum">     410 </span>                :<span class="lineCov">          1 : void dt_init_vpd_node(void)</span></a>
 <a name="411"><span class="lineNum">     411 </span>                :            : {</a>
 <a name="412"><span class="lineNum">     412 </span>                :            :         const char *name, *p_name;</a>
 <a name="413"><span class="lineNum">     413 </span>                :            :         int count, index;</a>
@@ -488,28 +488,28 @@
 <a name="417"><span class="lineNum">     417 </span>                :            :         struct dt_node *parent, *node;</a>
 <a name="418"><span class="lineNum">     418 </span>                :            :         const struct slca_entry *entry, *p_entry;</a>
 <a name="419"><span class="lineNum">     419 </span>                :            : </a>
-<a name="420"><span class="lineNum">     420 </span>                :<span class="lineCov">          2 :         dt_vpd = dt_new(dt_root, &quot;vpd&quot;);</span></a>
-<a name="421"><span class="lineNum">     421 </span>                :<span class="lineCov">          2 :         assert(dt_vpd);</span></a>
-<a name="422"><span class="lineNum">     422 </span>                :<span class="lineCov">          2 :         dt_add_property_string(dt_vpd, &quot;compatible&quot;, &quot;ibm,opal-v3-vpd&quot;);</span></a>
-<a name="423"><span class="lineNum">     423 </span>                :<span class="lineCov">          2 :         dt_add_property_cells(dt_vpd, &quot;#size-cells&quot;, 0);</span></a>
-<a name="424"><span class="lineNum">     424 </span>                :<span class="lineCov">          2 :         dt_add_property_cells(dt_vpd, &quot;#address-cells&quot;, 1);</span></a>
+<a name="420"><span class="lineNum">     420 </span>                :<span class="lineCov">          1 :         dt_vpd = dt_new(dt_root, &quot;vpd&quot;);</span></a>
+<a name="421"><span class="lineNum">     421 </span>                :<span class="lineCov">          1 :         assert(dt_vpd);</span></a>
+<a name="422"><span class="lineNum">     422 </span>                :<span class="lineCov">          1 :         dt_add_property_string(dt_vpd, &quot;compatible&quot;, &quot;ibm,opal-v3-vpd&quot;);</span></a>
+<a name="423"><span class="lineNum">     423 </span>                :<span class="lineCov">          1 :         dt_add_property_cells(dt_vpd, &quot;#size-cells&quot;, 0);</span></a>
+<a name="424"><span class="lineNum">     424 </span>                :<span class="lineCov">          1 :         dt_add_property_cells(dt_vpd, &quot;#address-cells&quot;, 1);</span></a>
 <a name="425"><span class="lineNum">     425 </span>                :            : </a>
-<a name="426"><span class="lineNum">     426 </span>                :<span class="lineCov">          2 :         slca_hdr = get_hdif(&amp;spira.ntuples.slca, SLCA_HDIF_SIG);</span></a>
-<a name="427"><span class="lineNum">     427 </span>                :<span class="lineCov">          2 :         if (!slca_hdr) {</span></a>
+<a name="426"><span class="lineNum">     426 </span>                :<span class="lineCov">          1 :         slca_hdr = get_hdif(&amp;spiras-&gt;ntuples.slca, SLCA_HDIF_SIG);</span></a>
+<a name="427"><span class="lineNum">     427 </span>                :<span class="lineCov">          1 :         if (!slca_hdr) {</span></a>
 <a name="428"><span class="lineNum">     428 </span>                :<span class="lineNoCov">          0 :                 prerror(&quot;SLCA Invalid\n&quot;);</span></a>
 <a name="429"><span class="lineNum">     429 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="430"><span class="lineNum">     430 </span>                :            :         }</a>
 <a name="431"><span class="lineNum">     431 </span>                :            : </a>
-<a name="432"><span class="lineNum">     432 </span>                :<span class="lineCov">          2 :         count = HDIF_get_iarray_size(slca_hdr, SLCA_IDATA_ARRAY);</span></a>
-<a name="433"><span class="lineNum">     433 </span>                :<span class="lineCov">          2 :         if (count &lt; 0) {</span></a>
+<a name="432"><span class="lineNum">     432 </span>                :<span class="lineCov">          1 :         count = HDIF_get_iarray_size(slca_hdr, SLCA_IDATA_ARRAY);</span></a>
+<a name="433"><span class="lineNum">     433 </span>                :<span class="lineCov">          1 :         if (count &lt; 0) {</span></a>
 <a name="434"><span class="lineNum">     434 </span>                :<span class="lineNoCov">          0 :                 prerror(&quot;SLCA: Can't find SLCA array size!\n&quot;);</span></a>
 <a name="435"><span class="lineNum">     435 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="436"><span class="lineNum">     436 </span>                :            :         }</a>
 <a name="437"><span class="lineNum">     437 </span>                :            : </a>
-<a name="438"><span class="lineNum">     438 </span>                :<span class="lineCov">        141 :         for (index = 0; index &lt; count; index++) {</span></a>
+<a name="438"><span class="lineNum">     438 </span>                :<span class="lineCov">         70 :         for (index = 0; index &lt; count; index++) {</span></a>
 <a name="439"><span class="lineNum">     439 </span>                :            :                 /* Get SLCA entry */</a>
-<a name="440"><span class="lineNum">     440 </span>                :<span class="lineCov">        139 :                 entry = slca_get_entry(index);</span></a>
-<a name="441"><span class="lineNum">     441 </span>                :<span class="lineCov">        139 :                 if (!entry)</span></a>
+<a name="440"><span class="lineNum">     440 </span>                :<span class="lineCov">         69 :                 entry = slca_get_entry(index);</span></a>
+<a name="441"><span class="lineNum">     441 </span>                :<span class="lineCov">         69 :                 if (!entry)</span></a>
 <a name="442"><span class="lineNum">     442 </span>                :<span class="lineNoCov">          0 :                         continue;</span></a>
 <a name="443"><span class="lineNum">     443 </span>                :            : </a>
 <a name="444"><span class="lineNum">     444 </span>                :            :                 /*</a>
@@ -518,51 +518,51 @@
 <a name="447"><span class="lineNum">     447 </span>                :            :                  *   b. SLCA_VPD_COLLECTED is set in s_entry-&gt;vpd_collected</a>
 <a name="448"><span class="lineNum">     448 </span>                :            :                  *   c. The SLCA is not a duplicate entry.</a>
 <a name="449"><span class="lineNum">     449 </span>                :            :                  */</a>
-<a name="450"><span class="lineNum">     450 </span>                :<span class="lineCov">        139 :                 if (!valid_child_entry(entry))</span></a>
-<a name="451"><span class="lineNum">     451 </span>                :<span class="lineCov">         73 :                         goto next_entry;</span></a>
+<a name="450"><span class="lineNum">     450 </span>                :<span class="lineCov">         69 :                 if (!valid_child_entry(entry))</span></a>
+<a name="451"><span class="lineNum">     451 </span>                :<span class="lineCov">         40 :                         goto next_entry;</span></a>
 <a name="452"><span class="lineNum">     452 </span>                :            : </a>
-<a name="453"><span class="lineNum">     453 </span>                :<span class="lineCov">         66 :                 name = vpd_map_name(entry-&gt;fru_id);</span></a>
-<a name="454"><span class="lineNum">     454 </span>                :<span class="lineCov">         66 :                 addr = be16_to_cpu(entry-&gt;rsrc_id);</span></a>
+<a name="453"><span class="lineNum">     453 </span>                :<span class="lineCov">         29 :                 name = vpd_map_name(entry-&gt;fru_id);</span></a>
+<a name="454"><span class="lineNum">     454 </span>                :<span class="lineCov">         29 :                 addr = be16_to_cpu(entry-&gt;rsrc_id);</span></a>
 <a name="455"><span class="lineNum">     455 </span>                :            :                 /* Check node is already created or not */</a>
-<a name="456"><span class="lineNum">     456 </span>                :<span class="lineCov">         66 :                 if (dt_find_by_name_addr(dt_vpd, name, addr))</span></a>
+<a name="456"><span class="lineNum">     456 </span>                :<span class="lineCov">         29 :                 if (dt_find_by_name_addr(dt_vpd, name, addr))</span></a>
 <a name="457"><span class="lineNum">     457 </span>                :<span class="lineNoCov">          0 :                         goto next_entry;</span></a>
 <a name="458"><span class="lineNum">     458 </span>                :            : </a>
 <a name="459"><span class="lineNum">     459 </span>                :            :                 /* Get parent node */</a>
-<a name="460"><span class="lineNum">     460 </span>                :<span class="lineCov">         66 :                 if (index == SLCA_ROOT_INDEX) {</span></a>
-<a name="461"><span class="lineNum">     461 </span>                :<span class="lineCov">          2 :                         parent = dt_vpd;</span></a>
+<a name="460"><span class="lineNum">     460 </span>                :<span class="lineCov">         29 :                 if (index == SLCA_ROOT_INDEX) {</span></a>
+<a name="461"><span class="lineNum">     461 </span>                :<span class="lineCov">          1 :                         parent = dt_vpd;</span></a>
 <a name="462"><span class="lineNum">     462 </span>                :            :                 } else {</a>
-<a name="463"><span class="lineNum">     463 </span>                :<span class="lineCov">         64 :                         p_entry = slca_get_entry(be16_to_cpu(entry-&gt;parent_index));</span></a>
-<a name="464"><span class="lineNum">     464 </span>                :<span class="lineCov">         64 :                         if (!p_entry)</span></a>
+<a name="463"><span class="lineNum">     463 </span>                :<span class="lineCov">         28 :                         p_entry = slca_get_entry(be16_to_cpu(entry-&gt;parent_index));</span></a>
+<a name="464"><span class="lineNum">     464 </span>                :<span class="lineCov">         28 :                         if (!p_entry)</span></a>
 <a name="465"><span class="lineNum">     465 </span>                :<span class="lineNoCov">          0 :                                 goto next_entry;</span></a>
-<a name="466"><span class="lineNum">     466 </span>                :<span class="lineCov">         64 :                         p_name = vpd_map_name(p_entry-&gt;fru_id);</span></a>
-<a name="467"><span class="lineNum">     467 </span>                :<span class="lineCov">         64 :                         p_addr = be16_to_cpu(p_entry-&gt;rsrc_id);</span></a>
-<a name="468"><span class="lineNum">     468 </span>                :<span class="lineCov">         64 :                         parent = dt_find_by_name_addr(dt_vpd, p_name, p_addr);</span></a>
+<a name="466"><span class="lineNum">     466 </span>                :<span class="lineCov">         28 :                         p_name = vpd_map_name(p_entry-&gt;fru_id);</span></a>
+<a name="467"><span class="lineNum">     467 </span>                :<span class="lineCov">         28 :                         p_addr = be16_to_cpu(p_entry-&gt;rsrc_id);</span></a>
+<a name="468"><span class="lineNum">     468 </span>                :<span class="lineCov">         28 :                         parent = dt_find_by_name_addr(dt_vpd, p_name, p_addr);</span></a>
 <a name="469"><span class="lineNum">     469 </span>                :            :                 }</a>
-<a name="470"><span class="lineNum">     470 </span>                :<span class="lineCov">         66 :                 if (!parent)</span></a>
+<a name="470"><span class="lineNum">     470 </span>                :<span class="lineCov">         29 :                 if (!parent)</span></a>
 <a name="471"><span class="lineNum">     471 </span>                :<span class="lineNoCov">          0 :                         goto next_entry;</span></a>
 <a name="472"><span class="lineNum">     472 </span>                :            : </a>
-<a name="473"><span class="lineNum">     473 </span>                :<span class="lineCov">         66 :                 node = dt_new_addr(parent, name, addr);</span></a>
-<a name="474"><span class="lineNum">     474 </span>                :<span class="lineCov">         66 :                 if (!node) {</span></a>
+<a name="473"><span class="lineNum">     473 </span>                :<span class="lineCov">         29 :                 node = dt_new_addr(parent, name, addr);</span></a>
+<a name="474"><span class="lineNum">     474 </span>                :<span class="lineCov">         29 :                 if (!node) {</span></a>
 <a name="475"><span class="lineNum">     475 </span>                :<span class="lineNoCov">          0 :                         prerror(&quot;VPD: Creating node at %s@%&quot;PRIx64&quot; failed\n&quot;,</span></a>
 <a name="476"><span class="lineNum">     476 </span>                :            :                                 name, addr);</a>
 <a name="477"><span class="lineNum">     477 </span>                :<span class="lineNoCov">          0 :                         goto next_entry;</span></a>
 <a name="478"><span class="lineNum">     478 </span>                :            :                 }</a>
 <a name="479"><span class="lineNum">     479 </span>                :            : </a>
 <a name="480"><span class="lineNum">     480 </span>                :            :                 /* Add location code */</a>
-<a name="481"><span class="lineNum">     481 </span>                :<span class="lineCov">         66 :                 slca_vpd_add_loc_code(node, be16_to_cpu(entry-&gt;my_index));</span></a>
+<a name="481"><span class="lineNum">     481 </span>                :<span class="lineCov">         29 :                 slca_vpd_add_loc_code(node, be16_to_cpu(entry-&gt;my_index));</span></a>
 <a name="482"><span class="lineNum">     482 </span>                :            :                 /* Add FRU label */</a>
-<a name="483"><span class="lineNum">     483 </span>                :<span class="lineCov">         66 :                 dt_add_property(node, &quot;fru-type&quot;, entry-&gt;fru_id, 2);</span></a>
-<a name="484"><span class="lineNum">     484 </span>                :<span class="lineCov">         66 :                 dt_add_property_cells(node, &quot;reg&quot;, addr);</span></a>
-<a name="485"><span class="lineNum">     485 </span>                :<span class="lineCov">         66 :                 dt_add_property_cells(node, &quot;#size-cells&quot;, 0);</span></a>
-<a name="486"><span class="lineNum">     486 </span>                :<span class="lineCov">         66 :                 dt_add_property_cells(node, &quot;#address-cells&quot;, 1);</span></a>
+<a name="483"><span class="lineNum">     483 </span>                :<span class="lineCov">         29 :                 dt_add_property(node, &quot;fru-type&quot;, entry-&gt;fru_id, 2);</span></a>
+<a name="484"><span class="lineNum">     484 </span>                :<span class="lineCov">         29 :                 dt_add_property_cells(node, &quot;reg&quot;, addr);</span></a>
+<a name="485"><span class="lineNum">     485 </span>                :<span class="lineCov">         29 :                 dt_add_property_cells(node, &quot;#size-cells&quot;, 0);</span></a>
+<a name="486"><span class="lineNum">     486 </span>                :<span class="lineCov">         29 :                 dt_add_property_cells(node, &quot;#address-cells&quot;, 1);</span></a>
 <a name="487"><span class="lineNum">     487 </span>                :            : </a>
-<a name="488"><span class="lineNum">     488 </span>                :<span class="lineCov">        139 : next_entry:</span></a>
+<a name="488"><span class="lineNum">     488 </span>                :<span class="lineCov">         69 : next_entry:</span></a>
 <a name="489"><span class="lineNum">     489 </span>                :            :                 /* Skip dups -- dups are contiguous */</a>
-<a name="490"><span class="lineNum">     490 </span>                :<span class="lineCov">        139 :                 index += entry-&gt;nr_dups;</span></a>
+<a name="490"><span class="lineNum">     490 </span>                :<span class="lineCov">         69 :                 index += entry-&gt;nr_dups;</span></a>
 <a name="491"><span class="lineNum">     491 </span>                :            :         }</a>
 <a name="492"><span class="lineNum">     492 </span>                :            : }</a>
 <a name="493"><span class="lineNum">     493 </span>                :            : </a>
-<a name="494"><span class="lineNum">     494 </span>                :<span class="lineCov">         27 : struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,</span></a>
+<a name="494"><span class="lineNum">     494 </span>                :<span class="lineCov">         11 : struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,</span></a>
 <a name="495"><span class="lineNum">     495 </span>                :            :                                 int indx_fru, int indx_vpd)</a>
 <a name="496"><span class="lineNum">     496 </span>                :            : {</a>
 <a name="497"><span class="lineNum">     497 </span>                :            :         const struct spira_fru_id *fru_id;</a>
@@ -573,76 +573,76 @@
 <a name="502"><span class="lineNum">     502 </span>                :            :         const char *name;</a>
 <a name="503"><span class="lineNum">     503 </span>                :            :         uint64_t addr;</a>
 <a name="504"><span class="lineNum">     504 </span>                :            : </a>
-<a name="505"><span class="lineNum">     505 </span>                :<span class="lineCov">         27 :         fru_id = HDIF_get_idata(hdr, indx_fru, &amp;fru_id_sz);</span></a>
-<a name="506"><span class="lineNum">     506 </span>                :<span class="lineCov">         27 :         if (!fru_id)</span></a>
+<a name="505"><span class="lineNum">     505 </span>                :<span class="lineCov">         11 :         fru_id = HDIF_get_idata(hdr, indx_fru, &amp;fru_id_sz);</span></a>
+<a name="506"><span class="lineNum">     506 </span>                :<span class="lineCov">         11 :         if (!fru_id)</span></a>
 <a name="507"><span class="lineNum">     507 </span>                :<span class="lineNoCov">          0 :                 return NULL;</span></a>
 <a name="508"><span class="lineNum">     508 </span>                :            : </a>
-<a name="509"><span class="lineNum">     509 </span>                :<span class="lineCov">         27 :         fruvpd = HDIF_get_idata(hdr, indx_vpd, &amp;fruvpd_sz);</span></a>
-<a name="510"><span class="lineNum">     510 </span>                :<span class="lineCov">         27 :         if (!CHECK_SPPTR(fruvpd))</span></a>
+<a name="509"><span class="lineNum">     509 </span>                :<span class="lineCov">         11 :         fruvpd = HDIF_get_idata(hdr, indx_vpd, &amp;fruvpd_sz);</span></a>
+<a name="510"><span class="lineNum">     510 </span>                :<span class="lineCov">         11 :         if (!CHECK_SPPTR(fruvpd))</span></a>
 <a name="511"><span class="lineNum">     511 </span>                :<span class="lineNoCov">          0 :                 return NULL;</span></a>
 <a name="512"><span class="lineNum">     512 </span>                :            : </a>
-<a name="513"><span class="lineNum">     513 </span>                :<span class="lineCov">         27 :         dt_vpd = dt_find_by_path(dt_root, &quot;/vpd&quot;);</span></a>
-<a name="514"><span class="lineNum">     514 </span>                :<span class="lineCov">         27 :         if (!dt_vpd)</span></a>
+<a name="513"><span class="lineNum">     513 </span>                :<span class="lineCov">         11 :         dt_vpd = dt_find_by_path(dt_root, &quot;/vpd&quot;);</span></a>
+<a name="514"><span class="lineNum">     514 </span>                :<span class="lineCov">         11 :         if (!dt_vpd)</span></a>
 <a name="515"><span class="lineNum">     515 </span>                :<span class="lineNoCov">          0 :                 return NULL;</span></a>
 <a name="516"><span class="lineNum">     516 </span>                :            : </a>
-<a name="517"><span class="lineNum">     517 </span>                :<span class="lineCov">         27 :         entry = slca_get_entry(be16_to_cpu(fru_id-&gt;slca_index));</span></a>
-<a name="518"><span class="lineNum">     518 </span>                :<span class="lineCov">         27 :         if (!entry)</span></a>
+<a name="517"><span class="lineNum">     517 </span>                :<span class="lineCov">         11 :         entry = slca_get_entry(be16_to_cpu(fru_id-&gt;slca_index));</span></a>
+<a name="518"><span class="lineNum">     518 </span>                :<span class="lineCov">         11 :         if (!entry)</span></a>
 <a name="519"><span class="lineNum">     519 </span>                :<span class="lineNoCov">          0 :                 return NULL;</span></a>
 <a name="520"><span class="lineNum">     520 </span>                :            : </a>
-<a name="521"><span class="lineNum">     521 </span>                :<span class="lineCov">         27 :         name = vpd_map_name(entry-&gt;fru_id);</span></a>
-<a name="522"><span class="lineNum">     522 </span>                :<span class="lineCov">         27 :         addr = be16_to_cpu(entry-&gt;rsrc_id);</span></a>
+<a name="521"><span class="lineNum">     521 </span>                :<span class="lineCov">         11 :         name = vpd_map_name(entry-&gt;fru_id);</span></a>
+<a name="522"><span class="lineNum">     522 </span>                :<span class="lineCov">         11 :         addr = be16_to_cpu(entry-&gt;rsrc_id);</span></a>
 <a name="523"><span class="lineNum">     523 </span>                :            :         /* Get the node already created */</a>
-<a name="524"><span class="lineNum">     524 </span>                :<span class="lineCov">         27 :         node = dt_find_by_name_addr(dt_vpd, name, addr);</span></a>
+<a name="524"><span class="lineNum">     524 </span>                :<span class="lineCov">         11 :         node = dt_find_by_name_addr(dt_vpd, name, addr);</span></a>
 <a name="525"><span class="lineNum">     525 </span>                :            :         /*</a>
 <a name="526"><span class="lineNum">     526 </span>                :            :          * It is unlikely that node not found because vpd nodes have the</a>
 <a name="527"><span class="lineNum">     527 </span>                :            :          * corresponding slca entry which we would have used to populate the vpd</a>
 <a name="528"><span class="lineNum">     528 </span>                :            :          * tree during the 'first' pass above so that we just need to perform</a>
 <a name="529"><span class="lineNum">     529 </span>                :            :          * VINI parse and add the vpd data..</a>
 <a name="530"><span class="lineNum">     530 </span>                :            :          */</a>
-<a name="531"><span class="lineNum">     531 </span>                :<span class="lineCov">         27 :         if (!node)</span></a>
+<a name="531"><span class="lineNum">     531 </span>                :<span class="lineCov">         11 :         if (!node)</span></a>
 <a name="532"><span class="lineNum">     532 </span>                :<span class="lineNoCov">          0 :                 return NULL;</span></a>
 <a name="533"><span class="lineNum">     533 </span>                :            : </a>
 <a name="534"><span class="lineNum">     534 </span>                :            :         /* Parse VPD fields, ensure that it has not been added already */</a>
-<a name="535"><span class="lineNum">     535 </span>                :<span class="lineCov">         27 :         if (vpd_valid(fruvpd, fruvpd_sz)</span></a>
-<a name="536"><span class="lineNum">     536 </span>                :<span class="lineCov">         27 :             &amp;&amp; !dt_find_property(node, &quot;ibm,vpd&quot;)) {</span></a>
-<a name="537"><span class="lineNum">     537 </span>                :<span class="lineCov">         24 :                 dt_add_property(node, &quot;ibm,vpd&quot;, fruvpd, fruvpd_sz);</span></a>
-<a name="538"><span class="lineNum">     538 </span>                :<span class="lineCov">         24 :                 vpd_data_parse(node, fruvpd, fruvpd_sz);</span></a>
+<a name="535"><span class="lineNum">     535 </span>                :<span class="lineCov">         11 :         if (vpd_valid(fruvpd, fruvpd_sz)</span></a>
+<a name="536"><span class="lineNum">     536 </span>                :<span class="lineCov">         11 :             &amp;&amp; !dt_find_property(node, &quot;ibm,vpd&quot;)) {</span></a>
+<a name="537"><span class="lineNum">     537 </span>                :<span class="lineCov">         10 :                 dt_add_property(node, &quot;ibm,vpd&quot;, fruvpd, fruvpd_sz);</span></a>
+<a name="538"><span class="lineNum">     538 </span>                :<span class="lineCov">         10 :                 vpd_data_parse(node, fruvpd, fruvpd_sz);</span></a>
 <a name="539"><span class="lineNum">     539 </span>                :            :         }</a>
 <a name="540"><span class="lineNum">     540 </span>                :            : </a>
-<a name="541"><span class="lineNum">     541 </span>                :<span class="lineCov">         27 :         return node;</span></a>
+<a name="541"><span class="lineNum">     541 </span>                :<span class="lineCov">         11 :         return node;</span></a>
 <a name="542"><span class="lineNum">     542 </span>                :            : }</a>
 <a name="543"><span class="lineNum">     543 </span>                :            : </a>
-<a name="544"><span class="lineNum">     544 </span>                :<span class="lineCov">          2 : static void dt_add_model_name(void)</span></a>
+<a name="544"><span class="lineNum">     544 </span>                :<span class="lineCov">          1 : static void dt_add_model_name(void)</span></a>
 <a name="545"><span class="lineNum">     545 </span>                :            : {</a>
-<a name="546"><span class="lineNum">     546 </span>                :<span class="lineCov">          2 :         const char *model_name = NULL;</span></a>
+<a name="546"><span class="lineNum">     546 </span>                :<span class="lineCov">          1 :         const char *model_name = NULL;</span></a>
 <a name="547"><span class="lineNum">     547 </span>                :            :         const struct machine_info *mi;</a>
 <a name="548"><span class="lineNum">     548 </span>                :            :         const struct iplparams_sysparams *p;</a>
 <a name="549"><span class="lineNum">     549 </span>                :            :         const struct HDIF_common_hdr *iplp;</a>
 <a name="550"><span class="lineNum">     550 </span>                :            :         const struct dt_property *model;</a>
 <a name="551"><span class="lineNum">     551 </span>                :            : </a>
-<a name="552"><span class="lineNum">     552 </span>                :<span class="lineCov">          2 :         model = dt_find_property(dt_root, &quot;model&quot;);</span></a>
+<a name="552"><span class="lineNum">     552 </span>                :<span class="lineCov">          1 :         model = dt_find_property(dt_root, &quot;model&quot;);</span></a>
 <a name="553"><span class="lineNum">     553 </span>                :            : </a>
-<a name="554"><span class="lineNum">     554 </span>                :<span class="lineCov">          2 :         iplp = get_hdif(&amp;spira.ntuples.ipl_parms, &quot;IPLPMS&quot;);</span></a>
-<a name="555"><span class="lineNum">     555 </span>                :<span class="lineCov">          2 :         if (!iplp)</span></a>
+<a name="554"><span class="lineNum">     554 </span>                :<span class="lineCov">          1 :         iplp = get_hdif(&amp;spiras-&gt;ntuples.ipl_parms, &quot;IPLPMS&quot;);</span></a>
+<a name="555"><span class="lineNum">     555 </span>                :<span class="lineCov">          1 :         if (!iplp)</span></a>
 <a name="556"><span class="lineNum">     556 </span>                :<span class="lineNoCov">          0 :                 goto def_model;</span></a>
 <a name="557"><span class="lineNum">     557 </span>                :            : </a>
-<a name="558"><span class="lineNum">     558 </span>                :<span class="lineCov">          2 :         p = HDIF_get_idata(iplp, IPLPARAMS_SYSPARAMS, NULL);</span></a>
-<a name="559"><span class="lineNum">     559 </span>                :<span class="lineCov">          2 :         if (!CHECK_SPPTR(p))</span></a>
+<a name="558"><span class="lineNum">     558 </span>                :<span class="lineCov">          1 :         p = HDIF_get_idata(iplp, IPLPARAMS_SYSPARAMS, NULL);</span></a>
+<a name="559"><span class="lineNum">     559 </span>                :<span class="lineCov">          1 :         if (!CHECK_SPPTR(p))</span></a>
 <a name="560"><span class="lineNum">     560 </span>                :<span class="lineNoCov">          0 :                 goto def_model;</span></a>
 <a name="561"><span class="lineNum">     561 </span>                :            : </a>
-<a name="562"><span class="lineNum">     562 </span>                :<span class="lineCov">          2 :         if (be16_to_cpu(iplp-&gt;version) &gt;= 0x60)</span></a>
+<a name="562"><span class="lineNum">     562 </span>                :<span class="lineCov">          1 :         if (be16_to_cpu(iplp-&gt;version) &gt;= 0x60)</span></a>
 <a name="563"><span class="lineNum">     563 </span>                :<span class="lineNoCov">          0 :                 model_name = p-&gt;sys_type_str;</span></a>
 <a name="564"><span class="lineNum">     564 </span>                :            : </a>
-<a name="565"><span class="lineNum">     565 </span>                :<span class="lineCov">          2 : def_model:</span></a>
-<a name="566"><span class="lineNum">     566 </span>                :<span class="lineCov">          2 :         if ((!model_name || model_name[0] == '\0') &amp;&amp; model) {</span></a>
-<a name="567"><span class="lineNum">     567 </span>                :<span class="lineCov">          2 :                 mi = machine_info_lookup(model-&gt;prop);</span></a>
-<a name="568"><span class="lineNum">     568 </span>                :<span class="lineCov">          2 :                 if (mi)</span></a>
-<a name="569"><span class="lineNum">     569 </span>                :<span class="lineCov">          2 :                         model_name = mi-&gt;name;</span></a>
+<a name="565"><span class="lineNum">     565 </span>                :<span class="lineCov">          1 : def_model:</span></a>
+<a name="566"><span class="lineNum">     566 </span>                :<span class="lineCov">          1 :         if ((!model_name || model_name[0] == '\0') &amp;&amp; model) {</span></a>
+<a name="567"><span class="lineNum">     567 </span>                :<span class="lineCov">          1 :                 mi = machine_info_lookup(model-&gt;prop);</span></a>
+<a name="568"><span class="lineNum">     568 </span>                :<span class="lineCov">          1 :                 if (mi)</span></a>
+<a name="569"><span class="lineNum">     569 </span>                :<span class="lineCov">          1 :                         model_name = mi-&gt;name;</span></a>
 <a name="570"><span class="lineNum">     570 </span>                :            :         }</a>
 <a name="571"><span class="lineNum">     571 </span>                :            : </a>
-<a name="572"><span class="lineNum">     572 </span>                :<span class="lineCov">          2 :         if(model_name)</span></a>
-<a name="573"><span class="lineNum">     573 </span>                :<span class="lineCov">          2 :                 dt_add_property_string(dt_root, &quot;model-name&quot;, model_name);</span></a>
-<a name="574"><span class="lineNum">     574 </span>                :<span class="lineCov">          2 : }</span></a>
+<a name="572"><span class="lineNum">     572 </span>                :<span class="lineCov">          1 :         if(model_name)</span></a>
+<a name="573"><span class="lineNum">     573 </span>                :<span class="lineCov">          1 :                 dt_add_property_string(dt_root, &quot;model-name&quot;, model_name);</span></a>
+<a name="574"><span class="lineNum">     574 </span>                :<span class="lineCov">          1 : }</span></a>
 <a name="575"><span class="lineNum">     575 </span>                :            : </a>
 <a name="576"><span class="lineNum">     576 </span>                :<span class="lineNoCov">          0 : static void sysvpd_parse_opp(const void *sysvpd, unsigned int sysvpd_sz)</span></a>
 <a name="577"><span class="lineNum">     577 </span>                :            : {</a>
@@ -663,33 +663,33 @@
 <a name="592"><span class="lineNum">     592 </span>                :<span class="lineNoCov">          0 : }</span></a>
 <a name="593"><span class="lineNum">     593 </span>                :            : </a>
 <a name="594"><span class="lineNum">     594 </span>                :            : </a>
-<a name="595"><span class="lineNum">     595 </span>                :<span class="lineCov">          2 : static void sysvpd_parse_legacy(const void *sysvpd, unsigned int sysvpd_sz)</span></a>
+<a name="595"><span class="lineNum">     595 </span>                :<span class="lineCov">          1 : static void sysvpd_parse_legacy(const void *sysvpd, unsigned int sysvpd_sz)</span></a>
 <a name="596"><span class="lineNum">     596 </span>                :            : {</a>
 <a name="597"><span class="lineNum">     597 </span>                :            :         const char *model;</a>
 <a name="598"><span class="lineNum">     598 </span>                :            :         const char *system_id;</a>
 <a name="599"><span class="lineNum">     599 </span>                :            :         const char *brand;</a>
 <a name="600"><span class="lineNum">     600 </span>                :            :         uint8_t sz;</a>
 <a name="601"><span class="lineNum">     601 </span>                :            : </a>
-<a name="602"><span class="lineNum">     602 </span>                :<span class="lineCov">          2 :         model = vpd_find(sysvpd, sysvpd_sz, &quot;VSYS&quot;, &quot;TM&quot;, &amp;sz);</span></a>
-<a name="603"><span class="lineNum">     603 </span>                :<span class="lineCov">          2 :         if (model)</span></a>
-<a name="604"><span class="lineNum">     604 </span>                :<span class="lineCov">          2 :                 dt_add_prop_sanitize_val(dt_root, &quot;model&quot;, model, sz);</span></a>
+<a name="602"><span class="lineNum">     602 </span>                :<span class="lineCov">          1 :         model = vpd_find(sysvpd, sysvpd_sz, &quot;VSYS&quot;, &quot;TM&quot;, &amp;sz);</span></a>
+<a name="603"><span class="lineNum">     603 </span>                :<span class="lineCov">          1 :         if (model)</span></a>
+<a name="604"><span class="lineNum">     604 </span>                :<span class="lineCov">          1 :                 dt_add_prop_sanitize_val(dt_root, &quot;model&quot;, model, sz);</span></a>
 <a name="605"><span class="lineNum">     605 </span>                :            :         else</a>
 <a name="606"><span class="lineNum">     606 </span>                :<span class="lineNoCov">          0 :                 dt_add_property_string(dt_root, &quot;model&quot;, &quot;Unknown&quot;);</span></a>
 <a name="607"><span class="lineNum">     607 </span>                :            : </a>
-<a name="608"><span class="lineNum">     608 </span>                :<span class="lineCov">          2 :         system_id = vpd_find(sysvpd, sysvpd_sz, &quot;VSYS&quot;, &quot;SE&quot;, &amp;sz);</span></a>
-<a name="609"><span class="lineNum">     609 </span>                :<span class="lineCov">          2 :         if (system_id)</span></a>
-<a name="610"><span class="lineNum">     610 </span>                :<span class="lineCov">          2 :                 dt_add_prop_sanitize_val(dt_root, &quot;system-id&quot;, system_id, sz);</span></a>
+<a name="608"><span class="lineNum">     608 </span>                :<span class="lineCov">          1 :         system_id = vpd_find(sysvpd, sysvpd_sz, &quot;VSYS&quot;, &quot;SE&quot;, &amp;sz);</span></a>
+<a name="609"><span class="lineNum">     609 </span>                :<span class="lineCov">          1 :         if (system_id)</span></a>
+<a name="610"><span class="lineNum">     610 </span>                :<span class="lineCov">          1 :                 dt_add_prop_sanitize_val(dt_root, &quot;system-id&quot;, system_id, sz);</span></a>
 <a name="611"><span class="lineNum">     611 </span>                :            :         else</a>
 <a name="612"><span class="lineNum">     612 </span>                :<span class="lineNoCov">          0 :                 dt_add_property_string(dt_root, &quot;system-id&quot;, &quot;Unknown&quot;);</span></a>
 <a name="613"><span class="lineNum">     613 </span>                :            : </a>
-<a name="614"><span class="lineNum">     614 </span>                :<span class="lineCov">          2 :         brand = vpd_find(sysvpd, sysvpd_sz, &quot;VSYS&quot;, &quot;BR&quot;, &amp;sz);</span></a>
-<a name="615"><span class="lineNum">     615 </span>                :<span class="lineCov">          2 :         if (brand)</span></a>
-<a name="616"><span class="lineNum">     616 </span>                :<span class="lineCov">          2 :                 dt_add_prop_sanitize_val(dt_root, &quot;system-brand&quot;, brand, sz);</span></a>
+<a name="614"><span class="lineNum">     614 </span>                :<span class="lineCov">          1 :         brand = vpd_find(sysvpd, sysvpd_sz, &quot;VSYS&quot;, &quot;BR&quot;, &amp;sz);</span></a>
+<a name="615"><span class="lineNum">     615 </span>                :<span class="lineCov">          1 :         if (brand)</span></a>
+<a name="616"><span class="lineNum">     616 </span>                :<span class="lineCov">          1 :                 dt_add_prop_sanitize_val(dt_root, &quot;system-brand&quot;, brand, sz);</span></a>
 <a name="617"><span class="lineNum">     617 </span>                :            :         else</a>
 <a name="618"><span class="lineNum">     618 </span>                :<span class="lineNoCov">          0 :                 dt_add_property_string(dt_root, &quot;brand&quot;, &quot;Unknown&quot;);</span></a>
-<a name="619"><span class="lineNum">     619 </span>                :<span class="lineCov">          2 : }</span></a>
+<a name="619"><span class="lineNum">     619 </span>                :<span class="lineCov">          1 : }</span></a>
 <a name="620"><span class="lineNum">     620 </span>                :            : </a>
-<a name="621"><span class="lineNum">     621 </span>                :<span class="lineCov">          2 : static void sysvpd_parse(void)</span></a>
+<a name="621"><span class="lineNum">     621 </span>                :<span class="lineCov">          1 : static void sysvpd_parse(void)</span></a>
 <a name="622"><span class="lineNum">     622 </span>                :            : {</a>
 <a name="623"><span class="lineNum">     623 </span>                :            :         const void *sysvpd;</a>
 <a name="624"><span class="lineNum">     624 </span>                :            :         unsigned int sysvpd_sz;</a>
@@ -698,81 +698,81 @@
 <a name="627"><span class="lineNum">     627 </span>                :            :         const struct spira_fru_id *fru_id;</a>
 <a name="628"><span class="lineNum">     628 </span>                :            :         struct HDIF_common_hdr *sysvpd_hdr;</a>
 <a name="629"><span class="lineNum">     629 </span>                :            : </a>
-<a name="630"><span class="lineNum">     630 </span>                :<span class="lineCov">          2 :         sysvpd_hdr = get_hdif(&amp;spira.ntuples.system_vpd, SYSVPD_HDIF_SIG);</span></a>
-<a name="631"><span class="lineNum">     631 </span>                :<span class="lineCov">          2 :         if (!sysvpd_hdr)</span></a>
+<a name="630"><span class="lineNum">     630 </span>                :<span class="lineCov">          1 :         sysvpd_hdr = get_hdif(&amp;spiras-&gt;ntuples.system_vpd, SYSVPD_HDIF_SIG);</span></a>
+<a name="631"><span class="lineNum">     631 </span>                :<span class="lineCov">          1 :         if (!sysvpd_hdr)</span></a>
 <a name="632"><span class="lineNum">     632 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="633"><span class="lineNum">     633 </span>                :            : </a>
-<a name="634"><span class="lineNum">     634 </span>                :<span class="lineCov">          2 :         fru_id = HDIF_get_idata(sysvpd_hdr, SYSVPD_IDATA_FRU_ID, &amp;fru_id_sz);</span></a>
-<a name="635"><span class="lineNum">     635 </span>                :<span class="lineCov">          2 :         if (!fru_id)</span></a>
+<a name="634"><span class="lineNum">     634 </span>                :<span class="lineCov">          1 :         fru_id = HDIF_get_idata(sysvpd_hdr, SYSVPD_IDATA_FRU_ID, &amp;fru_id_sz);</span></a>
+<a name="635"><span class="lineNum">     635 </span>                :<span class="lineCov">          1 :         if (!fru_id)</span></a>
 <a name="636"><span class="lineNum">     636 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="637"><span class="lineNum">     637 </span>                :            : </a>
-<a name="638"><span class="lineNum">     638 </span>                :<span class="lineCov">          2 :         sysvpd = HDIF_get_idata(sysvpd_hdr, SYSVPD_IDATA_KW_VPD, &amp;sysvpd_sz);</span></a>
-<a name="639"><span class="lineNum">     639 </span>                :<span class="lineCov">          2 :         if (!CHECK_SPPTR(sysvpd))</span></a>
+<a name="638"><span class="lineNum">     638 </span>                :<span class="lineCov">          1 :         sysvpd = HDIF_get_idata(sysvpd_hdr, SYSVPD_IDATA_KW_VPD, &amp;sysvpd_sz);</span></a>
+<a name="639"><span class="lineNum">     639 </span>                :<span class="lineCov">          1 :         if (!CHECK_SPPTR(sysvpd))</span></a>
 <a name="640"><span class="lineNum">     640 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="641"><span class="lineNum">     641 </span>                :            : </a>
 <a name="642"><span class="lineNum">     642 </span>                :            :         /* Add system VPD */</a>
-<a name="643"><span class="lineNum">     643 </span>                :<span class="lineCov">          2 :         dt_vpd = dt_find_by_path(dt_root, &quot;/vpd&quot;);</span></a>
-<a name="644"><span class="lineNum">     644 </span>                :<span class="lineCov">          2 :         if (dt_vpd) {</span></a>
-<a name="645"><span class="lineNum">     645 </span>                :<span class="lineCov">          2 :                 dt_add_property(dt_vpd, &quot;ibm,vpd&quot;, sysvpd, sysvpd_sz);</span></a>
-<a name="646"><span class="lineNum">     646 </span>                :<span class="lineCov">          2 :                 slca_vpd_add_loc_code(dt_vpd, be16_to_cpu(fru_id-&gt;slca_index));</span></a>
+<a name="643"><span class="lineNum">     643 </span>                :<span class="lineCov">          1 :         dt_vpd = dt_find_by_path(dt_root, &quot;/vpd&quot;);</span></a>
+<a name="644"><span class="lineNum">     644 </span>                :<span class="lineCov">          1 :         if (dt_vpd) {</span></a>
+<a name="645"><span class="lineNum">     645 </span>                :<span class="lineCov">          1 :                 dt_add_property(dt_vpd, &quot;ibm,vpd&quot;, sysvpd, sysvpd_sz);</span></a>
+<a name="646"><span class="lineNum">     646 </span>                :<span class="lineCov">          1 :                 slca_vpd_add_loc_code(dt_vpd, be16_to_cpu(fru_id-&gt;slca_index));</span></a>
 <a name="647"><span class="lineNum">     647 </span>                :            :         }</a>
 <a name="648"><span class="lineNum">     648 </span>                :            : </a>
 <a name="649"><span class="lineNum">     649 </span>                :            :         /* Look for the new OpenPower &quot;OSYS&quot; first */</a>
-<a name="650"><span class="lineNum">     650 </span>                :<span class="lineCov">          2 :         if (vpd_find_record(sysvpd, sysvpd_sz, &quot;OSYS&quot;, NULL))</span></a>
+<a name="650"><span class="lineNum">     650 </span>                :<span class="lineCov">          1 :         if (vpd_find_record(sysvpd, sysvpd_sz, &quot;OSYS&quot;, NULL))</span></a>
 <a name="651"><span class="lineNum">     651 </span>                :<span class="lineNoCov">          0 :                 sysvpd_parse_opp(sysvpd, sysvpd_sz);</span></a>
 <a name="652"><span class="lineNum">     652 </span>                :            :         else</a>
-<a name="653"><span class="lineNum">     653 </span>                :<span class="lineCov">          2 :                 sysvpd_parse_legacy(sysvpd, sysvpd_sz);</span></a>
+<a name="653"><span class="lineNum">     653 </span>                :<span class="lineCov">          1 :                 sysvpd_parse_legacy(sysvpd, sysvpd_sz);</span></a>
 <a name="654"><span class="lineNum">     654 </span>                :            : </a>
-<a name="655"><span class="lineNum">     655 </span>                :<span class="lineCov">          2 :         dt_add_model_name();</span></a>
+<a name="655"><span class="lineNum">     655 </span>                :<span class="lineCov">          1 :         dt_add_model_name();</span></a>
 <a name="656"><span class="lineNum">     656 </span>                :            : }</a>
 <a name="657"><span class="lineNum">     657 </span>                :            : </a>
-<a name="658"><span class="lineNum">     658 </span>                :<span class="lineCov">          3 : static void iokid_vpd_parse(const struct HDIF_common_hdr *iohub_hdr)</span></a>
+<a name="658"><span class="lineNum">     658 </span>                :<span class="lineCov">          1 : static void iokid_vpd_parse(const struct HDIF_common_hdr *iohub_hdr)</span></a>
 <a name="659"><span class="lineNum">     659 </span>                :            : {</a>
 <a name="660"><span class="lineNum">     660 </span>                :            :         const struct HDIF_child_ptr *iokids;</a>
 <a name="661"><span class="lineNum">     661 </span>                :            :         const struct HDIF_common_hdr *iokid;</a>
 <a name="662"><span class="lineNum">     662 </span>                :            :         unsigned int i;</a>
 <a name="663"><span class="lineNum">     663 </span>                :            : </a>
-<a name="664"><span class="lineNum">     664 </span>                :<span class="lineCov">          3 :         iokids = HDIF_child_arr(iohub_hdr, CECHUB_CHILD_IO_KIDS);</span></a>
-<a name="665"><span class="lineNum">     665 </span>                :<span class="lineCov">          3 :         if (!CHECK_SPPTR(iokids)) {</span></a>
+<a name="664"><span class="lineNum">     664 </span>                :<span class="lineCov">          1 :         iokids = HDIF_child_arr(iohub_hdr, CECHUB_CHILD_IO_KIDS);</span></a>
+<a name="665"><span class="lineNum">     665 </span>                :<span class="lineCov">          1 :         if (!CHECK_SPPTR(iokids)) {</span></a>
 <a name="666"><span class="lineNum">     666 </span>                :<span class="lineNoCov">          0 :                 prerror(&quot;VPD: No IOKID child array\n&quot;);</span></a>
 <a name="667"><span class="lineNum">     667 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="668"><span class="lineNum">     668 </span>                :            :         }</a>
 <a name="669"><span class="lineNum">     669 </span>                :            : </a>
-<a name="670"><span class="lineNum">     670 </span>                :<span class="lineCov">          6 :         for (i = 0; i &lt; be32_to_cpu(iokids-&gt;count); i++) {</span></a>
-<a name="671"><span class="lineNum">     671 </span>                :<span class="lineCov">          3 :                 iokid = HDIF_child(iohub_hdr, iokids, i,</span></a>
+<a name="670"><span class="lineNum">     670 </span>                :<span class="lineCov">          2 :         for (i = 0; i &lt; be32_to_cpu(iokids-&gt;count); i++) {</span></a>
+<a name="671"><span class="lineNum">     671 </span>                :<span class="lineCov">          1 :                 iokid = HDIF_child(iohub_hdr, iokids, i,</span></a>
 <a name="672"><span class="lineNum">     672 </span>                :            :                                         IOKID_FRU_HDIF_SIG);</a>
 <a name="673"><span class="lineNum">     673 </span>                :            :                 /* IO KID VPD structure layout is similar to FRUVPD */</a>
-<a name="674"><span class="lineNum">     674 </span>                :<span class="lineCov">          3 :                 if (iokid)</span></a>
-<a name="675"><span class="lineNum">     675 </span>                :<span class="lineCov">          3 :                         dt_add_vpd_node(iokid,</span></a>
+<a name="674"><span class="lineNum">     674 </span>                :<span class="lineCov">          1 :                 if (iokid)</span></a>
+<a name="675"><span class="lineNum">     675 </span>                :<span class="lineCov">          1 :                         dt_add_vpd_node(iokid,</span></a>
 <a name="676"><span class="lineNum">     676 </span>                :            :                                 FRUVPD_IDATA_FRU_ID, FRUVPD_IDATA_KW_VPD);</a>
 <a name="677"><span class="lineNum">     677 </span>                :            :         }</a>
 <a name="678"><span class="lineNum">     678 </span>                :            : }</a>
 <a name="679"><span class="lineNum">     679 </span>                :            : </a>
-<a name="680"><span class="lineNum">     680 </span>                :<span class="lineCov">          2 : static void iohub_vpd_parse(void)</span></a>
+<a name="680"><span class="lineNum">     680 </span>                :<span class="lineCov">          1 : static void iohub_vpd_parse(void)</span></a>
 <a name="681"><span class="lineNum">     681 </span>                :            : {</a>
 <a name="682"><span class="lineNum">     682 </span>                :            :         const struct HDIF_common_hdr *iohub_hdr;</a>
 <a name="683"><span class="lineNum">     683 </span>                :            :         const struct cechub_hub_fru_id *fru_id_data;</a>
 <a name="684"><span class="lineNum">     684 </span>                :            :         unsigned int i, vpd_sz, fru_id_sz;</a>
 <a name="685"><span class="lineNum">     685 </span>                :            : </a>
-<a name="686"><span class="lineNum">     686 </span>                :<span class="lineCov">          2 :         if (!get_hdif(&amp;spira.ntuples.cec_iohub_fru, CECHUB_FRU_HDIF_SIG)) {</span></a>
+<a name="686"><span class="lineNum">     686 </span>                :<span class="lineCov">          1 :         if (!get_hdif(&amp;spiras-&gt;ntuples.cec_iohub_fru, CECHUB_FRU_HDIF_SIG)) {</span></a>
 <a name="687"><span class="lineNum">     687 </span>                :<span class="lineNoCov">          0 :                 prerror(&quot;VPD: Could not find IO HUB FRU data\n&quot;);</span></a>
 <a name="688"><span class="lineNum">     688 </span>                :<span class="lineNoCov">          0 :                 return;</span></a>
 <a name="689"><span class="lineNum">     689 </span>                :            :         }</a>
 <a name="690"><span class="lineNum">     690 </span>                :            : </a>
-<a name="691"><span class="lineNum">     691 </span>                :<span class="lineCov">          5 :         for_each_ntuple_idx(&amp;spira.ntuples.cec_iohub_fru, iohub_hdr,</span></a>
+<a name="691"><span class="lineNum">     691 </span>                :<span class="lineCov">          2 :         for_each_ntuple_idx(&amp;spiras-&gt;ntuples.cec_iohub_fru, iohub_hdr,</span></a>
 <a name="692"><span class="lineNum">     692 </span>                :            :                                         i, CECHUB_FRU_HDIF_SIG) {</a>
 <a name="693"><span class="lineNum">     693 </span>                :            : </a>
-<a name="694"><span class="lineNum">     694 </span>                :<span class="lineCov">          3 :                 fru_id_data = HDIF_get_idata(iohub_hdr,</span></a>
+<a name="694"><span class="lineNum">     694 </span>                :<span class="lineCov">          1 :                 fru_id_data = HDIF_get_idata(iohub_hdr,</span></a>
 <a name="695"><span class="lineNum">     695 </span>                :            :                                              CECHUB_FRU_ID_DATA_AREA,</a>
 <a name="696"><span class="lineNum">     696 </span>                :            :                                              &amp;fru_id_sz);</a>
 <a name="697"><span class="lineNum">     697 </span>                :            : </a>
 <a name="698"><span class="lineNum">     698 </span>                :            :                 /* P8, IO HUB is on processor card and we have a</a>
 <a name="699"><span class="lineNum">     699 </span>                :            :                  * daughter card array</a>
 <a name="700"><span class="lineNum">     700 </span>                :            :                  */</a>
-<a name="701"><span class="lineNum">     701 </span>                :<span class="lineCov">          6 :                 if (fru_id_data &amp;&amp;</span></a>
-<a name="702"><span class="lineNum">     702 </span>                :<span class="lineCov">          3 :                     be32_to_cpu(fru_id_data-&gt;card_type) == CECHUB_FRU_TYPE_CPU_CARD) {</span></a>
-<a name="703"><span class="lineNum">     703 </span>                :<span class="lineCov">          3 :                         iokid_vpd_parse(iohub_hdr);</span></a>
-<a name="704"><span class="lineNum">     704 </span>                :<span class="lineCov">          3 :                         continue;</span></a>
+<a name="701"><span class="lineNum">     701 </span>                :<span class="lineCov">          2 :                 if (fru_id_data &amp;&amp;</span></a>
+<a name="702"><span class="lineNum">     702 </span>                :<span class="lineCov">          1 :                     be32_to_cpu(fru_id_data-&gt;card_type) == CECHUB_FRU_TYPE_CPU_CARD) {</span></a>
+<a name="703"><span class="lineNum">     703 </span>                :<span class="lineCov">          1 :                         iokid_vpd_parse(iohub_hdr);</span></a>
+<a name="704"><span class="lineNum">     704 </span>                :<span class="lineCov">          1 :                         continue;</span></a>
 <a name="705"><span class="lineNum">     705 </span>                :            :                 }</a>
 <a name="706"><span class="lineNum">     706 </span>                :            : </a>
 <a name="707"><span class="lineNum">     707 </span>                :<span class="lineNoCov">          0 :                 if (HDIF_get_idata(iohub_hdr,</span></a>
@@ -782,60 +782,57 @@
 <a name="711"><span class="lineNum">     711 </span>                :            :         }</a>
 <a name="712"><span class="lineNum">     712 </span>                :            : }</a>
 <a name="713"><span class="lineNum">     713 </span>                :            : </a>
-<a name="714"><span class="lineNum">     714 </span>                :<span class="lineCov">         14 : static void _vpd_parse(struct spira_ntuple tuple)</span></a>
+<a name="714"><span class="lineNum">     714 </span>                :<span class="lineCov">          6 : static void _vpd_parse(struct spira_ntuple tuple)</span></a>
 <a name="715"><span class="lineNum">     715 </span>                :            : {</a>
 <a name="716"><span class="lineNum">     716 </span>                :            :         const struct HDIF_common_hdr *fruvpd_hdr;</a>
 <a name="717"><span class="lineNum">     717 </span>                :            :         unsigned int i;</a>
 <a name="718"><span class="lineNum">     718 </span>                :            : </a>
-<a name="719"><span class="lineNum">     719 </span>                :<span class="lineCov">         14 :         if (!get_hdif(&amp;tuple, FRUVPD_HDIF_SIG))</span></a>
-<a name="720"><span class="lineNum">     720 </span>                :<span class="lineCov">          4 :                 return;</span></a>
+<a name="719"><span class="lineNum">     719 </span>                :<span class="lineCov">          6 :         if (!get_hdif(&amp;tuple, FRUVPD_HDIF_SIG))</span></a>
+<a name="720"><span class="lineNum">     720 </span>                :<span class="lineCov">          1 :                 return;</span></a>
 <a name="721"><span class="lineNum">     721 </span>                :            : </a>
-<a name="722"><span class="lineNum">     722 </span>                :<span class="lineCov">         20 :         for_each_ntuple_idx(&amp;tuple, fruvpd_hdr, i, FRUVPD_HDIF_SIG)</span></a>
-<a name="723"><span class="lineNum">     723 </span>                :<span class="lineCov">         10 :                 dt_add_vpd_node(fruvpd_hdr,</span></a>
+<a name="722"><span class="lineNum">     722 </span>                :<span class="lineCov">         10 :         for_each_ntuple_idx(&amp;tuple, fruvpd_hdr, i, FRUVPD_HDIF_SIG)</span></a>
+<a name="723"><span class="lineNum">     723 </span>                :<span class="lineCov">          5 :                 dt_add_vpd_node(fruvpd_hdr,</span></a>
 <a name="724"><span class="lineNum">     724 </span>                :            :                                 FRUVPD_IDATA_FRU_ID, FRUVPD_IDATA_KW_VPD);</a>
 <a name="725"><span class="lineNum">     725 </span>                :            : }</a>
 <a name="726"><span class="lineNum">     726 </span>                :            : </a>
-<a name="727"><span class="lineNum">     727 </span>                :<span class="lineCov">          2 : void vpd_parse(void)</span></a>
+<a name="727"><span class="lineNum">     727 </span>                :<span class="lineCov">          1 : void vpd_parse(void)</span></a>
 <a name="728"><span class="lineNum">     728 </span>                :            : {</a>
 <a name="729"><span class="lineNum">     729 </span>                :            :         const struct HDIF_common_hdr *fruvpd_hdr;</a>
 <a name="730"><span class="lineNum">     730 </span>                :            : </a>
 <a name="731"><span class="lineNum">     731 </span>                :            :         /* System VPD uses the VSYS record, so its special */</a>
-<a name="732"><span class="lineNum">     732 </span>                :<span class="lineCov">          2 :         sysvpd_parse();</span></a>
+<a name="732"><span class="lineNum">     732 </span>                :<span class="lineCov">          1 :         sysvpd_parse();</span></a>
 <a name="733"><span class="lineNum">     733 </span>                :            : </a>
 <a name="734"><span class="lineNum">     734 </span>                :            :         /* Enclosure */</a>
-<a name="735"><span class="lineNum">     735 </span>                :<span class="lineCov">          2 :         _vpd_parse(spira.ntuples.nt_enclosure_vpd);</span></a>
+<a name="735"><span class="lineNum">     735 </span>                :<span class="lineCov">          1 :         _vpd_parse(spiras-&gt;ntuples.nt_enclosure_vpd);</span></a>
 <a name="736"><span class="lineNum">     736 </span>                :            : </a>
 <a name="737"><span class="lineNum">     737 </span>                :            :         /* Backplane */</a>
-<a name="738"><span class="lineNum">     738 </span>                :<span class="lineCov">          2 :         _vpd_parse(spira.ntuples.backplane_vpd);</span></a>
+<a name="738"><span class="lineNum">     738 </span>                :<span class="lineCov">          1 :         _vpd_parse(spiras-&gt;ntuples.backplane_vpd);</span></a>
 <a name="739"><span class="lineNum">     739 </span>                :            : </a>
 <a name="740"><span class="lineNum">     740 </span>                :            :         /* clock card -- does this use the FRUVPD sig? */</a>
-<a name="741"><span class="lineNum">     741 </span>                :<span class="lineCov">          2 :         _vpd_parse(spira.ntuples.clock_vpd);</span></a>
+<a name="741"><span class="lineNum">     741 </span>                :<span class="lineCov">          1 :         _vpd_parse(spiras-&gt;ntuples.clock_vpd);</span></a>
 <a name="742"><span class="lineNum">     742 </span>                :            : </a>
 <a name="743"><span class="lineNum">     743 </span>                :            :         /* Anchor card */</a>
-<a name="744"><span class="lineNum">     744 </span>                :<span class="lineCov">          2 :         _vpd_parse(spira.ntuples.anchor_vpd);</span></a>
+<a name="744"><span class="lineNum">     744 </span>                :<span class="lineCov">          1 :         _vpd_parse(spiras-&gt;ntuples.anchor_vpd);</span></a>
 <a name="745"><span class="lineNum">     745 </span>                :            : </a>
 <a name="746"><span class="lineNum">     746 </span>                :            :         /* Op panel -- does this use the FRUVPD sig? */</a>
-<a name="747"><span class="lineNum">     747 </span>                :<span class="lineCov">          2 :         _vpd_parse(spira.ntuples.op_panel_vpd);</span></a>
+<a name="747"><span class="lineNum">     747 </span>                :<span class="lineCov">          1 :         _vpd_parse(spiras-&gt;ntuples.op_panel_vpd);</span></a>
 <a name="748"><span class="lineNum">     748 </span>                :            : </a>
-<a name="749"><span class="lineNum">     749 </span>                :            :         /* External cache FRU vpd -- does this use the FRUVPD sig? */</a>
-<a name="750"><span class="lineNum">     750 </span>                :<span class="lineCov">          2 :         _vpd_parse(spira.ntuples.ext_cache_fru_vpd);</span></a>
+<a name="749"><span class="lineNum">     749 </span>                :            :         /* Misc CEC FRU */</a>
+<a name="750"><span class="lineNum">     750 </span>                :<span class="lineCov">          1 :         _vpd_parse(spiras-&gt;ntuples.misc_cec_fru_vpd);</span></a>
 <a name="751"><span class="lineNum">     751 </span>                :            : </a>
-<a name="752"><span class="lineNum">     752 </span>                :            :         /* Misc CEC FRU */</a>
-<a name="753"><span class="lineNum">     753 </span>                :<span class="lineCov">          2 :         _vpd_parse(spira.ntuples.misc_cec_fru_vpd);</span></a>
+<a name="752"><span class="lineNum">     752 </span>                :            :         /* CEC IO HUB FRU */</a>
+<a name="753"><span class="lineNum">     753 </span>                :<span class="lineCov">          1 :         iohub_vpd_parse();</span></a>
 <a name="754"><span class="lineNum">     754 </span>                :            : </a>
-<a name="755"><span class="lineNum">     755 </span>                :            :         /* CEC IO HUB FRU */</a>
-<a name="756"><span class="lineNum">     756 </span>                :<span class="lineCov">          2 :         iohub_vpd_parse();</span></a>
-<a name="757"><span class="lineNum">     757 </span>                :            : </a>
-<a name="758"><span class="lineNum">     758 </span>                :            :         /*</a>
-<a name="759"><span class="lineNum">     759 </span>                :            :          * SP subsystem -- while the rest of the SPINFO structure is</a>
-<a name="760"><span class="lineNum">     760 </span>                :            :          * different, the FRU ID data and pointer pair to keyword VPD</a>
-<a name="761"><span class="lineNum">     761 </span>                :            :          * are the same offset as a FRUVPD entry. So reuse it</a>
-<a name="762"><span class="lineNum">     762 </span>                :            :          */</a>
-<a name="763"><span class="lineNum">     763 </span>                :<span class="lineCov">          2 :         fruvpd_hdr = get_hdif(&amp;spira.ntuples.sp_subsys, SPSS_HDIF_SIG);</span></a>
-<a name="764"><span class="lineNum">     764 </span>                :<span class="lineCov">          2 :         if (fruvpd_hdr)</span></a>
-<a name="765"><span class="lineNum">     765 </span>                :<span class="lineCov">          2 :                 dt_add_vpd_node(fruvpd_hdr,</span></a>
-<a name="766"><span class="lineNum">     766 </span>                :            :                                 FRUVPD_IDATA_FRU_ID, FRUVPD_IDATA_KW_VPD);</a>
-<a name="767"><span class="lineNum">     767 </span>                :<span class="lineCov">          2 : }</span></a>
+<a name="755"><span class="lineNum">     755 </span>                :            :         /*</a>
+<a name="756"><span class="lineNum">     756 </span>                :            :          * SP subsystem -- while the rest of the SPINFO structure is</a>
+<a name="757"><span class="lineNum">     757 </span>                :            :          * different, the FRU ID data and pointer pair to keyword VPD</a>
+<a name="758"><span class="lineNum">     758 </span>                :            :          * are the same offset as a FRUVPD entry. So reuse it</a>
+<a name="759"><span class="lineNum">     759 </span>                :            :          */</a>
+<a name="760"><span class="lineNum">     760 </span>                :<span class="lineCov">          1 :         fruvpd_hdr = get_hdif(&amp;spiras-&gt;ntuples.sp_subsys, SPSS_HDIF_SIG);</span></a>
+<a name="761"><span class="lineNum">     761 </span>                :<span class="lineCov">          1 :         if (fruvpd_hdr)</span></a>
+<a name="762"><span class="lineNum">     762 </span>                :<span class="lineCov">          1 :                 dt_add_vpd_node(fruvpd_hdr,</span></a>
+<a name="763"><span class="lineNum">     763 </span>                :            :                                 FRUVPD_IDATA_FRU_ID, FRUVPD_IDATA_KW_VPD);</a>
+<a name="764"><span class="lineNum">     764 </span>                :<span class="lineCov">          1 : }</span></a>
 </pre>
       </td>
     </tr>

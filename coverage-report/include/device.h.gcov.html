@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-09-18 13:49:48</td>
+            <td class="headerValue">2023-10-11 21:12:14</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">4</td>
@@ -120,19 +120,19 @@
 <a name="49"><span class="lineNum">      49 </span>                :            : bool dt_attach_root(struct dt_node *parent, struct dt_node *root);</a>
 <a name="50"><span class="lineNum">      50 </span>                :            : </a>
 <a name="51"><span class="lineNum">      51 </span>                :            : /* Wrappers for last_phandle operations */</a>
-<a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">          2 : static inline u32 get_last_phandle(void)</span></a>
+<a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">          1 : static inline u32 get_last_phandle(void)</span></a>
 <a name="53"><span class="lineNum">      53 </span>                :            : {</a>
-<a name="54"><span class="lineNum">      54 </span>                :<span class="lineCov">          2 :         return last_phandle;</span></a>
+<a name="54"><span class="lineNum">      54 </span>                :<span class="lineCov">          1 :         return last_phandle;</span></a>
 <a name="55"><span class="lineNum">      55 </span>                :            : }</a>
 <a name="56"><span class="lineNum">      56 </span>                :            : </a>
-<a name="57"><span class="lineNum">      57 </span>                :<span class="lineCov">          7 : static inline void set_last_phandle(u32 phandle)</span></a>
+<a name="57"><span class="lineNum">      57 </span>                :<span class="lineCov">          6 : static inline void set_last_phandle(u32 phandle)</span></a>
 <a name="58"><span class="lineNum">      58 </span>                :            : {</a>
-<a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">          7 :         last_phandle = phandle;</span></a>
-<a name="60"><span class="lineNum">      60 </span>                :<span class="lineCov">          7 : }</span></a>
+<a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">          6 :         last_phandle = phandle;</span></a>
+<a name="60"><span class="lineNum">      60 </span>                :<span class="lineCov">          6 : }</span></a>
 <a name="61"><span class="lineNum">      61 </span>                :            : </a>
-<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        894 : static inline u32 new_phandle(void)</span></a>
+<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">        737 : static inline u32 new_phandle(void)</span></a>
 <a name="63"><span class="lineNum">      63 </span>                :            : {</a>
-<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        894 :         return ++last_phandle;</span></a>
+<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">        737 :         return ++last_phandle;</span></a>
 <a name="65"><span class="lineNum">      65 </span>                :            : }</a>
 <a name="66"><span class="lineNum">      66 </span>                :            : </a>
 <a name="67"><span class="lineNum">      67 </span>                :            : /* Add a child node. */</a>
@@ -186,10 +186,10 @@
 <a name="115"><span class="lineNum">     115 </span>                :            :                                            const char *name,</a>
 <a name="116"><span class="lineNum">     116 </span>                :            :                                            int count, ...);</a>
 <a name="117"><span class="lineNum">     117 </span>                :            : </a>
-<a name="118"><span class="lineNum">     118 </span>                :<span class="lineCov">         46 : static inline struct dt_property *dt_add_property_u64(struct dt_node *node,</span></a>
+<a name="118"><span class="lineNum">     118 </span>                :<span class="lineCov">         14 : static inline struct dt_property *dt_add_property_u64(struct dt_node *node,</span></a>
 <a name="119"><span class="lineNum">     119 </span>                :            :                                                       const char *name, u64 val)</a>
 <a name="120"><span class="lineNum">     120 </span>                :            : {</a>
-<a name="121"><span class="lineNum">     121 </span>                :<span class="lineCov">         46 :         return dt_add_property_cells(node, name, (u32)(val &gt;&gt; 32),</span></a>
+<a name="121"><span class="lineNum">     121 </span>                :<span class="lineCov">         14 :         return dt_add_property_cells(node, name, (u32)(val &gt;&gt; 32),</span></a>
 <a name="122"><span class="lineNum">     122 </span>                :            :                                                 (u32)(val &amp; 0xffffffffUL));</a>
 <a name="123"><span class="lineNum">     123 </span>                :            : }</a>
 <a name="124"><span class="lineNum">     124 </span>                :            : </a>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-09-18 13:49:48</td>
+            <td class="headerValue">2023-10-11 21:12:14</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">7</td>
@@ -130,9 +130,9 @@
 <a name="59"><span class="lineNum">      59 </span>                :<span class="lineCov">         10 :         l-&gt;lock_val--;</span></a>
 <a name="60"><span class="lineNum">      60 </span>                :<span class="lineCov">         10 : }</span></a>
 <a name="61"><span class="lineNum">      61 </span>                :            : </a>
-<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">     131334 : bool lock_held_by_me(struct lock *l)</span></a>
+<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">     131340 : bool lock_held_by_me(struct lock *l)</span></a>
 <a name="63"><span class="lineNum">      63 </span>                :            : {</a>
-<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">     131334 :         return l-&gt;lock_val;</span></a>
+<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">     131340 :         return l-&gt;lock_val;</span></a>
 <a name="65"><span class="lineNum">      65 </span>                :            : }</a>
 <a name="66"><span class="lineNum">      66 </span>                :            : </a>
 <a name="67"><span class="lineNum">      67 </span>                :            : #define TEST_HEAP_ORDER 16</a>
@@ -181,19 +181,19 @@
 <a name="110"><span class="lineNum">     110 </span>                :            :         /* Allocations of various alignments: use small alloc first. */</a>
 <a name="111"><span class="lineNum">     111 </span>                :<span class="lineCov">          1 :         ptrs[0] = mem_alloc(&amp;skiboot_heap, 1, 1, &quot;small&quot;);</span></a>
 <a name="112"><span class="lineNum">     112 </span>                :<span class="lineCov">          1 :         for (i = 0; ; i++) {</span></a>
-<a name="113"><span class="lineNum">     113 </span>                :<span class="lineCov">         18 :                 p = mem_alloc(&amp;skiboot_heap, 1, 1ULL &lt;&lt; i, &quot;here&quot;);</span></a>
-<a name="114"><span class="lineNum">     114 </span>                :<span class="lineCov">         18 :                 assert(mem_check(&amp;skiboot_heap));</span></a>
+<a name="113"><span class="lineNum">     113 </span>                :<span class="lineCov">         21 :                 p = mem_alloc(&amp;skiboot_heap, 1, 1ULL &lt;&lt; i, &quot;here&quot;);</span></a>
+<a name="114"><span class="lineNum">     114 </span>                :<span class="lineCov">         21 :                 assert(mem_check(&amp;skiboot_heap));</span></a>
 <a name="115"><span class="lineNum">     115 </span>                :            :                 /* We will eventually fail... */</a>
-<a name="116"><span class="lineNum">     116 </span>                :<span class="lineCov">         18 :                 if (!p) {</span></a>
+<a name="116"><span class="lineNum">     116 </span>                :<span class="lineCov">         21 :                 if (!p) {</span></a>
 <a name="117"><span class="lineNum">     117 </span>                :<span class="lineCov">          1 :                         assert(i &gt;= TEST_HEAP_ORDER);</span></a>
 <a name="118"><span class="lineNum">     118 </span>                :<span class="lineCov">          1 :                         break;</span></a>
 <a name="119"><span class="lineNum">     119 </span>                :            :                 }</a>
-<a name="120"><span class="lineNum">     120 </span>                :<span class="lineCov">         17 :                 assert(p);</span></a>
-<a name="121"><span class="lineNum">     121 </span>                :<span class="lineCov">         17 :                 assert((long)p % (1ULL &lt;&lt; i) == 0);</span></a>
-<a name="122"><span class="lineNum">     122 </span>                :<span class="lineCov">         17 :                 assert(p &gt; (void *)test_heap);</span></a>
-<a name="123"><span class="lineNum">     123 </span>                :<span class="lineCov">         17 :                 assert(p + 1 &lt;= (void *)test_heap + TEST_HEAP_SIZE);</span></a>
-<a name="124"><span class="lineNum">     124 </span>                :<span class="lineCov">         17 :                 mem_free(&amp;skiboot_heap, p, &quot;freed&quot;);</span></a>
-<a name="125"><span class="lineNum">     125 </span>                :<span class="lineCov">         17 :                 assert(mem_check(&amp;skiboot_heap));</span></a>
+<a name="120"><span class="lineNum">     120 </span>                :<span class="lineCov">         20 :                 assert(p);</span></a>
+<a name="121"><span class="lineNum">     121 </span>                :<span class="lineCov">         20 :                 assert((long)p % (1ULL &lt;&lt; i) == 0);</span></a>
+<a name="122"><span class="lineNum">     122 </span>                :<span class="lineCov">         20 :                 assert(p &gt; (void *)test_heap);</span></a>
+<a name="123"><span class="lineNum">     123 </span>                :<span class="lineCov">         20 :                 assert(p + 1 &lt;= (void *)test_heap + TEST_HEAP_SIZE);</span></a>
+<a name="124"><span class="lineNum">     124 </span>                :<span class="lineCov">         20 :                 mem_free(&amp;skiboot_heap, p, &quot;freed&quot;);</span></a>
+<a name="125"><span class="lineNum">     125 </span>                :<span class="lineCov">         20 :                 assert(mem_check(&amp;skiboot_heap));</span></a>
 <a name="126"><span class="lineNum">     126 </span>                :            :         }</a>
 <a name="127"><span class="lineNum">     127 </span>                :<span class="lineCov">          1 :         mem_free(&amp;skiboot_heap, ptrs[0], &quot;small freed&quot;);</span></a>
 <a name="128"><span class="lineNum">     128 </span>                :<span class="lineCov">          1 :         assert(heap_empty());</span></a>

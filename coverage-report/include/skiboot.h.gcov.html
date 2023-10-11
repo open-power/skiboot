@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-09-18 13:49:48</td>
+            <td class="headerValue">2023-10-11 21:12:14</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">2</td>
@@ -120,9 +120,9 @@
 <a name="49"><span class="lineNum">      49 </span>                :            : /* Readonly section start and end. */</a>
 <a name="50"><span class="lineNum">      50 </span>                :            : extern char __rodata_start[], __rodata_end[];</a>
 <a name="51"><span class="lineNum">      51 </span>                :            : </a>
-<a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">       5830 : static inline bool is_rodata(const void *p)</span></a>
+<a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">       1878 : static inline bool is_rodata(const void *p)</span></a>
 <a name="53"><span class="lineNum">      53 </span>                :            : {</a>
-<a name="54"><span class="lineNum">      54 </span>                :<span class="lineCov">       5830 :         return ((const char *)p &gt;= __rodata_start &amp;&amp; (const char *)p &lt; __rodata_end);</span></a>
+<a name="54"><span class="lineNum">      54 </span>                :<span class="lineCov">       1878 :         return ((const char *)p &gt;= __rodata_start &amp;&amp; (const char *)p &lt; __rodata_end);</span></a>
 <a name="55"><span class="lineNum">      55 </span>                :            : }</a>
 <a name="56"><span class="lineNum">      56 </span>                :            : #else</a>
 <a name="57"><span class="lineNum">      57 </span>                :            : static inline bool is_rodata(const void *p)</a>
@@ -227,9 +227,9 @@
 <a name="156"><span class="lineNum">     156 </span>                :            : #define HRMOR_BIT (1ul &lt;&lt; 63)</a>
 <a name="157"><span class="lineNum">     157 </span>                :            : </a>
 <a name="158"><span class="lineNum">     158 </span>                :            : /* Clean the stray high bit which the FSP inserts: we only have 52 bits real */</a>
-<a name="159"><span class="lineNum">     159 </span>                :<span class="lineCov">        222 : static inline u64 cleanup_addr(u64 addr)</span></a>
+<a name="159"><span class="lineNum">     159 </span>                :<span class="lineCov">         53 : static inline u64 cleanup_addr(u64 addr)</span></a>
 <a name="160"><span class="lineNum">     160 </span>                :            : {</a>
-<a name="161"><span class="lineNum">     161 </span>                :<span class="lineCov">        222 :         return addr &amp; ((1ULL &lt;&lt; 52) - 1);</span></a>
+<a name="161"><span class="lineNum">     161 </span>                :<span class="lineCov">         53 :         return addr &amp; ((1ULL &lt;&lt; 52) - 1);</span></a>
 <a name="162"><span class="lineNum">     162 </span>                :            : }</a>
 <a name="163"><span class="lineNum">     163 </span>                :            : </a>
 <a name="164"><span class="lineNum">     164 </span>                :            : /* Start the kernel */</a>

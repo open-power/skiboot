@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-09-18 13:49:48</td>
+            <td class="headerValue">2023-10-11 21:12:14</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -86,12 +86,12 @@
 <a name="15"><span class="lineNum">      15 </span>                :            :         {&quot;8286-42A&quot;, &quot;IBM Power System S824&quot;},</a>
 <a name="16"><span class="lineNum">      16 </span>                :            : };</a>
 <a name="17"><span class="lineNum">      17 </span>                :            : </a>
-<a name="18"><span class="lineNum">      18 </span>                :<span class="lineCov">          2 : const struct machine_info *machine_info_lookup(const char *mtm)</span></a>
+<a name="18"><span class="lineNum">      18 </span>                :<span class="lineCov">          1 : const struct machine_info *machine_info_lookup(const char *mtm)</span></a>
 <a name="19"><span class="lineNum">      19 </span>                :            : {</a>
 <a name="20"><span class="lineNum">      20 </span>                :            :         int i;</a>
-<a name="21"><span class="lineNum">      21 </span>                :<span class="lineCov">          6 :         for(i = 0; i &lt; ARRAY_SIZE(machine_table); i++)</span></a>
-<a name="22"><span class="lineNum">      22 </span>                :<span class="lineCov">          6 :                 if (!strcmp(machine_table[i].mtm, mtm))</span></a>
-<a name="23"><span class="lineNum">      23 </span>                :<span class="lineCov">          2 :                         return &amp;machine_table[i];</span></a>
+<a name="21"><span class="lineNum">      21 </span>                :<span class="lineCov">          4 :         for(i = 0; i &lt; ARRAY_SIZE(machine_table); i++)</span></a>
+<a name="22"><span class="lineNum">      22 </span>                :<span class="lineCov">          4 :                 if (!strcmp(machine_table[i].mtm, mtm))</span></a>
+<a name="23"><span class="lineNum">      23 </span>                :<span class="lineCov">          1 :                         return &amp;machine_table[i];</span></a>
 <a name="24"><span class="lineNum">      24 </span>                :<span class="lineNoCov">          0 :         return NULL;</span></a>
 <a name="25"><span class="lineNum">      25 </span>                :            : }</a>
 </pre>
