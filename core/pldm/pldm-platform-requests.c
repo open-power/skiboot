@@ -834,7 +834,7 @@ static int send_repository_changed_event(uint32_t num_changed_pdrs,
 		.event_class = PLDM_PDR_REPOSITORY_CHG_EVENT,
 	};
 
-	struct pldm_platform_event_message_resp response;
+	struct pldm_platform_event_message_resp response = {0};
 
 	prlog(PR_DEBUG, "%s - num_changed_pdrs: %d\n", __func__, num_changed_pdrs);
 
