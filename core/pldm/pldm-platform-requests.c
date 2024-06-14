@@ -993,6 +993,7 @@ static void get_pdr_req_complete(struct pldm_rx_data *rx,
 	struct pldm_pdrs *pdrs = (struct pldm_pdrs *)data;
 	uint32_t record_hndl = pdrs->record_hndl;
 	struct get_pdr_response response;
+	struct pldm_pdr_hdr *pdr_hdr;
 	size_t payload_len;
 	int rc, i;
 
@@ -1065,6 +1066,8 @@ static void get_pdr_req_complete(struct pldm_rx_data *rx,
 	if (response.transfer_flag != PLDM_START_AND_END)
 		prlog(PR_ERR, "Transfert GetPDRResp not complete, transfer_flag: %d\n",
 			      response.transfer_flag);
+	pdr_hdr = (struct pldm_pdr_hdr *)response.record_data;
+	record_hndl = pdr_hdr->record_handle;
 
 	prlog(PR_DEBUG, "%s - record_hndl: %d, next_record_hndl: %d, resp_cnt: %d\n",
 			__func__, record_hndl,
