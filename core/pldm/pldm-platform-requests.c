@@ -38,8 +38,10 @@ static void pdr_init_complete(bool success)
 	if (!success) {
 		pdr_ready = false;
 
-		if (pdrs_repo)
+		if (pdrs_repo) {
 			pldm_pdr_destroy(pdrs_repo);
+			pdrs_repo = NULL;
+		}
 		return;
 	}
 
