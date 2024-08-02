@@ -15,7 +15,7 @@ jobs:
         os: [ ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, ubuntu-rolling, centos7, fedora39, fedora40, fedora-rawhide, docs ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Create Docker image
         run: |
