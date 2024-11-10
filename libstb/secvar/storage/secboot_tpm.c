@@ -160,9 +160,9 @@ static char *secboot_serialize_secvar(char *target, const struct secvar *var, co
 		+ var->key_len + var->data_size) > end)
 		return NULL;
 
-	*((uint64_t*) target) = cpu_to_be64(var->key_len);
+	*((beint64_t*) target) = cpu_to_be64(var->key_len);
 	target += sizeof(var->key_len);
-	*((uint64_t*) target) = cpu_to_be64(var->data_size);
+	*((beint64_t*) target) = cpu_to_be64(var->data_size);
 	target += sizeof(var->data_size);
 	memcpy(target, var->key, var->key_len);
 	target += var->key_len;
@@ -289,9 +289,9 @@ static int secboot_deserialize_secvar(struct secvar **var, char **src, const cha
 	assert(var);
 
 	/* Load in the two header values */
-	key_len = be64_to_cpu(*((uint64_t *) *src));
+	key_len = be64_to_cpu(*((beint64_t *) *src));
 	*src += sizeof(uint64_t);
-	data_size = be64_to_cpu(*((uint64_t *) *src));
+	data_size = be64_to_cpu(*((beint64_t *) *src));
 	*src += sizeof(uint64_t);
 
 	/* Check if we've reached the last var to deserialize */
