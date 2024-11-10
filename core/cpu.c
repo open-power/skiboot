@@ -31,6 +31,7 @@ struct cpu_stack {
 } __align(STACK_SIZE);
 
 static struct cpu_stack * const cpu_stacks = (struct cpu_stack *)CPU_STACKS_BASE;
+static unsigned int cpu_threads_max;
 unsigned int cpu_thread_count;
 unsigned int cpu_max_pir;
 struct cpu_thread *boot_cpu;
@@ -1063,29 +1064,29 @@ void init_boot_cpu(void)
 	/* Get a CPU thread count based on family */
 	switch(proc_gen) {
 	case proc_gen_p8:
-		cpu_thread_count = 8;
+		cpu_threads_max = 8;
 		prlog(PR_INFO, "CPU: P8 generation processor"
-		      " (max %d threads/core)\n", cpu_thread_count);
+		      " (max %d threads/core)\n", cpu_threads_max);
 		break;
 	case proc_gen_p9:
 		if (is_fused_core(pvr))
-			cpu_thread_count = 8;
+			cpu_threads_max = 8;
 		else
-			cpu_thread_count = 4;
+			cpu_threads_max = 4;
 		prlog(PR_INFO, "CPU: P9 generation processor"
-		      " (max %d threads/core)\n", cpu_thread_count);
+		      " (max %d threads/core)\n", cpu_threads_max);
 		break;
 	case proc_gen_p10:
 		if (is_fused_core(pvr))
-			cpu_thread_count = 8;
+			cpu_threads_max = 8;
 		else
-			cpu_thread_count = 4;
+			cpu_threads_max = 4;
 		prlog(PR_INFO, "CPU: P10 generation processor"
-		      " (max %d threads/core)\n", cpu_thread_count);
+		      " (max %d threads/core)\n", cpu_threads_max);
 		break;
 	default:
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
-		cpu_thread_count = 1;
+		cpu_threads_max = 1;
 	}
 
 	if (proc_gen == proc_gen_p8) {
@@ -1192,7 +1193,8 @@ void init_cpu_max_pir(void)
 
 	/* Iterate all CPUs in the device-tree */
 	dt_for_each_child(cpus, cpu) {
-		unsigned int pir, server_no;
+		unsigned int pir, server_no, threads;
+		const struct dt_property *p;
 
 		/* Skip cache nodes */
 		if (strcmp(dt_prop_get(cpu, "device_type"), "cpu"))
@@ -1205,8 +1207,27 @@ void init_cpu_max_pir(void)
 		 */
 		pir = dt_prop_get_u32_def(cpu, "ibm,pir", server_no);
 
-		if (cpu_max_pir < pir + cpu_thread_count - 1)
-			cpu_max_pir = pir + cpu_thread_count - 1;
+		p = dt_find_property(cpu, "ibm,ppc-interrupt-server#s");
+		if (!p)
+			continue;
+		threads = p->len / 4;
+		assert(threads > 0);
+		if (threads > cpu_threads_max) {
+			prlog(PR_WARNING, "CPU: Threads out of range for PIR 0x%04x"
+			      " threads=%d max=%d\n",
+			      pir, threads, cpu_threads_max);
+			threads = cpu_threads_max;
+		}
+		if (!cpu_thread_count) {
+			cpu_thread_count = threads;
+		} else {
+			/* Do not support asymmetric SMT topologies */
+			assert(cpu_thread_count == threads);
+		}
+
+
+		if (cpu_max_pir < pir + threads - 1)
+			cpu_max_pir = pir + threads - 1;
 	}
 
 	prlog(PR_DEBUG, "CPU: New max PIR set to 0x%x\n", cpu_max_pir);
@@ -1277,17 +1298,10 @@ void init_all_cpus(void)
 		prlog(PR_INFO, "CPU: CPU from DT PIR=0x%04x Server#=0x%x"
 		      " State=%d\n", pir, server_no, state);
 
-		/* Check max PIR */
-		if (cpu_max_pir < (pir + cpu_thread_count - 1)) {
-			prlog(PR_WARNING, "CPU: CPU potentially out of range"
-			      "PIR=0x%04x MAX=0x%04x !\n",
-			      pir, cpu_max_pir);
-			continue;
-		}
-
 		/* Setup thread 0 */
 		assert(pir <= cpu_max_pir);
 		t = pt0 = &cpu_stacks[pir].cpu;
+
 		if (t != boot_cpu) {
 			init_cpu_thread(t, state, pir);
 			/* Each cpu gets its own later in init_trace_buffers */
@@ -1322,12 +1336,6 @@ void init_all_cpus(void)
 		if (!p)
 			continue;
 		threads = p->len / 4;
-		if (threads > cpu_thread_count) {
-			prlog(PR_WARNING, "CPU: Threads out of range for PIR 0x%04x"
-			      " threads=%d max=%d\n",
-			      pir, threads, cpu_thread_count);
-			threads = cpu_thread_count;
-		}
 		for (thread = 1; thread < threads; thread++) {
 			prlog(PR_TRACE, "CPU:   secondary thread %d found\n",
 			      thread);
