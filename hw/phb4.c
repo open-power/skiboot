@@ -2959,6 +2959,10 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 			PHBDBG(p, "LINK: Link is up\n");
 			phb4_prepare_link_change(slot, true);
 			pci_slot_set_state(slot, PHB4_SLOT_LINK_STABLE);
+			if (chip_quirk(QUIRK_QEMU)) {
+				/* QEMU doesn't need to wait */
+				return OPAL_SUCCESS;
+			}
 			return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 		}
 
