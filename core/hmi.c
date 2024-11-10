@@ -915,7 +915,7 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 		hmi_evt->severity = OpalHMI_SEV_WARNING;
 		hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
 		hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NPU;
-		hmi_evt->u.xstop_error.xstop_reason = xstop_reason;
+		hmi_evt->u.xstop_error.xstop_reason = cpu_to_be32(xstop_reason);
 		hmi_evt->u.xstop_error.u.chip_id = cpu_to_be32(flat_chip_id);
 
 		/* Marking the event as recoverable so that we don't crash */
