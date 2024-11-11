@@ -417,15 +417,15 @@ void __noreturn fast_reboot_entry(void)
 	/* Clear release flag for next time */
 	fast_boot_release = false;
 
-	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS) && !chip_quirk(QUIRK_QEMU)) {
 		/*
 		 * mem_region_clear_unused avoids these preload regions
 		 * so it can run along side image preloading. Clear these
 		 * regions now to catch anything not overwritten by
 		 * preload.
 		 *
-		 * Mambo may have embedded payload here, so don't clear
-		 * it at all.
+		 * Simulators may have embedded payload here, so don't clear
+		 * these ranges for them.
 		 */
 		memset(kerneal_load_base_addr, 0, KERNEL_LOAD_SIZE);
 		memset(initramfs_load_base_addr, 0, INITRAMFS_LOAD_SIZE);

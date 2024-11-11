@@ -148,7 +148,7 @@ void init_chips(void)
 	if (dt_find_by_path(dt_root, "/mambo")) {
 		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_MAMBO_CALLOUTS
 			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ
-			| QUIRK_NO_RNG;
+			| QUIRK_NO_RNG | QUIRK_NO_DIRECT_CTL;
 
 		enable_mambo_console();
 
@@ -182,10 +182,13 @@ void init_chips(void)
 				model_type);
 	}
 	/* Detect Qemu */
-	if (dt_node_is_compatible(dt_root, "qemu,powernv") ||
+	if (dt_node_is_compatible(dt_root, "qemu,powernv10")) {
+		/* POWER10 has direct controls */
+		proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_RNG;
+		prlog(PR_NOTICE, "CHIP: Detected QEMU simulator\n");
+	} else if (dt_node_is_compatible(dt_root, "qemu,powernv") ||
 	    dt_node_is_compatible(dt_root, "qemu,powernv8") ||
 	    dt_node_is_compatible(dt_root, "qemu,powernv9") ||
-	    dt_node_is_compatible(dt_root, "qemu,powernv10") ||
 	    dt_find_by_path(dt_root, "/qemu")) {
 		proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;
 		prlog(PR_NOTICE, "CHIP: Detected QEMU simulator\n");

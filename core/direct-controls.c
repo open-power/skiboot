@@ -1151,7 +1151,7 @@ int64_t opal_signal_system_reset(int cpu_nr)
 
 void direct_controls_init(void)
 {
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+	if (chip_quirk(QUIRK_NO_DIRECT_CTL))
 		return;
 
 	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p10)
