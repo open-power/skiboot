@@ -356,7 +356,8 @@ int ast_mctp_init(void)
 	/* register an lpc client so we get an interrupt */
 	kcs_serial_irq = dt_prop_get_u32(n, "interrupts");
 	kcs_lpc_client.interrupts = LPC_IRQ(kcs_serial_irq);
-	lpc_register_client(dt_get_chip_id(n), &kcs_lpc_client, IRQ_ATTR_TARGET_OPAL);
+	lpc_register_client(dt_get_chip_id(n), &kcs_lpc_client, "lpc-mctp",
+				IRQ_ATTR_TARGET_OPAL);
 
 	return OPAL_SUCCESS;
 

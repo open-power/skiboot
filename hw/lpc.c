@@ -136,6 +136,7 @@ struct lpcm {
 	bool			sirq_routed[LPC_NUM_SERIRQ];
 	uint32_t		sirq_rmasks[4];
 	uint8_t			sirq_ralloc[4];
+	const char		*sirq_name[4];
 	struct dt_node		*node;
 };
 
@@ -881,8 +882,8 @@ static void lpc_route_serirq(struct lpcm *lpc, uint32_t sirq,
 	opb_write(lpc, opb_master_reg_base + reg, val, 4);
 }
 
-static void lpc_alloc_route(struct lpcm *lpc, unsigned int irq,
-			    unsigned int policy)
+static void lpc_alloc_route(struct lpcm *lpc, const char *name,
+			    unsigned int irq, unsigned int policy)
 {
 	unsigned int i, r, c;
 	int route = -1;
@@ -892,8 +893,8 @@ static void lpc_alloc_route(struct lpcm *lpc, unsigned int irq,
 	else
 		r = LPC_ROUTE_LINUX;
 
-	prlog(PR_DEBUG, "Routing irq %d, policy: %d (r=%d)\n",
-	      irq, policy, r);
+	prlog(PR_DEBUG, "Routing %s irq %d, policy: %d (r=%d)\n",
+	      name, irq, policy, r);
 
 	/* Are we already routed ? */
 	if (lpc->sirq_routed[irq] &&
@@ -915,6 +916,7 @@ static void lpc_alloc_route(struct lpcm *lpc, unsigned int irq,
 		 */
 		if (lpc->sirq_ralloc[i] == LPC_ROUTE_FREE && c < 4) {
 			lpc->sirq_ralloc[i] = r;
+			lpc->sirq_name[i] = name;
 			route = i;
 			break;
 		}
@@ -924,8 +926,12 @@ static void lpc_alloc_route(struct lpcm *lpc, unsigned int irq,
 	 * with a matching policy
 	 */
 	for (i = 0; route < 0 && i < 4; i++) {
-		if (lpc->sirq_ralloc[i] == r)
+		if (lpc->sirq_ralloc[i] == r) {
+			prlog(PR_NOTICE, "Muxing PSI SIRQ%d (%s %s)\n", i, name,
+					lpc->sirq_name[i]);
+			lpc->sirq_name[i] = "muxed";
 			route = i;
+		}
 	}
 
 	/* Still no route ? bail. That should never happen */
@@ -952,6 +958,16 @@ unsigned int lpc_get_irq_policy(uint32_t chip_id, uint32_t psi_idx)
 		return IRQ_ATTR_TARGET_LINUX;
 	else
 		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TYPE_LSI;
+}
+
+const char *lpc_get_irq_name(uint32_t chip_id, uint32_t psi_idx)
+{
+	struct proc_chip *c = get_chip(chip_id);
+
+	if (!c || !c->lpc)
+		return NULL;
+
+	return c->lpc->sirq_name[psi_idx];
 }
 
 static void lpc_create_int_map(struct lpcm *lpc, struct dt_node *psi_node)
@@ -1432,9 +1448,8 @@ bool lpc_ok(void)
 	return !lock_held_by_me(&chip->lpc->lock);
 }
 
-void lpc_register_client(uint32_t chip_id,
-			 const struct lpc_client *clt,
-			 uint32_t policy)
+void lpc_register_client(uint32_t chip_id, const struct lpc_client *clt,
+			 const char *name, uint32_t policy)
 {
 	struct lpc_client_entry *ent;
 	struct proc_chip *chip;
@@ -1472,7 +1487,7 @@ void lpc_register_client(uint32_t chip_id,
 		unsigned int i;
 		for (i = 0; i < LPC_NUM_SERIRQ; i++)
 			if (clt->interrupts & LPC_IRQ(i))
-				lpc_alloc_route(lpc, i, policy);
+				lpc_alloc_route(lpc, name, i, policy);
 	}
 
 	if (lpc->has_serirq)

@@ -725,7 +725,7 @@ void bt_init(void)
 
 	irq = dt_prop_get_u32(n, "interrupts");
 	bt_lpc_client.interrupts = LPC_IRQ(irq);
-	lpc_register_client(dt_get_chip_id(n), &bt_lpc_client,
+	lpc_register_client(dt_get_chip_id(n), &bt_lpc_client, "lpc-bt",
 			    IRQ_ATTR_TARGET_OPAL);
 
 	/* Enqueue an IPMI message to ask the BMC about its BT capabilities */
