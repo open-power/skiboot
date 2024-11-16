@@ -49,46 +49,31 @@ static void astbmc_ipmi_error(struct ipmi_msg *msg)
         ipmi_free_msg(msg);
 }
 
+#define SET_ENABLE_SEL		0x08
+#define SET_ENABLE_MSGBUF	0x04
+#define SET_ENABLE_RX_MQ_INT	0x01
+
 static void astbmc_ipmi_setenables(void)
 {
-        struct ipmi_msg *msg;
+	struct ipmi_msg *msg;
+	uint8_t data;
 
-        struct {
-                uint8_t oem2_en : 1;
-                uint8_t oem1_en : 1;
-                uint8_t oem0_en : 1;
-                uint8_t reserved : 1;
-                uint8_t sel_en : 1;
-                uint8_t msgbuf_en : 1;
-                uint8_t msgbuf_full_int_en : 1;
-                uint8_t rxmsg_queue_int_en : 1;
-        } data;
+	data = SET_ENABLE_SEL | SET_ENABLE_MSGBUF | SET_ENABLE_RX_MQ_INT;
 
-        memset(&data, 0, sizeof(data));
-
-        /* The spec says we need to read-modify-write to not clobber
-         * the state of the other flags. These are set on by the bmc */
-        data.rxmsg_queue_int_en = 1;
-        data.sel_en = 1;
-
-        /* These are the ones we want to set on */
-        data.msgbuf_en = 1;
-
-        msg = ipmi_mkmsg_simple(IPMI_SET_ENABLES, &data, sizeof(data));
-        if (!msg) {
+	msg = ipmi_mkmsg_simple(IPMI_SET_ENABLES, &data, sizeof(data));
+	if (!msg) {
 		/**
 		 * @fwts-label ASTBMCFailedSetEnables
 		 * @fwts-advice AST BMC is likely to be non-functional
 		 * when accessed from host.
 		 */
-                prlog(PR_ERR, "ASTBMC: failed to set enables\n");
-                return;
-        }
+		prlog(PR_ERR, "ASTBMC: failed to set enables\n");
+		return;
+	}
 
-        msg->error = astbmc_ipmi_error;
+	msg->error = astbmc_ipmi_error;
 
-        ipmi_queue_msg(msg);
-
+	ipmi_queue_msg(msg);
 }
 
 static int astbmc_fru_init(void)
