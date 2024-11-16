@@ -490,6 +490,16 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 #if BT_QUEUE_DEBUG
 	print_debug_queue_info();
 #endif
+	if (chip_quirk(QUIRK_QEMU) && !bt.irq_ok) {
+		/*
+		 * QEMU has a bug where PSI interrupts are lost when booting
+		 * the OS (perhaps when XIVE is reset, are the interrupts not
+		 * re-presented?) Clearing the irq here gets things moving.
+		 */
+		if (bt_inb(BT_INTMASK) & BT_INTMASK_B2H_IRQ)
+			bt_outb(BT_INTMASK_B2H_IRQ | BT_INTMASK_B2H_IRQEN,
+					BT_INTMASK);
+	}
 
 	bt_ctrl = bt_inb(BT_CTRL);
 
