@@ -446,56 +446,6 @@ static bool wait_for_all_occ_init(void)
 			break;
 
 		case 0x90:
-			/*
-			 * OCC-OPAL interface version 0x90 has a
-			 * dynamic data section.  This has an
-			 * occ_state field whose values inform about
-			 * the state of the OCC.
-			 *
-			 * 0x00 = OCC not running. No communication
-			 *        allowed.
-			 *
-			 * 0x01 = Standby. No communication allowed.
-			 *
-			 * 0x02 = Observation State. Communication
-			 *        allowed and is command dependent.
-			 *
-			 * 0x03 = Active State. Communication allowed
-			 *        and is command dependent.
-			 *
-			 * 0x04 = Safe State. No communication
-			 *        allowed. Just like CPU throttle
-			 *        status, some failures will not allow
-			 *        for OCC to update state to safe.
-			 *
-			 * 0x05 = Characterization State.
-			 *        Communication allowed and is command
-			 *        dependent.
-			 *
-			 * We will error out if OCC is not in the
-			 * Active State.
-			 *
-			 * XXX : Should we error out only if no
-			 *       communication is allowed with the
-			 *       OCC ?
-			 */
-			occ_dyn_data = get_occ_dynamic_data(chip);
-			if (occ_dyn_data->occ_state != 0x3) {
-				/**
-				 * @fwts-label OCCInactive
-				 * @fwts-advice The OCC for a chip was not active.
-				 * This means that CPU frequency scaling will
-				 * not be functional. CPU may be set to a low,
-				 * safe frequency. This means that CPU idle
-				 * states and CPU frequency scaling may not be
-				 * functional.
-				 */
-				prlog(PR_ERR, "OCC: Chip: %x: OCC not active\n",
-				      chip->id);
-				return false;
-			}
-			break;
-
 		case 0xA0:
 			/*
 			 * OCC-OPAL interface version 0x90 has a
@@ -1423,6 +1373,7 @@ static int read_occ_rsp(struct occ_response_buffer *rsp)
 		prlog(PR_DEBUG, "OCC: Rsp status: OCC internal error\n");
 		break;
 	default:
+		prlog(PR_WARNING, "OCC: Rsp status: Unknown 0x%x\n", rsp->status);
 		break;
 	}
 
