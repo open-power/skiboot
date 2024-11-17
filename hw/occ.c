@@ -261,12 +261,14 @@ struct occ_dynamic_data {
 	u8 major_version;
 	u8 minor_version;
 	u8 gpus_present;
-	struct __packed { /* Version 0x90 */
-		u8 spare1;
-	} v9;
-	struct __packed { /* Version 0xA0 */
-		u8 wof_enabled;
-	} v10;
+	union __packed {
+		struct __packed { /* Version 0x90 */
+			u8 spare1;
+		} v9;
+		struct __packed { /* Version 0xA0 */
+			u8 wof_enabled;
+		} v10;
+	};
 	u8 cpu_throttle;
 	u8 mem_throttle;
 	u8 quick_pwr_drop;
