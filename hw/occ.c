@@ -1522,7 +1522,7 @@ static void occ_cmd_interface_init(void)
 	chip = next_chip(NULL);
 	pdata = get_occ_pstate_table(chip);
 	major = pdata->version >> 4;
-	if (major != 0x9 || major != 0xA)
+	if (major != 0x9 && major != 0xA)
 		return;
 
 	for_each_chip(chip)
