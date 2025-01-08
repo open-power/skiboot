@@ -49,6 +49,16 @@ static const struct tpm_info tpm_nuvoton_650 = {
 	.vid_did = 0x60,
 };
 
+static const struct tpm_info tpm_nuvoton_75x = {
+	.compatible = "nuvoton,npct75x",
+	.vendor_id = 0x5010FC00,
+	.sts = 0x18,
+	.burst_count = 0x19,
+	.data_fifo_w = 0x24,
+	.data_fifo_r = 0x24,
+	.vid_did = 0x48,
+};
+
 static struct tpm_dev *tpm_device = NULL;
 static const struct tpm_info *tpm_info = NULL;
 
@@ -626,8 +636,11 @@ static void __tpm_i2c_nuvoton_probe(const struct tpm_info *info)
 		/*
 		 * Tweak for linux. It doesn't have a driver compatible
 		 * with "nuvoton,npct650"
+		 *
+		 * Not necessary for 75x, as we use the compatible that
+		 * Linux expects.
 		 */
-		if (!dt_node_is_compatible(node, "nuvoton,npct601")) {
+		if (dt_node_is_compatible(node, "nuvoton,npct650")) {
 			dt_check_del_prop(node, "compatible");
 			dt_add_property_strings(node, "compatible",
 						"nuvoton,npct650", "nuvoton,npct601");
@@ -643,4 +656,5 @@ disable:
 void tpm_i2c_nuvoton_probe(void)
 {
 	__tpm_i2c_nuvoton_probe(&tpm_nuvoton_650);
+	__tpm_i2c_nuvoton_probe(&tpm_nuvoton_75x);
 }

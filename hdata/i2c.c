@@ -156,6 +156,7 @@ static struct hdat_i2c_type hdat_i2c_devs[] = {
 	{ 0x11, "eeprom", "atmel,24c16" },
 	{ 0x12, "i2c", NULL },   /* NVDIA GPU */
 	{ 0x13, "i2c", "nxp,lpc11u35" },
+	{ 0x15, "tpm", "nuvoton,npct75x" },
 };
 
 struct hdat_i2c_info {
