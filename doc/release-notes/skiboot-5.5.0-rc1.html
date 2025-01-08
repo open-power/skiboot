@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.5.0-rc1 &#8212; skiboot bc7b85d
+    <title>skiboot-5.5.0-rc1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.5.0.html" title="skiboot-5.5.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0-rc1</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-5-0-rc1">
-<span id="id1"></span><h1>skiboot-5.5.0-rc1<a class="headerlink" href="#skiboot-5-5-0-rc1" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-5.5.0-rc1<a class="headerlink" href="#skiboot-5-5-0-rc1" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.5.0-rc1 was released on Tuesday March 28th 2017. It is the first
 release candidate of skiboot 5.5, which will become the new stable release
 of skiboot following the 5.4 release, first released November 11th 2016.</p>
@@ -63,7 +61,7 @@ period. Expected release dates and contents are tracked using GitHub milestone
 and issues: <a class="reference external" href="https://github.com/open-power/skiboot/milestones">https://github.com/open-power/skiboot/milestones</a></p>
 <p>Over skiboot-5.4, we have the following changes:</p>
 <section id="new-platforms">
-<h2>New Platforms<a class="headerlink" href="#new-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>New Platforms<a class="headerlink" href="#new-platforms" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>SuperMicro’s (SMC) P8DNU: An astbmc based POWER8 platform</p></li>
 <li><p>Add a generic platform to help with bringup of new systems.</p></li>
@@ -79,7 +77,7 @@ for bringup use only at this point):</p>
 </ul>
 </section>
 <section id="new-features">
-<h2>New features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<h2>New features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>System reset IPI facility and Mambo implementation
 Add an opal call <a class="reference internal" href="../opal-api/opal-signal-system-reset-145.html#opal-signal-system-reset"><span class="std std-ref">OPAL_SIGNAL_SYSTEM_RESET</span></a> which allows system reset
@@ -155,7 +153,7 @@ messages.</p>
 </ul>
 </section>
 <section id="core">
-<h2>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h2>
+<h2>Core<a class="headerlink" href="#core" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>asm: Don’t try to set LPCR:LPES1 on P8 and P9, the bit doesn’t exist.</p></li>
 <li><p>pci: Add a framework for quirks</p>
@@ -220,7 +218,7 @@ think the SLW timer didn’t work when in fact it did.</p>
 </ul>
 </section>
 <section id="i2c-and-tpm">
-<h2>I2C and TPM<a class="headerlink" href="#i2c-and-tpm" title="Permalink to this headline">¶</a></h2>
+<h2>I2C and TPM<a class="headerlink" href="#i2c-and-tpm" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>p8i2c: Use calculated poll_interval when booting OPAL
 Otherwise we’d default to 2seconds (TIMER_POLL) during boot on
@@ -257,7 +255,7 @@ make Hostboot behave.</p>
 </ul>
 </section>
 <section id="pci">
-<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<h2>PCI<a class="headerlink" href="#pci" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>core/pci: Support SRIOV VFs</p>
 <p>Currently, skiboot can’t see SRIOV VFs. It introduces some troubles
@@ -309,7 +307,7 @@ complete reset.</p>
 </ul>
 </section>
 <section id="p8dnu-platform">
-<h2>p8dnu platform<a class="headerlink" href="#p8dnu-platform" title="Permalink to this headline">¶</a></h2>
+<h2>p8dnu platform<a class="headerlink" href="#p8dnu-platform" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>astbmc/p8dnu: Enable PCI slot’s power supply on PEX9733 in hot-add path</p></li>
 <li><p>astbmc/p8dnu: Enable PCI slot’s power supply on PEX8718 in hot-add path</p></li>
@@ -383,7 +381,7 @@ have this issue on the integrated PLX 8718 switch.</p>
 </ul>
 </section>
 <section id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>opal-prd: Direct systemd to always restart opal-prd
 Always restart the opal-prd daemon, irrespective of why it stopped.</p></li>
@@ -394,13 +392,13 @@ Always restart the opal-prd daemon, irrespective of why it stopped.</p></li>
 </ul>
 </section>
 <section id="libffs">
-<h2>libffs<a class="headerlink" href="#libffs" title="Permalink to this headline">¶</a></h2>
+<h2>libffs<a class="headerlink" href="#libffs" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>libffs: Understand how to create FFS partition TOCs and entries.</p></li>
 </ul>
 </section>
 <section id="bmc-based-systems">
-<h2>BMC Based systems<a class="headerlink" href="#bmc-based-systems" title="Permalink to this headline">¶</a></h2>
+<h2>BMC Based systems<a class="headerlink" href="#bmc-based-systems" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>platforms/astbmc: Support PCI slots for palmetto</p></li>
 <li><p>habanero/slottable: Remove Network Mezz(2, 0) from PHB1.</p></li>
@@ -437,7 +435,7 @@ dereference a NULL pointer.</p></li>
 </ul>
 </section>
 <section id="power9">
-<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<h2>POWER9<a class="headerlink" href="#power9" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>external: Update xscom utils for type 1 indirect accesses</p></li>
 <li><p>xscom: Harden indirect writes</p></li>
@@ -627,7 +625,7 @@ In order to speed up xive reset</p></li>
 </div></blockquote>
 </section>
 <section id="fast-reboot">
-<h2>Fast-reboot<a class="headerlink" href="#fast-reboot" title="Permalink to this headline">¶</a></h2>
+<h2>Fast-reboot<a class="headerlink" href="#fast-reboot" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>fast-reboot: creset PHBs on fast reboot
 On fast reboot, perform a creset of all PHBs. This ensures that any PHBs
@@ -638,13 +636,13 @@ CAPI mode is disabled as part of OPAL_SYNC_HOST_REBOOT.</p></li>
 </ul>
 </section>
 <section id="capi">
-<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<h2>CAPI<a class="headerlink" href="#capi" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hmi: Print CAPP FIR information when handling CAPP malfunction alerts</p></li>
 </ul>
 </section>
 <section id="fsp-based-systems">
-<h2>FSP based systems<a class="headerlink" href="#fsp-based-systems" title="Permalink to this headline">¶</a></h2>
+<h2>FSP based systems<a class="headerlink" href="#fsp-based-systems" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hw/fsp: Do not queue SP and SPCN class messages during reset/reload
 This could cause soft lockups if FSP reset reload was done while in OPAL
@@ -653,7 +651,7 @@ FSP are generally queued for sending later.</p></li>
 </ul>
 </section>
 <section id="tests">
-<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
 <ul>
 <li><dl class="simple">
 <dt>core/test/run-trace: Reduce number of samples when running under valgrind</dt><dd><p>This reduces ‘make check’ run time by ~10 seconds on my laptop,
@@ -722,17 +720,12 @@ found to update the pattern, or add both.</p></li>
 </ul>
 </section>
 <section id="contributors">
-<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<h2>Contributors<a class="headerlink" href="#contributors" title="Link to this heading">¶</a></h2>
 <p>Processed 363 csets from 28 developers.
 A total of 18105 lines added, 16499 removed (delta 1606)</p>
 <section id="developers-with-the-most-changesets">
-<h3>Developers with the most changesets<a class="headerlink" href="#developers-with-the-most-changesets" title="Permalink to this headline">¶</a></h3>
+<h3>Developers with the most changesets<a class="headerlink" href="#developers-with-the-most-changesets" title="Link to this heading">¶</a></h3>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -856,13 +849,8 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-with-the-most-changed-lines">
-<h3>Developers with the most changed lines<a class="headerlink" href="#developers-with-the-most-changed-lines" title="Permalink to this headline">¶</a></h3>
+<h3>Developers with the most changed lines<a class="headerlink" href="#developers-with-the-most-changed-lines" title="Link to this heading">¶</a></h3>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 69%" />
-<col style="width: 13%" />
-<col style="width: 18%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -986,13 +974,8 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-with-the-most-lines-removed">
-<h3>Developers with the most lines removed<a class="headerlink" href="#developers-with-the-most-lines-removed" title="Permalink to this headline">¶</a></h3>
+<h3>Developers with the most lines removed<a class="headerlink" href="#developers-with-the-most-lines-removed" title="Link to this heading">¶</a></h3>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 69%" />
-<col style="width: 13%" />
-<col style="width: 18%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -1024,14 +1007,9 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-with-the-most-signoffs">
-<h3>Developers with the most signoffs<a class="headerlink" href="#developers-with-the-most-signoffs" title="Permalink to this headline">¶</a></h3>
+<h3>Developers with the most signoffs<a class="headerlink" href="#developers-with-the-most-signoffs" title="Link to this heading">¶</a></h3>
 <p>Total 322</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 67%" />
-<col style="width: 14%" />
-<col style="width: 19%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -1075,14 +1053,9 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-with-the-most-reviews">
-<h3>Developers with the most reviews<a class="headerlink" href="#developers-with-the-most-reviews" title="Permalink to this headline">¶</a></h3>
+<h3>Developers with the most reviews<a class="headerlink" href="#developers-with-the-most-reviews" title="Link to this heading">¶</a></h3>
 <p>Total: 45</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 67%" />
-<col style="width: 14%" />
-<col style="width: 19%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -1138,14 +1111,9 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-with-the-most-test-credits">
-<h3>Developers with the most test credits<a class="headerlink" href="#developers-with-the-most-test-credits" title="Permalink to this headline">¶</a></h3>
+<h3>Developers with the most test credits<a class="headerlink" href="#developers-with-the-most-test-credits" title="Link to this heading">¶</a></h3>
 <p>Total 11</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 67%" />
-<col style="width: 14%" />
-<col style="width: 19%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -1181,14 +1149,9 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-who-gave-the-most-tested-by-credits">
-<h3>Developers who gave the most tested-by credits<a class="headerlink" href="#developers-who-gave-the-most-tested-by-credits" title="Permalink to this headline">¶</a></h3>
+<h3>Developers who gave the most tested-by credits<a class="headerlink" href="#developers-who-gave-the-most-tested-by-credits" title="Link to this heading">¶</a></h3>
 <p>Total 11</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 13%" />
-<col style="width: 18%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -1220,14 +1183,9 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-with-the-most-report-credits">
-<h3>Developers with the most report credits<a class="headerlink" href="#developers-with-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<h3>Developers with the most report credits<a class="headerlink" href="#developers-with-the-most-report-credits" title="Link to this heading">¶</a></h3>
 <p>Total 7</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -1255,14 +1213,9 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </table>
 </section>
 <section id="developers-who-gave-the-most-report-credits">
-<h3>Developers who gave the most report credits<a class="headerlink" href="#developers-who-gave-the-most-report-credits" title="Permalink to this headline">¶</a></h3>
+<h3>Developers who gave the most report credits<a class="headerlink" href="#developers-who-gave-the-most-report-credits" title="Link to this heading">¶</a></h3>
 <p>Total 7</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 72%" />
-<col style="width: 8%" />
-<col style="width: 19%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>#</p></th>
@@ -1295,8 +1248,9 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.5.0-rc1</a><ul>
 <li><a class="reference internal" href="#new-platforms">New Platforms</a></li>
 <li><a class="reference internal" href="#new-features">New features</a></li>
@@ -1328,12 +1282,17 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.5.0.html"
-                        title="previous chapter">skiboot-5.5.0</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.5.0-rc2.html"
-                        title="next chapter">skiboot-5.5.0-rc2</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.5.0.html"
+                          title="previous chapter">skiboot-5.5.0</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.5.0-rc2.html"
+                          title="next chapter">skiboot-5.5.0-rc2</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1350,7 +1309,7 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1367,15 +1326,15 @@ A total of 18105 lines added, 16499 removed (delta 1606)</p>
         <li class="right" >
           <a href="skiboot-5.5.0.html" title="skiboot-5.5.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.5.0-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

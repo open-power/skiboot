@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Get/Set System Parameters &#8212; skiboot bc7b85d
+    <title>Get/Set System Parameters &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-nvram-read-write-7-8.html" title="OPAL NVRAM"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Get/Set System Parameters</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="get-set-system-parameters">
-<span id="opal-sysparams"></span><h1>Get/Set System Parameters<a class="headerlink" href="#get-set-system-parameters" title="Permalink to this headline">¶</a></h1>
+<span id="opal-sysparams"></span><h1>Get/Set System Parameters<a class="headerlink" href="#get-set-system-parameters" title="Link to this heading">¶</a></h1>
 <p>The usual way for setting system parameters is via IPMI for things controlled
 by the service processor, or through NVRAM for things controlled by host
 firmware. However, some platforms may have other options not easily (or
@@ -56,11 +54,11 @@ these parameters.</p>
 tree (see <a class="reference internal" href="../device-tree/ibm%2Copal/sysparams.html#device-tree-ibm-opal-sysparams"><span class="std std-ref">sysparams</span></a> for details).</p>
 <p>Currently only implemented on FSP based systems.</p>
 <section id="opal-get-param">
-<span id="id1"></span><h2>OPAL_GET_PARAM<a class="headerlink" href="#opal-get-param" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>OPAL_GET_PARAM<a class="headerlink" href="#opal-get-param" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_PARAM                               89</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">fsp_opal_get_param</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">param_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">                           </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">length</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">fsp_opal_get_param</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">param_id</span><span class="p">,</span>
+<span class="w">                           </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">length</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Get the current setting of <cite>param_id</cite>. This is an asynchronous call as OPAL may
@@ -68,7 +66,7 @@ need to communicate with a service processor. The <cite>param_id</cite> and <cit
 described in the device tree for each parameter (see
 <a class="reference internal" href="../device-tree/ibm%2Copal/sysparams.html#device-tree-ibm-opal-sysparams"><span class="std std-ref">sysparams</span></a> for details).</p>
 <section id="returns">
-<h3>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h3>
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>Hardware issue prevents retreiving parameter. e.g. FSP is offline or
 absent.</p>
@@ -87,11 +85,11 @@ absent.</p>
 </section>
 </section>
 <section id="opal-set-param">
-<span id="id2"></span><h2>OPAL_SET_PARAM<a class="headerlink" href="#opal-set-param" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>OPAL_SET_PARAM<a class="headerlink" href="#opal-set-param" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_SET_PARAM                               90</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">fsp_opal_set_param</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">param_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">                           </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">length</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">fsp_opal_set_param</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">param_id</span><span class="p">,</span>
+<span class="w">                           </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">length</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Write a new setting for <cite>param_id</cite>. This is an asynchronous call as OPAL may
@@ -99,7 +97,7 @@ need to communicate with a service processor. The <cite>param_id</cite> and <cit
 described in the device tree for each parameter (see
 <a class="reference internal" href="../device-tree/ibm%2Copal/sysparams.html#device-tree-ibm-opal-sysparams"><span class="std std-ref">sysparams</span></a> for details).</p>
 <section id="id3">
-<h3>Returns<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<h3>Returns<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-hardware"><span class="std std-ref">OPAL_HARDWARE</span></a></dt><dd><p>Hardware issue prevents retreiving parameter. e.g. FSP is offline or
 absent.</p>
@@ -126,8 +124,9 @@ absent.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Get/Set System Parameters</a><ul>
 <li><a class="reference internal" href="#opal-get-param">OPAL_GET_PARAM</a><ul>
 <li><a class="reference internal" href="#returns">Returns</a></li>
@@ -141,12 +140,17 @@ absent.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-nvram-read-write-7-8.html"
-                        title="previous chapter">OPAL NVRAM</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-pci-config-read-write-13-14-15-16-17-18.html"
-                        title="next chapter">OPAL PCI Config Space Access</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-nvram-read-write-7-8.html"
+                          title="previous chapter">OPAL NVRAM</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-pci-config-read-write-13-14-15-16-17-18.html"
+                          title="next chapter">OPAL PCI Config Space Access</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -163,7 +167,7 @@ absent.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -180,15 +184,15 @@ absent.</p>
         <li class="right" >
           <a href="opal-nvram-read-write-7-8.html" title="OPAL NVRAM"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Get/Set System Parameters</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

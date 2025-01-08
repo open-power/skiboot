@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ibm,firmware-versions node &#8212; skiboot bc7b85d
+    <title>ibm,firmware-versions node &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="ibm%2Ccvc.html" title="ibm,cvc"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">ibm,firmware-versions node</a></li> 
@@ -46,17 +44,12 @@
           <div class="body" role="main">
             
   <section id="ibm-firmware-versions-node">
-<h1>ibm,firmware-versions node<a class="headerlink" href="#ibm-firmware-versions-node" title="Permalink to this headline">¶</a></h1>
+<h1>ibm,firmware-versions node<a class="headerlink" href="#ibm-firmware-versions-node" title="Link to this heading">¶</a></h1>
 <p>The <cite>ibm,firmware-versions</cite> node contains information on the versions of
 various firmware components as they were <strong>during boot</strong>. It <strong>does not</strong>
 change if there are pending or runtime updates. It represents (to the best
 of boot firmware’s ability) what versions of firmware were during this boot.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 12%" />
-<col style="width: 64%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Property</p></th>
 <th class="head"><p>Required</p></th>
@@ -111,7 +104,7 @@ of boot firmware’s ability) what versions of firmware were during this boot.</
 </tbody>
 </table>
 <section id="version-property">
-<h2><code class="docutils literal notranslate"><span class="pre">version</span></code> property<a class="headerlink" href="#version-property" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal notranslate"><span class="pre">version</span></code> property<a class="headerlink" href="#version-property" title="Link to this heading">¶</a></h2>
 <p>This property <strong>must</strong> exist on POWER9 and above systems. It <strong>may</strong> exist
 on POWER8 systems.</p>
 <p>If this property exists, it <strong>must</strong> conform to this specification.
@@ -166,11 +159,6 @@ familiar to those who are familiar with RPM and Debian package versioning.</p>
 <p>The below table shows comparisons between versions and what the result should
 be:</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 36%" />
-<col style="width: 36%" />
-<col style="width: 27%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>A</p></th>
 <th class="head"><p>B</p></th>
@@ -222,7 +210,7 @@ be:</p>
 </table>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h2>
 <p>New style (required for POWER9 and above):</p>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,firmware-versions</span> <span class="p">{</span>
              <span class="nf">version</span> <span class="o">=</span> <span class="s">&quot;open-power-habanero-v1.14-45-g78d89280c3f9-dirty&quot;</span><span class="p">;</span>
@@ -258,8 +246,9 @@ be:</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">ibm,firmware-versions node</a><ul>
 <li><a class="reference internal" href="#version-property"><code class="docutils literal notranslate"><span class="pre">version</span></code> property</a></li>
 <li><a class="reference internal" href="#examples">Examples</a></li>
@@ -267,12 +256,17 @@ be:</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="ibm%2Ccvc.html"
-                        title="previous chapter">ibm,cvc</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="ibm%2Copal.html"
-                        title="next chapter">ibm,opal</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="ibm%2Ccvc.html"
+                          title="previous chapter">ibm,cvc</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="ibm%2Copal.html"
+                          title="next chapter">ibm,opal</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -289,7 +283,7 @@ be:</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -306,15 +300,15 @@ be:</p>
         <li class="right" >
           <a href="ibm%2Ccvc.html" title="ibm,cvc"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">ibm,firmware-versions node</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

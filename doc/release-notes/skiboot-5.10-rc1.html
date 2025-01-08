@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.10-rc1 &#8212; skiboot bc7b85d
+    <title>skiboot-5.10-rc1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.10.html" title="skiboot-5.10"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc1</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-10-rc1">
-<span id="id1"></span><h1>skiboot-5.10-rc1<a class="headerlink" href="#skiboot-5-10-rc1" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-5.10-rc1<a class="headerlink" href="#skiboot-5-10-rc1" title="Link to this heading">¶</a></h1>
 <p>skiboot v5.10-rc1 was released on Tuesday February 6th 2018. It is the first
 release candidate of skiboot 5.10, which will become the new stable release
 of skiboot following the 5.9 release, first released October 31st 2017.</p>
@@ -59,7 +57,7 @@ being for all POWER8 and POWER9 platforms in op-build v1.21.
 This release will be targeted to early POWER9 systems.</p>
 <p>Over skiboot-5.9, we have the following changes:</p>
 <section id="new-features">
-<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<h2>New Features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hdata: Parse IPL FW feature settings</p>
 <p>Add parsing for the firmware feature flags in the HDAT. This
@@ -122,7 +120,7 @@ Finally make sure xscom nodes created before calling memory_parse().</p>
 </li>
 </ul>
 <section id="fast-reboot-and-quiesce">
-<h3>Fast Reboot and Quiesce<a class="headerlink" href="#fast-reboot-and-quiesce" title="Permalink to this headline">¶</a></h3>
+<h3>Fast Reboot and Quiesce<a class="headerlink" href="#fast-reboot-and-quiesce" title="Link to this heading">¶</a></h3>
 <p>We have a preliminary fast reboot implementation for POWER9 systems, which
 we look to enabling by default in the next release.</p>
 <p>The OPAL Quiesce calls are designed to improve reliability and debuggability
@@ -183,7 +181,7 @@ stuck in firmware.</p>
 </ul>
 </section>
 <section id="power9-power-saving">
-<h3>POWER9 power saving<a class="headerlink" href="#power9-power-saving" title="Permalink to this headline">¶</a></h3>
+<h3>POWER9 power saving<a class="headerlink" href="#power9-power-saving" title="Link to this heading">¶</a></h3>
 <p>There is much improved support for deeper sleep/idle (stop) states on POWER9.</p>
 <ul>
 <li><p>OCC: Increase max pstate check on P9 to 255</p>
@@ -250,7 +248,7 @@ reads an immediate success from the previous operation.</p>
 </ul>
 </section>
 <section id="secure-and-trusted-boot-for-power9">
-<h3>Secure and Trusted Boot for POWER9<a class="headerlink" href="#secure-and-trusted-boot-for-power9" title="Permalink to this headline">¶</a></h3>
+<h3>Secure and Trusted Boot for POWER9<a class="headerlink" href="#secure-and-trusted-boot-for-power9" title="Link to this heading">¶</a></h3>
 <p>We introduce support for Secure and Trusted Boot for POWER9 systems, with equal
 functionality that we have on POWER8 systems, that is, we have the mechanisms in
 place to boot to petitboot (i.e. to BOOTKERNEL).</p>
@@ -441,7 +439,7 @@ sb_verify() calls are updated in a subsequent patch.</p>
 </section>
 </section>
 <section id="xive">
-<h2>XIVE<a class="headerlink" href="#xive" title="Permalink to this headline">¶</a></h2>
+<h2>XIVE<a class="headerlink" href="#xive" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>xive: Don’t bother cleaning up disabled EQs in reset</p>
 <p>Additionally, warn if we find an enabled one that isn’t one
@@ -542,7 +540,7 @@ freed entries are still marked valid (but masked).</p>
 </ul>
 </section>
 <section id="pci">
-<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<h2>PCI<a class="headerlink" href="#pci" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>pci: Shared slot state synchronisation for hot reset</p>
 <p>When a device is shared between two PHBs, it doesn’t get reset properly
@@ -558,7 +556,7 @@ between them where necessary.</p>
 </ul>
 </section>
 <section id="phb4">
-<h2>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h2>
+<h2>PHB4<a class="headerlink" href="#phb4" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>phb4: Change PCI MMIO timers</p>
 <p>Currently we have a mismatch between the NCU and PCI timers for MMIO
@@ -615,7 +613,7 @@ DAT_ERR Indication) and sets bit 21 (MMIO CFG Pending Error)</p>
 </ul>
 </section>
 <section id="capi">
-<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<h2>CAPI<a class="headerlink" href="#capi" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>capi: Disable CAPP virtual machines</p>
 <p>When exercising more than one CAPI accelerators simultaneously in
@@ -624,7 +622,7 @@ fix this a workaround of disabling CAPP virtual machines is
 suggested. These ‘virtual machines’ let PSL queue multiple CAPP
 commands for servicing by CAPP there by increasing
 throughput. Below is the error scenario described by the h/w team:</p>
-<p>” With virtual machines enabled we had a deadlock scenario where with 2
+<p>“ With virtual machines enabled we had a deadlock scenario where with 2
 or more CAPI’s in a system you could get in a deadlock scenario due to
 cast-outs that are required break the deadlock (evict lines that
 another CAPI is requesting) get stuck in the virtual machine queue by
@@ -681,7 +679,7 @@ to the CAPP for use.</p>
 </ul>
 </section>
 <section id="hmi">
-<h2>HMI<a class="headerlink" href="#hmi" title="Permalink to this headline">¶</a></h2>
+<h2>HMI<a class="headerlink" href="#hmi" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>core/hmi: Display chip location code while displaying core FIR.</p></li>
 <li><p>core/hmi: Do not display FIR details if none of the bits are set.</p>
@@ -710,7 +708,7 @@ code.</p>
 </ul>
 </section>
 <section id="sensors">
-<h2>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h2>
+<h2>Sensors<a class="headerlink" href="#sensors" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>occ-sensors: Fix up quad/gpu location mix-up</p>
 <p>The GPU and QUAD sensor location types are swapped compared to what
@@ -770,7 +768,7 @@ unit name or address but no reg property.</p>
 </ul>
 </section>
 <section id="general-fixes">
-<h2>General fixes<a class="headerlink" href="#general-fixes" title="Permalink to this headline">¶</a></h2>
+<h2>General fixes<a class="headerlink" href="#general-fixes" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>lpc: Clear pending IRQs at boot</p>
 <p>When we come in from hostboot the LPC master has the bus reset indicator
@@ -945,7 +943,7 @@ enable the addition of “imc_nest_chip” property always.</p>
 </ul>
 </section>
 <section id="nvlink2">
-<h2>NVLINK2<a class="headerlink" href="#nvlink2" title="Permalink to this headline">¶</a></h2>
+<h2>NVLINK2<a class="headerlink" href="#nvlink2" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>npu2-hw-procedures.c: Correct phy lane mapping</p>
 <p>Each NVLINK2 device is associated with a particular group of OBUS lanes via
@@ -1076,9 +1074,9 @@ for a little while so that we support older hostboot firmware.</p>
 </ul>
 </section>
 <section id="platform-specific-fixes">
-<h2>Platform Specific Fixes<a class="headerlink" href="#platform-specific-fixes" title="Permalink to this headline">¶</a></h2>
+<h2>Platform Specific Fixes<a class="headerlink" href="#platform-specific-fixes" title="Link to this heading">¶</a></h2>
 <section id="witherspoon">
-<h3>Witherspoon<a class="headerlink" href="#witherspoon" title="Permalink to this headline">¶</a></h3>
+<h3>Witherspoon<a class="headerlink" href="#witherspoon" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>Witherspoon: Remove old Witherspoon platform definition</p>
 <p>An old Witherspoon platform definition was added to aid the transition from
@@ -1103,7 +1101,7 @@ not standardised VPD EEPROM type.</p>
 </ul>
 </section>
 <section id="ibm-fsp-systems">
-<h3>IBM FSP Systems<a class="headerlink" href="#ibm-fsp-systems" title="Permalink to this headline">¶</a></h3>
+<h3>IBM FSP Systems<a class="headerlink" href="#ibm-fsp-systems" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>nvram: Fix ‘missing’ nvram on FSP systems.</p>
 <p>commit ba4d46fdd9eb (“console: Set log level from nvram”) wants to read
@@ -1129,7 +1127,7 @@ the NVRAM at all, ever, even after the NVRAM has loaded.</p>
 </section>
 </section>
 <section id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Fix xscom-utils distclean target</p>
 <p>In Debian/Ubuntu, the packaging system likes to have a full clean-up that
@@ -1142,7 +1140,7 @@ pages from their help output.</p>
 </li>
 </ul>
 <section id="gard">
-<h3>gard<a class="headerlink" href="#gard" title="Permalink to this headline">¶</a></h3>
+<h3>gard<a class="headerlink" href="#gard" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>gard: Add tests</p>
 <p>I hear Stewart likes these for some reason. Dunno why.</p>
@@ -1242,7 +1240,7 @@ so there’s no real point in reporting it’s contents.</p>
 </ul>
 </section>
 <section id="libflash-pflash">
-<h3>libflash / pflash<a class="headerlink" href="#libflash-pflash" title="Permalink to this headline">¶</a></h3>
+<h3>libflash / pflash<a class="headerlink" href="#libflash-pflash" title="Link to this heading">¶</a></h3>
 <p>Anybody shipping libflash or pflash to interact with POWER9 systems must
 upgrade to this version.</p>
 <ul>
@@ -1339,7 +1337,7 @@ open.</p>
 </ul>
 </section>
 <section id="opal-prd">
-<h3>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h3>
+<h3>opal-prd<a class="headerlink" href="#opal-prd" title="Link to this heading">¶</a></h3>
 <p>Anybody shipping <cite>opal-prd</cite> for POWER9 systems must upgrade <cite>opal-prd</cite> to
 this new version.</p>
 <ul>
@@ -1379,7 +1377,7 @@ likely that we’ll catch failure reasons on severe errors.</p>
 </section>
 </section>
 <section id="debugging-and-reliability-improvements">
-<h2>Debugging and reliability improvements<a class="headerlink" href="#debugging-and-reliability-improvements" title="Permalink to this headline">¶</a></h2>
+<h2>Debugging and reliability improvements<a class="headerlink" href="#debugging-and-reliability-improvements" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>lock: Add additional lock auditing code</p>
 <p>Keep track of lock owner name and replace lock_depth counter
@@ -1561,8 +1559,9 @@ the attn to prevent attempting to boot on an unknown processor.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.10-rc1</a><ul>
 <li><a class="reference internal" href="#new-features">New Features</a><ul>
 <li><a class="reference internal" href="#fast-reboot-and-quiesce">Fast Reboot and Quiesce</a></li>
@@ -1594,12 +1593,17 @@ the attn to prevent attempting to boot on an unknown processor.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.10.html"
-                        title="previous chapter">skiboot-5.10</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.10-rc2.html"
-                        title="next chapter">skiboot-5.10-rc2</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.10.html"
+                          title="previous chapter">skiboot-5.10</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.10-rc2.html"
+                          title="next chapter">skiboot-5.10-rc2</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1616,7 +1620,7 @@ the attn to prevent attempting to boot on an unknown processor.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1633,15 +1637,15 @@ the attn to prevent attempting to boot on an unknown processor.</p>
         <li class="right" >
           <a href="skiboot-5.10.html" title="skiboot-5.10"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.10-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.2.0-rc2 &#8212; skiboot bc7b85d
+    <title>skiboot-5.2.0-rc2 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.2.0-rc1.html" title="skiboot-5.2.0-rc1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.2.0-rc2</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-2-0-rc2">
-<h1>skiboot-5.2.0-rc2<a class="headerlink" href="#skiboot-5-2-0-rc2" title="Permalink to this headline">¶</a></h1>
+<h1>skiboot-5.2.0-rc2<a class="headerlink" href="#skiboot-5-2-0-rc2" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.2.0-rc2 was released on Wednesday March 9th, 2016.</p>
 <p>skiboot-5.2.0-rc2 is the second release candidate of skiboot 5.2, which will
 become the new stable release of skiboot following the 5.1 release, first
@@ -58,33 +56,33 @@ stable rules - see <a class="reference internal" href="../process/stable-skiboot
 bug fixing for future 5.2.0-rc releases (if any - I hope this will be the last)</p>
 <p>Over skiboot-5.2.0-rc1, we have the following changes:</p>
 <section id="new-platform">
-<h2>New platform!<a class="headerlink" href="#new-platform" title="Permalink to this headline">¶</a></h2>
+<h2>New platform!<a class="headerlink" href="#new-platform" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Add Barreleye platform</p></li>
 </ul>
 </section>
 <section id="generic">
-<h2>Generic<a class="headerlink" href="#generic" title="Permalink to this headline">¶</a></h2>
+<h2>Generic<a class="headerlink" href="#generic" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hw/p8-i2c: Speed up SMBUS_WRITE</p></li>
 <li><p>Fix early backtraces</p></li>
 </ul>
 </section>
 <section id="fsp-platforms">
-<h2>FSP Platforms<a class="headerlink" href="#fsp-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>FSP Platforms<a class="headerlink" href="#fsp-platforms" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>fsp-sensor: rework device tree for sensors</p></li>
 <li><p>platforms/firenze: Fix I2C clock source frequency</p></li>
 </ul>
 </section>
 <section id="simics-simulator">
-<h2>Simics simulator<a class="headerlink" href="#simics-simulator" title="Permalink to this headline">¶</a></h2>
+<h2>Simics simulator<a class="headerlink" href="#simics-simulator" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Enable Simics UART console</p></li>
 </ul>
 </section>
 <section id="mambo-simulator">
-<h2>Mambo simulator<a class="headerlink" href="#mambo-simulator" title="Permalink to this headline">¶</a></h2>
+<h2>Mambo simulator<a class="headerlink" href="#mambo-simulator" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>platforms/mambo: Add terminate callback</p>
 <ul>
@@ -95,20 +93,20 @@ bug fixing for future 5.2.0-rc releases (if any - I hope this will be the last)<
 </ul>
 </section>
 <section id="ipmi">
-<h2>IPMI<a class="headerlink" href="#ipmi" title="Permalink to this headline">¶</a></h2>
+<h2>IPMI<a class="headerlink" href="#ipmi" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hw/ipmi: fix event data 1 for System Firmware Progress sensor</p></li>
 <li><p>ipmi: Log exact NetFn value in OPAL logs</p></li>
 </ul>
 </section>
 <section id="ast-bmc-based-platforms">
-<h2>AST BMC based platforms<a class="headerlink" href="#ast-bmc-based-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>AST BMC based platforms<a class="headerlink" href="#ast-bmc-based-platforms" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hw/bt: allow BT driver to use different buffer size</p></li>
 </ul>
 </section>
 <section id="opal-prd-utility">
-<h2>opal-prd utility<a class="headerlink" href="#opal-prd-utility" title="Permalink to this headline">¶</a></h2>
+<h2>opal-prd utility<a class="headerlink" href="#opal-prd-utility" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><dl class="simple">
 <dt>opal-prd: Add debug output for firmware-driven OCC events</dt><dd><p>We indicate when we have a user-driven event, so add corresponding
@@ -119,7 +117,7 @@ outputs for firmware-driven ones too.</p>
 </ul>
 </section>
 <section id="getscom-utility">
-<h2>getscom utility<a class="headerlink" href="#getscom-utility" title="Permalink to this headline">¶</a></h2>
+<h2>getscom utility<a class="headerlink" href="#getscom-utility" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Add Naples chip support</p></li>
 </ul>
@@ -133,8 +131,9 @@ outputs for firmware-driven ones too.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.2.0-rc2</a><ul>
 <li><a class="reference internal" href="#new-platform">New platform!</a></li>
 <li><a class="reference internal" href="#generic">Generic</a></li>
@@ -149,12 +148,17 @@ outputs for firmware-driven ones too.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.2.0-rc1.html"
-                        title="previous chapter">skiboot-5.2.0-rc1</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.2.1.html"
-                        title="next chapter">skiboot-5.2.1</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.2.0-rc1.html"
+                          title="previous chapter">skiboot-5.2.0-rc1</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.2.1.html"
+                          title="next chapter">skiboot-5.2.1</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -171,7 +175,7 @@ outputs for firmware-driven ones too.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -188,15 +192,15 @@ outputs for firmware-driven ones too.</p>
         <li class="right" >
           <a href="skiboot-5.2.0-rc1.html" title="skiboot-5.2.0-rc1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.2.0-rc2</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

@@ -10,108 +10,108 @@
 
 <body>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="title">LCOV - code coverage report</td></tr>
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
 
-    <tr>
-      <td width="100%">
-        <table cellpadding=1 border=0 width="100%">
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
           <tr>
             <td width="10%" class="headerItem">Current view:</td>
-            <td width="35%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">libstb/secvar/test</a> - secvar-test-pkcs7.c<span style="font-size: 80%;"> (source / <a href="secvar-test-pkcs7.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="10%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">libstb/secvar/test</a> - secvar-test-pkcs7.c<span style="font-size: 80%;"> (source / <a href="secvar-test-pkcs7.c.func-c.html">functions</a>)</span></td>
             <td width="5%"></td>
-            <td width="15%"></td>
-            <td width="10%" class="headerCovTableHead">Hit</td>
-            <td width="10%" class="headerCovTableHead">Total</td>
-            <td width="15%" class="headerCovTableHead">Coverage</td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
             <td class="headerCovTableEntry">11</td>
             <td class="headerCovTableEntry">11</td>
-            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
-            <td class="headerItem">Date:</td>
-            <td class="headerValue">2024-09-10 18:37:41</td>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-01-08 15:53:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
             <td class="headerCovTableEntry">2</td>
             <td class="headerCovTableEntry">2</td>
-            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntry">0</td>
-            <td class="headerCovTableEntry">0</td>
             <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
           </tr>
-          <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-        </table>
-      </td>
-    </tr>
+                  <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
 
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-  </table>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
 
-  <table cellpadding=0 cellspacing=0 border=0>
-    <tr>
-      <td><br></td>
-    </tr>
-    <tr>
-      <td>
-<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
 <pre class="source">
-<a name="1"><span class="lineNum">       1 </span>                :            : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</a>
-<a name="2"><span class="lineNum">       2 </span>                :            : /* Copyright 2021 IBM Corp. */</a>
-<a name="3"><span class="lineNum">       3 </span>                :            : </a>
-<a name="4"><span class="lineNum">       4 </span>                :            : #define MBEDTLS_PKCS7_C</a>
-<a name="5"><span class="lineNum">       5 </span>                :            : #include &quot;secvar_common_test.c&quot;</a>
-<a name="6"><span class="lineNum">       6 </span>                :            : #include &quot;../../crypto/pkcs7/pkcs7.c&quot;</a>
-<a name="7"><span class="lineNum">       7 </span>                :            : </a>
-<a name="8"><span class="lineNum">       8 </span>                :            : const char *secvar_test_name = &quot;pkcs7&quot;;</a>
-<a name="9"><span class="lineNum">       9 </span>                :            : </a>
-<a name="10"><span class="lineNum">      10 </span>                :<span class="lineCov">          1 : int run_test()</span></a>
-<a name="11"><span class="lineNum">      11 </span>                :            : {</a>
-<a name="12"><span class="lineNum">      12 </span>                :<span class="lineCov">          1 :         const unsigned char underrun_p7s[] = {0x30, 0x48};</span></a>
-<a name="13"><span class="lineNum">      13 </span>                :            :         mbedtls_pkcs7 pkcs7;</a>
-<a name="14"><span class="lineNum">      14 </span>                :            :         unsigned char *data;</a>
-<a name="15"><span class="lineNum">      15 </span>                :            :         int rc;</a>
-<a name="16"><span class="lineNum">      16 </span>                :            : </a>
-<a name="17"><span class="lineNum">      17 </span>                :<span class="lineCov">          1 :         mbedtls_pkcs7_init(&amp;pkcs7);</span></a>
-<a name="18"><span class="lineNum">      18 </span>                :            :         /* The data must live in the heap, not the stack, for valgrind to</a>
-<a name="19"><span class="lineNum">      19 </span>                :            :            catch the overread. */</a>
-<a name="20"><span class="lineNum">      20 </span>                :<span class="lineCov">          1 :         data = malloc(sizeof(underrun_p7s));</span></a>
-<a name="21"><span class="lineNum">      21 </span>                :<span class="lineCov">          1 :         memcpy(data, underrun_p7s, sizeof(underrun_p7s));</span></a>
-<a name="22"><span class="lineNum">      22 </span>                :<span class="lineCov">          1 :         rc = mbedtls_pkcs7_parse_der(data, sizeof(underrun_p7s), &amp;pkcs7);</span></a>
-<a name="23"><span class="lineNum">      23 </span>                :<span class="lineCov">          1 :         free(data);</span></a>
-<a name="24"><span class="lineNum">      24 </span>                :<span class="lineCov">          1 :         ASSERT(0 &gt; rc);</span></a>
-<a name="25"><span class="lineNum">      25 </span>                :            : </a>
-<a name="26"><span class="lineNum">      26 </span>                :<span class="lineCov">          1 :         return 0;</span></a>
-<a name="27"><span class="lineNum">      27 </span>                :            : }</a>
-<a name="28"><span class="lineNum">      28 </span>                :            : </a>
-<a name="29"><span class="lineNum">      29 </span>                :<span class="lineCov">          1 : int main(void)</span></a>
-<a name="30"><span class="lineNum">      30 </span>                :            : {</a>
-<a name="31"><span class="lineNum">      31 </span>                :<span class="lineCov">          1 :         return run_test();</span></a>
-<a name="32"><span class="lineNum">      32 </span>                :            : }</a>
-</pre>
-      </td>
-    </tr>
-  </table>
-  <br>
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : /* Copyright 2021 IBM Corp. */</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : #define MBEDTLS_PKCS7_C</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : #include &quot;secvar_common_test.c&quot;</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : #include &quot;../../crypto/pkcs7/pkcs7.c&quot;</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : </span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : const char *secvar_test_name = &quot;pkcs7&quot;;</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : </span>
+<span id="L10"><span class="lineNum">      10</span>                 :<span class="tlaGNC tlaBgGNC">           1 : int run_test()</span></span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : {</span>
+<span id="L12"><span class="lineNum">      12</span>                 :<span class="tlaGNC">           1 :         const unsigned char underrun_p7s[] = {0x30, 0x48};</span></span>
+<span id="L13"><span class="lineNum">      13</span>                 :             :         mbedtls_pkcs7 pkcs7;</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             :         unsigned char *data;</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             :         int rc;</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : </span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">           1 :         mbedtls_pkcs7_init(&amp;pkcs7);</span></span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :         /* The data must live in the heap, not the stack, for valgrind to</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :            catch the overread. */</span>
+<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">           1 :         data = malloc(sizeof(underrun_p7s));</span></span>
+<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">           1 :         memcpy(data, underrun_p7s, sizeof(underrun_p7s));</span></span>
+<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">           1 :         rc = mbedtls_pkcs7_parse_der(data, sizeof(underrun_p7s), &amp;pkcs7);</span></span>
+<span id="L23"><span class="lineNum">      23</span>                 :<span class="tlaGNC">           1 :         free(data);</span></span>
+<span id="L24"><span class="lineNum">      24</span>                 :<span class="tlaGNC">           1 :         ASSERT(0 &gt; rc);</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : </span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">           1 :         return 0;</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :             : }</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : </span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">           1 : int main(void)</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :             : {</span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">           1 :         return run_test();</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
-  </table>
-  <br>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
 
 </body>
 </html>

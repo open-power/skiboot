@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL Specification &#8212; skiboot bc7b85d
+    <title>OPAL Specification &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="overview.html" title="Skiboot overview"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Specification</a></li> 
       </ul>
@@ -45,7 +43,7 @@
           <div class="body" role="main">
             
   <section id="opal-specification">
-<h1>OPAL Specification<a class="headerlink" href="#opal-specification" title="Permalink to this headline">¶</a></h1>
+<h1>OPAL Specification<a class="headerlink" href="#opal-specification" title="Link to this heading">¶</a></h1>
 <p><strong>DRAFT - VERSION 0.0.1 AT BEST.</strong></p>
 <p><strong>COMMENTS ARE WELCOME</strong> - and indeed, needed.</p>
 <p>If you are reading this, congratulations: you’re now reviewing it!</p>
@@ -54,11 +52,11 @@
 be complete enough that (given hardware documentation) create another
 implementation. It is not recommended that you do this though.</p>
 <section id="authors">
-<h2>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h2>
+<h2>Authors<a class="headerlink" href="#authors" title="Link to this heading">¶</a></h2>
 <p>Stewart Smith &lt;<a class="reference external" href="mailto:stewart&#37;&#52;&#48;linux&#46;ibm&#46;com">stewart<span>&#64;</span>linux<span>&#46;</span>ibm<span>&#46;</span>com</a>&gt; : OPAL Architect, IBM</p>
 </section>
 <section id="definitions">
-<h2>Definitions<a class="headerlink" href="#definitions" title="Permalink to this headline">¶</a></h2>
+<h2>Definitions<a class="headerlink" href="#definitions" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>Host processor</dt><dd><p>the main POWER CPU (e.g. the POWER8 CPU)</p>
 </dd>
@@ -69,7 +67,7 @@ implementation. It is not recommended that you do this though.</p>
 </dl>
 </section>
 <section id="what-is-opal">
-<h2>What is OPAL?<a class="headerlink" href="#what-is-opal" title="Permalink to this headline">¶</a></h2>
+<h2>What is OPAL?<a class="headerlink" href="#what-is-opal" title="Link to this heading">¶</a></h2>
 <p>The OpenPower Abstraction Layer (OPAL) is boot and runtime firmware for
 POWER systems. There are several components to what makes up a firmware
 image for OpenPower machines.</p>
@@ -135,7 +133,7 @@ There is no reason this couldn’t exist but the current specification is for
 </ul>
 </section>
 <section id="boot-services">
-<h2>Boot Services<a class="headerlink" href="#boot-services" title="Permalink to this headline">¶</a></h2>
+<h2>Boot Services<a class="headerlink" href="#boot-services" title="Link to this heading">¶</a></h2>
 <p>An OPAL compliant firmware implementation will load and execute a payload
 capable of booting a Host Operating System.</p>
 <p>The reference implementation loads a Linux kernel with an initramfs with
@@ -164,13 +162,9 @@ is left as an exercise for the reader)</p></li>
 </ul>
 </section>
 <section id="payload-environment">
-<h2>Payload Environment<a class="headerlink" href="#payload-environment" title="Permalink to this headline">¶</a></h2>
+<h2>Payload Environment<a class="headerlink" href="#payload-environment" title="Link to this heading">¶</a></h2>
 <p>The payload is started with:</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 17%" />
-<col style="width: 83%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Register</p></th>
 <th class="head"><p>Value</p></th>
@@ -190,7 +184,7 @@ is left as an exercise for the reader)</p></li>
 </table>
 </section>
 <section id="runtime-services">
-<h2>Runtime Services<a class="headerlink" href="#runtime-services" title="Permalink to this headline">¶</a></h2>
+<h2>Runtime Services<a class="headerlink" href="#runtime-services" title="Link to this heading">¶</a></h2>
 <p>An OPAL Specification compliant system provides runtime services to the host
 Operating System via a standard interface.</p>
 <dl class="simple">
@@ -220,7 +214,7 @@ appropriately convert parameters before passing them to OPAL.</p>
 </ul>
 </section>
 <section id="detecting-opal-support">
-<h2>Detecting OPAL Support<a class="headerlink" href="#detecting-opal-support" title="Permalink to this headline">¶</a></h2>
+<h2>Detecting OPAL Support<a class="headerlink" href="#detecting-opal-support" title="Link to this heading">¶</a></h2>
 <p>A Host OS may need to detect the presence of OPAL as it may support booting
 under other platforms. For example, a single Linux kernel can be built to boot
 under OPAL and under PowerVM or qemu pseries machine type.</p>
@@ -259,7 +253,7 @@ For example, it may be “skiboot-4.1” or other versioning described
 in more detail in <a class="reference internal" href="process/versioning.html#versioning"><span class="std std-ref">Versioning Scheme of skiboot</span></a>.</p>
 </section>
 <section id="opal-log">
-<h2>OPAL log<a class="headerlink" href="#opal-log" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL log<a class="headerlink" href="#opal-log" title="Link to this heading">¶</a></h2>
 <p>OPAL implementation SHOULD have an in memory log where informational and
 error messages are stored. If present it MUST be human readable and text based.
 There is a separate facility (Platform Error Logs) for machine readable errors.</p>
@@ -280,8 +274,9 @@ while more messages go to the in memory buffer.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL Specification</a><ul>
 <li><a class="reference internal" href="#authors">Authors</a></li>
 <li><a class="reference internal" href="#definitions">Definitions</a></li>
@@ -295,12 +290,17 @@ while more messages go to the in memory buffer.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="overview.html"
-                        title="previous chapter">Skiboot overview</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="platforms-and-cpus.html"
-                        title="next chapter">Supported platforms &amp; CPUs</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="overview.html"
+                          title="previous chapter">Skiboot overview</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="platforms-and-cpus.html"
+                          title="next chapter">Supported platforms &amp; CPUs</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -317,7 +317,7 @@ while more messages go to the in memory buffer.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -334,14 +334,14 @@ while more messages go to the in memory buffer.</p>
         <li class="right" >
           <a href="overview.html" title="Skiboot overview"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Specification</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

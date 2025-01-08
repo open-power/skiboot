@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.9-rc1 &#8212; skiboot bc7b85d
+    <title>skiboot-5.9-rc1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.9.html" title="skiboot-5.9"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc1</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-9-rc1">
-<span id="id1"></span><h1>skiboot-5.9-rc1<a class="headerlink" href="#skiboot-5-9-rc1" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-5.9-rc1<a class="headerlink" href="#skiboot-5-9-rc1" title="Link to this heading">¶</a></h1>
 <p>skiboot v5.9-rc1 was released on Wednesday October 11th 2017. It is the first
 release candidate of skiboot 5.9, which will become the new stable release
 of skiboot following the 5.8 release, first released August 31st 2017.</p>
@@ -59,9 +57,9 @@ being for all POWER8 and POWER9 platforms in op-build v1.20 (Due October 18th).
 This release will be targetted to early POWER9 systems.</p>
 <p>Over skiboot-5.8, we have the following changes:</p>
 <section id="new-features">
-<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<h2>New Features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <section id="power8">
-<h3>POWER8<a class="headerlink" href="#power8" title="Permalink to this headline">¶</a></h3>
+<h3>POWER8<a class="headerlink" href="#power8" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>fast-reset by default (if possible)</p>
 <p>Currently, this is limited to POWER8 systems.</p>
@@ -72,7 +70,7 @@ from minutes to a handful of seconds.</p>
 </ul>
 </section>
 <section id="power9">
-<h3>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h3>
+<h3>POWER9<a class="headerlink" href="#power9" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>POWER9 power management during boot</p>
 <p>Less power should be consumed during boot.</p>
@@ -181,7 +179,7 @@ section of PNOR and create <code class="docutils literal notranslate"><span clas
 </section>
 </section>
 <section id="id2">
-<h2>POWER9<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2>POWER9<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Disable Transactional Memory on Power9 DD 2.1</p>
 <p>Update pa_features_p9[] to disable TM (Transactional Memory). On DD 2.1
@@ -224,7 +222,7 @@ context, while the non-lite variants do (ESL: enable state loss).</p>
 </li>
 </ul>
 <section id="capi">
-<h3>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h3>
+<h3>CAPI<a class="headerlink" href="#capi" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>POWER9 DD2 update</p>
 <p>The CAPI initialization sequence has been updated in DD2.
@@ -240,7 +238,7 @@ cause any fir-action for P9.</p>
 </ul>
 </section>
 <section id="nvlink2">
-<h3>NVLINK2<a class="headerlink" href="#nvlink2" title="Permalink to this headline">¶</a></h3>
+<h3>NVLINK2<a class="headerlink" href="#nvlink2" title="Link to this heading">¶</a></h3>
 <p>A notabale change is that we now generate the device tree description of
 NVLINK based on the HDAT we get from hostboot. Since Hostboot will generate
 HDAT based on VPD, you now <em>MUST</em> have correct VPD programmed or we will
@@ -279,7 +277,7 @@ vendor capability byte.</p>
 </ul>
 </section>
 <section id="xive">
-<h3>XIVE<a class="headerlink" href="#xive" title="Permalink to this headline">¶</a></h3>
+<h3>XIVE<a class="headerlink" href="#xive" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>xive: Fix opal_xive_dump_tm() to access W2 properly.
 The HW only supported limited access sizes.</p></li>
@@ -338,7 +336,7 @@ the cache watch, so those barriers are pointless.</p>
 </ul>
 </section>
 <section id="phb4">
-<h3>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h3>
+<h3>PHB4<a class="headerlink" href="#phb4" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>phb4: Mask RXE_ARB: DEC Stage Valid Error</p>
 <p>Change the inits to mask out the RXE ARB: DEC Stage Valid Error (bit
@@ -378,7 +376,7 @@ card.</p>
 </section>
 </section>
 <section id="ibm-fsp-platforms">
-<h2>IBM FSP platforms<a class="headerlink" href="#ibm-fsp-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>IBM FSP platforms<a class="headerlink" href="#ibm-fsp-platforms" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>FSP/NVRAM: Handle “get vNVRAM statistics” command</p>
 <p>FSP sends MBOX command (cmd : 0xEB, subcmd : 0x05, mod : 0x00) to get vNVRAM
@@ -404,7 +402,7 @@ SURV: Sending the heartbeat command to FSP</p>
 </ul>
 </section>
 <section id="bmc-based-systems">
-<h2>BMC based systems<a class="headerlink" href="#bmc-based-systems" title="Permalink to this headline">¶</a></h2>
+<h2>BMC based systems<a class="headerlink" href="#bmc-based-systems" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hw/lpc-uart: read from RBR to clear character timeout interrupts</p>
 <p>When using the aspeed SUART, we see a condition where the UART sends
@@ -419,7 +417,7 @@ e.g. ones from HDAT on POWER9.</p></li>
 </ul>
 </section>
 <section id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<h2>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>ipmi: Convert common debug prints to trace</p>
 <p>OPAL logs messages for every IPMI request from host. Sometime OPAL console
@@ -483,7 +481,7 @@ MTD_NO_ERASE flag from the device tree property.</p>
 </ul>
 </section>
 <section id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>external/gard: Clear entire guard partition instead of entry by entry</p>
 <p>When using the current implementation of the gard tool to ecc clear the
@@ -507,11 +505,6 @@ order of 4 seconds.</p>
 This patch adds support to dispaly appropriate message depending
 on system type.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 6%" />
-<col style="width: 39%" />
-<col style="width: 55%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>SP</p></th>
 <th class="head"><p>Command</p></th>
@@ -554,7 +547,7 @@ case.</p>
 </ul>
 </section>
 <section id="simulators">
-<h2>Simulators<a class="headerlink" href="#simulators" title="Permalink to this headline">¶</a></h2>
+<h2>Simulators<a class="headerlink" href="#simulators" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>mambo: Add mambo socket program</p>
 <p>This adds a program that can be run inside a mambo simulator in linux
@@ -592,8 +585,9 @@ lite stop states for the mambo platform for now.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.9-rc1</a><ul>
 <li><a class="reference internal" href="#new-features">New Features</a><ul>
 <li><a class="reference internal" href="#power8">POWER8</a></li>
@@ -616,12 +610,17 @@ lite stop states for the mambo platform for now.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.9.html"
-                        title="previous chapter">skiboot-5.9</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.9-rc2.html"
-                        title="next chapter">skiboot-5.9-rc2</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.9.html"
+                          title="previous chapter">skiboot-5.9</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.9-rc2.html"
+                          title="next chapter">skiboot-5.9-rc2</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -638,7 +637,7 @@ lite stop states for the mambo platform for now.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -655,15 +654,15 @@ lite stop states for the mambo platform for now.</p>
         <li class="right" >
           <a href="skiboot-5.9.html" title="skiboot-5.9"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.9-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

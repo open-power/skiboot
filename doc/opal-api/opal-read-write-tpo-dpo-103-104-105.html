@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL Timed Power On and Delayed Power Off &#8212; skiboot bc7b85d
+    <title>OPAL Timed Power On and Delayed Power Off &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-quiesce-158.html" title="OPAL_QUIESCE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Timed Power On and Delayed Power Off</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="opal-timed-power-on-and-delayed-power-off">
-<h1>OPAL Timed Power On and Delayed Power Off<a class="headerlink" href="#opal-timed-power-on-and-delayed-power-off" title="Permalink to this headline">¶</a></h1>
+<h1>OPAL Timed Power On and Delayed Power Off<a class="headerlink" href="#opal-timed-power-on-and-delayed-power-off" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_WRITE_TPO                       103</span>
 <span class="cp">#define OPAL_READ_TPO                        104</span>
 <span class="cp">#define OPAL_GET_DPO_STATUS                  105</span>
@@ -64,26 +62,26 @@
 </div>
 <p>If the “has-tpo” proprety is <em>NOT</em> present then OPAL does <em>NOT</em> support TPO.</p>
 <section id="opal-read-tpo">
-<span id="id1"></span><h2>OPAL_READ_TPO<a class="headerlink" href="#opal-read-tpo" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>OPAL_READ_TPO<a class="headerlink" href="#opal-read-tpo" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_READ_TPO                        104</span>
 
-<span class="k">static</span><span class="w"> </span><span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_read_tpo</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="o">*</span><span class="n">y_m_d</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="o">*</span><span class="n">hr_min</span><span class="p">);</span><span class="w"></span>
+<span class="k">static</span><span class="w"> </span><span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_read_tpo</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="o">*</span><span class="n">y_m_d</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="o">*</span><span class="n">hr_min</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-write-tpo">
-<span id="id2"></span><h2>OPAL_WRITE_TPO<a class="headerlink" href="#opal-write-tpo" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>OPAL_WRITE_TPO<a class="headerlink" href="#opal-write-tpo" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_WRITE_TPO                       103</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">fsp_opal_tpo_write</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">y_m_d</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">hr_min</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">fsp_opal_tpo_write</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">async_token</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">y_m_d</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">hr_min</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-get-dpo-status">
-<span id="id3"></span><h2>OPAL_GET_DPO_STATUS<a class="headerlink" href="#opal-get-dpo-status" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>OPAL_GET_DPO_STATUS<a class="headerlink" href="#opal-get-dpo-status" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_DPO_STATUS                  105</span>
 
-<span class="k">static</span><span class="w"> </span><span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_get_dpo_status</span><span class="p">(</span><span class="kt">int64_t</span><span class="w"> </span><span class="o">*</span><span class="n">dpo_timeout</span><span class="p">);</span><span class="w"></span>
+<span class="k">static</span><span class="w"> </span><span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_get_dpo_status</span><span class="p">(</span><span class="kt">int64_t</span><span class="w"> </span><span class="o">*</span><span class="n">dpo_timeout</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>A <a class="reference internal" href="opal-messages.html#opal-msg-dpo"><span class="std std-ref">OPAL_MSG_DPO</span></a> message may be sent to indicate that there will shortly
@@ -96,7 +94,7 @@ with a UPS or similar.</p>
 number of seconds remaining for a forced system shutdown. This will enable
 the host to schedule for shutdown voluntarily before timeout occurs.</p>
 <section id="returns">
-<h3>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h3>
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p><code class="docutils literal notranslate"><span class="pre">dpo_timeout</span></code> is set to the number of seconds remaining before power is
 cut.</p>
@@ -115,8 +113,9 @@ cut.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL Timed Power On and Delayed Power Off</a><ul>
 <li><a class="reference internal" href="#opal-read-tpo">OPAL_READ_TPO</a></li>
 <li><a class="reference internal" href="#opal-write-tpo">OPAL_WRITE_TPO</a></li>
@@ -128,12 +127,17 @@ cut.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-quiesce-158.html"
-                        title="previous chapter">OPAL_QUIESCE</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-reinit-cpus-70.html"
-                        title="next chapter">OPAL_REINIT_CPUS</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-quiesce-158.html"
+                          title="previous chapter">OPAL_QUIESCE</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-reinit-cpus-70.html"
+                          title="next chapter">OPAL_REINIT_CPUS</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -150,7 +154,7 @@ cut.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -167,15 +171,15 @@ cut.</p>
         <li class="right" >
           <a href="opal-quiesce-158.html" title="OPAL_QUIESCE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Timed Power On and Delayed Power Off</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

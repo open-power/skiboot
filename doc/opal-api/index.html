@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL API Documentation &#8212; skiboot bc7b85d
+    <title>OPAL API Documentation &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="../device-tree/ibm%2Cpowerpc-cpu-features/design.html" title="ibm,powerpc-cpu-features Design"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL API Documentation</a></li> 
       </ul>
@@ -45,16 +43,9 @@
           <div class="body" role="main">
             
   <section id="opal-api-documentation">
-<span id="opal-api"></span><h1>OPAL API Documentation<a class="headerlink" href="#opal-api-documentation" title="Permalink to this headline">¶</a></h1>
+<span id="opal-api"></span><h1>OPAL API Documentation<a class="headerlink" href="#opal-api-documentation" title="Link to this heading">¶</a></h1>
 <p>The OPAL API is the interface between an Operating System and OPAL.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 41%" />
-<col style="width: 13%" />
-<col style="width: 22%" />
-<col style="width: 9%" />
-<col style="width: 15%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Name</p></td>
 <td><p>API Token ID</p></td>
@@ -1269,19 +1260,10 @@ unused.</p></td>
 </ul>
 </div>
 <section id="removed-calls">
-<h2>Removed Calls<a class="headerlink" href="#removed-calls" title="Permalink to this headline">¶</a></h2>
+<h2>Removed Calls<a class="headerlink" href="#removed-calls" title="Link to this heading">¶</a></h2>
 <p>Under <strong>very</strong> specific and careful circumstances, an OPAL call has been
 removed and no longer supported.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 47%" />
-<col style="width: 7%" />
-<col style="width: 6%" />
-<col style="width: 17%" />
-<col style="width: 7%" />
-<col style="width: 11%" />
-<col style="width: 4%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Name</p></td>
 <td><p>API
@@ -1400,65 +1382,65 @@ remnants removed in
 </tbody>
 </table>
 <section id="opal-get-completion-token-status">
-<span id="id1"></span><h3>OPAL_GET_COMPLETION_TOKEN_STATUS<a class="headerlink" href="#opal-get-completion-token-status" title="Permalink to this headline">¶</a></h3>
+<span id="id1"></span><h3>OPAL_GET_COMPLETION_TOKEN_STATUS<a class="headerlink" href="#opal-get-completion-token-status" title="Link to this heading">¶</a></h3>
 <p>In the before time, long-long ago, there existed something called OPAL before
 the incarnation we know today. Presumably, this long forgotten incarnation
 had a call called this.</p>
 <p>This call has never been implemented, and never will be.</p>
 </section>
 <section id="opal-pci-shpc">
-<span id="id2"></span><h3>OPAL_PCI_SHPC<a class="headerlink" href="#opal-pci-shpc" title="Permalink to this headline">¶</a></h3>
+<span id="id2"></span><h3>OPAL_PCI_SHPC<a class="headerlink" href="#opal-pci-shpc" title="Link to this heading">¶</a></h3>
 <p>A remnant of a long forgotten incarnation of OPAL. Never implemented, never
 will be.</p>
 </section>
 <section id="opal-pci-set-phb-table-memory">
-<span id="id3"></span><h3>OPAL_PCI_SET_PHB_TABLE_MEMORY<a class="headerlink" href="#opal-pci-set-phb-table-memory" title="Permalink to this headline">¶</a></h3>
+<span id="id3"></span><h3>OPAL_PCI_SET_PHB_TABLE_MEMORY<a class="headerlink" href="#opal-pci-set-phb-table-memory" title="Link to this heading">¶</a></h3>
 <p>A remnant of an old API design. Never implemented, never used. Only ever
 returned <a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a>, now the call is not implemented at all.</p>
 </section>
 <section id="opal-pci-get-xive-reissue">
-<span id="id4"></span><h3>OPAL_PCI_GET_XIVE_REISSUE<a class="headerlink" href="#opal-pci-get-xive-reissue" title="Permalink to this headline">¶</a></h3>
+<span id="id4"></span><h3>OPAL_PCI_GET_XIVE_REISSUE<a class="headerlink" href="#opal-pci-get-xive-reissue" title="Link to this heading">¶</a></h3>
 <p>A remnant of something prior to OPALv3. Never implemented in skiboot and never
 used by anyone. Returend <a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a> until <a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a>, where
 it was removed.</p>
 </section>
 <section id="opal-pci-set-xive-reissue">
-<span id="id5"></span><h3>OPAL_PCI_SET_XIVE_REISSUE<a class="headerlink" href="#opal-pci-set-xive-reissue" title="Permalink to this headline">¶</a></h3>
+<span id="id5"></span><h3>OPAL_PCI_SET_XIVE_REISSUE<a class="headerlink" href="#opal-pci-set-xive-reissue" title="Link to this heading">¶</a></h3>
 <p>A remnant of something prior to OPALv3. Never implemented in skiboot and never
 used by anyone. Returend <a class="reference internal" href="return-codes.html#opal-unsupported"><span class="std std-ref">OPAL_UNSUPPORTED</span></a> until <a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a>, where
 it was removed.</p>
 </section>
 <section id="opal-pci-fence-phb">
-<span id="id6"></span><h3>OPAL_PCI_FENCE_PHB<a class="headerlink" href="#opal-pci-fence-phb" title="Permalink to this headline">¶</a></h3>
+<span id="id6"></span><h3>OPAL_PCI_FENCE_PHB<a class="headerlink" href="#opal-pci-fence-phb" title="Link to this heading">¶</a></h3>
 <p>Never implemented.</p>
 </section>
 <section id="opal-pci-mask-pe-error">
-<span id="id7"></span><h3>OPAL_PCI_MASK_PE_ERROR<a class="headerlink" href="#opal-pci-mask-pe-error" title="Permalink to this headline">¶</a></h3>
+<span id="id7"></span><h3>OPAL_PCI_MASK_PE_ERROR<a class="headerlink" href="#opal-pci-mask-pe-error" title="Link to this heading">¶</a></h3>
 <p>Never implemented.</p>
 </section>
 <section id="opal-set-slot-led-status">
-<span id="id8"></span><h3>OPAL_SET_SLOT_LED_STATUS<a class="headerlink" href="#opal-set-slot-led-status" title="Permalink to this headline">¶</a></h3>
+<span id="id8"></span><h3>OPAL_SET_SLOT_LED_STATUS<a class="headerlink" href="#opal-set-slot-led-status" title="Link to this heading">¶</a></h3>
 <p>Never implemented.</p>
 </section>
 <section id="opal-set-system-attention-led">
-<span id="id9"></span><h3>OPAL_SET_SYSTEM_ATTENTION_LED<a class="headerlink" href="#opal-set-system-attention-led" title="Permalink to this headline">¶</a></h3>
+<span id="id9"></span><h3>OPAL_SET_SYSTEM_ATTENTION_LED<a class="headerlink" href="#opal-set-system-attention-led" title="Link to this heading">¶</a></h3>
 <p>Never implemented.</p>
 </section>
 <section id="opal-reserved1">
-<span id="id10"></span><h3>OPAL_RESERVED1<a class="headerlink" href="#opal-reserved1" title="Permalink to this headline">¶</a></h3>
+<span id="id10"></span><h3>OPAL_RESERVED1<a class="headerlink" href="#opal-reserved1" title="Link to this heading">¶</a></h3>
 <p>Reserved for future use, but never used.</p>
 </section>
 <section id="opal-reserved2">
-<span id="id11"></span><h3>OPAL_RESERVED2<a class="headerlink" href="#opal-reserved2" title="Permalink to this headline">¶</a></h3>
+<span id="id11"></span><h3>OPAL_RESERVED2<a class="headerlink" href="#opal-reserved2" title="Link to this heading">¶</a></h3>
 <p>Reserved for future use, but never used.</p>
 </section>
 <section id="opal-elog-send">
-<span id="id12"></span><h3>OPAL_ELOG_SEND<a class="headerlink" href="#opal-elog-send" title="Permalink to this headline">¶</a></h3>
+<span id="id12"></span><h3>OPAL_ELOG_SEND<a class="headerlink" href="#opal-elog-send" title="Link to this heading">¶</a></h3>
 <p>Brielfy present prior to the first public release of OPAL. Never used in any
 public kernel tree. If this functionality were to ever be implemented, it’d
 appear as <a class="reference internal" href="#opal-elog-write"><span class="std std-ref">OPAL_ELOG_WRITE</span></a> rather than this call.</p>
 <section id="opal-pci-get-phb-diag-data">
-<span id="id13"></span><h4>OPAL_PCI_GET_PHB_DIAG_DATA<a class="headerlink" href="#opal-pci-get-phb-diag-data" title="Permalink to this headline">¶</a></h4>
+<span id="id13"></span><h4>OPAL_PCI_GET_PHB_DIAG_DATA<a class="headerlink" href="#opal-pci-get-phb-diag-data" title="Link to this heading">¶</a></h4>
 <p>This call was introduced and functionally removed (all backends for it were)
 before the first public opal release. It has not been used since Linux 3.11-rc1.
 Considering the state of EEH in such old kernels and firmware, removing the
@@ -1469,7 +1451,7 @@ will be returned instead of <a class="reference internal" href="return-codes.htm
 </section>
 </section>
 <section id="opal-get-xive-source">
-<span id="id14"></span><h3>OPAL_GET_XIVE_SOURCE<a class="headerlink" href="#opal-get-xive-source" title="Permalink to this headline">¶</a></h3>
+<span id="id14"></span><h3>OPAL_GET_XIVE_SOURCE<a class="headerlink" href="#opal-get-xive-source" title="Link to this heading">¶</a></h3>
 <p>While this call was technically implemented by skiboot, no code has ever called
 it, and it was only ever implemented for the p7ioc-phb back-end (i.e. POWER7).
 Since this call was unused in Linux, and that  POWER7 with OPAL was only ever
@@ -1477,21 +1459,21 @@ available internally, it was determined that it was safe to remove this call as
 of <a class="reference internal" href="../release-notes/skiboot-6.4.html#skiboot-6-4"><span class="std std-ref">skiboot-6.4</span></a>.</p>
 </section>
 <section id="opal-write-oppanel">
-<span id="id15"></span><h3>OPAL_WRITE_OPPANEL<a class="headerlink" href="#opal-write-oppanel" title="Permalink to this headline">¶</a></h3>
+<span id="id15"></span><h3>OPAL_WRITE_OPPANEL<a class="headerlink" href="#opal-write-oppanel" title="Link to this heading">¶</a></h3>
 <p>Never in a released version, use <a class="reference internal" href="opal-write-oppanel-async-95.html#opal-write-oppanel-async"><span class="std std-ref">OPAL_WRITE_OPPANEL_ASYNC</span></a>.</p>
 </section>
 <section id="opal-old-i2c-request">
-<span id="id16"></span><h3>OPAL_OLD_I2C_REQUEST<a class="headerlink" href="#opal-old-i2c-request" title="Permalink to this headline">¶</a></h3>
+<span id="id16"></span><h3>OPAL_OLD_I2C_REQUEST<a class="headerlink" href="#opal-old-i2c-request" title="Link to this heading">¶</a></h3>
 <p>Never used. Only existing briefly in the <a class="reference internal" href="../release-notes/skiboot-4.0.html#skiboot-4-0"><span class="std std-ref">skiboot 4.0</span></a> development cycle.</p>
 </section>
 <section id="opal-register-opal-exception-handler">
-<span id="id17"></span><h3>OPAL_REGISTER_OPAL_EXCEPTION_HANDLER<a class="headerlink" href="#opal-register-opal-exception-handler" title="Permalink to this headline">¶</a></h3>
+<span id="id17"></span><h3>OPAL_REGISTER_OPAL_EXCEPTION_HANDLER<a class="headerlink" href="#opal-register-opal-exception-handler" title="Link to this heading">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_REGISTER_OPAL_EXCEPTION_HANDLER 22</span>
 
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_register_exc_handler</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">opal_exception</span><span class="w"> </span><span class="n">__unused</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">handler_address</span><span class="w"> </span><span class="n">__unused</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">glue_cache_line</span><span class="w"> </span><span class="n">__unused</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_register_exc_handler</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">opal_exception</span><span class="w"> </span><span class="n">__unused</span><span class="p">,</span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">handler_address</span><span class="w"> </span><span class="n">__unused</span><span class="p">,</span>
+<span class="w">                                  </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">glue_cache_line</span><span class="w"> </span><span class="n">__unused</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This call existed for a very short period of time and only ever worked with Big
@@ -1506,12 +1488,12 @@ returns <a class="reference internal" href="return-codes.html#opal-unsupported">
 <p>Use of the <a class="reference internal" href="opal-handle-hmi-98-166.html#opal-handle-hmi"><span class="std std-ref">OPAL_HANDLE_HMI</span></a> call was introduced in Linux 3.17.</p>
 </section>
 <section id="opal-pci-set-hub-tce-memory">
-<span id="id18"></span><h3>OPAL_PCI_SET_HUB_TCE_MEMORY<a class="headerlink" href="#opal-pci-set-hub-tce-memory" title="Permalink to this headline">¶</a></h3>
+<span id="id18"></span><h3>OPAL_PCI_SET_HUB_TCE_MEMORY<a class="headerlink" href="#opal-pci-set-hub-tce-memory" title="Link to this heading">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_HUB_TCE_MEMORY          11</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_set_hub_tce_memory</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">hub_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_addr</span><span class="w"> </span><span class="n">__unused</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_size</span><span class="w"> </span><span class="n">__unused</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_set_hub_tce_memory</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">hub_id</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_addr</span><span class="w"> </span><span class="n">__unused</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_size</span><span class="w"> </span><span class="n">__unused</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This call was only ever relevant for p5ioc based POWER7 systems. These were
@@ -1522,12 +1504,12 @@ and bring-up purposes.</p>
 <p>Support for p5ioc was removed from the Linux kernel in v4.6-rc1.</p>
 </section>
 <section id="opal-pci-set-phb-tce-memory">
-<span id="id19"></span><h3>OPAL_PCI_SET_PHB_TCE_MEMORY<a class="headerlink" href="#opal-pci-set-phb-tce-memory" title="Permalink to this headline">¶</a></h3>
+<span id="id19"></span><h3>OPAL_PCI_SET_PHB_TCE_MEMORY<a class="headerlink" href="#opal-pci-set-phb-tce-memory" title="Link to this heading">¶</a></h3>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_PHB_TCE_MEMORY          12</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_set_phb_tce_memory</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_addr</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_size</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_set_phb_tce_memory</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_addr</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">tce_mem_size</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This call was only ever relevant for p5ioc based POWER7 systems. These were
@@ -1538,20 +1520,20 @@ and bring-up purposes.</p>
 <p>Support for p5ioc was removed from the Linux kernel in v4.6-rc1.</p>
 </section>
 <section id="opal-pci-set-mve">
-<span id="id20"></span><h3>OPAL_PCI_SET_MVE<a class="headerlink" href="#opal-pci-set-mve" title="Permalink to this headline">¶</a></h3>
+<span id="id20"></span><h3>OPAL_PCI_SET_MVE<a class="headerlink" href="#opal-pci-set-mve" title="Link to this heading">¶</a></h3>
 <p>Dead code, as the callback did nothing after the P7IOC code was removed in
 skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/skiboot-7.1.html#skiboot-7-1"><span class="std std-ref">skiboot-7.1</span></a>.</p>
 </section>
 <section id="opal-pci-set-mve-enable">
-<span id="id21"></span><h3>OPAL_PCI_SET_MVE_ENABLE<a class="headerlink" href="#opal-pci-set-mve-enable" title="Permalink to this headline">¶</a></h3>
+<span id="id21"></span><h3>OPAL_PCI_SET_MVE_ENABLE<a class="headerlink" href="#opal-pci-set-mve-enable" title="Link to this heading">¶</a></h3>
 <p>Dead code, as the callback did nothing after the P7IOC code was removed in
 skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/skiboot-7.1.html#skiboot-7-1"><span class="std std-ref">skiboot-7.1</span></a>.</p>
 </section>
 </section>
 <section id="future-calls">
-<h2>Future Calls<a class="headerlink" href="#future-calls" title="Permalink to this headline">¶</a></h2>
+<h2>Future Calls<a class="headerlink" href="#future-calls" title="Link to this heading">¶</a></h2>
 <section id="opal-elog-write">
-<span id="id22"></span><h3>OPAL_ELOG_WRITE<a class="headerlink" href="#opal-elog-write" title="Permalink to this headline">¶</a></h3>
+<span id="id22"></span><h3>OPAL_ELOG_WRITE<a class="headerlink" href="#opal-elog-write" title="Link to this heading">¶</a></h3>
 <p>May be implemented in the future to complement the <a class="reference internal" href="opal-elog-71-72-73-74-75.html#opal-elog-read"><span class="std std-ref">OPAL_ELOG_READ</span></a> call.</p>
 </section>
 </section>
@@ -1564,8 +1546,9 @@ skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/ski
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL API Documentation</a><ul>
 <li><a class="reference internal" href="#removed-calls">Removed Calls</a><ul>
 <li><a class="reference internal" href="#opal-get-completion-token-status">OPAL_GET_COMPLETION_TOKEN_STATUS</a></li>
@@ -1601,12 +1584,17 @@ skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/ski
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="../device-tree/ibm%2Cpowerpc-cpu-features/design.html"
-                        title="previous chapter">ibm,powerpc-cpu-features Design</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-cec-power-down-5.html"
-                        title="next chapter">OPAL_CEC_POWER_DOWN</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../device-tree/ibm%2Cpowerpc-cpu-features/design.html"
+                          title="previous chapter">ibm,powerpc-cpu-features Design</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-cec-power-down-5.html"
+                          title="next chapter">OPAL_CEC_POWER_DOWN</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1623,7 +1611,7 @@ skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/ski
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1640,14 +1628,14 @@ skiboot 6.4. Removed in <a class="reference internal" href="../release-notes/ski
         <li class="right" >
           <a href="../device-tree/ibm%2Cpowerpc-cpu-features/design.html" title="ibm,powerpc-cpu-features Design"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL API Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>How to log errors on OPAL &#8212; skiboot bc7b85d
+    <title>How to log errors on OPAL &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="console-log.html" title="SkiBoot Console Log"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">How to log errors on OPAL</a></li> 
       </ul>
@@ -45,7 +43,7 @@
           <div class="body" role="main">
             
   <section id="how-to-log-errors-on-opal">
-<h1>How to log errors on OPAL<a class="headerlink" href="#how-to-log-errors-on-opal" title="Permalink to this headline">¶</a></h1>
+<h1>How to log errors on OPAL<a class="headerlink" href="#how-to-log-errors-on-opal" title="Link to this heading">¶</a></h1>
 <p>Currently the errors reported by OPAL interfaces are in free form, where as
 errors reported by service processor is in standard Platform Error Log (PEL)
 format. For out-of band management via IPMI interfaces, it is necessary to
@@ -59,7 +57,7 @@ generated based on the input and then passed on to service processor.</p>
 <p>We do create eSEL error log format for some service processors but it’s just
 a wrapper around PEL format. Actual data still stays in PEL format.</p>
 <section id="error-logging-interfaces-in-opal">
-<h2>Error logging interfaces in OPAL<a class="headerlink" href="#error-logging-interfaces-in-opal" title="Permalink to this headline">¶</a></h2>
+<h2>Error logging interfaces in OPAL<a class="headerlink" href="#error-logging-interfaces-in-opal" title="Link to this heading">¶</a></h2>
 <p>Interfaces are provided for the user to log/report an error in OPAL. Using
 these interfaces relevant error information is collected and later converted
 to PEL format and then pushed to service processor.</p>
@@ -303,7 +301,7 @@ is done with just one call.</p>
 </section>
 </section>
 <section id="error-logging-retrieval-from-fsp">
-<h1>Error logging retrieval from FSP:<a class="headerlink" href="#error-logging-retrieval-from-fsp" title="Permalink to this headline">¶</a></h1>
+<h1>Error logging retrieval from FSP:<a class="headerlink" href="#error-logging-retrieval-from-fsp" title="Link to this heading">¶</a></h1>
 <p>FSP sends error log notification to OPAL via mailbox protocol.</p>
 <p>OPAL maintains below lists:</p>
 <ul class="simple">
@@ -349,7 +347,7 @@ call to OPAL, which in turn sends the acknowledgement mbox message to FSP and
 moves error log id from processed list to again back to free node list and this
 process goes on every FSP error log.</p>
 <section id="design-constraints">
-<h2>Design constraints:<a class="headerlink" href="#design-constraints" title="Permalink to this headline">¶</a></h2>
+<h2>Design constraints:<a class="headerlink" href="#design-constraints" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define ELOG_READ_MAX_RECORD            128</span>
 </pre></div>
 </div>
@@ -365,7 +363,7 @@ If it is run out of the buffers in the pool, it will log the message saying
 ‘Failed to get the buffer’.</p>
 </section>
 <section id="note">
-<h2>Note<a class="headerlink" href="#note" title="Permalink to this headline">¶</a></h2>
+<h2>Note<a class="headerlink" href="#note" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>For more information regarding error logging and PEL format
 refer to PAPR doc and P7 PEL and SRC PLDD document.</p></li>
@@ -375,7 +373,7 @@ structures.</p></li>
 </ul>
 </section>
 <section id="sample-error-logging">
-<h2>Sample error logging<a class="headerlink" href="#sample-error-logging" title="Permalink to this headline">¶</a></h2>
+<h2>Sample error logging<a class="headerlink" href="#sample-error-logging" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="n">DEFINE_LOG_ENTRY</span><span class="p">(</span><span class="n">OPAL_RC_ATTN</span><span class="p">,</span> <span class="n">OPAL_PLATFORM_ERR_EVT</span><span class="p">,</span> <span class="n">OPAL_ATTN</span><span class="p">,</span>
                 <span class="n">OPAL_PLATFORM_FIRMWARE</span><span class="p">,</span> <span class="n">OPAL_PREDICTIVE_ERR_GENERAL</span><span class="p">,</span>
                 <span class="n">OPAL_NA</span><span class="p">);</span>
@@ -424,7 +422,7 @@ structures.</p></li>
 </div>
 </section>
 <section id="sample-output-pel-dump-got-from-fsp">
-<h2>Sample output PEL dump got from FSP<a class="headerlink" href="#sample-output-pel-dump-got-from-fsp" title="Permalink to this headline">¶</a></h2>
+<h2>Sample output PEL dump got from FSP<a class="headerlink" href="#sample-output-pel-dump-got-from-fsp" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ errl -d -x 0x533C9B37
 |   00000000     50480030  01004154  20150728  02000500     PH.0..AT ..(....   |
 |   00000010     20150728  02000566  4B000107  00000000      ..(...fK.......   |
@@ -567,8 +565,9 @@ structures.</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">How to log errors on OPAL</a><ul>
 <li><a class="reference internal" href="#error-logging-interfaces-in-opal">Error logging interfaces in OPAL</a></li>
 </ul>
@@ -582,12 +581,17 @@ structures.</p></li>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="console-log.html"
-                        title="previous chapter">SkiBoot Console Log</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="bmc.html"
-                        title="next chapter">OPAL &lt;–&gt; BMC interactions</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="console-log.html"
+                          title="previous chapter">SkiBoot Console Log</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="bmc.html"
+                          title="next chapter">OPAL &lt;–&gt; BMC interactions</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -604,7 +608,7 @@ structures.</p></li>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -621,14 +625,14 @@ structures.</p></li>
         <li class="right" >
           <a href="console-log.html" title="SkiBoot Console Log"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">How to log errors on OPAL</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

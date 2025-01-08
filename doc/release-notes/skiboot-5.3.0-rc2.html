@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.3.0-rc2 &#8212; skiboot bc7b85d
+    <title>skiboot-5.3.0-rc2 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.3.0-rc1.html" title="skiboot-5.3.0-rc1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.3.0-rc2</a></li> 
@@ -46,25 +44,25 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-3-0-rc2">
-<h1>skiboot-5.3.0-rc2<a class="headerlink" href="#skiboot-5-3-0-rc2" title="Permalink to this headline">¶</a></h1>
+<h1>skiboot-5.3.0-rc2<a class="headerlink" href="#skiboot-5-3-0-rc2" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.3.0-rc2 was released on Thursday July 28th, 2016.</p>
 <p>The current plan is to release skiboot-5.3.0 August 1st 2016.</p>
 <p>Over skiboot-5.3.0-rc1, we have the following changes:</p>
 <section id="pflash">
-<h2>pflash<a class="headerlink" href="#pflash" title="Permalink to this headline">¶</a></h2>
+<h2>pflash<a class="headerlink" href="#pflash" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>pflash: Clean up makefiles and resolve build race</p></li>
 <li><p>pflash: use atexit for musl compatibility</p></li>
 </ul>
 </section>
 <section id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<h2>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>core/flash: Fix passing pointer instead of value</p></li>
 </ul>
 </section>
 <section id="power9">
-<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<h2>POWER9<a class="headerlink" href="#power9" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><dl class="simple">
 <dt>mambo: Update Radix Tree Size as per ISA 3.0</dt><dd><p>In Linux we recently changed to this encoding, so we no longer boot.
@@ -75,7 +73,7 @@ The associated Linux commit is b23d9c5b9c83c05e013aa52460f12a8365062cf4</p>
 </ul>
 </section>
 <section id="fsp-platforms">
-<h2>FSP Platforms<a class="headerlink" href="#fsp-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>FSP Platforms<a class="headerlink" href="#fsp-platforms" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>platforms/ibm-fsp: Fix incorrect struct member access and comparison</p></li>
 <li><p>FSP/MDST: Fix TCE alignment issue
@@ -85,7 +83,7 @@ endup doing wrong mapping and corrupting part of SYSDUMP.</p></li>
 </ul>
 </section>
 <section id="capi">
-<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<h2>CAPI<a class="headerlink" href="#capi" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hw/phb3: Increase AIB TX command credit for DMA read in CAPP DMA mode</p></li>
 </ul>
@@ -99,8 +97,9 @@ endup doing wrong mapping and corrupting part of SYSDUMP.</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.3.0-rc2</a><ul>
 <li><a class="reference internal" href="#pflash">pflash</a></li>
 <li><a class="reference internal" href="#general">General</a></li>
@@ -111,12 +110,17 @@ endup doing wrong mapping and corrupting part of SYSDUMP.</p></li>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.3.0-rc1.html"
-                        title="previous chapter">skiboot-5.3.0-rc1</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.3.1.html"
-                        title="next chapter">skiboot-5.3.1</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.3.0-rc1.html"
+                          title="previous chapter">skiboot-5.3.0-rc1</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.3.1.html"
+                          title="next chapter">skiboot-5.3.1</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -133,7 +137,7 @@ endup doing wrong mapping and corrupting part of SYSDUMP.</p></li>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -150,15 +154,15 @@ endup doing wrong mapping and corrupting part of SYSDUMP.</p></li>
         <li class="right" >
           <a href="skiboot-5.3.0-rc1.html" title="skiboot-5.3.0-rc1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.3.0-rc2</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

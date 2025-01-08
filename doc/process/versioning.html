@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Versioning Scheme of skiboot &#8212; skiboot bc7b85d
+    <title>Versioning Scheme of skiboot &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="stable-skiboot-rules.html" title="Skiboot stable tree rules and releases"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Versioning Scheme of skiboot</a></li> 
       </ul>
@@ -45,9 +43,9 @@
           <div class="body" role="main">
             
   <section id="versioning-scheme-of-skiboot">
-<span id="versioning"></span><h1>Versioning Scheme of skiboot<a class="headerlink" href="#versioning-scheme-of-skiboot" title="Permalink to this headline">¶</a></h1>
+<span id="versioning"></span><h1>Versioning Scheme of skiboot<a class="headerlink" href="#versioning-scheme-of-skiboot" title="Link to this heading">¶</a></h1>
 <section id="history">
-<h2>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
+<h2>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h2>
 <p>For roughly the first six months of public life, skiboot just presented a
 git SHA1 as a version “number”. This was “user visible” in two places:</p>
 <ol class="arabic simple">
@@ -63,7 +61,7 @@ string instead. This better addresses the needs of everybody who is building
 OpenPower systems.</p>
 </section>
 <section id="current-practice">
-<h2>Current practice<a class="headerlink" href="#current-practice" title="Permalink to this headline">¶</a></h2>
+<h2>Current practice<a class="headerlink" href="#current-practice" title="Link to this heading">¶</a></h2>
 <p>The version string is constructed from a few places and is designed to
 be <em>highly</em> informative about what you’re running. For the most part,
 it should be automatically constructed by the skiboot build system. The
@@ -136,7 +134,7 @@ release. So, you could ship a skiboot with the following version string:</p>
 some revisions for your platform.</p>
 </section>
 <section id="practical-considerations">
-<h2>Practical Considerations<a class="headerlink" href="#practical-considerations" title="Permalink to this headline">¶</a></h2>
+<h2>Practical Considerations<a class="headerlink" href="#practical-considerations" title="Link to this heading">¶</a></h2>
 <p>You MUST correctly tag your git tree for sensible version numbers to be
 generated. Look at the (generated) version.c file to confirm you’re building
 the correct version number. You will need annotated tags (git tag -a).</p>
@@ -153,8 +151,9 @@ versioning scheme), otherwise the build will fail.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Versioning Scheme of skiboot</a><ul>
 <li><a class="reference internal" href="#history">History</a></li>
 <li><a class="reference internal" href="#current-practice">Current practice</a></li>
@@ -163,12 +162,17 @@ versioning scheme), otherwise the build will fail.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="stable-skiboot-rules.html"
-                        title="previous chapter">Skiboot stable tree rules and releases</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../console-log.html"
-                        title="next chapter">SkiBoot Console Log</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="stable-skiboot-rules.html"
+                          title="previous chapter">Skiboot stable tree rules and releases</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../console-log.html"
+                          title="next chapter">SkiBoot Console Log</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -185,7 +189,7 @@ versioning scheme), otherwise the build will fail.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -202,14 +206,14 @@ versioning scheme), otherwise the build will fail.</p>
         <li class="right" >
           <a href="stable-skiboot-rules.html" title="Skiboot stable tree rules and releases"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Versioning Scheme of skiboot</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

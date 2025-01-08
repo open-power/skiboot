@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-6.0-rc1 &#8212; skiboot bc7b85d
+    <title>skiboot-6.0-rc1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-6.0.html" title="skiboot-6.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.0-rc1</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-6-0-rc1">
-<span id="id1"></span><h1>skiboot-6.0-rc1<a class="headerlink" href="#skiboot-6-0-rc1" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-6.0-rc1<a class="headerlink" href="#skiboot-6-0-rc1" title="Link to this heading">¶</a></h1>
 <p>skiboot v6.0-rc1 was released on Tuesday May 1st 2018. It is the first
 release candidate of skiboot 6.0, which will become the new stable release
 of skiboot following the 5.11 release, first released April 6th 2018.</p>
@@ -61,7 +59,7 @@ stable releases in the 5.10.x series, nor in the 5.11.x series.</p>
 being for all POWER8 and POWER9 platforms in op-build v2.0.</p>
 <p>Over skiboot-5.11, we have the following changes:</p>
 <section id="new-features">
-<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<h2>New Features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Disable stop states from OPAL</p>
 <p>On ZZ, stop4,5,11 are enabled for PowerVM, even though doing
@@ -126,7 +124,7 @@ number, which is obviously a good thing for one’s own sanity.</p>
 </li>
 </ul>
 <section id="improved-hmi-handling">
-<h3>Improved HMI Handling<a class="headerlink" href="#improved-hmi-handling" title="Permalink to this headline">¶</a></h3>
+<h3>Improved HMI Handling<a class="headerlink" href="#improved-hmi-handling" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>opal/hmi: Add documentation for opal_handle_hmi2 call</p></li>
 <li><p>opal/hmi: Generate hmi event for recovered HDEC parity error.</p></li>
@@ -235,7 +233,7 @@ by HW while we are in OPAL.</p>
 </ul>
 </section>
 <section id="libflash-and-ffspart">
-<h3>libflash and ffspart<a class="headerlink" href="#libflash-and-ffspart" title="Permalink to this headline">¶</a></h3>
+<h3>libflash and ffspart<a class="headerlink" href="#libflash-and-ffspart" title="Link to this heading">¶</a></h3>
 <p>Many improvements to the <cite>ffspart</cite> utility and <cite>libflash</cite> have come
 in this release, making <cite>ffspart</cite> suitable for building bit-identical
 PNOR images as the existing tooling used by <cite>op-build</cite>. The plan is to
@@ -359,7 +357,7 @@ consistent, we should move the code into libffs to avoid problems.</p>
 </section>
 </section>
 <section id="p9dsu-platform-changes">
-<h2>p9dsu Platform changes<a class="headerlink" href="#p9dsu-platform-changes" title="Permalink to this headline">¶</a></h2>
+<h2>p9dsu Platform changes<a class="headerlink" href="#p9dsu-platform-changes" title="Link to this heading">¶</a></h2>
 <p>The p9dsu platform from SuperMicro (also known as ‘Boston’) has received
 a number of updates, and the patches once carried by SuperMicro are now
 upstream.</p>
@@ -383,7 +381,7 @@ PCI before we setup the slot table.</p>
 </ul>
 </section>
 <section id="zz-platform-changes">
-<h2>ZZ Platform Changes<a class="headerlink" href="#zz-platform-changes" title="Permalink to this headline">¶</a></h2>
+<h2>ZZ Platform Changes<a class="headerlink" href="#zz-platform-changes" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hdata/i2c: Fix up pci hotplug labels</p>
 <p>These labels are used on the devices used to do PCIe slot power control
@@ -427,7 +425,7 @@ is 0x80f00103.lid.</p>
 </ul>
 </section>
 <section id="bugs-fixed">
-<h2>Bugs Fixed<a class="headerlink" href="#bugs-fixed" title="Permalink to this headline">¶</a></h2>
+<h2>Bugs Fixed<a class="headerlink" href="#bugs-fixed" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>core: Fix iteration condition to skip garded cpu</p></li>
 <li><p>uart: fix uart_opal_flush to take console lock over uart_con_flush
@@ -526,7 +524,7 @@ EEHed devices under that port.</p>
 </li>
 </ul>
 <section id="opal-prd">
-<h3>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h3>
+<h3>opal-prd<a class="headerlink" href="#opal-prd" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>opal-prd: Insert powernv_flash module</p>
 <p>Explictly load powernv_flash module on BMC based system so that we are sure
@@ -538,7 +536,7 @@ detect flash device. Hence pnor_available() becomes redundant check.</p>
 </ul>
 </section>
 <section id="npu2-nvlink2">
-<h3>NPU2/NVLINK2<a class="headerlink" href="#npu2-nvlink2" title="Permalink to this headline">¶</a></h3>
+<h3>NPU2/NVLINK2<a class="headerlink" href="#npu2-nvlink2" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>npu2/hw-procedures: fence bricks on GPU reset</p>
 <p>The NPU workbook defines a way of fencing a brick and
@@ -624,7 +622,7 @@ we make it all the way to creating a context for the BDF.</p>
 </ul>
 </section>
 <section id="secure-and-trusted-boot">
-<h3>Secure and Trusted Boot<a class="headerlink" href="#secure-and-trusted-boot" title="Permalink to this headline">¶</a></h3>
+<h3>Secure and Trusted Boot<a class="headerlink" href="#secure-and-trusted-boot" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>hdata/tpmrel: detect tpm not present by looking up the stinfo-&gt;status</p>
 <p>Skiboot detects if tpm is present by checking if a secureboot_tpm_info
@@ -638,7 +636,7 @@ issue, reproduced when skiboot is running on a system that has no tpm.</p>
 </ul>
 </section>
 <section id="pci">
-<h3>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h3>
+<h3>PCI<a class="headerlink" href="#pci" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>phb4: Restore bus numbers after CRS</p>
 <p>Currently we restore PCIe bus numbers right after the link is
@@ -662,7 +660,7 @@ errors during boot.</p>
 </ul>
 </section>
 <section id="capi-opencapi">
-<h3>CAPI/OpenCAPI<a class="headerlink" href="#capi-opencapi" title="Permalink to this headline">¶</a></h3>
+<h3>CAPI/OpenCAPI<a class="headerlink" href="#capi-opencapi" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>capi: Keep the current mmio windows in the mbt cache table.</p>
 <p>When the phb is used as a CAPI interface, the current mmio windows list
@@ -720,7 +718,7 @@ to prevent as_notify messages from being dropped.</p>
 </section>
 </section>
 <section id="debugging-testing-improvements">
-<h2>Debugging/Testing improvements<a class="headerlink" href="#debugging-testing-improvements" title="Permalink to this headline">¶</a></h2>
+<h2>Debugging/Testing improvements<a class="headerlink" href="#debugging-testing-improvements" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>core/stack: backtrace unwind basic OPAL call details</p>
 <p>Put OPAL callers’ r1 into the stack back chain, and then use that to
@@ -861,8 +859,9 @@ the LPC bus from userspace on the host.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-6.0-rc1</a><ul>
 <li><a class="reference internal" href="#new-features">New Features</a><ul>
 <li><a class="reference internal" href="#improved-hmi-handling">Improved HMI Handling</a></li>
@@ -884,12 +883,17 @@ the LPC bus from userspace on the host.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-6.0.html"
-                        title="previous chapter">skiboot-6.0</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-6.0-rc2.html"
-                        title="next chapter">skiboot-6.0-rc2</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-6.0.html"
+                          title="previous chapter">skiboot-6.0</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-6.0-rc2.html"
+                          title="next chapter">skiboot-6.0-rc2</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -906,7 +910,7 @@ the LPC bus from userspace on the host.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -923,15 +927,15 @@ the LPC bus from userspace on the host.</p>
         <li class="right" >
           <a href="skiboot-6.0.html" title="skiboot-6.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.0-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

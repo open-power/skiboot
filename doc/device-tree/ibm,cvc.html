@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ibm,cvc &#8212; skiboot bc7b85d
+    <title>ibm,cvc &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="index.html" title="Device Tree"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">ibm,cvc</a></li> 
@@ -46,13 +44,13 @@
           <div class="body" role="main">
             
   <section id="ibm-cvc">
-<span id="device-tree-ibm-cvc"></span><h1>ibm,cvc<a class="headerlink" href="#ibm-cvc" title="Permalink to this headline">¶</a></h1>
+<span id="device-tree-ibm-cvc"></span><h1>ibm,cvc<a class="headerlink" href="#ibm-cvc" title="Link to this heading">¶</a></h1>
 <p>This describes the code (a.k.a container verification code) that skiboot uses
 to verify signed firmware blobs. Each ibm,cvc child node describes CVC service,
 which has a version and offset (reg).</p>
 <p>Added in the device tree from <code class="docutils literal notranslate"><span class="pre">ibm,secureboot-v2</span></code>.</p>
 <section id="required-properties">
-<h2>Required properties<a class="headerlink" href="#required-properties" title="Permalink to this headline">¶</a></h2>
+<h2>Required properties<a class="headerlink" href="#required-properties" title="Link to this heading">¶</a></h2>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>compatible:      should be &quot;ibm,container-verification-code&quot;
 
 memory-region:   this points to the reserved memory where the
@@ -61,7 +59,7 @@ memory-region:   this points to the reserved memory where the
 </div>
 </section>
 <section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">ibm,cvc</span> <span class="p">{</span>
         <span class="nf">phandle</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x10f</span><span class="p">&gt;;</span>
         <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
@@ -95,8 +93,9 @@ memory-region:   this points to the reserved memory where the
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">ibm,cvc</a><ul>
 <li><a class="reference internal" href="#required-properties">Required properties</a></li>
 <li><a class="reference internal" href="#example">Example</a></li>
@@ -104,12 +103,17 @@ memory-region:   this points to the reserved memory where the
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">Device Tree</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="ibm%2Cfirmware-versions.html"
-                        title="next chapter">ibm,firmware-versions node</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Device Tree</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="ibm%2Cfirmware-versions.html"
+                          title="next chapter">ibm,firmware-versions node</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -126,7 +130,7 @@ memory-region:   this points to the reserved memory where the
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -143,15 +147,15 @@ memory-region:   this points to the reserved memory where the
         <li class="right" >
           <a href="index.html" title="Device Tree"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">ibm,cvc</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

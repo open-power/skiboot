@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_ELOG: Error logging &#8212; skiboot bc7b85d
+    <title>OPAL_ELOG: Error logging &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-dump-81-82-83-84-94-101-102.html" title="OPAL Dumps"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_ELOG: Error logging</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="opal-elog-error-logging">
-<span id="opal-elog"></span><h1>OPAL_ELOG: Error logging<a class="headerlink" href="#opal-elog-error-logging" title="Permalink to this headline">¶</a></h1>
+<span id="opal-elog"></span><h1>OPAL_ELOG: Error logging<a class="headerlink" href="#opal-elog-error-logging" title="Link to this heading">¶</a></h1>
 <p>OPAL provides an abstraction to platform specific methods of storing and
 retrieving error logs. Some service processors may be able to store information
 in the Platform Error Log (PEL) format. These may be generated at runtime
@@ -71,7 +69,7 @@ must be checked separately.</p>
 <p><strong>TODO</strong>: we need a good explanation of the notification mechanism and in
 what order and <em>when</em> to call each of the OPAL APIs.</p>
 <section id="opal-elog-read">
-<span id="id1"></span><h2>OPAL_ELOG_READ<a class="headerlink" href="#opal-elog-read" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>OPAL_ELOG_READ<a class="headerlink" href="#opal-elog-read" title="Link to this heading">¶</a></h2>
 <p>The <a class="reference internal" href="#opal-elog-read"><span class="std std-ref">OPAL_ELOG_READ</span></a> call will copy the error log identified by <code class="docutils literal notranslate"><span class="pre">id</span></code> into
 the <code class="docutils literal notranslate"><span class="pre">buffer</span></code> of size <code class="docutils literal notranslate"><span class="pre">size</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">OPAL_ELOG_READ</span></code> accepts 3 parameters:</p>
@@ -94,7 +92,7 @@ wrong order.</p>
 like <a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a>.</p>
 </section>
 <section id="opal-elog-ack">
-<span id="id2"></span><h2>OPAL_ELOG_ACK<a class="headerlink" href="#opal-elog-ack" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>OPAL_ELOG_ACK<a class="headerlink" href="#opal-elog-ack" title="Link to this heading">¶</a></h2>
 <p>Acknowledging (ACKing) an error log tells OPAL and the service processor that
 the host operating system has dealt with the error log successfully. This allows
 OPAL and the service processor to delete the error log from their
@@ -114,7 +112,7 @@ memory/storage.</p>
 like <a class="reference internal" href="return-codes.html#opal-internal-error"><span class="std std-ref">OPAL_INTERNAL_ERROR</span></a>.</p>
 </section>
 <section id="opal-elog-resend">
-<span id="id3"></span><h2>OPAL_ELOG_RESEND<a class="headerlink" href="#opal-elog-resend" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>OPAL_ELOG_RESEND<a class="headerlink" href="#opal-elog-resend" title="Link to this heading">¶</a></h2>
 <p>The <a class="reference internal" href="#opal-elog-resend"><span class="std std-ref">OPAL_ELOG_RESEND</span></a> call will cause OPAL to resend notification to the
 host operating system of all outstanding error logs. This is commonly used
 (although doesn’t have to be) in a kexec scenario.</p>
@@ -122,7 +120,7 @@ host operating system of all outstanding error logs. This is commonly used
 void.</p>
 </section>
 <section id="opal-elog-size">
-<span id="id4"></span><h2>OPAL_ELOG_SIZE<a class="headerlink" href="#opal-elog-size" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>OPAL_ELOG_SIZE<a class="headerlink" href="#opal-elog-size" title="Link to this heading">¶</a></h2>
 <p>The <a class="reference internal" href="#opal-elog-size"><span class="std std-ref">OPAL_ELOG_SIZE</span></a> call retrieves information about an error log.</p>
 <p>Here, <code class="docutils literal notranslate"><span class="pre">type</span></code> specifies error log format. Supported types are :</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="o">-&gt;</span> <span class="n">Platform</span> <span class="n">Error</span> <span class="n">Log</span>
@@ -152,8 +150,9 @@ void.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_ELOG: Error logging</a><ul>
 <li><a class="reference internal" href="#opal-elog-read">OPAL_ELOG_READ</a></li>
 <li><a class="reference internal" href="#opal-elog-ack">OPAL_ELOG_ACK</a></li>
@@ -163,12 +162,17 @@ void.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-dump-81-82-83-84-94-101-102.html"
-                        title="previous chapter">OPAL Dumps</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-flash-110-111-112.html"
-                        title="next chapter">OPAL Flash calls</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-dump-81-82-83-84-94-101-102.html"
+                          title="previous chapter">OPAL Dumps</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-flash-110-111-112.html"
+                          title="next chapter">OPAL Flash calls</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -185,7 +189,7 @@ void.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -202,15 +206,15 @@ void.</p>
         <li class="right" >
           <a href="opal-dump-81-82-83-84-94-101-102.html" title="OPAL Dumps"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_ELOG: Error logging</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-6.4 &#8212; skiboot bc7b85d
+    <title>skiboot-6.4 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-6.3.5.html" title="skiboot-6.3.5"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.4</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-6-4">
-<span id="id1"></span><h1>skiboot-6.4<a class="headerlink" href="#skiboot-6-4" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-6.4<a class="headerlink" href="#skiboot-6-4" title="Link to this heading">¶</a></h1>
 <p>skiboot v6.4 was released on Tuesday July 16th 2019. It is the first
 release of skiboot 6.4, which becomes the new stable release
 of skiboot following the 6.3 release, first released May 3rd 2019.</p>
@@ -56,7 +54,7 @@ and <a class="reference internal" href="skiboot-6.3.2.html#skiboot-6-3-2"><span 
 <p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
 <p>Over skiboot 6.3, we have the following changes:</p>
 <section id="new-features">
-<span id="skiboot-6-4-new-features"></span><h2>New features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<span id="skiboot-6-4-new-features"></span><h2>New features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.4-rc1:</p>
 <ul>
 <li><p>npu2-opencapi: Add opencapi support on ZZ</p>
@@ -185,7 +183,7 @@ interrupt status is cleared.</p></li>
 </ul>
 </section>
 <section id="removed-features">
-<h2>Removed features<a class="headerlink" href="#removed-features" title="Permalink to this headline">¶</a></h2>
+<h2>Removed features<a class="headerlink" href="#removed-features" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>pci/iov: Remove skiboot VF tracking</p>
@@ -257,7 +255,7 @@ remove them and save a handful of bytes at runtime.</p>
 </ul>
 </section>
 <section id="secure-and-trusted-boot">
-<h2>Secure and Trusted Boot<a class="headerlink" href="#secure-and-trusted-boot" title="Permalink to this headline">¶</a></h2>
+<h2>Secure and Trusted Boot<a class="headerlink" href="#secure-and-trusted-boot" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>trustedboot: Change PCR and event_type for the skiboot events</p>
@@ -308,7 +306,7 @@ both data and config events should be logged as EV_COMPACT_HASH.</p></li>
 </ul>
 </section>
 <section id="sensors">
-<h2>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h2>
+<h2>Sensors<a class="headerlink" href="#sensors" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>occ-sensors: Check if OCC is reset while reading inband sensors</p>
@@ -320,7 +318,7 @@ and propagate the appropriate error.</p>
 </ul>
 </section>
 <section id="ipmi">
-<h2>IPMI<a class="headerlink" href="#ipmi" title="Permalink to this headline">¶</a></h2>
+<h2>IPMI<a class="headerlink" href="#ipmi" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>ipmi: ensure forward progress on ipmi_queue_msg_sync()</p>
@@ -338,7 +336,7 @@ flash resource with the IPMI HIOMAP backend.</p>
 </ul>
 </section>
 <section id="npu2">
-<h2>NPU2<a class="headerlink" href="#npu2" title="Permalink to this headline">¶</a></h2>
+<h2>NPU2<a class="headerlink" href="#npu2" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.4-rc1:</p>
 <ul>
 <li><p>witherspoon: Add nvlink peers in finalise_dt()</p>
@@ -414,7 +412,7 @@ assigned to LPID and we cannot rely on the kernel to clean that up.</p>
 </ul>
 </section>
 <section id="phb4">
-<h2>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h2>
+<h2>PHB4<a class="headerlink" href="#phb4" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>hw/phb4: Make phb4_training_trace() more general</p>
@@ -543,7 +541,7 @@ seems to avoid the Completion Timeout. With the patch applied we get:</p>
 </ul>
 </section>
 <section id="simulators">
-<h2>Simulators<a class="headerlink" href="#simulators" title="Permalink to this headline">¶</a></h2>
+<h2>Simulators<a class="headerlink" href="#simulators" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>external/mambo: Bump default POWER9 to Nimbus DD2.3</p></li>
@@ -635,7 +633,7 @@ due to a HW crash (eg. unhandled exception).</p>
 </ul>
 </section>
 <section id="vesnin-platform">
-<h2>VESNIN platform<a class="headerlink" href="#vesnin-platform" title="Permalink to this headline">¶</a></h2>
+<h2>VESNIN platform<a class="headerlink" href="#vesnin-platform" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>platforms/vesnin: PCI inventory via IPMI OEM</p>
@@ -647,7 +645,7 @@ plugins.</p>
 </ul>
 </section>
 <section id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>opal-gard: Account for ECC size when clearing partition</p>
@@ -668,7 +666,7 @@ of ECC bytes required.</p>
 </ul>
 </section>
 <section id="build-and-debugging">
-<h2>Build and debugging<a class="headerlink" href="#build-and-debugging" title="Permalink to this headline">¶</a></h2>
+<h2>Build and debugging<a class="headerlink" href="#build-and-debugging" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.3:</p>
 <ul>
 <li><p>Disable -Waddress-of-packed-member for GCC9</p>
@@ -804,7 +802,7 @@ in future.</p>
 </ul>
 </section>
 <section id="general-fixes">
-<h2>General Fixes<a class="headerlink" href="#general-fixes" title="Permalink to this headline">¶</a></h2>
+<h2>General Fixes<a class="headerlink" href="#general-fixes" title="Link to this heading">¶</a></h2>
 <p>Since skiboot v6.4-rc1:</p>
 <ul>
 <li><p>libflash: Fix broken continuations</p>
@@ -833,8 +831,9 @@ statement.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-6.4</a><ul>
 <li><a class="reference internal" href="#new-features">New features</a></li>
 <li><a class="reference internal" href="#removed-features">Removed features</a></li>
@@ -852,12 +851,17 @@ statement.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-6.3.5.html"
-                        title="previous chapter">skiboot-6.3.5</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-6.4-rc1.html"
-                        title="next chapter">skiboot-6.4-rc1</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-6.3.5.html"
+                          title="previous chapter">skiboot-6.3.5</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-6.4-rc1.html"
+                          title="next chapter">skiboot-6.4-rc1</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -874,7 +878,7 @@ statement.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -891,15 +895,15 @@ statement.</p>
         <li class="right" >
           <a href="skiboot-6.3.5.html" title="skiboot-6.3.5"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.4</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

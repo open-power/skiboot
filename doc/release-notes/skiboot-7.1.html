@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-7.1 &#8212; skiboot bc7b85d
+    <title>skiboot-7.1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -29,7 +27,7 @@
         <li class="right" >
           <a href="skiboot-7.0.html" title="skiboot-7.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-7.1</a></li> 
@@ -42,22 +40,22 @@
           <div class="body" role="main">
             
   <section id="skiboot-7-1">
-<span id="id1"></span><h1>skiboot-7.1<a class="headerlink" href="#skiboot-7-1" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-7.1<a class="headerlink" href="#skiboot-7-1" title="Link to this heading">¶</a></h1>
 <p>skiboot v7.1 was released on Monday Sep 18th 2023. It is the first release of
 the skiboot 7.1 series, which becomes the new stable release following the
 <a class="reference internal" href="skiboot-7.0.html#skiboot-7-0"><span class="std std-ref">skiboot-7.0</span></a> release, first released Tuesday Oct 26th 2021.</p>
 <p>Changes in this release are mostly bug fixes, refactoring improvements, and
 some code deprecation/obsoletion.</p>
 <section id="new-features">
-<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<h2>New Features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <section id="removed-opal-calls">
-<h3>Removed OPAL calls<a class="headerlink" href="#removed-opal-calls" title="Permalink to this headline">¶</a></h3>
+<h3>Removed OPAL calls<a class="headerlink" href="#removed-opal-calls" title="Link to this heading">¶</a></h3>
 <p>The OPAL_PCI_SET_MVE_ENABLE and OPAL_PCI_SET_MVE calls were removed, as they
 were noops. Support for IODA1 and both calls was removed from the Linux kernel
 in v6.5-rc1.</p>
 </section>
 <section id="optional-power8-support">
-<h3>Optional POWER8 support<a class="headerlink" href="#optional-power8-support" title="Permalink to this headline">¶</a></h3>
+<h3>Optional POWER8 support<a class="headerlink" href="#optional-power8-support" title="Link to this heading">¶</a></h3>
 <p>Most POWER8 code has been conditionalized, making it possible to omit support by
 building with <cite>CONFIG_P8=0</cite>. The result is a smaller binary targeting POWER9 as
 the baseline CPU.</p>
@@ -72,8 +70,9 @@ the baseline CPU.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-7.1</a><ul>
 <li><a class="reference internal" href="#new-features">New Features</a><ul>
 <li><a class="reference internal" href="#removed-opal-calls">Removed OPAL calls</a></li>
@@ -84,9 +83,12 @@ the baseline CPU.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-7.0.html"
-                        title="previous chapter">skiboot-7.0</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-7.0.html"
+                          title="previous chapter">skiboot-7.0</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -103,7 +105,7 @@ the baseline CPU.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -117,15 +119,15 @@ the baseline CPU.</p>
         <li class="right" >
           <a href="skiboot-7.0.html" title="skiboot-7.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-7.1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

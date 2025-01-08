@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.3.0-rc1 &#8212; skiboot bc7b85d
+    <title>skiboot-5.3.0-rc1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.3.0.html" title="skiboot-5.3.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.3.0-rc1</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-3-0-rc1">
-<h1>skiboot-5.3.0-rc1<a class="headerlink" href="#skiboot-5-3-0-rc1" title="Permalink to this headline">¶</a></h1>
+<h1>skiboot-5.3.0-rc1<a class="headerlink" href="#skiboot-5-3-0-rc1" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.3.0-rc1 was released on Monday July 25th, 2016</p>
 <p>skiboot-5.3.0-rc1 is the first release candidate of skiboot 5.3, which will
 become the new stable release of skiboot following the 5.2 release, first
@@ -57,7 +55,7 @@ and skiboot-5.2.4 (the existing stable releases).</p>
 <p>The current plan is to release skiboot-5.3.0 August 1st 2016.</p>
 <p>Over skiboot-5.2, we have the following changes:</p>
 <section id="opal-api-device-tree">
-<h2>OPAL API/Device Tree<a class="headerlink" href="#opal-api-device-tree" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL API/Device Tree<a class="headerlink" href="#opal-api-device-tree" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><dl class="simple">
 <dt>Reserve OPAL API numbers for XICS emulation for XIVE</dt><dd><p>Additionally, we put in some skeleton docs for what’s coming,
@@ -72,7 +70,7 @@ No Linux kernel has ever existed for powernv that only knows linux,phandle.</p><
 </ul>
 </section>
 <section id="power9">
-<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<h2>POWER9<a class="headerlink" href="#power9" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Add base POWER9 support
 In <em>NO WAY</em> is this geared towards real POWER9 hardware.
@@ -86,7 +84,7 @@ Some things are going to change, we start documenting them.</p></li>
 </ul>
 </section>
 <section id="capi">
-<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<h2>CAPI<a class="headerlink" href="#capi" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>phb3: Test CAPI mode on both CAPP units on Naples</p></li>
 <li><p>hmi: Recover both CAPP units on Naples after malfunction alert</p></li>
@@ -103,7 +101,7 @@ the OPAL_PCI_SET_PHB_CAPI_MODE API to enable CAPI in DMA mode.</p>
 </ul>
 </section>
 <section id="pci">
-<h2>PCI<a class="headerlink" href="#pci" title="Permalink to this headline">¶</a></h2>
+<h2>PCI<a class="headerlink" href="#pci" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>pci: Do a dummy config write to devices to establish bus number</p></li>
 <li><p>phb: Work around XSL bug sending PTE updates with wrong scope</p></li>
@@ -111,14 +109,14 @@ the OPAL_PCI_SET_PHB_CAPI_MODE API to enable CAPI in DMA mode.</p>
 </ul>
 </section>
 <section id="garrison">
-<h2>Garrison<a class="headerlink" href="#garrison" title="Permalink to this headline">¶</a></h2>
+<h2>Garrison<a class="headerlink" href="#garrison" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>NVLink/NPU support</p></li>
 <li><p>Full garrison platform support.</p></li>
 </ul>
 </section>
 <section id="bmc-based-platforms">
-<h2>BMC based platforms<a class="headerlink" href="#bmc-based-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>BMC based platforms<a class="headerlink" href="#bmc-based-platforms" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>bt: use the maximum retry count returned by the BMC</p></li>
 <li><dl class="simple">
@@ -130,7 +128,7 @@ of 0007). This code fixes this issue by adding ID in proper order.</p>
 </ul>
 </section>
 <section id="tests-simulation">
-<h2>Tests/Simulation<a class="headerlink" href="#tests-simulation" title="Permalink to this headline">¶</a></h2>
+<h2>Tests/Simulation<a class="headerlink" href="#tests-simulation" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>test/hello_world: always use shutdown type zero</p></li>
 <li><p>make check: make test runs less noisy</p></li>
@@ -146,7 +144,7 @@ of 0007). This code fixes this issue by adding ID in proper order.</p>
 </ul>
 </section>
 <section id="fsp-platforms">
-<h2>FSP platforms<a class="headerlink" href="#fsp-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>FSP platforms<a class="headerlink" href="#fsp-platforms" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>beginnings of support for SPIRA-S structure</p></li>
 <li><p>Handle mbox response with bad status:0x24 during FSP termination</p></li>
@@ -170,7 +168,7 @@ read.</p>
 </ul>
 </section>
 <section id="hmi">
-<h2>HMI<a class="headerlink" href="#hmi" title="Permalink to this headline">¶</a></h2>
+<h2>HMI<a class="headerlink" href="#hmi" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hmi: Fix a bug where partial hmi event was reported to host.</p></li>
 <li><p>hmi: Add handling for NPU checkstops</p></li>
@@ -179,7 +177,7 @@ read.</p>
 </ul>
 </section>
 <section id="tools">
-<h2>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
+<h2>Tools<a class="headerlink" href="#tools" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><dl class="simple">
 <dt>external: Add a getsram command</dt><dd><p>The getsram command reads the OCC SRAM. This is useful for debug.</p>
@@ -198,7 +196,7 @@ read.</p>
 </ul>
 </section>
 <section id="mambo">
-<h2>Mambo<a class="headerlink" href="#mambo" title="Permalink to this headline">¶</a></h2>
+<h2>Mambo<a class="headerlink" href="#mambo" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><dl class="simple">
 <dt>Test device tree for kernel location</dt><dd><p>This can reduce the boot time since the kernel no longer needs to
@@ -209,7 +207,7 @@ relocate itself when loaded directly at 0.</p>
 </ul>
 </section>
 <section id="generic">
-<h2>Generic<a class="headerlink" href="#generic" title="Permalink to this headline">¶</a></h2>
+<h2>Generic<a class="headerlink" href="#generic" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hw/lpc: Log LPC SYNC errors as OPAL_PLATFORM_ERR_EVT errors</p></li>
 <li><p>Explicitly disable the attn instruction on all CPUs on boot.</p></li>
@@ -229,18 +227,10 @@ OS from restarting a thread that was caught for re-init.</p>
 </ul>
 </section>
 <section id="contributors">
-<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<h2>Contributors<a class="headerlink" href="#contributors" title="Link to this heading">¶</a></h2>
 <p>Extending the analysis done for the last few releases, we can see our trends
 in code review across versions:</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 14%" />
-<col style="width: 17%" />
-<col style="width: 17%" />
-<col style="width: 14%" />
-<col style="width: 19%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Release</p></th>
 <th class="head"><p>csets</p></th>
@@ -287,10 +277,6 @@ in code review across versions:</p>
 A total of 20887 lines added, 4540 removed (delta 16347)</p>
 <p>Developers with the most changesets</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 69%" />
-<col style="width: 31%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -394,10 +380,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers with the most changed lines</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -501,10 +483,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers with the most lines removed</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -527,10 +505,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers with the most signoffs (total 249)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -559,10 +533,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers with the most reviews (total 53)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -615,10 +585,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers with the most test credits (total 4)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -638,10 +604,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers who gave the most tested-by credits (total 4)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -658,10 +620,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers with the most report credits (total 5)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -684,10 +642,6 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </table>
 <p>Developers who gave the most report credits (total 5)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 68%" />
-<col style="width: 32%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -715,8 +669,9 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.3.0-rc1</a><ul>
 <li><a class="reference internal" href="#opal-api-device-tree">OPAL API/Device Tree</a></li>
 <li><a class="reference internal" href="#power9">POWER9</a></li>
@@ -735,12 +690,17 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.3.0.html"
-                        title="previous chapter">skiboot-5.3.0</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.3.0-rc2.html"
-                        title="next chapter">skiboot-5.3.0-rc2</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.3.0.html"
+                          title="previous chapter">skiboot-5.3.0</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.3.0-rc2.html"
+                          title="next chapter">skiboot-5.3.0-rc2</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -757,7 +717,7 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -774,15 +734,15 @@ A total of 20887 lines added, 4540 removed (delta 16347)</p>
         <li class="right" >
           <a href="skiboot-5.3.0.html" title="skiboot-5.3.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.3.0-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

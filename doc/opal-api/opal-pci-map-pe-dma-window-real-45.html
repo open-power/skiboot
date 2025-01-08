@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_PCI_MAP_PE_DMA_WINDOW_REAL &#8212; skiboot bc7b85d
+    <title>OPAL_PCI_MAP_PE_DMA_WINDOW_REAL &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-pci-map-pe-dma-window-44.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_DMA_WINDOW_REAL</a></li> 
@@ -46,14 +44,14 @@
           <div class="body" role="main">
             
   <section id="opal-pci-map-pe-dma-window-real">
-<span id="id1"></span><h1>OPAL_PCI_MAP_PE_DMA_WINDOW_REAL<a class="headerlink" href="#opal-pci-map-pe-dma-window-real" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_PCI_MAP_PE_DMA_WINDOW_REAL<a class="headerlink" href="#opal-pci-map-pe-dma-window-real" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL              45</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_map_pe_dma_window_real</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pe_number</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                        </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">window_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_start_addr</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_mem_size</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_map_pe_dma_window_real</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span>
+<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pe_number</span><span class="p">,</span>
+<span class="w">                                        </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">window_id</span><span class="p">,</span>
+<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_start_addr</span><span class="p">,</span>
+<span class="w">                                        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_mem_size</span><span class="p">);</span>
 </pre></div>
 </div>
 <p><strong>WARNING:</strong> following documentation is from old sources, and is possibly
@@ -100,12 +98,16 @@ disable this DMA window.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-pci-map-pe-dma-window-44.html"
-                        title="previous chapter">OPAL_PCI_MAP_PE_DMA_WINDOW</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-pci-map-pe-mmio-window-29.html"
-                        title="next chapter">OPAL_PCI_MAP_PE_MMIO_WINDOW</a></p>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-pci-map-pe-dma-window-44.html"
+                          title="previous chapter">OPAL_PCI_MAP_PE_DMA_WINDOW</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-pci-map-pe-mmio-window-29.html"
+                          title="next chapter">OPAL_PCI_MAP_PE_MMIO_WINDOW</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -122,7 +124,7 @@ disable this DMA window.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -139,15 +141,15 @@ disable this DMA window.</p>
         <li class="right" >
           <a href="opal-pci-map-pe-dma-window-44.html" title="OPAL_PCI_MAP_PE_DMA_WINDOW"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_PCI_MAP_PE_DMA_WINDOW_REAL</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

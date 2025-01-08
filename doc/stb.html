@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Secure and Trusted Boot Library (LibSTB) Documentation &#8212; skiboot bc7b85d
+    <title>Secure and Trusted Boot Library (LibSTB) Documentation &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="vas.html" title="Virtual Accelerator Switchboard (VAS)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Secure and Trusted Boot Library (LibSTB) Documentation</a></li> 
       </ul>
@@ -45,7 +43,7 @@
           <div class="body" role="main">
             
   <section id="secure-and-trusted-boot-library-libstb-documentation">
-<span id="stb-overview"></span><h1>Secure and Trusted Boot Library (LibSTB) Documentation<a class="headerlink" href="#secure-and-trusted-boot-library-libstb-documentation" title="Permalink to this headline">¶</a></h1>
+<span id="stb-overview"></span><h1>Secure and Trusted Boot Library (LibSTB) Documentation<a class="headerlink" href="#secure-and-trusted-boot-library-libstb-documentation" title="Link to this heading">¶</a></h1>
 <p><em>LibSTB</em> provides APIs to support Secure Boot and Trusted Boot in skiboot.</p>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">Secure</span> <span class="pre">Boot:</span> <span class="pre">verify</span> <span class="pre">and</span> <span class="pre">enforce.</span></code></dt><dd><p>When the system is booting in secure mode, Secure Boot MUST ensure that
@@ -67,7 +65,7 @@ Module (TPM) that are shielded from direct access by the CPU.</p>
 verify and measure the code it fetches from PNOR.</p>
 <p>LibSTB is initialized by calling <em>secureboot_init()</em>, see <code class="docutils literal notranslate"><span class="pre">libstb/secureboot.h</span></code>.</p>
 <section id="secure-boot">
-<h2>Secure Boot<a class="headerlink" href="#secure-boot" title="Permalink to this headline">¶</a></h2>
+<h2>Secure Boot<a class="headerlink" href="#secure-boot" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">Requirements:</span></code></dt><dd><ol class="arabic simple">
 <li><p>CVC-verify service to verify signed firmware code.</p></li>
@@ -87,7 +85,7 @@ hardware key hash trusted by the platform owner.</p>
 information is found in the device tree, see
 <a class="reference internal" href="device-tree/ibm%2Csecureboot.html#device-tree-ibm-secureboot"><span class="std std-ref">doc/device-tree/ibm,secureboot.rst</span></a>.</p>
 <section id="signing-firmware-code">
-<span id="id1"></span><h3>Signing Firmware Code<a class="headerlink" href="#signing-firmware-code" title="Permalink to this headline">¶</a></h3>
+<span id="id1"></span><h3>Signing Firmware Code<a class="headerlink" href="#signing-firmware-code" title="Link to this heading">¶</a></h3>
 <p>Fimware code is signed using the <code class="docutils literal notranslate"><span class="pre">sb-signing-utils</span></code> utilities by running it
 standalone or just calling op-build. The latter will automatically sign the
 various firmware components that comprise the PNOR image if SECUREBOOT is
@@ -105,7 +103,7 @@ payload.</p>
 </section>
 </section>
 <section id="container-verification-code">
-<span id="id2"></span><h2>Container Verification Code<a class="headerlink" href="#container-verification-code" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>Container Verification Code<a class="headerlink" href="#container-verification-code" title="Link to this heading">¶</a></h2>
 <p>The <em>Container Verification Code</em> (a.k.a. ROM code) is stored in a secure
 memory region and it provides basic Secure and Trusted Boot services for the
 entire firmware stack. See <cite>doc/device-tree/ibm,secureboot.rst
@@ -114,9 +112,9 @@ entire firmware stack. See <cite>doc/device-tree/ibm,secureboot.rst
 <p>LibSTB uses function wrappers to call into each CVC service, see
 <code class="docutils literal notranslate"><span class="pre">libstb/cvc.h</span></code>.</p>
 <section id="cvc-verify-service">
-<h3>CVC-verify Service<a class="headerlink" href="#cvc-verify-service" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">call_cvc_verify</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">hw_key_hash</span><span class="p">,</span><span class="w"></span>
-<span class="w">                    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">hw_key_hash_size</span><span class="p">,</span><span class="w"> </span><span class="n">__be64</span><span class="w"> </span><span class="o">*</span><span class="n">log</span><span class="p">)</span><span class="w"></span>
+<h3>CVC-verify Service<a class="headerlink" href="#cvc-verify-service" title="Link to this heading">¶</a></h3>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">call_cvc_verify</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">hw_key_hash</span><span class="p">,</span>
+<span class="w">                    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">hw_key_hash_size</span><span class="p">,</span><span class="w"> </span><span class="n">__be64</span><span class="w"> </span><span class="o">*</span><span class="n">log</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This function wrapper calls into the <em>CVC-verify</em>, which verifies if the
@@ -129,9 +127,9 @@ it to find out what checks has failed.</p>
 <p>Enforcement is caller’s responsibility.</p>
 </section>
 <section id="cvc-sha512-service">
-<h3>CVC-sha512 Service<a class="headerlink" href="#cvc-sha512-service" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">call_cvc_sha512</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">data_len</span><span class="p">,</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="o">*</span><span class="n">digest</span><span class="p">,</span><span class="w"></span>
-<span class="w">                    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">digest_size</span><span class="p">)</span><span class="w"></span>
+<h3>CVC-sha512 Service<a class="headerlink" href="#cvc-sha512-service" title="Link to this heading">¶</a></h3>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">call_cvc_sha512</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">data_len</span><span class="p">,</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="o">*</span><span class="n">digest</span><span class="p">,</span>
+<span class="w">                    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">digest_size</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This function wrapper calls into the <em>CVC-sha512</em>, which calculates the
@@ -140,7 +138,7 @@ sha512 hash of what is provided in &#64;data. Its parameters are documented in
 </section>
 </section>
 <section id="trusted-boot">
-<h2>Trusted Boot<a class="headerlink" href="#trusted-boot" title="Permalink to this headline">¶</a></h2>
+<h2>Trusted Boot<a class="headerlink" href="#trusted-boot" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">Requirements:</span></code></dt><dd><ol class="arabic simple">
 <li><p>TPM device and TPM driver. See devices supported in
@@ -188,8 +186,9 @@ Log entries.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Secure and Trusted Boot Library (LibSTB) Documentation</a><ul>
 <li><a class="reference internal" href="#secure-boot">Secure Boot</a><ul>
 <li><a class="reference internal" href="#signing-firmware-code">Signing Firmware Code</a></li>
@@ -205,12 +204,17 @@ Log entries.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="vas.html"
-                        title="previous chapter">Virtual Accelerator Switchboard (VAS)</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="device-tree.html"
-                        title="next chapter">Device Tree</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="vas.html"
+                          title="previous chapter">Virtual Accelerator Switchboard (VAS)</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="device-tree.html"
+                          title="next chapter">Device Tree</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -227,7 +231,7 @@ Log entries.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -244,14 +248,14 @@ Log entries.</p>
         <li class="right" >
           <a href="vas.html" title="Virtual Accelerator Switchboard (VAS)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Secure and Trusted Boot Library (LibSTB) Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

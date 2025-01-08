@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_PCI_SET_PHB_MEM_WINDOW &#8212; skiboot bc7b85d
+    <title>OPAL_PCI_SET_PHB_MEM_WINDOW &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-pci-set-phb-capi-mode-93.html" title="OPAL_PCI_SET_PHB_CAPI_MODE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PHB_MEM_WINDOW</a></li> 
@@ -46,15 +44,15 @@
           <div class="body" role="main">
             
   <section id="opal-pci-set-phb-mem-window">
-<span id="id1"></span><h1>OPAL_PCI_SET_PHB_MEM_WINDOW<a class="headerlink" href="#opal-pci-set-phb-mem-window" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_PCI_SET_PHB_MEM_WINDOW<a class="headerlink" href="#opal-pci-set-phb-mem-window" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_SET_PHB_MEM_WINDOW             28</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_set_phb_mem_window</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">window_type</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">window_num</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">addr</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_addr</span><span class="p">,</span><span class="w"></span>
-<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">size</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_set_phb_mem_window</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">phb_id</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">window_type</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">window_num</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">addr</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">pci_addr</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -110,10 +108,10 @@ segment_size times the number of segments within this MMIO window.</p>
 <p>The host must set PHB memory windows to be within the system real address
 ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.</p>
 <p>Return value:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPAL_PARAMETER</span><span class="p">;</span><span class="w"></span>
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">set_phb_mem_window</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPAL_UNSUPPORTED</span><span class="p">;</span><span class="w"></span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPAL_PARAMETER</span><span class="p">;</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">phb</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">set_phb_mem_window</span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPAL_UNSUPPORTED</span><span class="p">;</span>
 </pre></div>
 </div>
 </section>
@@ -125,12 +123,16 @@ ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-pci-set-phb-capi-mode-93.html"
-                        title="previous chapter">OPAL_PCI_SET_PHB_CAPI_MODE</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-pci-set-power-state-121.html"
-                        title="next chapter">OPAL_PCI_SET_POWER_STATE</a></p>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-pci-set-phb-capi-mode-93.html"
+                          title="previous chapter">OPAL_PCI_SET_PHB_CAPI_MODE</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-pci-set-power-state-121.html"
+                          title="next chapter">OPAL_PCI_SET_POWER_STATE</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +149,7 @@ ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -164,15 +166,15 @@ ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.</p>
         <li class="right" >
           <a href="opal-pci-set-phb-capi-mode-93.html" title="OPAL_PCI_SET_PHB_CAPI_MODE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_PCI_SET_PHB_MEM_WINDOW</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

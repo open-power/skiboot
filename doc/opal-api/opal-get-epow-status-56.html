@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_GET_EPOW_STATUS &#8212; skiboot bc7b85d
+    <title>OPAL_GET_EPOW_STATUS &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-get-device-tree-118.html" title="OPAL_GET_DEVICE_TREE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_GET_EPOW_STATUS</a></li> 
@@ -46,45 +44,45 @@
           <div class="body" role="main">
             
   <section id="opal-get-epow-status">
-<span id="id1"></span><h1>OPAL_GET_EPOW_STATUS<a class="headerlink" href="#opal-get-epow-status" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_GET_EPOW_STATUS<a class="headerlink" href="#opal-get-epow-status" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_GET_EPOW_STATUS                 56</span>
 
-<span class="k">enum</span><span class="w"> </span><span class="n">OpalEpowStatus</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_EPOW_NONE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_EPOW_UPS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_EPOW_OVER_AMBIENT_TEMP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_EPOW_OVER_INTERNAL_TEMP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalEpowStatus</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">OPAL_EPOW_NONE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_EPOW_UPS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_EPOW_OVER_AMBIENT_TEMP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_EPOW_OVER_INTERNAL_TEMP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+<span class="p">};</span>
 
-<span class="cm">/* System EPOW type */</span><span class="w"></span>
-<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysEpow</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSEPOW_POWER</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Power EPOW */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSEPOW_TEMP</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Temperature EPOW */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSEPOW_COOLING</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Cooling EPOW */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSEPOW_MAX</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Max EPOW categories */</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="cm">/* System EPOW type */</span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysEpow</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">OPAL_SYSEPOW_POWER</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Power EPOW */</span>
+<span class="w">     </span><span class="n">OPAL_SYSEPOW_TEMP</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Temperature EPOW */</span>
+<span class="w">     </span><span class="n">OPAL_SYSEPOW_COOLING</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Cooling EPOW */</span>
+<span class="w">     </span><span class="n">OPAL_SYSEPOW_MAX</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">    </span><span class="cm">/* Max EPOW categories */</span>
+<span class="p">};</span>
 
-<span class="cm">/* Power EPOW */</span><span class="w"></span>
-<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysPower</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSPOWER_UPS</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System on UPS power */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSPOWER_CHNG</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0002</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System power configuration change */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSPOWER_FAIL</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0004</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System impending power failure */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSPOWER_INCL</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0008</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System incomplete power */</span><span class="w"></span>
-<span class="w">     </span><span class="p">};</span><span class="w"></span>
+<span class="cm">/* Power EPOW */</span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysPower</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">OPAL_SYSPOWER_UPS</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System on UPS power */</span>
+<span class="w">     </span><span class="n">OPAL_SYSPOWER_CHNG</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0002</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System power configuration change */</span>
+<span class="w">     </span><span class="n">OPAL_SYSPOWER_FAIL</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0004</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System impending power failure */</span>
+<span class="w">     </span><span class="n">OPAL_SYSPOWER_INCL</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0008</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System incomplete power */</span>
+<span class="w">     </span><span class="p">};</span>
 
-<span class="cm">/* Temperature EPOW */</span><span class="w"></span>
-<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysTemp</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSTEMP_AMB</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System over ambient temperature */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSTEMP_INT</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0002</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System over internal temperature */</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSTEMP_HMD</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0004</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System over ambient humidity */</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="cm">/* Temperature EPOW */</span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysTemp</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">OPAL_SYSTEMP_AMB</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System over ambient temperature */</span>
+<span class="w">     </span><span class="n">OPAL_SYSTEMP_INT</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0002</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System over internal temperature */</span>
+<span class="w">     </span><span class="n">OPAL_SYSTEMP_HMD</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0004</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System over ambient humidity */</span>
+<span class="p">};</span>
 
-<span class="cm">/* Cooling EPOW */</span><span class="w"></span>
-<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysCooling</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_SYSCOOL_INSF</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System insufficient cooling */</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="cm">/* Cooling EPOW */</span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalSysCooling</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">OPAL_SYSCOOL_INSF</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="cm">/* System insufficient cooling */</span>
+<span class="p">};</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_get_epow_status</span><span class="p">(</span><span class="kt">int16_t</span><span class="w"> </span><span class="o">*</span><span class="n">out_epow</span><span class="p">,</span><span class="w"> </span><span class="kt">int16_t</span><span class="w"> </span><span class="o">*</span><span class="n">length</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_get_epow_status</span><span class="p">(</span><span class="kt">int16_t</span><span class="w"> </span><span class="o">*</span><span class="n">out_epow</span><span class="p">,</span><span class="w"> </span><span class="kt">int16_t</span><span class="w"> </span><span class="o">*</span><span class="n">length</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The <a class="reference internal" href="#opal-get-epow-status"><span class="std std-ref">OPAL_GET_EPOW_STATUS</span></a> call gets the Environmental and Power Warnings
@@ -97,7 +95,7 @@ maximum length it filled out. Thus, new classes can be added and backwards
 compatibility is maintained.</p>
 <p>At time of writing, this call is only implemented on FSP based systems.</p>
 <section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Successfully retreived status. Note, success is returned even if only
 able to retreive a subset of the EPOW classes.</p>
@@ -114,20 +112,26 @@ able to retreive a subset of the EPOW classes.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_GET_EPOW_STATUS</a><ul>
 <li><a class="reference internal" href="#returns">Returns</a></li>
 </ul>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-get-device-tree-118.html"
-                        title="previous chapter">OPAL_GET_DEVICE_TREE</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-get-msg-85.html"
-                        title="next chapter">OPAL_GET_MSG</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-get-device-tree-118.html"
+                          title="previous chapter">OPAL_GET_DEVICE_TREE</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-get-msg-85.html"
+                          title="next chapter">OPAL_GET_MSG</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -144,7 +148,7 @@ able to retreive a subset of the EPOW classes.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -161,15 +165,15 @@ able to retreive a subset of the EPOW classes.</p>
         <li class="right" >
           <a href="opal-get-device-tree-118.html" title="OPAL_GET_DEVICE_TREE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_GET_EPOW_STATUS</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

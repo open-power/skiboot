@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-6.3 &#8212; skiboot bc7b85d
+    <title>skiboot-6.3 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-6.2.4.html" title="skiboot-6.2.4"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.3</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-6-3">
-<span id="id1"></span><h1>skiboot-6.3<a class="headerlink" href="#skiboot-6-3" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-6.3<a class="headerlink" href="#skiboot-6-3" title="Link to this heading">¶</a></h1>
 <p>skiboot v6.3 was released on Friday May 3rd 2019. It is the first
 release of skiboot 6.3, which becomes the new stable release
 of skiboot following the 6.2 release, first released December 14th 2018.</p>
@@ -57,7 +55,7 @@ stable releases).</p>
 <p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
 <p>Over skiboot 6.2, we have the following changes:</p>
 <section id="new-features">
-<span id="skiboot-6-3-new-features"></span><h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<span id="skiboot-6-3-new-features"></span><h2>New Features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hw/imc: Enable opal calls to init/start/stop IMC Trace mode</p>
 <p>New OPAL APIs for In-Memory Collection Counter infrastructure(IMC),
@@ -206,7 +204,7 @@ infrastructure.</p>
 </ul>
 </section>
 <section id="deprecated-removed-features">
-<h2>Deprecated/Removed Features<a class="headerlink" href="#deprecated-removed-features" title="Permalink to this headline">¶</a></h2>
+<h2>Deprecated/Removed Features<a class="headerlink" href="#deprecated-removed-features" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>opal: Deprecate reading the PHB status</p>
 <p>The OPAL_PCI_EEH_FREEZE_STATUS call takes a bunch of parameters, one of
@@ -243,7 +241,7 @@ pdbg patches: <a class="reference external" href="https://patchwork.ozlabs.org/p
 </ul>
 </section>
 <section id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<h2>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>core/i2c: Various bits of refactoring</p></li>
 <li><p>refactor backtrace generation infrastructure</p></li>
@@ -479,7 +477,7 @@ shows no thread error reported in TFMR register.</p>
 </ul>
 </section>
 <section id="ibm-fsp-based-platforms">
-<h2>IBM FSP based platforms<a class="headerlink" href="#ibm-fsp-based-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>IBM FSP based platforms<a class="headerlink" href="#ibm-fsp-based-platforms" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>platforms/firenze: Rework I2C controller fixups</p></li>
 <li><p>platforms/zz: Re-enable LXVPD slot information parsing</p>
@@ -491,7 +489,7 @@ codes on ZZ.</p>
 </ul>
 </section>
 <section id="hiomap">
-<h2>HIOMAP<a class="headerlink" href="#hiomap" title="Permalink to this headline">¶</a></h2>
+<h2>HIOMAP<a class="headerlink" href="#hiomap" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>astbmc: Try IPMI HIOMAP for P8</p>
 <p>The HIOMAP protocol was developed after the release of P8 in preparation
@@ -573,7 +571,7 @@ flush data to flash.</p>
 </ul>
 </section>
 <section id="power8">
-<h2>POWER8<a class="headerlink" href="#power8" title="Permalink to this headline">¶</a></h2>
+<h2>POWER8<a class="headerlink" href="#power8" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hw/phb3/naples: Disable D-states</p>
 <p>Putting “Mellanox Technologies MT27700 Family [ConnectX-4] [15b3:1013]”
@@ -595,7 +593,7 @@ of missing LPCR_PECEDH.</p>
 </li>
 </ul>
 <section id="p8dtu-platform">
-<h3>p8dtu Platform<a class="headerlink" href="#p8dtu-platform" title="Permalink to this headline">¶</a></h3>
+<h3>p8dtu Platform<a class="headerlink" href="#p8dtu-platform" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>p8dtu: Configure BMC graphics</p>
 <p>We can no-longer read the values from the BMC in the way we have in the
@@ -605,7 +603,7 @@ past. Values were provided by Eric Chen of SMC.</p>
 </ul>
 </section>
 <section id="vesnin-platform">
-<h3>Vesnin Platform<a class="headerlink" href="#vesnin-platform" title="Permalink to this headline">¶</a></h3>
+<h3>Vesnin Platform<a class="headerlink" href="#vesnin-platform" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>platforms/vesnin: Disable PCIe port bifurcation</p>
 <p>PCIe ports connected to CPU1 and CPU3 now work as x16 instead of x8x8.</p>
@@ -665,7 +663,7 @@ failed state as well.</p>
 </section>
 </section>
 <section id="power9">
-<span id="skiboot-6-3-power9"></span><h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<span id="skiboot-6-3-power9"></span><h2>POWER9<a class="headerlink" href="#power9" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Retry link training at PCIe GEN1 if presence detected but training repeatedly failed</p>
 <p>Certain older PCIe 1.0 devices will not train unless the training process starts at GEN1 speeds.
@@ -778,7 +776,7 @@ override.</p>
 </li>
 </ul>
 <section id="capi2">
-<h3>CAPI2<a class="headerlink" href="#capi2" title="Permalink to this headline">¶</a></h3>
+<h3>CAPI2<a class="headerlink" href="#capi2" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>capp/phb4: Prevent HMI from getting triggered when disabling CAPP</p>
 <p>While disabling CAPP an HMI gets triggered as soon as ETU is put in
@@ -819,7 +817,7 @@ ensure that Opal slot reset state machine makes forward progress.</p>
 </ul>
 </section>
 <section id="witherspoon-platform">
-<h3>Witherspoon Platform<a class="headerlink" href="#witherspoon-platform" title="Permalink to this headline">¶</a></h3>
+<h3>Witherspoon Platform<a class="headerlink" href="#witherspoon-platform" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>platforms/witherspoon: Make PCIe shared slot error message more informative</p>
 <p>If we’re missing chips for some reason, we print a warning when configuring
@@ -834,7 +832,7 @@ let’s clarify the message to explicitly mention PCI.</p>
 </ul>
 </section>
 <section id="zaius-platform">
-<h3>Zaius Platform<a class="headerlink" href="#zaius-platform" title="Permalink to this headline">¶</a></h3>
+<h3>Zaius Platform<a class="headerlink" href="#zaius-platform" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>zaius: Add BMC description</p>
 <p>Frederic reported that Zaius was failing with a NULL dereference when
@@ -844,7 +842,7 @@ described at all, so add a description.</p>
 </ul>
 </section>
 <section id="p9dsu-platform">
-<h3>p9dsu platform<a class="headerlink" href="#p9dsu-platform" title="Permalink to this headline">¶</a></h3>
+<h3>p9dsu platform<a class="headerlink" href="#p9dsu-platform" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>p9dsu: Fix p9dsu default variant</p>
 <p>Add the default when no riser_id is returned from the ipmi query.</p>
@@ -854,7 +852,7 @@ described at all, so add a description.</p>
 </section>
 </section>
 <section id="pcie">
-<h2>PCIe<a class="headerlink" href="#pcie" title="Permalink to this headline">¶</a></h2>
+<h2>PCIe<a class="headerlink" href="#pcie" title="Link to this heading">¶</a></h2>
 <p>See <a class="reference internal" href="#skiboot-6-3-power9"><span class="std std-ref">POWER9</span></a> for POWER9 specific PCIe changes.</p>
 <ul>
 <li><p>core/pcie-slot: Don’t bail early in the power on case</p>
@@ -953,7 +951,7 @@ the stack node itself.</p>
 </ul>
 </section>
 <section id="opencapi">
-<span id="skiboot-6-3-opencapi"></span><h2>OpenCAPI<a class="headerlink" href="#opencapi" title="Permalink to this headline">¶</a></h2>
+<span id="skiboot-6-3-opencapi"></span><h2>OpenCAPI<a class="headerlink" href="#opencapi" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>npu2/hw-procedures: Fix parallel zcal for opencapi</p>
 <p>For opencapi, we currently do impedance calibration when initializing
@@ -1079,7 +1077,7 @@ to upstream that code yet though.</p>
 </ul>
 </section>
 <section id="nvlink2">
-<h2>NVLINK2<a class="headerlink" href="#nvlink2" title="Permalink to this headline">¶</a></h2>
+<h2>NVLINK2<a class="headerlink" href="#nvlink2" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>npu2: Allow ATSD for LPAR other than 0</p>
 <p>Each XTS MMIO ATSD# register is accompanied by another register -
@@ -1133,7 +1131,7 @@ a bare metal). To enable snarfing, the user needs to run:</p>
 </ul>
 </section>
 <section id="debugging-and-simulation">
-<h2>Debugging and simulation<a class="headerlink" href="#debugging-and-simulation" title="Permalink to this headline">¶</a></h2>
+<h2>Debugging and simulation<a class="headerlink" href="#debugging-and-simulation" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>external/mambo: Error out if kernel is too large</p>
 <p>If you’re trying to boot a gigantic kernel in mambo (which you can
@@ -1214,7 +1212,7 @@ if they take a machine check, the system will checkstop.</p>
 </ul>
 </section>
 <section id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>pflash: Don’t try update RO ToC</p>
 <p>In the future it’s likely the ToC will be marked as read-only. Don’t
@@ -1248,8 +1246,9 @@ out” to support reading the “valid” data from existing PNOR images.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-6.3</a><ul>
 <li><a class="reference internal" href="#new-features">New Features</a></li>
 <li><a class="reference internal" href="#deprecated-removed-features">Deprecated/Removed Features</a></li>
@@ -1277,12 +1276,17 @@ out” to support reading the “valid” data from existing PNOR images.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-6.2.4.html"
-                        title="previous chapter">skiboot-6.2.4</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-6.3-rc1.html"
-                        title="next chapter">skiboot-6.3-rc1</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-6.2.4.html"
+                          title="previous chapter">skiboot-6.2.4</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-6.3-rc1.html"
+                          title="next chapter">skiboot-6.3-rc1</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1299,7 +1303,7 @@ out” to support reading the “valid” data from existing PNOR images.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1316,15 +1320,15 @@ out” to support reading the “valid” data from existing PNOR images.</p>
         <li class="right" >
           <a href="skiboot-6.2.4.html" title="skiboot-6.2.4"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.3</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

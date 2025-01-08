@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_MESSAGE &#8212; skiboot bc7b85d
+    <title>OPAL_MESSAGE &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_MESSAGE</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="opal-message">
-<span id="opal-messages"></span><h1>OPAL_MESSAGE<a class="headerlink" href="#opal-message" title="Permalink to this headline">¶</a></h1>
+<span id="opal-messages"></span><h1>OPAL_MESSAGE<a class="headerlink" href="#opal-message" title="Link to this heading">¶</a></h1>
 <p>The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The
 messages are defined by enum opal_msg_type. The host is notified of there
 being messages to be consumed by the OPAL_EVENT_MSG_PENDING bit being set.</p>
@@ -72,7 +70,7 @@ details.</p>
 </pre></div>
 </div>
 <section id="opal-msg-async-comp">
-<h2>OPAL_MSG_ASYNC_COMP<a class="headerlink" href="#opal-msg-async-comp" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_MSG_ASYNC_COMP<a class="headerlink" href="#opal-msg-async-comp" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">token</span>
 <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">rc</span>
 </pre></div>
@@ -80,10 +78,10 @@ details.</p>
 <p>Additional parameters are function-specific.</p>
 </section>
 <section id="opal-msg-mem-err">
-<h2>OPAL_MSG_MEM_ERR<a class="headerlink" href="#opal-msg-mem-err" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_MSG_MEM_ERR<a class="headerlink" href="#opal-msg-mem-err" title="Link to this heading">¶</a></h2>
 </section>
 <section id="opal-msg-epow">
-<span id="id1"></span><h2>OPAL_MSG_EPOW<a class="headerlink" href="#opal-msg-epow" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>OPAL_MSG_EPOW<a class="headerlink" href="#opal-msg-epow" title="Link to this heading">¶</a></h2>
 <p>Used by OPAL to issue environmental and power warnings to host OS for
 conditions requiring an earlier poweroff. A few examples of these are high
 ambient temperature or system running on UPS power with low UPS battery.
@@ -95,7 +93,7 @@ OPAL_SYSPOWER_INC events don’t require system poweroff.</p>
 for ‘epow’ node under OPAL device-tree to determine epow support.</p>
 </section>
 <section id="opal-msg-shutdown">
-<h2>OPAL_MSG_SHUTDOWN<a class="headerlink" href="#opal-msg-shutdown" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_MSG_SHUTDOWN<a class="headerlink" href="#opal-msg-shutdown" title="Link to this heading">¶</a></h2>
 <p>Used by OPAL to inform the host OS it must imitate a graceful shutdown. Uses
 the first parameter to indicate weather the system is going down for shutdown
 or a reboot.</p>
@@ -104,7 +102,7 @@ or a reboot.</p>
 </div>
 </section>
 <section id="opal-msg-hmi-evt">
-<span id="id2"></span><h2>OPAL_MSG_HMI_EVT<a class="headerlink" href="#opal-msg-hmi-evt" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>OPAL_MSG_HMI_EVT<a class="headerlink" href="#opal-msg-hmi-evt" title="Link to this heading">¶</a></h2>
 <p>Used by OPAL to sends the OPAL HMI Event to the host OS that reports a
 summary of HMI error and whether it was successfully recovered or not.</p>
 <p>HMI is a Hypervisor Maintenance Interrupt usually reports error related
@@ -157,14 +155,14 @@ must be bumped.</p></li>
 </div>
 </section>
 <section id="opal-msg-dpo">
-<span id="id3"></span><h2>OPAL_MSG_DPO<a class="headerlink" href="#opal-msg-dpo" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>OPAL_MSG_DPO<a class="headerlink" href="#opal-msg-dpo" title="Link to this heading">¶</a></h2>
 <p>Delayed poweroff where OPAL informs host OS that a poweroff has been
 requested and a forced shutdown will happen in future. Host OS can use
 OPAL_GET_DPO_STATUS API to query OPAL the number of seconds remaining
 before a forced poweroff will occur.</p>
 </section>
 <section id="opal-msg-prd">
-<span id="id4"></span><h2>OPAL_MSG_PRD<a class="headerlink" href="#opal-msg-prd" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>OPAL_MSG_PRD<a class="headerlink" href="#opal-msg-prd" title="Link to this heading">¶</a></h2>
 <p>This message is a OPAL-to-HBRT notification, and contains a
 struct opal_prd_msg:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">enum</span> <span class="n">opal_prd_msg_type</span> <span class="p">{</span>
@@ -208,7 +206,7 @@ struct opal_prd_msg:</p>
 through the <a class="reference internal" href="opal-prd-msg-113.html#opal-prd-msg"><span class="std std-ref">OPAL_PRD_MSG</span></a> call.</p>
 </section>
 <section id="opal-msg-occ">
-<h2>OPAL_MSG_OCC<a class="headerlink" href="#opal-msg-occ" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_MSG_OCC<a class="headerlink" href="#opal-msg-occ" title="Link to this heading">¶</a></h2>
 <p>This is used by OPAL to inform host about OCC events like OCC reset,
 OCC load and throttle status change by OCC which can indicate the
 host the reason for frequency throttling/unthrottling.</p>
@@ -249,7 +247,7 @@ new events can be defined for <code class="docutils literal notranslate"><span c
 of OPAL.</p>
 </section>
 <section id="opal-msg-prd2">
-<h2>OPAL_MSG_PRD2<a class="headerlink" href="#opal-msg-prd2" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_MSG_PRD2<a class="headerlink" href="#opal-msg-prd2" title="Link to this heading">¶</a></h2>
 <p>This message is a OPAL-to-HBRT notification. Its same as OPAL_MSG_PRD except
 this one supports passing more than 64bytes (8*8) of data.</p>
 </section>
@@ -262,8 +260,9 @@ this one supports passing more than 64bytes (8*8) of data.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_MESSAGE</a><ul>
 <li><a class="reference internal" href="#opal-msg-async-comp">OPAL_MSG_ASYNC_COMP</a></li>
 <li><a class="reference internal" href="#opal-msg-mem-err">OPAL_MSG_MEM_ERR</a></li>
@@ -278,12 +277,17 @@ this one supports passing more than 64bytes (8*8) of data.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-lpc-read-write-67-68.html"
-                        title="previous chapter">OPAL_LPC_READ</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-mpipl-173-174.html"
-                        title="next chapter">OPAL MPIPL APIs</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-lpc-read-write-67-68.html"
+                          title="previous chapter">OPAL_LPC_READ</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-mpipl-173-174.html"
+                          title="next chapter">OPAL MPIPL APIs</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -300,7 +304,7 @@ this one supports passing more than 64bytes (8*8) of data.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -317,15 +321,15 @@ this one supports passing more than 64bytes (8*8) of data.</p>
         <li class="right" >
           <a href="opal-lpc-read-write-67-68.html" title="OPAL_LPC_READ"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_MESSAGE</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

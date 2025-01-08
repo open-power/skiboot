@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Device Tree &#8212; skiboot bc7b85d
+    <title>Device Tree &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Device Tree</a></li> 
       </ul>
@@ -45,11 +43,11 @@
           <div class="body" role="main">
             
   <section id="device-tree">
-<span id="id1"></span><h1>Device Tree<a class="headerlink" href="#device-tree" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>Device Tree<a class="headerlink" href="#device-tree" title="Link to this heading">¶</a></h1>
 <p>General notes on the Device Tree produced by skiboot. This chapter
 <strong>needs updating</strong>.</p>
 <section id="general-comments">
-<h2>General comments<a class="headerlink" href="#general-comments" title="Permalink to this headline">¶</a></h2>
+<h2>General comments<a class="headerlink" href="#general-comments" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>skiboot does not require nodes to have phandle properties, but
 if you have them then <em>all</em> nodes must have them including the
@@ -72,7 +70,7 @@ and to help some stupid parsers out there…</p></li>
 </ul>
 </section>
 <section id="reserve-map">
-<h2>Reserve Map<a class="headerlink" href="#reserve-map" title="Permalink to this headline">¶</a></h2>
+<h2>Reserve Map<a class="headerlink" href="#reserve-map" title="Link to this heading">¶</a></h2>
 <p>Here are the reserve map entries. They should exactly match the
 reserved-ranges property of the root node (see documentation
 of that property)</p>
@@ -88,11 +86,11 @@ of that property)</p>
 </div>
 </section>
 <section id="root-node">
-<h2>Root Node<a class="headerlink" href="#root-node" title="Permalink to this headline">¶</a></h2>
+<h2>Root Node<a class="headerlink" href="#root-node" title="Link to this heading">¶</a></h2>
 <p>Root node of device tree. There are a few required and a few optional properties
 that sit in the root node. They’re described here.</p>
 <section id="compatible">
-<h3>compatible<a class="headerlink" href="#compatible" title="Permalink to this headline">¶</a></h3>
+<h3>compatible<a class="headerlink" href="#compatible" title="Link to this heading">¶</a></h3>
 <p>The “compatible” properties are string lists indicating the overall
 compatibility from the more specific to the least specific.</p>
 <p>The root node compatible property <em>must</em> contain “ibm,powernv” for
@@ -110,7 +108,7 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
 </div>
 </section>
 <section id="example">
-<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<h3>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h3>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="k">/dts-v1/;</span>
 <span class="k">/</span> <span class="p">{</span>
        <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,powernv&quot;</span><span class="p">;</span>
@@ -548,8 +546,9 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Device Tree</a><ul>
 <li><a class="reference internal" href="#general-comments">General comments</a></li>
 <li><a class="reference internal" href="#reserve-map">Reserve Map</a></li>
@@ -562,12 +561,17 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="stb.html"
-                        title="previous chapter">Secure and Trusted Boot Library (LibSTB) Documentation</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="device-tree/index.html"
-                        title="next chapter">Device Tree</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="stb.html"
+                          title="previous chapter">Secure and Trusted Boot Library (LibSTB) Documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="device-tree/index.html"
+                          title="next chapter">Device Tree</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -584,7 +588,7 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -601,14 +605,14 @@ would work. Or even better: <cite>compatible = “goog,rhesus-v1”,”goog,rhes
         <li class="right" >
           <a href="stb.html" title="Secure and Trusted Boot Library (LibSTB) Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Device Tree</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

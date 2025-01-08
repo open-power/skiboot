@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-6.2.2 &#8212; skiboot bc7b85d
+    <title>skiboot-6.2.2 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-6.2.1.html" title="skiboot-6.2.1"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.2.2</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-6-2-2">
-<span id="id1"></span><h1>skiboot-6.2.2<a class="headerlink" href="#skiboot-6-2-2" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-6.2.2<a class="headerlink" href="#skiboot-6-2-2" title="Link to this heading">¶</a></h1>
 <p>skiboot 6.2.2 was released on Wednesday March 6th, 2019. It replaces
 <a class="reference internal" href="skiboot-6.2.1.html#skiboot-6-2-1"><span class="std std-ref">skiboot-6.2.1</span></a> as the current stable release in the 6.2.x series.</p>
 <p>It is recommended that 6.2.2 be used instead of any previous 6.2.x version
@@ -54,7 +52,7 @@ due to the bug fixes it contains.</p>
 <p>Over <a class="reference internal" href="skiboot-6.2.1.html#skiboot-6-2-1"><span class="std std-ref">skiboot-6.2.1</span></a> we have several bug fixes, including important ones
 for powercap, ipmi-hiomap, astbmc and BMC communication driver.</p>
 <section id="powercap">
-<h2>powercap<a class="headerlink" href="#powercap" title="Permalink to this headline">¶</a></h2>
+<h2>powercap<a class="headerlink" href="#powercap" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>powercap: occ: Fix the powercapping range allowed for user</p>
 <p>OCC provides two limits for minimum powercap. One being hard powercap
@@ -69,7 +67,7 @@ limit.</p>
 </ul>
 </section>
 <section id="astbmc">
-<h2>ASTBMC<a class="headerlink" href="#astbmc" title="Permalink to this headline">¶</a></h2>
+<h2>ASTBMC<a class="headerlink" href="#astbmc" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>astbmc: Enable IPMI HIOMAP for AMI platforms</p>
 <p>Required for Habanero, Palmetto and Romulus.</p>
@@ -94,7 +92,7 @@ Witherspoon.</p>
 </ul>
 </section>
 <section id="p8dtu">
-<h2>P8DTU<a class="headerlink" href="#p8dtu" title="Permalink to this headline">¶</a></h2>
+<h2>P8DTU<a class="headerlink" href="#p8dtu" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>p8dtu: Enable HIOMAP support</p></li>
 <li><p>p8dtu: Configure BMC graphics</p>
@@ -104,7 +102,7 @@ past. Values were provided by Eric Chen of SMC.</p>
 </ul>
 </section>
 <section id="ipmi-hiomap">
-<h2>IPMI-HIOMAP<a class="headerlink" href="#ipmi-hiomap" title="Permalink to this headline">¶</a></h2>
+<h2>IPMI-HIOMAP<a class="headerlink" href="#ipmi-hiomap" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>ipmi-hiomap test case enhancements/fixes.</p></li>
 <li><p>libflash/ipmi-hiomap: Enforce message size for empty response</p>
@@ -163,7 +161,7 @@ to respond.</p>
 </ul>
 </section>
 <section id="bmc-communication">
-<h2>BMC communication<a class="headerlink" href="#bmc-communication" title="Permalink to this headline">¶</a></h2>
+<h2>BMC communication<a class="headerlink" href="#bmc-communication" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>core/ipmi: Add ipmi sync messages to top of the list</p>
 <p>In ipmi_queue_msg_sync() path OPAL will wait until it gets response from
@@ -237,7 +235,7 @@ we wouldn’t go down the astbmc_init() path, thus not having flash.</p>
 </ul>
 </section>
 <section id="phb3">
-<h2>PHB3<a class="headerlink" href="#phb3" title="Permalink to this headline">¶</a></h2>
+<h2>PHB3<a class="headerlink" href="#phb3" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hw/phb3/naples: Disable D-states</p>
 <p>Putting “Mellanox Technologies MT27700 Family [ConnectX-4] [15b3:1013]”
@@ -259,8 +257,9 @@ installing a config space access filter (copied from PHB4).</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-6.2.2</a><ul>
 <li><a class="reference internal" href="#powercap">powercap</a></li>
 <li><a class="reference internal" href="#astbmc">ASTBMC</a></li>
@@ -272,12 +271,17 @@ installing a config space access filter (copied from PHB4).</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-6.2.1.html"
-                        title="previous chapter">skiboot-6.2.1</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-6.2.3.html"
-                        title="next chapter">skiboot-6.2.3</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-6.2.1.html"
+                          title="previous chapter">skiboot-6.2.1</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-6.2.3.html"
+                          title="next chapter">skiboot-6.2.3</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -294,7 +298,7 @@ installing a config space access filter (copied from PHB4).</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -311,15 +315,15 @@ installing a config space access filter (copied from PHB4).</p>
         <li class="right" >
           <a href="skiboot-6.2.1.html" title="skiboot-6.2.1"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.2.2</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

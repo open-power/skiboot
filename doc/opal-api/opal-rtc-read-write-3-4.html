@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL Real Time Clock (RTC) APIs &#8212; skiboot bc7b85d
+    <title>OPAL Real Time Clock (RTC) APIs &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-resync-timebase-79.html" title="OPAL_RESYNC_TIMEBASE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Real Time Clock (RTC) APIs</a></li> 
@@ -46,12 +44,12 @@
           <div class="body" role="main">
             
   <section id="opal-real-time-clock-rtc-apis">
-<h1>OPAL Real Time Clock (RTC) APIs<a class="headerlink" href="#opal-real-time-clock-rtc-apis" title="Permalink to this headline">¶</a></h1>
+<h1>OPAL Real Time Clock (RTC) APIs<a class="headerlink" href="#opal-real-time-clock-rtc-apis" title="Link to this heading">¶</a></h1>
 <section id="opal-rtc-read">
-<span id="id1"></span><h2>OPAL_RTC_READ<a class="headerlink" href="#opal-rtc-read" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>OPAL_RTC_READ<a class="headerlink" href="#opal-rtc-read" title="Link to this heading">¶</a></h2>
 <p>Read the Real Time Clock.</p>
 <section id="parameters">
-<h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h3>
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">uint32_t*</span> <span class="pre">year_month_day</span></code></dt><dd><p>the year, month and day formatted as follows:</p>
 <ul class="simple">
@@ -72,7 +70,7 @@
 </dl>
 </section>
 <section id="calling">
-<h3>Calling<a class="headerlink" href="#calling" title="Permalink to this headline">¶</a></h3>
+<h3>Calling<a class="headerlink" href="#calling" title="Link to this heading">¶</a></h3>
 <p>Since RTC calls can be pretty slow, <a class="reference internal" href="#opal-rtc-read"><span class="std std-ref">OPAL_RTC_READ</span></a> is likely to first return
 <a class="reference internal" href="return-codes.html#opal-busy-event"><span class="std std-ref">OPAL_BUSY_EVENT</span></a>, requiring the caller to wait until the <a class="reference internal" href="opal-poll-events.html#opal-event-rtc"><span class="std std-ref">OPAL_EVENT_RTC = 0x4</span></a> event
 has been signaled. Once the event has been signaled, a subsequent
@@ -81,12 +79,12 @@ used for both reading and writing the RTC, callers must be able to handle
 the event being signaled for a concurrent in flight <a class="reference internal" href="#opal-rtc-write"><span class="std std-ref">OPAL_RTC_WRITE</span></a> rather
 than this read request.</p>
 <p>The following code is one way to correctly issue and then wait for a response:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">;</span><span class="w"></span>
-<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">      </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opal_rtc_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">y_m_d</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">h_m_s_ms</span><span class="p">);</span><span class="w"></span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span><span class="w"></span>
-<span class="w">         </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">;</span>
+<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opal_rtc_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">y_m_d</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">h_m_s_ms</span><span class="p">);</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span>
+<span class="w">         </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>Although as of writing all <a class="reference internal" href="#opal-rtc-read"><span class="std std-ref">OPAL_RTC_READ</span></a> backends are asynchronous, there is
@@ -95,7 +93,7 @@ return the retreived value rather than <a class="reference internal" href="retur
 <p><strong>TODO</strong>: describe/document format of arguments.</p>
 </section>
 <section id="return-codes">
-<h3>Return codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h3>
+<h3>Return codes<a class="headerlink" href="#return-codes" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>parameters now contain the current time, or one read from cache.</p>
 </dd>
@@ -115,7 +113,7 @@ This can be a transient error</p>
 </section>
 </section>
 <section id="opal-rtc-write">
-<span id="id2"></span><h2>OPAL_RTC_WRITE<a class="headerlink" href="#opal-rtc-write" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>OPAL_RTC_WRITE<a class="headerlink" href="#opal-rtc-write" title="Link to this heading">¶</a></h2>
 <p><a class="reference internal" href="#opal-rtc-write"><span class="std std-ref">OPAL_RTC_WRITE</span></a> is much like <a class="reference internal" href="#opal-rtc-read"><span class="std std-ref">OPAL_RTC_READ</span></a> in that it can be asynchronous.</p>
 <p>If multiple WRITES are issued before the first one completes, subsequent
 writes are ignored. There can only be one write in flight at any one time.</p>
@@ -130,8 +128,9 @@ writes are ignored. There can only be one write in flight at any one time.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL Real Time Clock (RTC) APIs</a><ul>
 <li><a class="reference internal" href="#opal-rtc-read">OPAL_RTC_READ</a><ul>
 <li><a class="reference internal" href="#parameters">Parameters</a></li>
@@ -144,12 +143,17 @@ writes are ignored. There can only be one write in flight at any one time.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-resync-timebase-79.html"
-                        title="previous chapter">OPAL_RESYNC_TIMEBASE</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-secvar.html"
-                        title="next chapter">OPAL Secure Variable API</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-resync-timebase-79.html"
+                          title="previous chapter">OPAL_RESYNC_TIMEBASE</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-secvar.html"
+                          title="next chapter">OPAL Secure Variable API</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -166,7 +170,7 @@ writes are ignored. There can only be one write in flight at any one time.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -183,15 +187,15 @@ writes are ignored. There can only be one write in flight at any one time.</p>
         <li class="right" >
           <a href="opal-resync-timebase-79.html" title="OPAL_RESYNC_TIMEBASE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Real Time Clock (RTC) APIs</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

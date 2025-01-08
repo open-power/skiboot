@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-6.1 &#8212; skiboot bc7b85d
+    <title>skiboot-6.1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-6.0.9.html" title="skiboot-6.0.9"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.1</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-6-1">
-<span id="id1"></span><h1>skiboot-6.1<a class="headerlink" href="#skiboot-6-1" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-6.1<a class="headerlink" href="#skiboot-6-1" title="Link to this heading">¶</a></h1>
 <p>skiboot v6.1 was released on Wednesday July 11th 2018. It is the first
 release of skiboot 6.1, which is the new stable release of skiboot
 following the 6.0 release, first released May 11th 2018.</p>
@@ -60,7 +58,7 @@ going in.</p>
 <p>For how the skiboot stable releases work, see <a class="reference internal" href="../process/stable-skiboot-rules.html#stable-rules"><span class="std std-ref">Skiboot stable tree rules and releases</span></a> for details.</p>
 <p>Over skiboot-6.0, we have the following changes:</p>
 <section id="general-changes-and-bug-fixes">
-<h2>General changes and bug fixes<a class="headerlink" href="#general-changes-and-bug-fixes" title="Permalink to this headline">¶</a></h2>
+<h2>General changes and bug fixes<a class="headerlink" href="#general-changes-and-bug-fixes" title="Link to this heading">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-6.1-rc1.html#skiboot-6-1-rc1"><span class="std std-ref">skiboot-6.1-rc1</span></a>:</p>
 <ul>
 <li><p>slw: Fix trivial typo in debug message</p></li>
@@ -188,7 +186,7 @@ not take any recovery action during blocklevel_write.</p>
 </li>
 </ul>
 <section id="i2c">
-<h3>I2C<a class="headerlink" href="#i2c" title="Permalink to this headline">¶</a></h3>
+<h3>I2C<a class="headerlink" href="#i2c" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>p8-i2c: fix wrong request status when a reset is needed</p>
 <p>If the bus is found in error state when starting a new request, the
@@ -242,7 +240,7 @@ device-tree. This is consumed by skiboot.</p>
 </ul>
 </section>
 <section id="ipmi-watchdog">
-<h3>IPMI Watchdog<a class="headerlink" href="#ipmi-watchdog" title="Permalink to this headline">¶</a></h3>
+<h3>IPMI Watchdog<a class="headerlink" href="#ipmi-watchdog" title="Link to this heading">¶</a></h3>
 <ul>
 <li><p>ipmi-watchdog: Support handling re-initialization</p>
 <p>Watchdog resets can return an error code from the BMC indicating that
@@ -299,7 +297,7 @@ Host Power Cycle. Use the correct name for Reset in our watchdog code.</p>
 </section>
 </section>
 <section id="power8-platforms">
-<h2>POWER8 platforms<a class="headerlink" href="#power8-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>POWER8 platforms<a class="headerlink" href="#power8-platforms" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>astbmc: Enable mbox depending on scratch reg</p>
 <p>P8 boxes can opt in for mbox pnor support if they set the scratch
@@ -308,7 +306,7 @@ register bit to indicate it is supported.</p>
 </ul>
 </section>
 <section id="simulator-platforms">
-<h2>Simulator platforms<a class="headerlink" href="#simulator-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>Simulator platforms<a class="headerlink" href="#simulator-platforms" title="Link to this heading">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-6.1-rc1.html#skiboot-6-1-rc1"><span class="std std-ref">skiboot-6.1-rc1</span></a>:</p>
 <ul>
 <li><p>pmem: volatile bindings for the poorly enabled</p>
@@ -342,7 +340,7 @@ simulation stops for any reason.</p>
 </ul>
 </section>
 <section id="fsp-based-platforms">
-<h2>FSP based platforms<a class="headerlink" href="#fsp-based-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>FSP based platforms<a class="headerlink" href="#fsp-based-platforms" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Disable fast reboot on FSP IPL side change</p>
 <p>If FSP changes next IPL side, then disable fast reboot.</p>
@@ -366,7 +364,7 @@ node names.</p>
 </ul>
 </section>
 <section id="ast-bmc-based-platforms">
-<h2>AST BMC based platforms<a class="headerlink" href="#ast-bmc-based-platforms" title="Permalink to this headline">¶</a></h2>
+<h2>AST BMC based platforms<a class="headerlink" href="#ast-bmc-based-platforms" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>AMI BMC: use 0x3a as OEM command</p>
 <p>The 0x3a OEM command is for IBM commands, while 0x32 was for AMI ones.
@@ -384,7 +382,7 @@ do not delete this property.</p>
 </ul>
 </section>
 <section id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>external/xscom-utils: Add python library for xscom access</p>
 <p>Patch adds a simple python library module for xscom access.
@@ -398,7 +396,7 @@ and write from debugfs ‘scom’ directory.</p>
 </pre></div>
 </div>
 <p>Sample output for above getscom.py:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp"># </span>./getscom.py -l
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp"># </span>./getscom.py<span class="w"> </span>-l
 <span class="go">Chip ID  | Rev   | Chip type</span>
 <span class="go">---------|-------|-----------</span>
 <span class="go">00000008 | DD2.0 | P9 (Nimbus) processor</span>
@@ -423,7 +421,7 @@ been carrying for years.</p>
 </ul>
 </section>
 <section id="power9">
-<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<h2>POWER9<a class="headerlink" href="#power9" title="Link to this heading">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-6.1-rc1.html#skiboot-6-1-rc1"><span class="std std-ref">skiboot-6.1-rc1</span></a>:</p>
 <ul>
 <li><p>occ: sensors: Fix the size of the phandle array ‘sensors’ in DT</p>
@@ -475,7 +473,7 @@ for something that is only used a few seconds during boot.</p>
 </li>
 </ul>
 <section id="npu2-nvlink2-and-opencapi">
-<h3>NPU2 (NVLink2 and OpenCAPI)<a class="headerlink" href="#npu2-nvlink2-and-opencapi" title="Permalink to this headline">¶</a></h3>
+<h3>NPU2 (NVLink2 and OpenCAPI)<a class="headerlink" href="#npu2-nvlink2-and-opencapi" title="Link to this heading">¶</a></h3>
 <p>Since <a class="reference internal" href="skiboot-6.1-rc1.html#skiboot-6-1-rc1"><span class="std std-ref">skiboot-6.1-rc1</span></a>:</p>
 <ul>
 <li><p>capi: Select the correct IODA table entry for the mbt cache.</p>
@@ -637,7 +635,7 @@ in a later patch.</p>
 </section>
 </section>
 <section id="testing-and-ci">
-<h2>Testing and CI<a class="headerlink" href="#testing-and-ci" title="Permalink to this headline">¶</a></h2>
+<h2>Testing and CI<a class="headerlink" href="#testing-and-ci" title="Link to this heading">¶</a></h2>
 <p>Since <a class="reference internal" href="skiboot-6.1-rc1.html#skiboot-6-1-rc1"><span class="std std-ref">skiboot-6.1-rc1</span></a>:</p>
 <ul>
 <li><p>test/qemu: start building qemu again, and use our built qemu for tests</p>
@@ -660,8 +658,9 @@ the PCR that we require to boot.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-6.1</a><ul>
 <li><a class="reference internal" href="#general-changes-and-bug-fixes">General changes and bug fixes</a><ul>
 <li><a class="reference internal" href="#i2c">I2C</a></li>
@@ -682,12 +681,17 @@ the PCR that we require to boot.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-6.0.9.html"
-                        title="previous chapter">skiboot-6.0.9</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-6.1-rc1.html"
-                        title="next chapter">skiboot-6.1-rc1</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-6.0.9.html"
+                          title="previous chapter">skiboot-6.0.9</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-6.1-rc1.html"
+                          title="next chapter">skiboot-6.1-rc1</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -704,7 +708,7 @@ the PCR that we require to boot.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -721,15 +725,15 @@ the PCR that we require to boot.</p>
         <li class="right" >
           <a href="skiboot-6.0.9.html" title="skiboot-6.0.9"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-6.1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

@@ -1,0 +1,1 @@
+genhtml --branch-coverage -q -o coverage-report skiboot.info

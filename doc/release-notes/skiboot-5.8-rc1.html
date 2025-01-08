@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.8-rc1 &#8212; skiboot bc7b85d
+    <title>skiboot-5.8-rc1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.8.html" title="skiboot-5.8"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.8-rc1</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-8-rc1">
-<span id="id1"></span><h1>skiboot-5.8-rc1<a class="headerlink" href="#skiboot-5-8-rc1" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-5.8-rc1<a class="headerlink" href="#skiboot-5-8-rc1" title="Link to this heading">¶</a></h1>
 <p>skiboot v5.8-rc1 was released on Tuesday August 22nd 2017. It is the first
 release candidate of skiboot 5.8, which will become the new stable release
 of skiboot following the 5.7 release, first released 25th July 2017.</p>
@@ -60,7 +58,7 @@ This is a short cycle as this release is mainly targetted towards POWER9
 bringup efforts.</p>
 <p>Over skiboot-5.7, we have the following changes:</p>
 <section id="new-features">
-<h2>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<h2>New Features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>sensors: occ: Add support to clear sensor groups</p>
 <p>Adds a generic API to clear sensor groups. OCC inband sensor groups
@@ -119,7 +117,7 @@ configuration, so we report an error for the time being.</p>
 </ul>
 </section>
 <section id="power9-dd2">
-<h2>POWER9 DD2<a class="headerlink" href="#power9-dd2" title="Permalink to this headline">¶</a></h2>
+<h2>POWER9 DD2<a class="headerlink" href="#power9-dd2" title="Link to this heading">¶</a></h2>
 <p>Further support for POWER9 DD2 revision chips. Notable changes include:</p>
 <ul>
 <li><p>xscom: Grab P9 DD2 revision level</p></li>
@@ -133,7 +131,7 @@ work. These bits were unused in DD1.</p>
 </ul>
 </section>
 <section id="power9">
-<h2>POWER9<a class="headerlink" href="#power9" title="Permalink to this headline">¶</a></h2>
+<h2>POWER9<a class="headerlink" href="#power9" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Base NPU2 support on POWER9 DD2</p></li>
 <li><p>hdata/i2c: Work around broken I2C array version</p>
@@ -247,7 +245,7 @@ populated:</p>
 </ul>
 </section>
 <section id="phb4">
-<h2>PHB4<a class="headerlink" href="#phb4" title="Permalink to this headline">¶</a></h2>
+<h2>PHB4<a class="headerlink" href="#phb4" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hdat: Fix PCIe GEN4 lane-eq setting for DD2</p>
 <p>For PCIe GEN4, DD2 uses only 1 byte per PCIe lane for the lane-eq
@@ -379,7 +377,7 @@ error.</p>
 </ul>
 </section>
 <section id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>external/xscom-utils: Add <code class="docutils literal notranslate"><span class="pre">--list-bits</span></code></p>
 <p>When using getscom/putscom it’s helpful to know what bits are set in the
@@ -391,7 +389,7 @@ since that’s what the XSCOM documentation uses.</p>
 </ul>
 </section>
 <section id="opal-prd">
-<h2>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h2>
+<h2>opal-prd<a class="headerlink" href="#opal-prd" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>opal-prd: Do not pass pnor file while starting daemon.</p>
 <p>This change to the included systemd init file means opal-prd can
@@ -406,7 +404,7 @@ access interfaces.</p>
 </ul>
 </section>
 <section id="opal-sensors">
-<h2>OPAL Sensors<a class="headerlink" href="#opal-sensors" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL Sensors<a class="headerlink" href="#opal-sensors" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>sensor-groups : occ: Add ‘ops’ DT property</p>
 <p>Add new device-tree property ‘ops’ to define different operations
@@ -432,7 +430,7 @@ not updated by OCC.</p>
 </ul>
 </section>
 <section id="tests">
-<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>hdata_to_dt: use a realistic PVR and chip revision</p></li>
 <li><p>nx: PR_INFO that NX RNG and Crypto not yet supported on POWER9</p></li>
@@ -476,7 +474,7 @@ performance penalty to breaking up the erase ioctl()s.</p>
 </ul>
 </section>
 <section id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<h2>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>opal-msg: Increase the max-async completion count by max chips possible</p></li>
 <li><p>occ: Add support for OPAL-OCC command/response interface</p>
@@ -501,8 +499,9 @@ on modern P9 as we only have one entry point (we don’t do the PHYP LID hack).<
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.8-rc1</a><ul>
 <li><a class="reference internal" href="#new-features">New Features</a></li>
 <li><a class="reference internal" href="#power9-dd2">POWER9 DD2</a></li>
@@ -517,12 +516,17 @@ on modern P9 as we only have one entry point (we don’t do the PHYP LID hack).<
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.8.html"
-                        title="previous chapter">skiboot-5.8</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.9.html"
-                        title="next chapter">skiboot-5.9</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.8.html"
+                          title="previous chapter">skiboot-5.8</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.9.html"
+                          title="next chapter">skiboot-5.9</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -539,7 +543,7 @@ on modern P9 as we only have one entry point (we don’t do the PHYP LID hack).<
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -556,15 +560,15 @@ on modern P9 as we only have one entry point (we don’t do the PHYP LID hack).<
         <li class="right" >
           <a href="skiboot-5.8.html" title="skiboot-5.8"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.8-rc1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

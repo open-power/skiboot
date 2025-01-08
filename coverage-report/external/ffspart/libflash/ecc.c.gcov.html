@@ -10,525 +10,525 @@
 
 <body>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="title">LCOV - code coverage report</td></tr>
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
 
-    <tr>
-      <td width="100%">
-        <table cellpadding=1 border=0 width="100%">
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
           <tr>
             <td width="10%" class="headerItem">Current view:</td>
-            <td width="35%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">external/ffspart/libflash</a> - ecc.c<span style="font-size: 80%;"> (source / <a href="ecc.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="10%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">external/ffspart/libflash</a> - ecc.c<span style="font-size: 80%;"> (source / <a href="ecc.c.func-c.html">functions</a>)</span></td>
             <td width="5%"></td>
-            <td width="15%"></td>
-            <td width="10%" class="headerCovTableHead">Hit</td>
-            <td width="10%" class="headerCovTableHead">Total</td>
-            <td width="15%" class="headerCovTableHead">Coverage</td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryLo">14.4&nbsp;%</td>
+            <td class="headerCovTableEntry">104</td>
             <td class="headerCovTableEntry">15</td>
-            <td class="headerCovTableEntry">105</td>
-            <td class="headerCovTableEntryLo">14.3 %</td>
           </tr>
           <tr>
-            <td class="headerItem">Date:</td>
-            <td class="headerValue">2024-09-10 18:37:41</td>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-01-08 15:53:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryLo">16.7&nbsp;%</td>
             <td class="headerCovTableEntry">6</td>
-            <td class="headerCovTableEntryLo">16.7 %</td>
+            <td class="headerCovTableEntry">1</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntry">0</td>
-            <td class="headerCovTableEntry">0</td>
             <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
           </tr>
-          <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-        </table>
-      </td>
-    </tr>
+                  <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
 
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-  </table>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
 
-  <table cellpadding=0 cellspacing=0 border=0>
-    <tr>
-      <td><br></td>
-    </tr>
-    <tr>
-      <td>
-<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
 <pre class="source">
-<a name="1"><span class="lineNum">       1 </span>                :            : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</a>
-<a name="2"><span class="lineNum">       2 </span>                :            : /*</a>
-<a name="3"><span class="lineNum">       3 </span>                :            :  * This is based on the hostboot ecc code</a>
-<a name="4"><span class="lineNum">       4 </span>                :            :  *</a>
-<a name="5"><span class="lineNum">       5 </span>                :            :  * Copyright 2013-2019 IBM Corp.</a>
-<a name="6"><span class="lineNum">       6 </span>                :            :  */</a>
-<a name="7"><span class="lineNum">       7 </span>                :            : </a>
-<a name="8"><span class="lineNum">       8 </span>                :            : #include &lt;stdint.h&gt;</a>
-<a name="9"><span class="lineNum">       9 </span>                :            : #include &lt;inttypes.h&gt;</a>
-<a name="10"><span class="lineNum">      10 </span>                :            : #include &lt;string.h&gt;</a>
-<a name="11"><span class="lineNum">      11 </span>                :            : </a>
-<a name="12"><span class="lineNum">      12 </span>                :            : #include &lt;ccan/endian/endian.h&gt;</a>
-<a name="13"><span class="lineNum">      13 </span>                :            : </a>
-<a name="14"><span class="lineNum">      14 </span>                :            : #include &quot;libflash.h&quot;</a>
-<a name="15"><span class="lineNum">      15 </span>                :            : #include &quot;ecc.h&quot;</a>
-<a name="16"><span class="lineNum">      16 </span>                :            : </a>
-<a name="17"><span class="lineNum">      17 </span>                :            : /* Bit field identifiers for syndrome calculations. */</a>
-<a name="18"><span class="lineNum">      18 </span>                :            : enum eccbitfields</a>
-<a name="19"><span class="lineNum">      19 </span>                :            : {</a>
-<a name="20"><span class="lineNum">      20 </span>                :            :         GD = 0xff,      //&lt; Good, ECC matches.</a>
-<a name="21"><span class="lineNum">      21 </span>                :            :         UE = 0xfe,      //&lt; Uncorrectable.</a>
-<a name="22"><span class="lineNum">      22 </span>                :            :         E0 = 71,        //&lt; Error in ECC bit 0</a>
-<a name="23"><span class="lineNum">      23 </span>                :            :         E1 = 70,        //&lt; Error in ECC bit 1</a>
-<a name="24"><span class="lineNum">      24 </span>                :            :         E2 = 69,        //&lt; Error in ECC bit 2</a>
-<a name="25"><span class="lineNum">      25 </span>                :            :         E3 = 68,        //&lt; Error in ECC bit 3</a>
-<a name="26"><span class="lineNum">      26 </span>                :            :         E4 = 67,        //&lt; Error in ECC bit 4</a>
-<a name="27"><span class="lineNum">      27 </span>                :            :         E5 = 66,        //&lt; Error in ECC bit 5</a>
-<a name="28"><span class="lineNum">      28 </span>                :            :         E6 = 65,        //&lt; Error in ECC bit 6</a>
-<a name="29"><span class="lineNum">      29 </span>                :            :         E7 = 64         //&lt; Error in ECC bit 7</a>
-<a name="30"><span class="lineNum">      30 </span>                :            :         /* 0-63 Correctable bit in byte */</a>
-<a name="31"><span class="lineNum">      31 </span>                :            : };</a>
-<a name="32"><span class="lineNum">      32 </span>                :            : </a>
-<a name="33"><span class="lineNum">      33 </span>                :            : /*</a>
-<a name="34"><span class="lineNum">      34 </span>                :            :  * Matrix used for ECC calculation.</a>
-<a name="35"><span class="lineNum">      35 </span>                :            :  *</a>
-<a name="36"><span class="lineNum">      36 </span>                :            :  *  Each row of this is the set of data word bits that are used for</a>
-<a name="37"><span class="lineNum">      37 </span>                :            :  *  the calculation of the corresponding ECC bit.  The parity of the</a>
-<a name="38"><span class="lineNum">      38 </span>                :            :  *  bitset is the value of the ECC bit.</a>
-<a name="39"><span class="lineNum">      39 </span>                :            :  *</a>
-<a name="40"><span class="lineNum">      40 </span>                :            :  *  ie. ECC[n] = eccMatrix[n] &amp; data</a>
-<a name="41"><span class="lineNum">      41 </span>                :            :  *</a>
-<a name="42"><span class="lineNum">      42 </span>                :            :  *  Note: To make the math easier (and less shifts in resulting code),</a>
-<a name="43"><span class="lineNum">      43 </span>                :            :  *        row0 = ECC7.  HW numbering is MSB, order here is LSB.</a>
-<a name="44"><span class="lineNum">      44 </span>                :            :  *</a>
-<a name="45"><span class="lineNum">      45 </span>                :            :  *  These values come from the HW design of the ECC algorithm.</a>
-<a name="46"><span class="lineNum">      46 </span>                :            :  */</a>
-<a name="47"><span class="lineNum">      47 </span>                :            : static uint64_t eccmatrix[] = {</a>
-<a name="48"><span class="lineNum">      48 </span>                :            :         0x0000e8423c0f99ffull,</a>
-<a name="49"><span class="lineNum">      49 </span>                :            :         0x00e8423c0f99ff00ull,</a>
-<a name="50"><span class="lineNum">      50 </span>                :            :         0xe8423c0f99ff0000ull,</a>
-<a name="51"><span class="lineNum">      51 </span>                :            :         0x423c0f99ff0000e8ull,</a>
-<a name="52"><span class="lineNum">      52 </span>                :            :         0x3c0f99ff0000e842ull,</a>
-<a name="53"><span class="lineNum">      53 </span>                :            :         0x0f99ff0000e8423cull,</a>
-<a name="54"><span class="lineNum">      54 </span>                :            :         0x99ff0000e8423c0full,</a>
-<a name="55"><span class="lineNum">      55 </span>                :            :         0xff0000e8423c0f99ull</a>
-<a name="56"><span class="lineNum">      56 </span>                :            : };</a>
-<a name="57"><span class="lineNum">      57 </span>                :            : </a>
-<a name="58"><span class="lineNum">      58 </span>                :            : /**</a>
-<a name="59"><span class="lineNum">      59 </span>                :            :  * Syndrome calculation matrix.</a>
-<a name="60"><span class="lineNum">      60 </span>                :            :  *</a>
-<a name="61"><span class="lineNum">      61 </span>                :            :  *  Maps syndrome to flipped bit.</a>
-<a name="62"><span class="lineNum">      62 </span>                :            :  *</a>
-<a name="63"><span class="lineNum">      63 </span>                :            :  *  To perform ECC correction, this matrix is a look-up of the bit</a>
-<a name="64"><span class="lineNum">      64 </span>                :            :  *  that is bad based on the binary difference of the good and bad</a>
-<a name="65"><span class="lineNum">      65 </span>                :            :  *  ECC.  This difference is called the &quot;syndrome&quot;.</a>
-<a name="66"><span class="lineNum">      66 </span>                :            :  *</a>
-<a name="67"><span class="lineNum">      67 </span>                :            :  *  When a particular bit is on in the data, it cause a column from</a>
-<a name="68"><span class="lineNum">      68 </span>                :            :  *  eccMatrix being XOR'd into the ECC field.  This column is the</a>
-<a name="69"><span class="lineNum">      69 </span>                :            :  *  &quot;effect&quot; of each bit.  If a bit is flipped in the data then its</a>
-<a name="70"><span class="lineNum">      70 </span>                :            :  *  &quot;effect&quot; is missing from the ECC.  You can calculate ECC on unknown</a>
-<a name="71"><span class="lineNum">      71 </span>                :            :  *  quality data and compare the ECC field between the calculated</a>
-<a name="72"><span class="lineNum">      72 </span>                :            :  *  value and the stored value.  If the difference is zero, then the</a>
-<a name="73"><span class="lineNum">      73 </span>                :            :  *  data is clean.  If the difference is non-zero, you look up the</a>
-<a name="74"><span class="lineNum">      74 </span>                :            :  *  difference in the syndrome table to identify the &quot;effect&quot; that</a>
-<a name="75"><span class="lineNum">      75 </span>                :            :  *  is missing, which is the bit that is flipped.</a>
-<a name="76"><span class="lineNum">      76 </span>                :            :  *</a>
-<a name="77"><span class="lineNum">      77 </span>                :            :  *  Notice that ECC bit flips are recorded by a single &quot;effect&quot;</a>
-<a name="78"><span class="lineNum">      78 </span>                :            :  *  bit (ie. 0x1, 0x2, 0x4, 0x8 ...) and double bit flips are identified</a>
-<a name="79"><span class="lineNum">      79 </span>                :            :  *  by the UE status in the table.</a>
-<a name="80"><span class="lineNum">      80 </span>                :            :  *</a>
-<a name="81"><span class="lineNum">      81 </span>                :            :  *  Bits are in MSB order.</a>
-<a name="82"><span class="lineNum">      82 </span>                :            :  */</a>
-<a name="83"><span class="lineNum">      83 </span>                :            : static enum eccbitfields syndromematrix[] = {</a>
-<a name="84"><span class="lineNum">      84 </span>                :            :         GD, E7, E6, UE, E5, UE, UE, 47, E4, UE, UE, 37, UE, 35, 39, UE,</a>
-<a name="85"><span class="lineNum">      85 </span>                :            :         E3, UE, UE, 48, UE, 30, 29, UE, UE, 57, 27, UE, 31, UE, UE, UE,</a>
-<a name="86"><span class="lineNum">      86 </span>                :            :         E2, UE, UE, 17, UE, 18, 40, UE, UE, 58, 22, UE, 21, UE, UE, UE,</a>
-<a name="87"><span class="lineNum">      87 </span>                :            :         UE, 16, 49, UE, 19, UE, UE, UE, 23, UE, UE, UE, UE, 20, UE, UE,</a>
-<a name="88"><span class="lineNum">      88 </span>                :            :         E1, UE, UE, 51, UE, 46,  9, UE, UE, 34, 10, UE, 32, UE, UE, 36,</a>
-<a name="89"><span class="lineNum">      89 </span>                :            :         UE, 62, 50, UE, 14, UE, UE, UE, 13, UE, UE, UE, UE, UE, UE, UE,</a>
-<a name="90"><span class="lineNum">      90 </span>                :            :         UE, 61,  8, UE, 41, UE, UE, UE, 11, UE, UE, UE, UE, UE, UE, UE,</a>
-<a name="91"><span class="lineNum">      91 </span>                :            :         15, UE, UE, UE, UE, UE, UE, UE, UE, UE, 12, UE, UE, UE, UE, UE,</a>
-<a name="92"><span class="lineNum">      92 </span>                :            :         E0, UE, UE, 55, UE, 45, 43, UE, UE, 56, 38, UE,  1, UE, UE, UE,</a>
-<a name="93"><span class="lineNum">      93 </span>                :            :         UE, 25, 26, UE,  2, UE, UE, UE, 24, UE, UE, UE, UE, UE, 28, UE,</a>
-<a name="94"><span class="lineNum">      94 </span>                :            :         UE, 59, 54, UE, 42, UE, UE, 44,  6, UE, UE, UE, UE, UE, UE, UE,</a>
-<a name="95"><span class="lineNum">      95 </span>                :            :          5, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE,</a>
-<a name="96"><span class="lineNum">      96 </span>                :            :         UE, 63, 53, UE,  0, UE, UE, UE, 33, UE, UE, UE, UE, UE, UE, UE,</a>
-<a name="97"><span class="lineNum">      97 </span>                :            :          3, UE, UE, 52, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE,</a>
-<a name="98"><span class="lineNum">      98 </span>                :            :          7, UE, UE, UE, UE, UE, UE, UE, UE, 60, UE, UE, UE, UE, UE, UE,</a>
-<a name="99"><span class="lineNum">      99 </span>                :            :         UE, UE, UE, UE,  4, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE,</a>
-<a name="100"><span class="lineNum">     100 </span>                :            : };</a>
-<a name="101"><span class="lineNum">     101 </span>                :            : </a>
-<a name="102"><span class="lineNum">     102 </span>                :            : /**</a>
-<a name="103"><span class="lineNum">     103 </span>                :            :  * Create the ECC field corresponding to a 8-byte data field</a>
-<a name="104"><span class="lineNum">     104 </span>                :            :  *</a>
-<a name="105"><span class="lineNum">     105 </span>                :            :  *  @data:      The 8 byte data to generate ECC for.</a>
-<a name="106"><span class="lineNum">     106 </span>                :            :  *  @return:    The 1 byte ECC corresponding to the data.</a>
-<a name="107"><span class="lineNum">     107 </span>                :            :  */</a>
-<a name="108"><span class="lineNum">     108 </span>                :<span class="lineCov">       2268 : static uint8_t eccgenerate(uint64_t data)</span></a>
-<a name="109"><span class="lineNum">     109 </span>                :            : {</a>
-<a name="110"><span class="lineNum">     110 </span>                :<span class="lineCov">       2268 :         int i;</span></a>
-<a name="111"><span class="lineNum">     111 </span>                :<span class="lineCov">       2268 :         uint8_t result = 0;</span></a>
-<a name="112"><span class="lineNum">     112 </span>                :            : </a>
-<a name="113"><span class="lineNum">     113 </span>                :<span class="lineCov">      20412 :         for (i = 0; i &lt; 8; i++)</span></a>
-<a name="114"><span class="lineNum">     114 </span>                :<span class="lineCov">      18144 :                 result |= __builtin_parityll(eccmatrix[i] &amp; data) &lt;&lt; i;</span></a>
-<a name="115"><span class="lineNum">     115 </span>                :            : </a>
-<a name="116"><span class="lineNum">     116 </span>                :<span class="lineCov">       2268 :         return result;</span></a>
-<a name="117"><span class="lineNum">     117 </span>                :            : }</a>
-<a name="118"><span class="lineNum">     118 </span>                :            : </a>
-<a name="119"><span class="lineNum">     119 </span>                :            : /**</a>
-<a name="120"><span class="lineNum">     120 </span>                :            :  * Verify the data and ECC match or indicate how they are wrong.</a>
-<a name="121"><span class="lineNum">     121 </span>                :            :  *</a>
-<a name="122"><span class="lineNum">     122 </span>                :            :  * @data:       The data to check ECC on.</a>
-<a name="123"><span class="lineNum">     123 </span>                :            :  * @ecc:        The [supposed] ECC for the data.</a>
-<a name="124"><span class="lineNum">     124 </span>                :            :  *</a>
-<a name="125"><span class="lineNum">     125 </span>                :            :  * @return:     eccBitfield or 0-64.</a>
-<a name="126"><span class="lineNum">     126 </span>                :            :  *</a>
-<a name="127"><span class="lineNum">     127 </span>                :            :  * @retval GD - Indicates the data is good (matches ECC).</a>
-<a name="128"><span class="lineNum">     128 </span>                :            :  * @retval UE - Indicates the data is uncorrectable.</a>
-<a name="129"><span class="lineNum">     129 </span>                :            :  * @retval all others - Indication of which bit is incorrect.</a>
-<a name="130"><span class="lineNum">     130 </span>                :            :  */</a>
-<a name="131"><span class="lineNum">     131 </span>                :<span class="lineNoCov">          0 : static enum eccbitfields eccverify(uint64_t data, uint8_t ecc)</span></a>
-<a name="132"><span class="lineNum">     132 </span>                :            : {</a>
-<a name="133"><span class="lineNum">     133 </span>                :<span class="lineNoCov">          0 :         return syndromematrix[eccgenerate(data) ^ ecc];</span></a>
-<a name="134"><span class="lineNum">     134 </span>                :            : }</a>
-<a name="135"><span class="lineNum">     135 </span>                :            : </a>
-<a name="136"><span class="lineNum">     136 </span>                :            : /* IBM bit ordering */</a>
-<a name="137"><span class="lineNum">     137 </span>                :<span class="lineNoCov">          0 : static inline uint64_t eccflipbit(uint64_t data, uint8_t bit)</span></a>
-<a name="138"><span class="lineNum">     138 </span>                :            : {</a>
-<a name="139"><span class="lineNum">     139 </span>                :<span class="lineNoCov">          0 :         if (bit &gt; 63)</span></a>
-<a name="140"><span class="lineNum">     140 </span>                :            :                 return data;</a>
-<a name="141"><span class="lineNum">     141 </span>                :            : </a>
-<a name="142"><span class="lineNum">     142 </span>                :<span class="lineNoCov">          0 :         return data ^ (1ul &lt;&lt; (63 - bit));</span></a>
-<a name="143"><span class="lineNum">     143 </span>                :            : }</a>
-<a name="144"><span class="lineNum">     144 </span>                :            : </a>
-<a name="145"><span class="lineNum">     145 </span>                :<span class="lineNoCov">          0 : static int eccbyte(beint64_t *dst, struct ecc64 *src)</span></a>
-<a name="146"><span class="lineNum">     146 </span>                :            : {</a>
-<a name="147"><span class="lineNum">     147 </span>                :<span class="lineNoCov">          0 :         uint8_t ecc, badbit;</span></a>
-<a name="148"><span class="lineNum">     148 </span>                :<span class="lineNoCov">          0 :         uint64_t data;</span></a>
-<a name="149"><span class="lineNum">     149 </span>                :            : </a>
-<a name="150"><span class="lineNum">     150 </span>                :<span class="lineNoCov">          0 :         data = be64_to_cpu(src-&gt;data);</span></a>
-<a name="151"><span class="lineNum">     151 </span>                :<span class="lineNoCov">          0 :         ecc = src-&gt;ecc;</span></a>
-<a name="152"><span class="lineNum">     152 </span>                :            : </a>
-<a name="153"><span class="lineNum">     153 </span>                :<span class="lineNoCov">          0 :         badbit = eccverify(data, ecc);</span></a>
-<a name="154"><span class="lineNum">     154 </span>                :<span class="lineNoCov">          0 :         if (badbit == UE) {</span></a>
-<a name="155"><span class="lineNum">     155 </span>                :<span class="lineNoCov">          0 :                 FL_ERR(&quot;ECC: uncorrectable error: %016llx %02x\n&quot;, (unsigned long long int)data, ecc);</span></a>
-<a name="156"><span class="lineNum">     156 </span>                :<span class="lineNoCov">          0 :                 return badbit;</span></a>
-<a name="157"><span class="lineNum">     157 </span>                :            :         }</a>
-<a name="158"><span class="lineNum">     158 </span>                :<span class="lineNoCov">          0 :         if (badbit &lt;= UE)</span></a>
-<a name="159"><span class="lineNum">     159 </span>                :<span class="lineNoCov">          0 :                 FL_INF(&quot;ECC: correctable error: %i\n&quot;, badbit);</span></a>
-<a name="160"><span class="lineNum">     160 </span>                :<span class="lineNoCov">          0 :         if (badbit &lt; 64)</span></a>
-<a name="161"><span class="lineNum">     161 </span>                :<span class="lineNoCov">          0 :                 *dst = cpu_to_be64(eccflipbit(data, badbit));</span></a>
-<a name="162"><span class="lineNum">     162 </span>                :            :         else</a>
-<a name="163"><span class="lineNum">     163 </span>                :<span class="lineNoCov">          0 :                 *dst = cpu_to_be64(data);</span></a>
-<a name="164"><span class="lineNum">     164 </span>                :            : </a>
-<a name="165"><span class="lineNum">     165 </span>                :            :         return 0;</a>
-<a name="166"><span class="lineNum">     166 </span>                :            : }</a>
-<a name="167"><span class="lineNum">     167 </span>                :            : </a>
-<a name="168"><span class="lineNum">     168 </span>                :<span class="lineNoCov">          0 : static beint64_t *inc_beint64_by(const void *p, uint64_t i)</span></a>
-<a name="169"><span class="lineNum">     169 </span>                :            : {</a>
-<a name="170"><span class="lineNum">     170 </span>                :<span class="lineNoCov">          0 :         return (beint64_t *)(((char *)p) + i);</span></a>
-<a name="171"><span class="lineNum">     171 </span>                :            : }</a>
-<a name="172"><span class="lineNum">     172 </span>                :            : </a>
-<a name="173"><span class="lineNum">     173 </span>                :<span class="lineNoCov">          0 : static uint64_t *inc_uint64_by(const void *p, uint64_t i)</span></a>
-<a name="174"><span class="lineNum">     174 </span>                :            : {</a>
-<a name="175"><span class="lineNum">     175 </span>                :<span class="lineNoCov">          0 :         return (uint64_t *)(((char *)p) + i);</span></a>
-<a name="176"><span class="lineNum">     176 </span>                :            : }</a>
-<a name="177"><span class="lineNum">     177 </span>                :            : </a>
-<a name="178"><span class="lineNum">     178 </span>                :<span class="lineNoCov">          0 : static struct ecc64 *inc_ecc64_by(struct ecc64 *p, uint64_t i)</span></a>
-<a name="179"><span class="lineNum">     179 </span>                :            : {</a>
-<a name="180"><span class="lineNum">     180 </span>                :<span class="lineNoCov">          0 :         return (struct ecc64 *)(((char *)p) + i);</span></a>
-<a name="181"><span class="lineNum">     181 </span>                :            : }</a>
-<a name="182"><span class="lineNum">     182 </span>                :            : </a>
-<a name="183"><span class="lineNum">     183 </span>                :<span class="lineNoCov">          0 : static uint64_t whole_ecc_bytes(uint64_t i)</span></a>
-<a name="184"><span class="lineNum">     184 </span>                :            : {</a>
-<a name="185"><span class="lineNum">     185 </span>                :<span class="lineNoCov">          0 :         return i &amp; ~(BYTES_PER_ECC - 1);</span></a>
-<a name="186"><span class="lineNum">     186 </span>                :            : }</a>
-<a name="187"><span class="lineNum">     187 </span>                :            : </a>
-<a name="188"><span class="lineNum">     188 </span>                :            : static uint64_t whole_ecc_structs(uint64_t i)</a>
-<a name="189"><span class="lineNum">     189 </span>                :            : {</a>
-<a name="190"><span class="lineNum">     190 </span>                :<span class="lineNoCov">          0 :         return whole_ecc_bytes(i) &gt;&gt; 3;</span></a>
-<a name="191"><span class="lineNum">     191 </span>                :            : }</a>
-<a name="192"><span class="lineNum">     192 </span>                :            : </a>
-<a name="193"><span class="lineNum">     193 </span>                :            : /**</a>
-<a name="194"><span class="lineNum">     194 </span>                :            :  * Copy data from an input buffer with ECC to an output buffer without ECC.</a>
-<a name="195"><span class="lineNum">     195 </span>                :            :  * Correct it along the way and check for errors.</a>
-<a name="196"><span class="lineNum">     196 </span>                :            :  *</a>
-<a name="197"><span class="lineNum">     197 </span>                :            :  * @dst:        destination buffer without ECC</a>
-<a name="198"><span class="lineNum">     198 </span>                :            :  * @src:        source buffer with ECC</a>
-<a name="199"><span class="lineNum">     199 </span>                :            :  * @len:        number of bytes of data to copy (without ecc).</a>
-<a name="200"><span class="lineNum">     200 </span>                :            :  *                   Must be 8 byte aligned.</a>
-<a name="201"><span class="lineNum">     201 </span>                :            :  *</a>
-<a name="202"><span class="lineNum">     202 </span>                :            :  * @return:     Success or error</a>
-<a name="203"><span class="lineNum">     203 </span>                :            :  *</a>
-<a name="204"><span class="lineNum">     204 </span>                :            :  * @retval: 0 - success</a>
-<a name="205"><span class="lineNum">     205 </span>                :            :  * @retfal: other - fail</a>
-<a name="206"><span class="lineNum">     206 </span>                :            :  */</a>
-<a name="207"><span class="lineNum">     207 </span>                :<span class="lineNoCov">          0 : int memcpy_from_ecc(beint64_t *dst, struct ecc64 *src, uint64_t len)</span></a>
-<a name="208"><span class="lineNum">     208 </span>                :            : {</a>
-<a name="209"><span class="lineNum">     209 </span>                :<span class="lineNoCov">          0 :         uint32_t i;</span></a>
-<a name="210"><span class="lineNum">     210 </span>                :            : </a>
-<a name="211"><span class="lineNum">     211 </span>                :<span class="lineNoCov">          0 :         if (len &amp; 0x7) {</span></a>
-<a name="212"><span class="lineNum">     212 </span>                :            :                 /* TODO: we could probably handle this */</a>
-<a name="213"><span class="lineNum">     213 </span>                :<span class="lineNoCov">          0 :                 FL_ERR(&quot;ECC data length must be 8 byte aligned length:%&quot; PRIx64  &quot;\n&quot;,</span></a>
-<a name="214"><span class="lineNum">     214 </span>                :            :                        len);</a>
-<a name="215"><span class="lineNum">     215 </span>                :<span class="lineNoCov">          0 :                 return -1;</span></a>
-<a name="216"><span class="lineNum">     216 </span>                :            :         }</a>
-<a name="217"><span class="lineNum">     217 </span>                :            : </a>
-<a name="218"><span class="lineNum">     218 </span>                :            :         /* Handle in chunks of 8 bytes, so adjust the length */</a>
-<a name="219"><span class="lineNum">     219 </span>                :<span class="lineNoCov">          0 :         len &gt;&gt;= 3;</span></a>
-<a name="220"><span class="lineNum">     220 </span>                :            : </a>
-<a name="221"><span class="lineNum">     221 </span>                :<span class="lineNoCov">          0 :         for (i = 0; i &lt; len; i++) {</span></a>
-<a name="222"><span class="lineNum">     222 </span>                :<span class="lineNoCov">          0 :                 int rc;</span></a>
-<a name="223"><span class="lineNum">     223 </span>                :<span class="lineNoCov">          0 :                 rc = eccbyte(dst, src + i);</span></a>
-<a name="224"><span class="lineNum">     224 </span>                :<span class="lineNoCov">          0 :                 if (rc)</span></a>
-<a name="225"><span class="lineNum">     225 </span>                :<span class="lineNoCov">          0 :                         return rc;</span></a>
-<a name="226"><span class="lineNum">     226 </span>                :<span class="lineNoCov">          0 :                 dst++;</span></a>
-<a name="227"><span class="lineNum">     227 </span>                :            :         }</a>
-<a name="228"><span class="lineNum">     228 </span>                :            :         return 0;</a>
-<a name="229"><span class="lineNum">     229 </span>                :            : }</a>
-<a name="230"><span class="lineNum">     230 </span>                :            : </a>
-<a name="231"><span class="lineNum">     231 </span>                :            : /**</a>
-<a name="232"><span class="lineNum">     232 </span>                :            :  * Copy data from an input buffer with ECC to an output buffer without ECC.</a>
-<a name="233"><span class="lineNum">     233 </span>                :            :  * Correct it along the way and check for errors.</a>
-<a name="234"><span class="lineNum">     234 </span>                :            :  *</a>
-<a name="235"><span class="lineNum">     235 </span>                :            :  * Unlike memcmp_from_ecc() which requires that the first byte into</a>
-<a name="236"><span class="lineNum">     236 </span>                :            :  * dst be the first byte in src (which must also be aligned to a</a>
-<a name="237"><span class="lineNum">     237 </span>                :            :  * struct ecc64 struct boundary) this function can cope with the first</a>
-<a name="238"><span class="lineNum">     238 </span>                :            :  * byte in dst not being the first byte in src.</a>
-<a name="239"><span class="lineNum">     239 </span>                :            :  *</a>
-<a name="240"><span class="lineNum">     240 </span>                :            :  * Note: src MUST still be aligned to a struct ecc64 otherwise ECC</a>
-<a name="241"><span class="lineNum">     241 </span>                :            :  * calculations are impossible.</a>
-<a name="242"><span class="lineNum">     242 </span>                :            :  *</a>
-<a name="243"><span class="lineNum">     243 </span>                :            :  * The alignment parameter species the number of bytes present at the</a>
-<a name="244"><span class="lineNum">     244 </span>                :            :  * start of src that should be skipped and not written to dst. Once</a>
-<a name="245"><span class="lineNum">     245 </span>                :            :  * again, these bytes must be in src otherwise the ECC cannot be</a>
-<a name="246"><span class="lineNum">     246 </span>                :            :  * checked.</a>
-<a name="247"><span class="lineNum">     247 </span>                :            :  *</a>
-<a name="248"><span class="lineNum">     248 </span>                :            :  * len also doesn't have any value limitation for this function. Of</a>
-<a name="249"><span class="lineNum">     249 </span>                :            :  * course src must contain an exact multiple of struct ecc64 otherwise</a>
-<a name="250"><span class="lineNum">     250 </span>                :            :  * ECC calculation cannot be performed but this function won't copy</a>
-<a name="251"><span class="lineNum">     251 </span>                :            :  * the entirety of the last src data word if len is not mutiple of 8</a>
-<a name="252"><span class="lineNum">     252 </span>                :            :  *</a>
-<a name="253"><span class="lineNum">     253 </span>                :            :  * @dst:                destination buffer without ECC</a>
-<a name="254"><span class="lineNum">     254 </span>                :            :  * @src:                source buffer with ECC</a>
-<a name="255"><span class="lineNum">     255 </span>                :            :  * @len:                number of bytes of data to copy (without ecc).</a>
-<a name="256"><span class="lineNum">     256 </span>                :            :  * @alignment:  number of leading bytes in src which shouldn't be</a>
-<a name="257"><span class="lineNum">     257 </span>                :            :  *                              copied to dst</a>
-<a name="258"><span class="lineNum">     258 </span>                :            :  * @return:     Success or error</a>
-<a name="259"><span class="lineNum">     259 </span>                :            :  *</a>
-<a name="260"><span class="lineNum">     260 </span>                :            :  * @retval: 0 - success</a>
-<a name="261"><span class="lineNum">     261 </span>                :            :  * @retfal: other - fail</a>
-<a name="262"><span class="lineNum">     262 </span>                :            :  */</a>
-<a name="263"><span class="lineNum">     263 </span>                :<span class="lineNoCov">          0 : int memcpy_from_ecc_unaligned(beint64_t *dst, struct ecc64 *src,</span></a>
-<a name="264"><span class="lineNum">     264 </span>                :            :                 uint64_t len, uint8_t alignment)</a>
-<a name="265"><span class="lineNum">     265 </span>                :            : {</a>
-<a name="266"><span class="lineNum">     266 </span>                :<span class="lineNoCov">          0 :         char data[BYTES_PER_ECC];</span></a>
-<a name="267"><span class="lineNum">     267 </span>                :<span class="lineNoCov">          0 :         uint8_t bytes_wanted;</span></a>
-<a name="268"><span class="lineNum">     268 </span>                :<span class="lineNoCov">          0 :         int rc;</span></a>
-<a name="269"><span class="lineNum">     269 </span>                :            : </a>
-<a name="270"><span class="lineNum">     270 </span>                :<span class="lineNoCov">          0 :         if (alignment &gt; 8)</span></a>
-<a name="271"><span class="lineNum">     271 </span>                :            :                 return -1;</a>
-<a name="272"><span class="lineNum">     272 </span>                :            : </a>
-<a name="273"><span class="lineNum">     273 </span>                :<span class="lineNoCov">          0 :         bytes_wanted = BYTES_PER_ECC - alignment;</span></a>
-<a name="274"><span class="lineNum">     274 </span>                :            : </a>
-<a name="275"><span class="lineNum">     275 </span>                :            :         /*</a>
-<a name="276"><span class="lineNum">     276 </span>                :            :          * Only actually do the first calculation if an alignment is</a>
-<a name="277"><span class="lineNum">     277 </span>                :            :          * required - otherwise jump straight to memcpy_from_ecc()</a>
-<a name="278"><span class="lineNum">     278 </span>                :            :          */</a>
-<a name="279"><span class="lineNum">     279 </span>                :<span class="lineNoCov">          0 :         if (alignment) {</span></a>
-<a name="280"><span class="lineNum">     280 </span>                :<span class="lineNoCov">          0 :                 rc = eccbyte((beint64_t *)data, src);</span></a>
-<a name="281"><span class="lineNum">     281 </span>                :<span class="lineNoCov">          0 :                 if (rc)</span></a>
-<a name="282"><span class="lineNum">     282 </span>                :            :                         return rc;</a>
-<a name="283"><span class="lineNum">     283 </span>                :            : </a>
-<a name="284"><span class="lineNum">     284 </span>                :<span class="lineNoCov">          0 :                 memcpy(dst, &amp;data[alignment], bytes_wanted);</span></a>
-<a name="285"><span class="lineNum">     285 </span>                :            : </a>
-<a name="286"><span class="lineNum">     286 </span>                :<span class="lineNoCov">          0 :                 src = inc_ecc64_by(src, sizeof(struct ecc64));</span></a>
-<a name="287"><span class="lineNum">     287 </span>                :<span class="lineNoCov">          0 :                 dst = inc_beint64_by(dst, bytes_wanted);</span></a>
-<a name="288"><span class="lineNum">     288 </span>                :<span class="lineNoCov">          0 :                 len -= bytes_wanted;</span></a>
-<a name="289"><span class="lineNum">     289 </span>                :            :         }</a>
-<a name="290"><span class="lineNum">     290 </span>                :            : </a>
-<a name="291"><span class="lineNum">     291 </span>                :<span class="lineNoCov">          0 :         if (len &gt;= BYTES_PER_ECC) {</span></a>
-<a name="292"><span class="lineNum">     292 </span>                :<span class="lineNoCov">          0 :                 rc = memcpy_from_ecc(dst, src, whole_ecc_bytes(len));</span></a>
-<a name="293"><span class="lineNum">     293 </span>                :<span class="lineNoCov">          0 :                 if (rc)</span></a>
-<a name="294"><span class="lineNum">     294 </span>                :            :                         return rc;</a>
-<a name="295"><span class="lineNum">     295 </span>                :            : </a>
-<a name="296"><span class="lineNum">     296 </span>                :            :                 /*</a>
-<a name="297"><span class="lineNum">     297 </span>                :            :                  * It helps to let the compiler to the pointer arithmetic</a>
-<a name="298"><span class="lineNum">     298 </span>                :            :                  * here, (dst and src are different types)</a>
-<a name="299"><span class="lineNum">     299 </span>                :            :                  */</a>
-<a name="300"><span class="lineNum">     300 </span>                :<span class="lineNoCov">          0 :                 dst += whole_ecc_structs(len);</span></a>
-<a name="301"><span class="lineNum">     301 </span>                :<span class="lineNoCov">          0 :                 src += whole_ecc_structs(len);</span></a>
-<a name="302"><span class="lineNum">     302 </span>                :<span class="lineNoCov">          0 :                 len -= whole_ecc_bytes(len);</span></a>
-<a name="303"><span class="lineNum">     303 </span>                :            :         }</a>
-<a name="304"><span class="lineNum">     304 </span>                :            : </a>
-<a name="305"><span class="lineNum">     305 </span>                :<span class="lineNoCov">          0 :         if (len) {</span></a>
-<a name="306"><span class="lineNum">     306 </span>                :<span class="lineNoCov">          0 :                 rc = eccbyte((beint64_t *)data, src);</span></a>
-<a name="307"><span class="lineNum">     307 </span>                :<span class="lineNoCov">          0 :                 if (rc)</span></a>
-<a name="308"><span class="lineNum">     308 </span>                :            :                         return rc;</a>
-<a name="309"><span class="lineNum">     309 </span>                :            : </a>
-<a name="310"><span class="lineNum">     310 </span>                :<span class="lineNoCov">          0 :                 memcpy(dst, data, len);</span></a>
-<a name="311"><span class="lineNum">     311 </span>                :            :         }</a>
-<a name="312"><span class="lineNum">     312 </span>                :            : </a>
-<a name="313"><span class="lineNum">     313 </span>                :            :         return 0;</a>
-<a name="314"><span class="lineNum">     314 </span>                :            : }</a>
-<a name="315"><span class="lineNum">     315 </span>                :            : </a>
-<a name="316"><span class="lineNum">     316 </span>                :            : /**</a>
-<a name="317"><span class="lineNum">     317 </span>                :            :  * Copy data from an input buffer without ECC to an output buffer with ECC.</a>
-<a name="318"><span class="lineNum">     318 </span>                :            :  *</a>
-<a name="319"><span class="lineNum">     319 </span>                :            :  * @dst:        destination buffer with ECC</a>
-<a name="320"><span class="lineNum">     320 </span>                :            :  * @src:        source buffer without ECC</a>
-<a name="321"><span class="lineNum">     321 </span>                :            :  * @len:        number of bytes of data to copy (without ecc, length of src).</a>
-<a name="322"><span class="lineNum">     322 </span>                :            :  *       Note: dst must be big enough to hold ecc bytes as well.</a>
-<a name="323"><span class="lineNum">     323 </span>                :            :  *                   Must be 8 byte aligned.</a>
-<a name="324"><span class="lineNum">     324 </span>                :            :  *</a>
-<a name="325"><span class="lineNum">     325 </span>                :            :  * @return:     success or failure</a>
-<a name="326"><span class="lineNum">     326 </span>                :            :  *</a>
-<a name="327"><span class="lineNum">     327 </span>                :            :  * @retval: 0 - success</a>
-<a name="328"><span class="lineNum">     328 </span>                :            :  * @retfal: other - fail</a>
-<a name="329"><span class="lineNum">     329 </span>                :            :  */</a>
-<a name="330"><span class="lineNum">     330 </span>                :<span class="lineCov">         20 : int memcpy_to_ecc(struct ecc64 *dst, const beint64_t *src, uint64_t len)</span></a>
-<a name="331"><span class="lineNum">     331 </span>                :            : {</a>
-<a name="332"><span class="lineNum">     332 </span>                :<span class="lineCov">         20 :         struct ecc64 ecc_word;</span></a>
-<a name="333"><span class="lineNum">     333 </span>                :<span class="lineCov">         20 :         uint64_t i;</span></a>
-<a name="334"><span class="lineNum">     334 </span>                :            : </a>
-<a name="335"><span class="lineNum">     335 </span>                :<span class="lineCov">         20 :         if (len &amp; 0x7) {</span></a>
-<a name="336"><span class="lineNum">     336 </span>                :            :                 /* TODO: we could probably handle this */</a>
-<a name="337"><span class="lineNum">     337 </span>                :<span class="lineNoCov">          0 :                 FL_ERR(&quot;Data to add ECC bytes to must be 8 byte aligned length: %&quot;</span></a>
-<a name="338"><span class="lineNum">     338 </span>                :            :                        PRIx64 &quot;\n&quot;, len);</a>
-<a name="339"><span class="lineNum">     339 </span>                :<span class="lineNoCov">          0 :                 return -1;</span></a>
-<a name="340"><span class="lineNum">     340 </span>                :            :         }</a>
-<a name="341"><span class="lineNum">     341 </span>                :            : </a>
-<a name="342"><span class="lineNum">     342 </span>                :            :         /* Handle in chunks of 8 bytes, so adjust the length */</a>
-<a name="343"><span class="lineNum">     343 </span>                :<span class="lineCov">         20 :         len &gt;&gt;= 3;</span></a>
-<a name="344"><span class="lineNum">     344 </span>                :            : </a>
-<a name="345"><span class="lineNum">     345 </span>                :<span class="lineCov">       2288 :         for (i = 0; i &lt; len; i++) {</span></a>
-<a name="346"><span class="lineNum">     346 </span>                :<span class="lineCov">       2268 :                 ecc_word.ecc = eccgenerate(be64_to_cpu(*(src + i)));</span></a>
-<a name="347"><span class="lineNum">     347 </span>                :<span class="lineCov">       2268 :                 ecc_word.data = *(src + i);</span></a>
-<a name="348"><span class="lineNum">     348 </span>                :            : </a>
-<a name="349"><span class="lineNum">     349 </span>                :<span class="lineCov">       2268 :                 *(dst + i) = ecc_word;</span></a>
-<a name="350"><span class="lineNum">     350 </span>                :            :         }</a>
-<a name="351"><span class="lineNum">     351 </span>                :            : </a>
-<a name="352"><span class="lineNum">     352 </span>                :            :         return 0;</a>
-<a name="353"><span class="lineNum">     353 </span>                :            : }</a>
-<a name="354"><span class="lineNum">     354 </span>                :            : </a>
-<a name="355"><span class="lineNum">     355 </span>                :            : /**</a>
-<a name="356"><span class="lineNum">     356 </span>                :            :  * Copy data from an input buffer without ECC to an output buffer with ECC.</a>
-<a name="357"><span class="lineNum">     357 </span>                :            :  *</a>
-<a name="358"><span class="lineNum">     358 </span>                :            :  * Unlike memcmp_to_ecc() which requires that the first byte in src be</a>
-<a name="359"><span class="lineNum">     359 </span>                :            :  * the first byte of a struct ecc64 structure this function does not</a>
-<a name="360"><span class="lineNum">     360 </span>                :            :  * have this requirement.</a>
-<a name="361"><span class="lineNum">     361 </span>                :            :  *</a>
-<a name="362"><span class="lineNum">     362 </span>                :            :  * Like memcpy_to_ecc_unaligned() the alignment parameter specfies the</a>
-<a name="363"><span class="lineNum">     363 </span>                :            :  * number of bytes in the first src word that are missing and would be</a>
-<a name="364"><span class="lineNum">     364 </span>                :            :  * required to form a struct ecc64 structure.</a>
-<a name="365"><span class="lineNum">     365 </span>                :            :  *</a>
-<a name="366"><span class="lineNum">     366 </span>                :            :  * It must be noted here that extra work IN THE CALLER must be done</a>
-<a name="367"><span class="lineNum">     367 </span>                :            :  * if your data is unaligned. In order to peform ECC calculations</a>
-<a name="368"><span class="lineNum">     368 </span>                :            :  * whatever portions of the ecc words are missing in src must be in</a>
-<a name="369"><span class="lineNum">     369 </span>                :            :  * dst.</a>
-<a name="370"><span class="lineNum">     370 </span>                :            :  *</a>
-<a name="371"><span class="lineNum">     371 </span>                :            :  * For example, if there is an alignment value of 1 then this means</a>
-<a name="372"><span class="lineNum">     372 </span>                :            :  * there is 1 byte (of the total of 8 bytes) missing in src which is</a>
-<a name="373"><span class="lineNum">     373 </span>                :            :  * needed to calculate the first ECC byte. Therefore the first byte of</a>
-<a name="374"><span class="lineNum">     374 </span>                :            :  * dst MUST CONTAIN IT!</a>
-<a name="375"><span class="lineNum">     375 </span>                :            :  *</a>
-<a name="376"><span class="lineNum">     376 </span>                :            :  * The same problem exists for the end of the buffer where src may not</a>
-<a name="377"><span class="lineNum">     377 </span>                :            :  * end exactly aligned, if this is the case dst must contain the</a>
-<a name="378"><span class="lineNum">     378 </span>                :            :  * required bytes to calculate the last ECC byte - they should be in</a>
-<a name="379"><span class="lineNum">     379 </span>                :            :  * dst where they would normally be found if src did contain those</a>
-<a name="380"><span class="lineNum">     380 </span>                :            :  * bytes.</a>
-<a name="381"><span class="lineNum">     381 </span>                :            :  *</a>
-<a name="382"><span class="lineNum">     382 </span>                :            :  * @dst:                destination buffer with ECC</a>
-<a name="383"><span class="lineNum">     383 </span>                :            :  * @src:                source buffer without ECC</a>
-<a name="384"><span class="lineNum">     384 </span>                :            :  * @len:                number of bytes of data to copy (without ecc, length of src).</a>
-<a name="385"><span class="lineNum">     385 </span>                :            :  * @alignment:  The number of bytes 'missing' from the start of src to</a>
-<a name="386"><span class="lineNum">     386 </span>                :            :  *                              be struct ecc64 aligned</a>
-<a name="387"><span class="lineNum">     387 </span>                :            :  *</a>
-<a name="388"><span class="lineNum">     388 </span>                :            :  *       Note: dst must be big enough to hold ecc bytes as well.</a>
-<a name="389"><span class="lineNum">     389 </span>                :            :  *                   Must be 8 byte aligned.</a>
-<a name="390"><span class="lineNum">     390 </span>                :            :  *</a>
-<a name="391"><span class="lineNum">     391 </span>                :            :  * @return:     success or failure</a>
-<a name="392"><span class="lineNum">     392 </span>                :            :  *</a>
-<a name="393"><span class="lineNum">     393 </span>                :            :  * @retval: 0 - success</a>
-<a name="394"><span class="lineNum">     394 </span>                :            :  * @retfal: other - fail</a>
-<a name="395"><span class="lineNum">     395 </span>                :            :  */</a>
-<a name="396"><span class="lineNum">     396 </span>                :            : </a>
-<a name="397"><span class="lineNum">     397 </span>                :<span class="lineNoCov">          0 : int memcpy_to_ecc_unaligned(struct ecc64 *dst, const beint64_t *src,</span></a>
-<a name="398"><span class="lineNum">     398 </span>                :            :                 uint64_t len, uint8_t alignment)</a>
-<a name="399"><span class="lineNum">     399 </span>                :            : {</a>
-<a name="400"><span class="lineNum">     400 </span>                :<span class="lineNoCov">          0 :         struct ecc64 ecc_word;</span></a>
-<a name="401"><span class="lineNum">     401 </span>                :<span class="lineNoCov">          0 :         uint8_t bytes_wanted;</span></a>
-<a name="402"><span class="lineNum">     402 </span>                :<span class="lineNoCov">          0 :         int rc;</span></a>
-<a name="403"><span class="lineNum">     403 </span>                :            : </a>
-<a name="404"><span class="lineNum">     404 </span>                :<span class="lineNoCov">          0 :         bytes_wanted = BYTES_PER_ECC - alignment;</span></a>
-<a name="405"><span class="lineNum">     405 </span>                :            : </a>
-<a name="406"><span class="lineNum">     406 </span>                :            :         /*</a>
-<a name="407"><span class="lineNum">     407 </span>                :            :          * Only actually do the first calculation if an alignment is</a>
-<a name="408"><span class="lineNum">     408 </span>                :            :          * required - otherwise jump straight to memcpy_to_ecc()</a>
-<a name="409"><span class="lineNum">     409 </span>                :            :          */</a>
-<a name="410"><span class="lineNum">     410 </span>                :<span class="lineNoCov">          0 :         if (alignment) {</span></a>
-<a name="411"><span class="lineNum">     411 </span>                :<span class="lineNoCov">          0 :                 ecc_word.data = dst-&gt;data;</span></a>
-<a name="412"><span class="lineNum">     412 </span>                :<span class="lineNoCov">          0 :                 memcpy(inc_uint64_by(&amp;ecc_word.data, alignment), src, bytes_wanted);</span></a>
-<a name="413"><span class="lineNum">     413 </span>                :            : </a>
-<a name="414"><span class="lineNum">     414 </span>                :<span class="lineNoCov">          0 :                 ecc_word.ecc = eccgenerate(be64_to_cpu(ecc_word.data));</span></a>
-<a name="415"><span class="lineNum">     415 </span>                :<span class="lineNoCov">          0 :                 memcpy(dst, inc_ecc64_by(&amp;ecc_word, alignment),</span></a>
-<a name="416"><span class="lineNum">     416 </span>                :            :                                 sizeof(struct ecc64) - alignment);</a>
-<a name="417"><span class="lineNum">     417 </span>                :            : </a>
-<a name="418"><span class="lineNum">     418 </span>                :<span class="lineNoCov">          0 :                 dst = inc_ecc64_by(dst, sizeof(struct ecc64) - alignment);</span></a>
-<a name="419"><span class="lineNum">     419 </span>                :<span class="lineNoCov">          0 :                 src = inc_beint64_by(src, bytes_wanted);</span></a>
-<a name="420"><span class="lineNum">     420 </span>                :<span class="lineNoCov">          0 :                 len -= bytes_wanted;</span></a>
-<a name="421"><span class="lineNum">     421 </span>                :            :         }</a>
-<a name="422"><span class="lineNum">     422 </span>                :            : </a>
-<a name="423"><span class="lineNum">     423 </span>                :<span class="lineNoCov">          0 :         if (len &gt;= BYTES_PER_ECC) {</span></a>
-<a name="424"><span class="lineNum">     424 </span>                :<span class="lineNoCov">          0 :                 rc = memcpy_to_ecc(dst, src, whole_ecc_bytes(len));</span></a>
-<a name="425"><span class="lineNum">     425 </span>                :<span class="lineNoCov">          0 :                 if (rc)</span></a>
-<a name="426"><span class="lineNum">     426 </span>                :            :                         return rc;</a>
-<a name="427"><span class="lineNum">     427 </span>                :            : </a>
-<a name="428"><span class="lineNum">     428 </span>                :            :                 /*</a>
-<a name="429"><span class="lineNum">     429 </span>                :            :                  * It helps to let the compiler to the pointer arithmetic</a>
-<a name="430"><span class="lineNum">     430 </span>                :            :                  * here, (dst and src are different types)</a>
-<a name="431"><span class="lineNum">     431 </span>                :            :                  */</a>
-<a name="432"><span class="lineNum">     432 </span>                :<span class="lineNoCov">          0 :                 dst += whole_ecc_structs(len);</span></a>
-<a name="433"><span class="lineNum">     433 </span>                :<span class="lineNoCov">          0 :                 src += whole_ecc_structs(len);</span></a>
-<a name="434"><span class="lineNum">     434 </span>                :<span class="lineNoCov">          0 :                 len -= whole_ecc_bytes(len);</span></a>
-<a name="435"><span class="lineNum">     435 </span>                :            :         }</a>
-<a name="436"><span class="lineNum">     436 </span>                :            : </a>
-<a name="437"><span class="lineNum">     437 </span>                :<span class="lineNoCov">          0 :         if (len) {</span></a>
-<a name="438"><span class="lineNum">     438 </span>                :<span class="lineNoCov">          0 :                 bytes_wanted = BYTES_PER_ECC - len;</span></a>
-<a name="439"><span class="lineNum">     439 </span>                :            : </a>
-<a name="440"><span class="lineNum">     440 </span>                :<span class="lineNoCov">          0 :                 ecc_word.data = *src;</span></a>
-<a name="441"><span class="lineNum">     441 </span>                :<span class="lineNoCov">          0 :                 memcpy(inc_uint64_by(&amp;ecc_word.data, len), inc_ecc64_by(dst, len),</span></a>
-<a name="442"><span class="lineNum">     442 </span>                :            :                                 bytes_wanted);</a>
-<a name="443"><span class="lineNum">     443 </span>                :<span class="lineNoCov">          0 :                 ecc_word.ecc = eccgenerate(be64_to_cpu(ecc_word.data));</span></a>
-<a name="444"><span class="lineNum">     444 </span>                :            : </a>
-<a name="445"><span class="lineNum">     445 </span>                :<span class="lineNoCov">          0 :                 *dst = ecc_word;</span></a>
-<a name="446"><span class="lineNum">     446 </span>                :            :         }</a>
-<a name="447"><span class="lineNum">     447 </span>                :            : </a>
-<a name="448"><span class="lineNum">     448 </span>                :            :         return 0;</a>
-<a name="449"><span class="lineNum">     449 </span>                :            : }</a>
-</pre>
-      </td>
-    </tr>
-  </table>
-  <br>
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : /*</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             :  * This is based on the hostboot ecc code</span>
+<span id="L4"><span class="lineNum">       4</span>                 :             :  *</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             :  * Copyright 2013-2019 IBM Corp.</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             :  */</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : </span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : #include &lt;stdint.h&gt;</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : #include &lt;inttypes.h&gt;</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : #include &lt;string.h&gt;</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : #include &lt;ccan/endian/endian.h&gt;</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : </span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : #include &quot;libflash.h&quot;</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : #include &quot;ecc.h&quot;</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : </span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : /* Bit field identifiers for syndrome calculations. */</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : enum eccbitfields</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             : {</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :         GD = 0xff,      //&lt; Good, ECC matches.</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             :         UE = 0xfe,      //&lt; Uncorrectable.</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :         E0 = 71,        //&lt; Error in ECC bit 0</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :         E1 = 70,        //&lt; Error in ECC bit 1</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :         E2 = 69,        //&lt; Error in ECC bit 2</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :         E3 = 68,        //&lt; Error in ECC bit 3</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :         E4 = 67,        //&lt; Error in ECC bit 4</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :         E5 = 66,        //&lt; Error in ECC bit 5</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             :         E6 = 65,        //&lt; Error in ECC bit 6</span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :         E7 = 64         //&lt; Error in ECC bit 7</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :         /* 0-63 Correctable bit in byte */</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             : };</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             : </span>
+<span id="L33"><span class="lineNum">      33</span>                 :             : /*</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :  * Matrix used for ECC calculation.</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :  *</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :  *  Each row of this is the set of data word bits that are used for</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :  *  the calculation of the corresponding ECC bit.  The parity of the</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :  *  bitset is the value of the ECC bit.</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :  *</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :  *  ie. ECC[n] = eccMatrix[n] &amp; data</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :  *</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :  *  Note: To make the math easier (and less shifts in resulting code),</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :  *        row0 = ECC7.  HW numbering is MSB, order here is LSB.</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             :  *</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :  *  These values come from the HW design of the ECC algorithm.</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :  */</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             : static uint64_t eccmatrix[] = {</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :         0x0000e8423c0f99ffull,</span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :         0x00e8423c0f99ff00ull,</span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :         0xe8423c0f99ff0000ull,</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :         0x423c0f99ff0000e8ull,</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :         0x3c0f99ff0000e842ull,</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :         0x0f99ff0000e8423cull,</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :         0x99ff0000e8423c0full,</span>
+<span id="L55"><span class="lineNum">      55</span>                 :             :         0xff0000e8423c0f99ull</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             : };</span>
+<span id="L57"><span class="lineNum">      57</span>                 :             : </span>
+<span id="L58"><span class="lineNum">      58</span>                 :             : /**</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             :  * Syndrome calculation matrix.</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             :  *</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :  *  Maps syndrome to flipped bit.</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             :  *</span>
+<span id="L63"><span class="lineNum">      63</span>                 :             :  *  To perform ECC correction, this matrix is a look-up of the bit</span>
+<span id="L64"><span class="lineNum">      64</span>                 :             :  *  that is bad based on the binary difference of the good and bad</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             :  *  ECC.  This difference is called the &quot;syndrome&quot;.</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             :  *</span>
+<span id="L67"><span class="lineNum">      67</span>                 :             :  *  When a particular bit is on in the data, it cause a column from</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             :  *  eccMatrix being XOR'd into the ECC field.  This column is the</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :  *  &quot;effect&quot; of each bit.  If a bit is flipped in the data then its</span>
+<span id="L70"><span class="lineNum">      70</span>                 :             :  *  &quot;effect&quot; is missing from the ECC.  You can calculate ECC on unknown</span>
+<span id="L71"><span class="lineNum">      71</span>                 :             :  *  quality data and compare the ECC field between the calculated</span>
+<span id="L72"><span class="lineNum">      72</span>                 :             :  *  value and the stored value.  If the difference is zero, then the</span>
+<span id="L73"><span class="lineNum">      73</span>                 :             :  *  data is clean.  If the difference is non-zero, you look up the</span>
+<span id="L74"><span class="lineNum">      74</span>                 :             :  *  difference in the syndrome table to identify the &quot;effect&quot; that</span>
+<span id="L75"><span class="lineNum">      75</span>                 :             :  *  is missing, which is the bit that is flipped.</span>
+<span id="L76"><span class="lineNum">      76</span>                 :             :  *</span>
+<span id="L77"><span class="lineNum">      77</span>                 :             :  *  Notice that ECC bit flips are recorded by a single &quot;effect&quot;</span>
+<span id="L78"><span class="lineNum">      78</span>                 :             :  *  bit (ie. 0x1, 0x2, 0x4, 0x8 ...) and double bit flips are identified</span>
+<span id="L79"><span class="lineNum">      79</span>                 :             :  *  by the UE status in the table.</span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :  *</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             :  *  Bits are in MSB order.</span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :  */</span>
+<span id="L83"><span class="lineNum">      83</span>                 :             : static enum eccbitfields syndromematrix[] = {</span>
+<span id="L84"><span class="lineNum">      84</span>                 :             :         GD, E7, E6, UE, E5, UE, UE, 47, E4, UE, UE, 37, UE, 35, 39, UE,</span>
+<span id="L85"><span class="lineNum">      85</span>                 :             :         E3, UE, UE, 48, UE, 30, 29, UE, UE, 57, 27, UE, 31, UE, UE, UE,</span>
+<span id="L86"><span class="lineNum">      86</span>                 :             :         E2, UE, UE, 17, UE, 18, 40, UE, UE, 58, 22, UE, 21, UE, UE, UE,</span>
+<span id="L87"><span class="lineNum">      87</span>                 :             :         UE, 16, 49, UE, 19, UE, UE, UE, 23, UE, UE, UE, UE, 20, UE, UE,</span>
+<span id="L88"><span class="lineNum">      88</span>                 :             :         E1, UE, UE, 51, UE, 46,  9, UE, UE, 34, 10, UE, 32, UE, UE, 36,</span>
+<span id="L89"><span class="lineNum">      89</span>                 :             :         UE, 62, 50, UE, 14, UE, UE, UE, 13, UE, UE, UE, UE, UE, UE, UE,</span>
+<span id="L90"><span class="lineNum">      90</span>                 :             :         UE, 61,  8, UE, 41, UE, UE, UE, 11, UE, UE, UE, UE, UE, UE, UE,</span>
+<span id="L91"><span class="lineNum">      91</span>                 :             :         15, UE, UE, UE, UE, UE, UE, UE, UE, UE, 12, UE, UE, UE, UE, UE,</span>
+<span id="L92"><span class="lineNum">      92</span>                 :             :         E0, UE, UE, 55, UE, 45, 43, UE, UE, 56, 38, UE,  1, UE, UE, UE,</span>
+<span id="L93"><span class="lineNum">      93</span>                 :             :         UE, 25, 26, UE,  2, UE, UE, UE, 24, UE, UE, UE, UE, UE, 28, UE,</span>
+<span id="L94"><span class="lineNum">      94</span>                 :             :         UE, 59, 54, UE, 42, UE, UE, 44,  6, UE, UE, UE, UE, UE, UE, UE,</span>
+<span id="L95"><span class="lineNum">      95</span>                 :             :          5, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE,</span>
+<span id="L96"><span class="lineNum">      96</span>                 :             :         UE, 63, 53, UE,  0, UE, UE, UE, 33, UE, UE, UE, UE, UE, UE, UE,</span>
+<span id="L97"><span class="lineNum">      97</span>                 :             :          3, UE, UE, 52, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE,</span>
+<span id="L98"><span class="lineNum">      98</span>                 :             :          7, UE, UE, UE, UE, UE, UE, UE, UE, 60, UE, UE, UE, UE, UE, UE,</span>
+<span id="L99"><span class="lineNum">      99</span>                 :             :         UE, UE, UE, UE,  4, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE,</span>
+<span id="L100"><span class="lineNum">     100</span>                 :             : };</span>
+<span id="L101"><span class="lineNum">     101</span>                 :             : </span>
+<span id="L102"><span class="lineNum">     102</span>                 :             : /**</span>
+<span id="L103"><span class="lineNum">     103</span>                 :             :  * Create the ECC field corresponding to a 8-byte data field</span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :  *</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             :  *  @data:      The 8 byte data to generate ECC for.</span>
+<span id="L106"><span class="lineNum">     106</span>                 :             :  *  @return:    The 1 byte ECC corresponding to the data.</span>
+<span id="L107"><span class="lineNum">     107</span>                 :             :  */</span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC tlaBgGNC">        2268 : static uint8_t eccgenerate(uint64_t data)</span></span>
+<span id="L109"><span class="lineNum">     109</span>                 :             : {</span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">        2268 :         int i;</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">        2268 :         uint8_t result = 0;</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :             : </span>
+<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">       20412 :         for (i = 0; i &lt; 8; i++)</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">       18144 :                 result |= __builtin_parityll(eccmatrix[i] &amp; data) &lt;&lt; i;</span></span>
+<span id="L115"><span class="lineNum">     115</span>                 :             : </span>
+<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">        2268 :         return result;</span></span>
+<span id="L117"><span class="lineNum">     117</span>                 :             : }</span>
+<span id="L118"><span class="lineNum">     118</span>                 :             : </span>
+<span id="L119"><span class="lineNum">     119</span>                 :             : /**</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             :  * Verify the data and ECC match or indicate how they are wrong.</span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :  *</span>
+<span id="L122"><span class="lineNum">     122</span>                 :             :  * @data:       The data to check ECC on.</span>
+<span id="L123"><span class="lineNum">     123</span>                 :             :  * @ecc:        The [supposed] ECC for the data.</span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :  *</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             :  * @return:     eccBitfield or 0-64.</span>
+<span id="L126"><span class="lineNum">     126</span>                 :             :  *</span>
+<span id="L127"><span class="lineNum">     127</span>                 :             :  * @retval GD - Indicates the data is good (matches ECC).</span>
+<span id="L128"><span class="lineNum">     128</span>                 :             :  * @retval UE - Indicates the data is uncorrectable.</span>
+<span id="L129"><span class="lineNum">     129</span>                 :             :  * @retval all others - Indication of which bit is incorrect.</span>
+<span id="L130"><span class="lineNum">     130</span>                 :             :  */</span>
+<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaUNC tlaBgUNC">           0 : static enum eccbitfields eccverify(uint64_t data, uint8_t ecc)</span></span>
+<span id="L132"><span class="lineNum">     132</span>                 :             : {</span>
+<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaUNC">           0 :         return syndromematrix[eccgenerate(data) ^ ecc];</span></span>
+<span id="L134"><span class="lineNum">     134</span>                 :             : }</span>
+<span id="L135"><span class="lineNum">     135</span>                 :             : </span>
+<span id="L136"><span class="lineNum">     136</span>                 :             : /* IBM bit ordering */</span>
+<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaUNC">           0 : static inline uint64_t eccflipbit(uint64_t data, uint8_t bit)</span></span>
+<span id="L138"><span class="lineNum">     138</span>                 :             : {</span>
+<span id="L139"><span class="lineNum">     139</span>                 :<span class="tlaUNC">           0 :         if (bit &gt; 63)</span></span>
+<span id="L140"><span class="lineNum">     140</span>                 :             :                 return data;</span>
+<span id="L141"><span class="lineNum">     141</span>                 :             : </span>
+<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaUNC">           0 :         return data ^ (1ul &lt;&lt; (63 - bit));</span></span>
+<span id="L143"><span class="lineNum">     143</span>                 :             : }</span>
+<span id="L144"><span class="lineNum">     144</span>                 :             : </span>
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaUNC">           0 : static int eccbyte(beint64_t *dst, struct ecc64 *src)</span></span>
+<span id="L146"><span class="lineNum">     146</span>                 :             : {</span>
+<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaUNC">           0 :         uint8_t ecc, badbit;</span></span>
+<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaUNC">           0 :         uint64_t data;</span></span>
+<span id="L149"><span class="lineNum">     149</span>                 :             : </span>
+<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaUNC">           0 :         data = be64_to_cpu(src-&gt;data);</span></span>
+<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaUNC">           0 :         ecc = src-&gt;ecc;</span></span>
+<span id="L152"><span class="lineNum">     152</span>                 :             : </span>
+<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaUNC">           0 :         badbit = eccverify(data, ecc);</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaUNC">           0 :         if (badbit == UE) {</span></span>
+<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaUNC">           0 :                 FL_ERR(&quot;ECC: uncorrectable error: %016llx %02x\n&quot;, (unsigned long long int)data, ecc);</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaUNC">           0 :                 return badbit;</span></span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :         }</span>
+<span id="L158"><span class="lineNum">     158</span>                 :<span class="tlaUNC">           0 :         if (badbit &lt;= UE)</span></span>
+<span id="L159"><span class="lineNum">     159</span>                 :<span class="tlaUNC">           0 :                 FL_INF(&quot;ECC: correctable error: %i\n&quot;, badbit);</span></span>
+<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaUNC">           0 :         if (badbit &lt; 64)</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaUNC">           0 :                 *dst = cpu_to_be64(eccflipbit(data, badbit));</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :             :         else</span>
+<span id="L163"><span class="lineNum">     163</span>                 :<span class="tlaUNC">           0 :                 *dst = cpu_to_be64(data);</span></span>
+<span id="L164"><span class="lineNum">     164</span>                 :             : </span>
+<span id="L165"><span class="lineNum">     165</span>                 :             :         return 0;</span>
+<span id="L166"><span class="lineNum">     166</span>                 :             : }</span>
+<span id="L167"><span class="lineNum">     167</span>                 :             : </span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaUNC">           0 : static beint64_t *inc_beint64_by(const void *p, uint64_t i)</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :             : {</span>
+<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaUNC">           0 :         return (beint64_t *)(((char *)p) + i);</span></span>
+<span id="L171"><span class="lineNum">     171</span>                 :             : }</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : </span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaUNC">           0 : static uint64_t *inc_uint64_by(const void *p, uint64_t i)</span></span>
+<span id="L174"><span class="lineNum">     174</span>                 :             : {</span>
+<span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaUNC">           0 :         return (uint64_t *)(((char *)p) + i);</span></span>
+<span id="L176"><span class="lineNum">     176</span>                 :             : }</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             : </span>
+<span id="L178"><span class="lineNum">     178</span>                 :<span class="tlaUNC">           0 : static struct ecc64 *inc_ecc64_by(struct ecc64 *p, uint64_t i)</span></span>
+<span id="L179"><span class="lineNum">     179</span>                 :             : {</span>
+<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaUNC">           0 :         return (struct ecc64 *)(((char *)p) + i);</span></span>
+<span id="L181"><span class="lineNum">     181</span>                 :             : }</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             : </span>
+<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaUNC">           0 : static uint64_t whole_ecc_bytes(uint64_t i)</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :             : {</span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaUNC">           0 :         return i &amp; ~(BYTES_PER_ECC - 1);</span></span>
+<span id="L186"><span class="lineNum">     186</span>                 :             : }</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             : </span>
+<span id="L188"><span class="lineNum">     188</span>                 :             : static uint64_t whole_ecc_structs(uint64_t i)</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             : {</span>
+<span id="L190"><span class="lineNum">     190</span>                 :             :         return whole_ecc_bytes(i) &gt;&gt; 3;</span>
+<span id="L191"><span class="lineNum">     191</span>                 :             : }</span>
+<span id="L192"><span class="lineNum">     192</span>                 :             : </span>
+<span id="L193"><span class="lineNum">     193</span>                 :             : /**</span>
+<span id="L194"><span class="lineNum">     194</span>                 :             :  * Copy data from an input buffer with ECC to an output buffer without ECC.</span>
+<span id="L195"><span class="lineNum">     195</span>                 :             :  * Correct it along the way and check for errors.</span>
+<span id="L196"><span class="lineNum">     196</span>                 :             :  *</span>
+<span id="L197"><span class="lineNum">     197</span>                 :             :  * @dst:        destination buffer without ECC</span>
+<span id="L198"><span class="lineNum">     198</span>                 :             :  * @src:        source buffer with ECC</span>
+<span id="L199"><span class="lineNum">     199</span>                 :             :  * @len:        number of bytes of data to copy (without ecc).</span>
+<span id="L200"><span class="lineNum">     200</span>                 :             :  *                   Must be 8 byte aligned.</span>
+<span id="L201"><span class="lineNum">     201</span>                 :             :  *</span>
+<span id="L202"><span class="lineNum">     202</span>                 :             :  * @return:     Success or error</span>
+<span id="L203"><span class="lineNum">     203</span>                 :             :  *</span>
+<span id="L204"><span class="lineNum">     204</span>                 :             :  * @retval: 0 - success</span>
+<span id="L205"><span class="lineNum">     205</span>                 :             :  * @retfal: other - fail</span>
+<span id="L206"><span class="lineNum">     206</span>                 :             :  */</span>
+<span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaUNC">           0 : int memcpy_from_ecc(beint64_t *dst, struct ecc64 *src, uint64_t len)</span></span>
+<span id="L208"><span class="lineNum">     208</span>                 :             : {</span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaUNC">           0 :         uint32_t i;</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :             : </span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaUNC">           0 :         if (len &amp; 0x7) {</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :             :                 /* TODO: we could probably handle this */</span>
+<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaUNC">           0 :                 FL_ERR(&quot;ECC data length must be 8 byte aligned length:%&quot; PRIx64  &quot;\n&quot;,</span></span>
+<span id="L214"><span class="lineNum">     214</span>                 :             :                        len);</span>
+<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaUNC">           0 :                 return -1;</span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :         }</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             : </span>
+<span id="L218"><span class="lineNum">     218</span>                 :             :         /* Handle in chunks of 8 bytes, so adjust the length */</span>
+<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaUNC">           0 :         len &gt;&gt;= 3;</span></span>
+<span id="L220"><span class="lineNum">     220</span>                 :             : </span>
+<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaUNC">           0 :         for (i = 0; i &lt; len; i++) {</span></span>
+<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaUNC">           0 :                 int rc;</span></span>
+<span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaUNC">           0 :                 rc = eccbyte(dst, src + i);</span></span>
+<span id="L224"><span class="lineNum">     224</span>                 :<span class="tlaUNC">           0 :                 if (rc)</span></span>
+<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaUNC">           0 :                         return rc;</span></span>
+<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaUNC">           0 :                 dst++;</span></span>
+<span id="L227"><span class="lineNum">     227</span>                 :             :         }</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             :         return 0;</span>
+<span id="L229"><span class="lineNum">     229</span>                 :             : }</span>
+<span id="L230"><span class="lineNum">     230</span>                 :             : </span>
+<span id="L231"><span class="lineNum">     231</span>                 :             : /**</span>
+<span id="L232"><span class="lineNum">     232</span>                 :             :  * Copy data from an input buffer with ECC to an output buffer without ECC.</span>
+<span id="L233"><span class="lineNum">     233</span>                 :             :  * Correct it along the way and check for errors.</span>
+<span id="L234"><span class="lineNum">     234</span>                 :             :  *</span>
+<span id="L235"><span class="lineNum">     235</span>                 :             :  * Unlike memcmp_from_ecc() which requires that the first byte into</span>
+<span id="L236"><span class="lineNum">     236</span>                 :             :  * dst be the first byte in src (which must also be aligned to a</span>
+<span id="L237"><span class="lineNum">     237</span>                 :             :  * struct ecc64 struct boundary) this function can cope with the first</span>
+<span id="L238"><span class="lineNum">     238</span>                 :             :  * byte in dst not being the first byte in src.</span>
+<span id="L239"><span class="lineNum">     239</span>                 :             :  *</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :  * Note: src MUST still be aligned to a struct ecc64 otherwise ECC</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             :  * calculations are impossible.</span>
+<span id="L242"><span class="lineNum">     242</span>                 :             :  *</span>
+<span id="L243"><span class="lineNum">     243</span>                 :             :  * The alignment parameter species the number of bytes present at the</span>
+<span id="L244"><span class="lineNum">     244</span>                 :             :  * start of src that should be skipped and not written to dst. Once</span>
+<span id="L245"><span class="lineNum">     245</span>                 :             :  * again, these bytes must be in src otherwise the ECC cannot be</span>
+<span id="L246"><span class="lineNum">     246</span>                 :             :  * checked.</span>
+<span id="L247"><span class="lineNum">     247</span>                 :             :  *</span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :  * len also doesn't have any value limitation for this function. Of</span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :  * course src must contain an exact multiple of struct ecc64 otherwise</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :  * ECC calculation cannot be performed but this function won't copy</span>
+<span id="L251"><span class="lineNum">     251</span>                 :             :  * the entirety of the last src data word if len is not mutiple of 8</span>
+<span id="L252"><span class="lineNum">     252</span>                 :             :  *</span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :  * @dst:                destination buffer without ECC</span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :  * @src:                source buffer with ECC</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :  * @len:                number of bytes of data to copy (without ecc).</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :  * @alignment:  number of leading bytes in src which shouldn't be</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :  *                              copied to dst</span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :  * @return:     Success or error</span>
+<span id="L259"><span class="lineNum">     259</span>                 :             :  *</span>
+<span id="L260"><span class="lineNum">     260</span>                 :             :  * @retval: 0 - success</span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :  * @retfal: other - fail</span>
+<span id="L262"><span class="lineNum">     262</span>                 :             :  */</span>
+<span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaUNC">           0 : int memcpy_from_ecc_unaligned(beint64_t *dst, struct ecc64 *src,</span></span>
+<span id="L264"><span class="lineNum">     264</span>                 :             :                 uint64_t len, uint8_t alignment)</span>
+<span id="L265"><span class="lineNum">     265</span>                 :             : {</span>
+<span id="L266"><span class="lineNum">     266</span>                 :<span class="tlaUNC">           0 :         char data[BYTES_PER_ECC];</span></span>
+<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaUNC">           0 :         uint8_t bytes_wanted;</span></span>
+<span id="L268"><span class="lineNum">     268</span>                 :<span class="tlaUNC">           0 :         int rc;</span></span>
+<span id="L269"><span class="lineNum">     269</span>                 :             : </span>
+<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaUNC">           0 :         if (alignment &gt; 8)</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :             :                 return -1;</span>
+<span id="L272"><span class="lineNum">     272</span>                 :             : </span>
+<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaUNC">           0 :         bytes_wanted = BYTES_PER_ECC - alignment;</span></span>
+<span id="L274"><span class="lineNum">     274</span>                 :             : </span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :         /*</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             :          * Only actually do the first calculation if an alignment is</span>
+<span id="L277"><span class="lineNum">     277</span>                 :             :          * required - otherwise jump straight to memcpy_from_ecc()</span>
+<span id="L278"><span class="lineNum">     278</span>                 :             :          */</span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaUNC">           0 :         if (alignment) {</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaUNC">           0 :                 rc = eccbyte((beint64_t *)data, src);</span></span>
+<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaUNC">           0 :                 if (rc)</span></span>
+<span id="L282"><span class="lineNum">     282</span>                 :             :                         return rc;</span>
+<span id="L283"><span class="lineNum">     283</span>                 :             : </span>
+<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaUNC">           0 :                 memcpy(dst, &amp;data[alignment], bytes_wanted);</span></span>
+<span id="L285"><span class="lineNum">     285</span>                 :             : </span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaUNC">           0 :                 src = inc_ecc64_by(src, sizeof(struct ecc64));</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaUNC">           0 :                 dst = inc_beint64_by(dst, bytes_wanted);</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaUNC">           0 :                 len -= bytes_wanted;</span></span>
+<span id="L289"><span class="lineNum">     289</span>                 :             :         }</span>
+<span id="L290"><span class="lineNum">     290</span>                 :             : </span>
+<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaUNC">           0 :         if (len &gt;= BYTES_PER_ECC) {</span></span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaUNC">           0 :                 rc = memcpy_from_ecc(dst, src, whole_ecc_bytes(len));</span></span>
+<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaUNC">           0 :                 if (rc)</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :             :                         return rc;</span>
+<span id="L295"><span class="lineNum">     295</span>                 :             : </span>
+<span id="L296"><span class="lineNum">     296</span>                 :             :                 /*</span>
+<span id="L297"><span class="lineNum">     297</span>                 :             :                  * It helps to let the compiler to the pointer arithmetic</span>
+<span id="L298"><span class="lineNum">     298</span>                 :             :                  * here, (dst and src are different types)</span>
+<span id="L299"><span class="lineNum">     299</span>                 :             :                  */</span>
+<span id="L300"><span class="lineNum">     300</span>                 :<span class="tlaUNC">           0 :                 dst += whole_ecc_structs(len);</span></span>
+<span id="L301"><span class="lineNum">     301</span>                 :<span class="tlaUNC">           0 :                 src += whole_ecc_structs(len);</span></span>
+<span id="L302"><span class="lineNum">     302</span>                 :<span class="tlaUNC">           0 :                 len -= whole_ecc_bytes(len);</span></span>
+<span id="L303"><span class="lineNum">     303</span>                 :             :         }</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             : </span>
+<span id="L305"><span class="lineNum">     305</span>                 :<span class="tlaUNC">           0 :         if (len) {</span></span>
+<span id="L306"><span class="lineNum">     306</span>                 :<span class="tlaUNC">           0 :                 rc = eccbyte((beint64_t *)data, src);</span></span>
+<span id="L307"><span class="lineNum">     307</span>                 :<span class="tlaUNC">           0 :                 if (rc)</span></span>
+<span id="L308"><span class="lineNum">     308</span>                 :             :                         return rc;</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : </span>
+<span id="L310"><span class="lineNum">     310</span>                 :<span class="tlaUNC">           0 :                 memcpy(dst, data, len);</span></span>
+<span id="L311"><span class="lineNum">     311</span>                 :             :         }</span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : </span>
+<span id="L313"><span class="lineNum">     313</span>                 :             :         return 0;</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             : }</span>
+<span id="L315"><span class="lineNum">     315</span>                 :             : </span>
+<span id="L316"><span class="lineNum">     316</span>                 :             : /**</span>
+<span id="L317"><span class="lineNum">     317</span>                 :             :  * Copy data from an input buffer without ECC to an output buffer with ECC.</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             :  *</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :  * @dst:        destination buffer with ECC</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :  * @src:        source buffer without ECC</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :  * @len:        number of bytes of data to copy (without ecc, length of src).</span>
+<span id="L322"><span class="lineNum">     322</span>                 :             :  *       Note: dst must be big enough to hold ecc bytes as well.</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :  *                   Must be 8 byte aligned.</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             :  *</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             :  * @return:     success or failure</span>
+<span id="L326"><span class="lineNum">     326</span>                 :             :  *</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             :  * @retval: 0 - success</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             :  * @retfal: other - fail</span>
+<span id="L329"><span class="lineNum">     329</span>                 :             :  */</span>
+<span id="L330"><span class="lineNum">     330</span>                 :<span class="tlaGNC tlaBgGNC">          20 : int memcpy_to_ecc(struct ecc64 *dst, const beint64_t *src, uint64_t len)</span></span>
+<span id="L331"><span class="lineNum">     331</span>                 :             : {</span>
+<span id="L332"><span class="lineNum">     332</span>                 :<span class="tlaGNC">          20 :         struct ecc64 ecc_word;</span></span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">          20 :         uint64_t i;</span></span>
+<span id="L334"><span class="lineNum">     334</span>                 :             : </span>
+<span id="L335"><span class="lineNum">     335</span>                 :<span class="tlaGNC">          20 :         if (len &amp; 0x7) {</span></span>
+<span id="L336"><span class="lineNum">     336</span>                 :             :                 /* TODO: we could probably handle this */</span>
+<span id="L337"><span class="lineNum">     337</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 FL_ERR(&quot;Data to add ECC bytes to must be 8 byte aligned length: %&quot;</span></span>
+<span id="L338"><span class="lineNum">     338</span>                 :             :                        PRIx64 &quot;\n&quot;, len);</span>
+<span id="L339"><span class="lineNum">     339</span>                 :<span class="tlaUNC">           0 :                 return -1;</span></span>
+<span id="L340"><span class="lineNum">     340</span>                 :             :         }</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             : </span>
+<span id="L342"><span class="lineNum">     342</span>                 :             :         /* Handle in chunks of 8 bytes, so adjust the length */</span>
+<span id="L343"><span class="lineNum">     343</span>                 :<span class="tlaGNC tlaBgGNC">          20 :         len &gt;&gt;= 3;</span></span>
+<span id="L344"><span class="lineNum">     344</span>                 :             : </span>
+<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaGNC">        2288 :         for (i = 0; i &lt; len; i++) {</span></span>
+<span id="L346"><span class="lineNum">     346</span>                 :<span class="tlaGNC">        2268 :                 ecc_word.ecc = eccgenerate(be64_to_cpu(*(src + i)));</span></span>
+<span id="L347"><span class="lineNum">     347</span>                 :<span class="tlaGNC">        2268 :                 ecc_word.data = *(src + i);</span></span>
+<span id="L348"><span class="lineNum">     348</span>                 :             : </span>
+<span id="L349"><span class="lineNum">     349</span>                 :<span class="tlaGNC">        2268 :                 *(dst + i) = ecc_word;</span></span>
+<span id="L350"><span class="lineNum">     350</span>                 :             :         }</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             : </span>
+<span id="L352"><span class="lineNum">     352</span>                 :             :         return 0;</span>
+<span id="L353"><span class="lineNum">     353</span>                 :             : }</span>
+<span id="L354"><span class="lineNum">     354</span>                 :             : </span>
+<span id="L355"><span class="lineNum">     355</span>                 :             : /**</span>
+<span id="L356"><span class="lineNum">     356</span>                 :             :  * Copy data from an input buffer without ECC to an output buffer with ECC.</span>
+<span id="L357"><span class="lineNum">     357</span>                 :             :  *</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             :  * Unlike memcmp_to_ecc() which requires that the first byte in src be</span>
+<span id="L359"><span class="lineNum">     359</span>                 :             :  * the first byte of a struct ecc64 structure this function does not</span>
+<span id="L360"><span class="lineNum">     360</span>                 :             :  * have this requirement.</span>
+<span id="L361"><span class="lineNum">     361</span>                 :             :  *</span>
+<span id="L362"><span class="lineNum">     362</span>                 :             :  * Like memcpy_to_ecc_unaligned() the alignment parameter specfies the</span>
+<span id="L363"><span class="lineNum">     363</span>                 :             :  * number of bytes in the first src word that are missing and would be</span>
+<span id="L364"><span class="lineNum">     364</span>                 :             :  * required to form a struct ecc64 structure.</span>
+<span id="L365"><span class="lineNum">     365</span>                 :             :  *</span>
+<span id="L366"><span class="lineNum">     366</span>                 :             :  * It must be noted here that extra work IN THE CALLER must be done</span>
+<span id="L367"><span class="lineNum">     367</span>                 :             :  * if your data is unaligned. In order to peform ECC calculations</span>
+<span id="L368"><span class="lineNum">     368</span>                 :             :  * whatever portions of the ecc words are missing in src must be in</span>
+<span id="L369"><span class="lineNum">     369</span>                 :             :  * dst.</span>
+<span id="L370"><span class="lineNum">     370</span>                 :             :  *</span>
+<span id="L371"><span class="lineNum">     371</span>                 :             :  * For example, if there is an alignment value of 1 then this means</span>
+<span id="L372"><span class="lineNum">     372</span>                 :             :  * there is 1 byte (of the total of 8 bytes) missing in src which is</span>
+<span id="L373"><span class="lineNum">     373</span>                 :             :  * needed to calculate the first ECC byte. Therefore the first byte of</span>
+<span id="L374"><span class="lineNum">     374</span>                 :             :  * dst MUST CONTAIN IT!</span>
+<span id="L375"><span class="lineNum">     375</span>                 :             :  *</span>
+<span id="L376"><span class="lineNum">     376</span>                 :             :  * The same problem exists for the end of the buffer where src may not</span>
+<span id="L377"><span class="lineNum">     377</span>                 :             :  * end exactly aligned, if this is the case dst must contain the</span>
+<span id="L378"><span class="lineNum">     378</span>                 :             :  * required bytes to calculate the last ECC byte - they should be in</span>
+<span id="L379"><span class="lineNum">     379</span>                 :             :  * dst where they would normally be found if src did contain those</span>
+<span id="L380"><span class="lineNum">     380</span>                 :             :  * bytes.</span>
+<span id="L381"><span class="lineNum">     381</span>                 :             :  *</span>
+<span id="L382"><span class="lineNum">     382</span>                 :             :  * @dst:                destination buffer with ECC</span>
+<span id="L383"><span class="lineNum">     383</span>                 :             :  * @src:                source buffer without ECC</span>
+<span id="L384"><span class="lineNum">     384</span>                 :             :  * @len:                number of bytes of data to copy (without ecc, length of src).</span>
+<span id="L385"><span class="lineNum">     385</span>                 :             :  * @alignment:  The number of bytes 'missing' from the start of src to</span>
+<span id="L386"><span class="lineNum">     386</span>                 :             :  *                              be struct ecc64 aligned</span>
+<span id="L387"><span class="lineNum">     387</span>                 :             :  *</span>
+<span id="L388"><span class="lineNum">     388</span>                 :             :  *       Note: dst must be big enough to hold ecc bytes as well.</span>
+<span id="L389"><span class="lineNum">     389</span>                 :             :  *                   Must be 8 byte aligned.</span>
+<span id="L390"><span class="lineNum">     390</span>                 :             :  *</span>
+<span id="L391"><span class="lineNum">     391</span>                 :             :  * @return:     success or failure</span>
+<span id="L392"><span class="lineNum">     392</span>                 :             :  *</span>
+<span id="L393"><span class="lineNum">     393</span>                 :             :  * @retval: 0 - success</span>
+<span id="L394"><span class="lineNum">     394</span>                 :             :  * @retfal: other - fail</span>
+<span id="L395"><span class="lineNum">     395</span>                 :             :  */</span>
+<span id="L396"><span class="lineNum">     396</span>                 :             : </span>
+<span id="L397"><span class="lineNum">     397</span>                 :<span class="tlaUNC tlaBgUNC">           0 : int memcpy_to_ecc_unaligned(struct ecc64 *dst, const beint64_t *src,</span></span>
+<span id="L398"><span class="lineNum">     398</span>                 :             :                 uint64_t len, uint8_t alignment)</span>
+<span id="L399"><span class="lineNum">     399</span>                 :             : {</span>
+<span id="L400"><span class="lineNum">     400</span>                 :<span class="tlaUNC">           0 :         struct ecc64 ecc_word;</span></span>
+<span id="L401"><span class="lineNum">     401</span>                 :<span class="tlaUNC">           0 :         uint8_t bytes_wanted;</span></span>
+<span id="L402"><span class="lineNum">     402</span>                 :<span class="tlaUNC">           0 :         int rc;</span></span>
+<span id="L403"><span class="lineNum">     403</span>                 :             : </span>
+<span id="L404"><span class="lineNum">     404</span>                 :<span class="tlaUNC">           0 :         bytes_wanted = BYTES_PER_ECC - alignment;</span></span>
+<span id="L405"><span class="lineNum">     405</span>                 :             : </span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :         /*</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             :          * Only actually do the first calculation if an alignment is</span>
+<span id="L408"><span class="lineNum">     408</span>                 :             :          * required - otherwise jump straight to memcpy_to_ecc()</span>
+<span id="L409"><span class="lineNum">     409</span>                 :             :          */</span>
+<span id="L410"><span class="lineNum">     410</span>                 :<span class="tlaUNC">           0 :         if (alignment) {</span></span>
+<span id="L411"><span class="lineNum">     411</span>                 :<span class="tlaUNC">           0 :                 ecc_word.data = dst-&gt;data;</span></span>
+<span id="L412"><span class="lineNum">     412</span>                 :<span class="tlaUNC">           0 :                 memcpy(inc_uint64_by(&amp;ecc_word.data, alignment), src, bytes_wanted);</span></span>
+<span id="L413"><span class="lineNum">     413</span>                 :             : </span>
+<span id="L414"><span class="lineNum">     414</span>                 :<span class="tlaUNC">           0 :                 ecc_word.ecc = eccgenerate(be64_to_cpu(ecc_word.data));</span></span>
+<span id="L415"><span class="lineNum">     415</span>                 :<span class="tlaUNC">           0 :                 memcpy(dst, inc_ecc64_by(&amp;ecc_word, alignment),</span></span>
+<span id="L416"><span class="lineNum">     416</span>                 :             :                                 sizeof(struct ecc64) - alignment);</span>
+<span id="L417"><span class="lineNum">     417</span>                 :             : </span>
+<span id="L418"><span class="lineNum">     418</span>                 :<span class="tlaUNC">           0 :                 dst = inc_ecc64_by(dst, sizeof(struct ecc64) - alignment);</span></span>
+<span id="L419"><span class="lineNum">     419</span>                 :<span class="tlaUNC">           0 :                 src = inc_beint64_by(src, bytes_wanted);</span></span>
+<span id="L420"><span class="lineNum">     420</span>                 :<span class="tlaUNC">           0 :                 len -= bytes_wanted;</span></span>
+<span id="L421"><span class="lineNum">     421</span>                 :             :         }</span>
+<span id="L422"><span class="lineNum">     422</span>                 :             : </span>
+<span id="L423"><span class="lineNum">     423</span>                 :<span class="tlaUNC">           0 :         if (len &gt;= BYTES_PER_ECC) {</span></span>
+<span id="L424"><span class="lineNum">     424</span>                 :<span class="tlaUNC">           0 :                 rc = memcpy_to_ecc(dst, src, whole_ecc_bytes(len));</span></span>
+<span id="L425"><span class="lineNum">     425</span>                 :<span class="tlaUNC">           0 :                 if (rc)</span></span>
+<span id="L426"><span class="lineNum">     426</span>                 :             :                         return rc;</span>
+<span id="L427"><span class="lineNum">     427</span>                 :             : </span>
+<span id="L428"><span class="lineNum">     428</span>                 :             :                 /*</span>
+<span id="L429"><span class="lineNum">     429</span>                 :             :                  * It helps to let the compiler to the pointer arithmetic</span>
+<span id="L430"><span class="lineNum">     430</span>                 :             :                  * here, (dst and src are different types)</span>
+<span id="L431"><span class="lineNum">     431</span>                 :             :                  */</span>
+<span id="L432"><span class="lineNum">     432</span>                 :<span class="tlaUNC">           0 :                 dst += whole_ecc_structs(len);</span></span>
+<span id="L433"><span class="lineNum">     433</span>                 :<span class="tlaUNC">           0 :                 src += whole_ecc_structs(len);</span></span>
+<span id="L434"><span class="lineNum">     434</span>                 :<span class="tlaUNC">           0 :                 len -= whole_ecc_bytes(len);</span></span>
+<span id="L435"><span class="lineNum">     435</span>                 :             :         }</span>
+<span id="L436"><span class="lineNum">     436</span>                 :             : </span>
+<span id="L437"><span class="lineNum">     437</span>                 :<span class="tlaUNC">           0 :         if (len) {</span></span>
+<span id="L438"><span class="lineNum">     438</span>                 :<span class="tlaUNC">           0 :                 bytes_wanted = BYTES_PER_ECC - len;</span></span>
+<span id="L439"><span class="lineNum">     439</span>                 :             : </span>
+<span id="L440"><span class="lineNum">     440</span>                 :<span class="tlaUNC">           0 :                 ecc_word.data = *src;</span></span>
+<span id="L441"><span class="lineNum">     441</span>                 :<span class="tlaUNC">           0 :                 memcpy(inc_uint64_by(&amp;ecc_word.data, len), inc_ecc64_by(dst, len),</span></span>
+<span id="L442"><span class="lineNum">     442</span>                 :             :                                 bytes_wanted);</span>
+<span id="L443"><span class="lineNum">     443</span>                 :<span class="tlaUNC">           0 :                 ecc_word.ecc = eccgenerate(be64_to_cpu(ecc_word.data));</span></span>
+<span id="L444"><span class="lineNum">     444</span>                 :             : </span>
+<span id="L445"><span class="lineNum">     445</span>                 :<span class="tlaUNC">           0 :                 *dst = ecc_word;</span></span>
+<span id="L446"><span class="lineNum">     446</span>                 :             :         }</span>
+<span id="L447"><span class="lineNum">     447</span>                 :             : </span>
+<span id="L448"><span class="lineNum">     448</span>                 :             :         return 0;</span>
+<span id="L449"><span class="lineNum">     449</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
-  </table>
-  <br>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
 
 </body>
 </html>

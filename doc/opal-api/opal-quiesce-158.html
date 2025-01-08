@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_QUIESCE &#8212; skiboot bc7b85d
+    <title>OPAL_QUIESCE &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-query-cpu-status-42.html" title="OPAL_QUERY_CPU_STATUS"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_QUIESCE</a></li> 
@@ -46,10 +44,10 @@
           <div class="body" role="main">
             
   <section id="opal-quiesce">
-<span id="id1"></span><h1>OPAL_QUIESCE<a class="headerlink" href="#opal-quiesce" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_QUIESCE<a class="headerlink" href="#opal-quiesce" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_QUIESCE                         158</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_quiesce</span><span class="p">(</span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">quiesce_type</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">cpu_target</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_quiesce</span><span class="p">(</span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">quiesce_type</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">cpu_target</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The host OS can use <a class="reference internal" href="#opal-quiesce"><span class="std std-ref">OPAL_QUIESCE</span></a> to ensure CPUs under host control are not
@@ -57,9 +55,9 @@ executing OPAL. This is useful in crash or shutdown scenarios to try to
 ensure that CPUs are not holding locks, and is intended to be used with
 <a class="reference internal" href="opal-signal-system-reset-145.html#opal-signal-system-reset"><span class="std std-ref">OPAL_SIGNAL_SYSTEM_RESET</span></a>, for example.</p>
 <section id="arguments">
-<h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h2>
+<h2>Arguments<a class="headerlink" href="#arguments" title="Link to this heading">¶</a></h2>
 <section id="quiesce-type">
-<h3>quiesce_type<a class="headerlink" href="#quiesce-type" title="Permalink to this headline">¶</a></h3>
+<h3>quiesce_type<a class="headerlink" href="#quiesce-type" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>QUIESCE_HOLD</dt><dd><p>Wait for all target(s) currently executing OPAL to
 return to the host. Any new OPAL call that is made
@@ -88,7 +86,7 @@ into a new OS boot).</p>
 </dl>
 </section>
 <section id="target-cpu">
-<h3>target_cpu<a class="headerlink" href="#target-cpu" title="Permalink to this headline">¶</a></h3>
+<h3>target_cpu<a class="headerlink" href="#target-cpu" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">cpu_nr</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code></dt><dd><p>The cpu server number of the target cpu to reset.</p>
 </dd>
@@ -98,7 +96,7 @@ into a new OS boot).</p>
 </section>
 </section>
 <section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>The quiesce call was successful.</p>
 </dd>
@@ -125,8 +123,9 @@ QUIESCE_LOCK_BREAK or QUIESCE_RESUME.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_QUIESCE</a><ul>
 <li><a class="reference internal" href="#arguments">Arguments</a><ul>
 <li><a class="reference internal" href="#quiesce-type">quiesce_type</a></li>
@@ -138,12 +137,17 @@ QUIESCE_LOCK_BREAK or QUIESCE_RESUME.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-query-cpu-status-42.html"
-                        title="previous chapter">OPAL_QUERY_CPU_STATUS</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-read-write-tpo-dpo-103-104-105.html"
-                        title="next chapter">OPAL Timed Power On and Delayed Power Off</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-query-cpu-status-42.html"
+                          title="previous chapter">OPAL_QUERY_CPU_STATUS</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-read-write-tpo-dpo-103-104-105.html"
+                          title="next chapter">OPAL Timed Power On and Delayed Power Off</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -160,7 +164,7 @@ QUIESCE_LOCK_BREAK or QUIESCE_RESUME.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -177,15 +181,15 @@ QUIESCE_LOCK_BREAK or QUIESCE_RESUME.</p>
         <li class="right" >
           <a href="opal-query-cpu-status-42.html" title="OPAL_QUERY_CPU_STATUS"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_QUIESCE</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

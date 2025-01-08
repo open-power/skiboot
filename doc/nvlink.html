@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL/Skiboot Nvlink Interface Documentation &#8212; skiboot bc7b85d
+    <title>OPAL/Skiboot Nvlink Interface Documentation &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="memory.html" title="Memory in skiboot"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL/Skiboot Nvlink Interface Documentation</a></li> 
       </ul>
@@ -45,9 +43,9 @@
           <div class="body" role="main">
             
   <section id="opal-skiboot-nvlink-interface-documentation">
-<span id="nvlink"></span><h1>OPAL/Skiboot Nvlink Interface Documentation<a class="headerlink" href="#opal-skiboot-nvlink-interface-documentation" title="Permalink to this headline">¶</a></h1>
+<span id="nvlink"></span><h1>OPAL/Skiboot Nvlink Interface Documentation<a class="headerlink" href="#opal-skiboot-nvlink-interface-documentation" title="Link to this heading">¶</a></h1>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>NV-Link is a high speed interconnect that is used in conjunction with
 a PCI-E connection to create an interface between chips that provides
 very high data bandwidth. The PCI-E connection is used as the control
@@ -64,7 +62,7 @@ the target, thus the emulated PCI device will only handle registers
 for link initialisation, DMA transfers and error reporting (EEH).</p>
 </section>
 <section id="emulated-pci-devices">
-<h2>Emulated PCI Devices<a class="headerlink" href="#emulated-pci-devices" title="Permalink to this headline">¶</a></h2>
+<h2>Emulated PCI Devices<a class="headerlink" href="#emulated-pci-devices" title="Link to this heading">¶</a></h2>
 <p>Each link will be exported as an emulated PCI device with a minimum of
 two emulated PCI devices per GPU. Emulated PCI devices are grouped per
 GPU.</p>
@@ -73,13 +71,8 @@ the Linux kernel. It has a standard PCI configuration space to expose
 necessary device parameters. The only functionality available is
 related to the setup of DMA windows.</p>
 <section id="configuration-space-parameters">
-<h3>Configuration Space Parameters<a class="headerlink" href="#configuration-space-parameters" title="Permalink to this headline">¶</a></h3>
+<h3>Configuration Space Parameters<a class="headerlink" href="#configuration-space-parameters" title="Link to this heading">¶</a></h3>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 17%" />
-<col style="width: 26%" />
-<col style="width: 57%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -115,7 +108,7 @@ related to the setup of DMA windows.</p>
 </table>
 </section>
 <section id="tl-dl-registers">
-<h3>TL/DL Registers<a class="headerlink" href="#tl-dl-registers" title="Permalink to this headline">¶</a></h3>
+<h3>TL/DL Registers<a class="headerlink" href="#tl-dl-registers" title="Link to this heading">¶</a></h3>
 <p>Each link has 128KB of TL/DL registers. These will always be mapped
 to 64-bit BAR#0 of the emulated PCI device configuration space.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BAR</span><span class="c1">#0 + 128K +-----------+</span>
@@ -127,7 +120,7 @@ to 64-bit BAR#0 of the emulated PCI device configuration space.</p>
 </div>
 </section>
 <section id="generation-registers-gen-id">
-<h3>Generation Registers (GEN-ID)<a class="headerlink" href="#generation-registers-gen-id" title="Permalink to this headline">¶</a></h3>
+<h3>Generation Registers (GEN-ID)<a class="headerlink" href="#generation-registers-gen-id" title="Link to this heading">¶</a></h3>
 <p>On POWER9 each link has 64K of generation ID registers for the relaxed
 ordering mode syncronisation. Refer to the programming guide for
 details of the register layout in this BAR.</p>
@@ -136,7 +129,7 @@ device driver support. Device drivers will need to request relaxed
 ordering mode through some yet to be designed mechanism.</p>
 </section>
 <section id="vendor-specific-capabilities">
-<h3>Vendor Specific Capabilities<a class="headerlink" href="#vendor-specific-capabilities" title="Permalink to this headline">¶</a></h3>
+<h3>Vendor Specific Capabilities<a class="headerlink" href="#vendor-specific-capabilities" title="Link to this heading">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">+-----------------+----------------+----------------+----------------+</span>
 <span class="o">|</span>  <span class="n">Version</span> <span class="p">(</span><span class="mh">0x02</span><span class="p">)</span> <span class="o">|</span>   <span class="n">Cap</span> <span class="n">Length</span>   <span class="o">|</span>  <span class="n">Next</span> <span class="n">Cap</span> <span class="n">Ptr</span>  <span class="o">|</span>  <span class="n">Cap</span> <span class="n">ID</span> <span class="p">(</span><span class="mh">0x09</span><span class="p">)</span> <span class="o">|</span>
 <span class="o">+-----------------+----------------+----------------+----------------+</span>
@@ -222,7 +215,7 @@ with. One of 0, 1, 4 or 5 (links 2 &amp; 3 do not exist on Naples).</p>
 </div></blockquote>
 </section>
 <section id="interrupts">
-<h3>Interrupts<a class="headerlink" href="#interrupts" title="Permalink to this headline">¶</a></h3>
+<h3>Interrupts<a class="headerlink" href="#interrupts" title="Link to this heading">¶</a></h3>
 <p>Each link has a single DL/TL interrupt assigned to it. These will be
 exposed as an LSI via the emulated PCI device. There are 4 links
 consuming 4 LSI interrupts. The 4 remaining interrupts supported by the
@@ -231,7 +224,7 @@ reporting.</p>
 </section>
 </section>
 <section id="device-tree-bindings">
-<h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Permalink to this headline">¶</a></h2>
+<h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Link to this heading">¶</a></h2>
 <p>See <a class="reference internal" href="device-tree/nvlink.html#device-tree-nvlink"><span class="std std-ref">Nvlink Device Tree Bindings</span></a></p>
 </section>
 </section>
@@ -243,8 +236,9 @@ reporting.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL/Skiboot Nvlink Interface Documentation</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#emulated-pci-devices">Emulated PCI Devices</a><ul>
@@ -260,12 +254,17 @@ reporting.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="memory.html"
-                        title="previous chapter">Memory in skiboot</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="pci.html"
-                        title="next chapter">PCI</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="memory.html"
+                          title="previous chapter">Memory in skiboot</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="pci.html"
+                          title="next chapter">PCI</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -282,7 +281,7 @@ reporting.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -299,14 +298,14 @@ reporting.</p>
         <li class="right" >
           <a href="memory.html" title="Memory in skiboot"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL/Skiboot Nvlink Interface Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

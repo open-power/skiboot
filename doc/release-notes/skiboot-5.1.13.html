@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.1.13 &#8212; skiboot bc7b85d
+    <title>skiboot-5.1.13 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.1.12.html" title="skiboot-5.1.12"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.13</a></li> 
@@ -46,12 +44,12 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-1-13">
-<span id="id1"></span><h1>skiboot-5.1.13<a class="headerlink" href="#skiboot-5-1-13" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>skiboot-5.1.13<a class="headerlink" href="#skiboot-5-1-13" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.1.13 was released on Wed January 27th, 2016.</p>
 <p>skiboot-5.1.13 is the 14th stable release of 5.1, it follows skiboot-5.1.12
 (which was released December 4th, 2015). This release contains bug fixes.</p>
 <section id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<h2>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>core/device.c: Sort nodes with <a class="reference external" href="mailto:name&#37;&#52;&#48;unit">name<span>&#64;</span>unit</a> names by unit</p>
 <ul class="simple">
@@ -76,7 +74,7 @@ fully printed out.</p>
 </ul>
 </section>
 <section id="capi">
-<h2>CAPI<a class="headerlink" href="#capi" title="Permalink to this headline">¶</a></h2>
+<h2>CAPI<a class="headerlink" href="#capi" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>hmi: Identify the phb upon CAPI malfunction alert
 Previously, any error on a CAPI adapter would assume PHB0.
@@ -84,7 +82,7 @@ This could cause issues on Firestone machines.</p></li>
 </ul>
 </section>
 <section id="gard-utility">
-<h2>gard utility<a class="headerlink" href="#gard-utility" title="Permalink to this headline">¶</a></h2>
+<h2>gard utility<a class="headerlink" href="#gard-utility" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Fix displaying ‘cleared’ gard records
 When a garded component is replaced hostboot detects this and updates the
@@ -95,7 +93,7 @@ record needed to be erased. This fix makes gard and hostboot agree.</p>
 </ul>
 </section>
 <section id="firestone-platform">
-<h2>firestone platform<a class="headerlink" href="#firestone-platform" title="Permalink to this headline">¶</a></h2>
+<h2>firestone platform<a class="headerlink" href="#firestone-platform" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>fix spacing in slot name
 The other SlotN names have no space.</p></li>
@@ -110,8 +108,9 @@ The other SlotN names have no space.</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.1.13</a><ul>
 <li><a class="reference internal" href="#general">General</a></li>
 <li><a class="reference internal" href="#capi">CAPI</a></li>
@@ -121,12 +120,17 @@ The other SlotN names have no space.</p></li>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.1.12.html"
-                        title="previous chapter">skiboot-5.1.12</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.1.14.html"
-                        title="next chapter">skiboot-5.1.14</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.1.12.html"
+                          title="previous chapter">skiboot-5.1.12</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.1.14.html"
+                          title="next chapter">skiboot-5.1.14</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -143,7 +147,7 @@ The other SlotN names have no space.</p></li>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -160,15 +164,15 @@ The other SlotN names have no space.</p></li>
         <li class="right" >
           <a href="skiboot-5.1.12.html" title="skiboot-5.1.12"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.13</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

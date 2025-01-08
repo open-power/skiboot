@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL &lt;–&gt; BMC interactions &#8212; skiboot bc7b85d
+    <title>OPAL &lt;–&gt; BMC interactions &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="error-logging.html" title="How to log errors on OPAL"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL &lt;–&gt; BMC interactions</a></li> 
       </ul>
@@ -45,11 +43,11 @@
           <div class="body" role="main">
             
   <section id="opal-bmc-interactions">
-<h1>OPAL &lt;–&gt; BMC interactions<a class="headerlink" href="#opal-bmc-interactions" title="Permalink to this headline">¶</a></h1>
+<h1>OPAL &lt;–&gt; BMC interactions<a class="headerlink" href="#opal-bmc-interactions" title="Link to this heading">¶</a></h1>
 <p>This document provides information about some of the user-visible interactions
 that skiboot performs with the BMC.</p>
 <section id="ipmi-sensors">
-<h2>IPMI sensors<a class="headerlink" href="#ipmi-sensors" title="Permalink to this headline">¶</a></h2>
+<h2>IPMI sensors<a class="headerlink" href="#ipmi-sensors" title="Link to this heading">¶</a></h2>
 <p>OPAL will interact with a few IPMI sensors during the boot process. These
 are:</p>
 <blockquote>
@@ -91,7 +89,7 @@ boot it.</p></li>
 </div></blockquote>
 </section>
 <section id="chassis-control-messages">
-<h2>Chassis control messages<a class="headerlink" href="#chassis-control-messages" title="Permalink to this headline">¶</a></h2>
+<h2>Chassis control messages<a class="headerlink" href="#chassis-control-messages" title="Link to this heading">¶</a></h2>
 <p>OPAL uses chassis control messages to instruct the BMC to remove power from
 the host. These messages are sent during graceful reboot and shutdown processes
 initiated by the host.</p>
@@ -101,17 +99,17 @@ notification. This SEL has a type of 0xc0, and command of 0x04. The data0 field
 of the SEL indicates shutdown (0x0) or reboot (0x1).</p>
 </section>
 <section id="watchdog-support">
-<h2>Watchdog support<a class="headerlink" href="#watchdog-support" title="Permalink to this headline">¶</a></h2>
+<h2>Watchdog support<a class="headerlink" href="#watchdog-support" title="Link to this heading">¶</a></h2>
 <p>OPAL supports a BMC watchdog during the boot process. This will be disabled
 before entering the OS.</p>
 </section>
 <section id="real-time-clock">
-<h2>Real-time clock<a class="headerlink" href="#real-time-clock" title="Permalink to this headline">¶</a></h2>
+<h2>Real-time clock<a class="headerlink" href="#real-time-clock" title="Link to this heading">¶</a></h2>
 <p>On platforms where a real-time-clock is not available, skiboot may use the
 IPMI SEL Time as a real-time-clock device.</p>
 </section>
 <section id="sbe-validation">
-<h2>SBE validation<a class="headerlink" href="#sbe-validation" title="Permalink to this headline">¶</a></h2>
+<h2>SBE validation<a class="headerlink" href="#sbe-validation" title="Link to this heading">¶</a></h2>
 <p>On some P8 platforms with an AMI or SMC BMC (ie. astbmc) SBE validation is done
 by a tool on the BMC. This is done to inspect the SBE and detect if a malicious
 host has written to the SBE, especially in multi-tenant
@@ -145,8 +143,9 @@ the flag is not set and validation doesn’t occur.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL &lt;–&gt; BMC interactions</a><ul>
 <li><a class="reference internal" href="#ipmi-sensors">IPMI sensors</a></li>
 <li><a class="reference internal" href="#chassis-control-messages">Chassis control messages</a></li>
@@ -157,12 +156,17 @@ the flag is not set and validation doesn’t occur.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="error-logging.html"
-                        title="previous chapter">How to log errors on OPAL</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="gcov.html"
-                        title="next chapter">GCOV for skiboot</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="error-logging.html"
+                          title="previous chapter">How to log errors on OPAL</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="gcov.html"
+                          title="next chapter">GCOV for skiboot</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -179,7 +183,7 @@ the flag is not set and validation doesn’t occur.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -196,14 +200,14 @@ the flag is not set and validation doesn’t occur.</p>
         <li class="right" >
           <a href="error-logging.html" title="How to log errors on OPAL"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL &lt;–&gt; BMC interactions</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

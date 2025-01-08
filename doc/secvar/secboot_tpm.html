@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>secboot_tpm secvar storage driver for P9 platforms &#8212; skiboot bc7b85d
+    <title>secboot_tpm secvar storage driver for P9 platforms &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -25,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">secboot_tpm secvar storage driver for P9 platforms</a></li> 
       </ul>
@@ -37,9 +35,9 @@
           <div class="body" role="main">
             
   <section id="secboot-tpm-secvar-storage-driver-for-p9-platforms">
-<span id="secvar-secboot-tpm"></span><h1>secboot_tpm secvar storage driver for P9 platforms<a class="headerlink" href="#secboot-tpm-secvar-storage-driver-for-p9-platforms" title="Permalink to this headline">¶</a></h1>
+<span id="secvar-secboot-tpm"></span><h1>secboot_tpm secvar storage driver for P9 platforms<a class="headerlink" href="#secboot-tpm-secvar-storage-driver-for-p9-platforms" title="Link to this heading">¶</a></h1>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>This storage driver utilizes the SECBOOT PNOR partition and TPM NV space to
 persist secure variables across reboots in a tamper-resistant manner. While
 writes to PNOR cannot be completely prevented, writes CAN be prevented to TPM
@@ -52,7 +50,7 @@ must have been altered and are not loaded.</p>
 <p>See the following sections for more information on the internals of the driver.</p>
 </section>
 <section id="storage-layouts">
-<h2>Storage Layouts<a class="headerlink" href="#storage-layouts" title="Permalink to this headline">¶</a></h2>
+<h2>Storage Layouts<a class="headerlink" href="#storage-layouts" title="Link to this heading">¶</a></h2>
 <p>At a high-level, there are a few major logical components:</p>
 <blockquote>
 <div><ul class="simple">
@@ -72,7 +70,7 @@ variable storage, there is only one bank due to limited storage space. See the
 TPM NV Indices section for more.</p>
 </section>
 <section id="persisting-the-variable-bank">
-<h2>Persisting the Variable Bank<a class="headerlink" href="#persisting-the-variable-bank" title="Permalink to this headline">¶</a></h2>
+<h2>Persisting the Variable Bank<a class="headerlink" href="#persisting-the-variable-bank" title="Link to this heading">¶</a></h2>
 <p>When writing a new variable bank to storage, this is (roughly) the procedure the
 driver will follow:</p>
 <ol class="arabic simple">
@@ -91,7 +89,7 @@ banks, there are also two corresponding active/staging bank hashes stored in
 the TPM.</p>
 </section>
 <section id="tpm-nv-indices">
-<h2>TPM NV Indices<a class="headerlink" href="#tpm-nv-indices" title="Permalink to this headline">¶</a></h2>
+<h2>TPM NV Indices<a class="headerlink" href="#tpm-nv-indices" title="Link to this heading">¶</a></h2>
 <p>The driver utilizes two TPM NV indices:</p>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp"># size). datadefine SECBOOT_TPMNV_VARS_INDEX  0x01c10190</span>
 <span class="cp">#define SECBOOT_TPMNV_CONTROL_INDEX   0x01c10191</span>
@@ -110,7 +108,7 @@ attributes, size, etc), then the driver will halt the boot. Asserting physical
 presence will redefine the indices in the correct state.</p>
 </section>
 <section id="locking">
-<h2>Locking<a class="headerlink" href="#locking" title="Permalink to this headline">¶</a></h2>
+<h2>Locking<a class="headerlink" href="#locking" title="Link to this heading">¶</a></h2>
 <p>PNOR cannot be locked, however the TPM can be. The TPM NV indices are double
 protected via two locking mechanisms:</p>
 <blockquote>
@@ -131,7 +129,7 @@ kernel. This is also reset on the next TPM reset.</p>
 NOT unlock the TPM.</p>
 </section>
 <section id="resetting-storage-physical-presence">
-<h2>Resetting Storage / Physical Presence<a class="headerlink" href="#resetting-storage-physical-presence" title="Permalink to this headline">¶</a></h2>
+<h2>Resetting Storage / Physical Presence<a class="headerlink" href="#resetting-storage-physical-presence" title="Link to this heading">¶</a></h2>
 <p>In the case that secure boot/secvar has been rendered unusable, (for example:
 corrupted data, lost/compromised private key, improperly defined NV indices, etc)
 this storage driver responds to physical presence assertion as a last-resort
@@ -151,9 +149,9 @@ device tree nodes are present in <code class="docutils literal notranslate"><spa
 </section>
 </section>
 <section id="storage-formats-layouts">
-<h1>Storage Formats/Layouts<a class="headerlink" href="#storage-formats-layouts" title="Permalink to this headline">¶</a></h1>
+<h1>Storage Formats/Layouts<a class="headerlink" href="#storage-formats-layouts" title="Link to this heading">¶</a></h1>
 <section id="secboot-pnor">
-<h2>SECBOOT (PNOR)<a class="headerlink" href="#secboot-pnor" title="Permalink to this headline">¶</a></h2>
+<h2>SECBOOT (PNOR)<a class="headerlink" href="#secboot-pnor" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>Partition Format:</dt><dd><ul class="simple">
 <li><p>8b secboot header
@@ -175,7 +173,7 @@ device tree nodes are present in <code class="docutils literal notranslate"><spa
 </dl>
 </section>
 <section id="tpm-vars-nv">
-<h2>TPM VARS (NV)<a class="headerlink" href="#tpm-vars-nv" title="Permalink to this headline">¶</a></h2>
+<h2>TPM VARS (NV)<a class="headerlink" href="#tpm-vars-nv" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>NV Index Format:</dt><dd><ul class="simple">
 <li><p>8b secboot header
@@ -195,7 +193,7 @@ device tree nodes are present in <code class="docutils literal notranslate"><spa
 </dl>
 </section>
 <section id="tpm-control-nv">
-<h2>TPM CONTROL (NV)<a class="headerlink" href="#tpm-control-nv" title="Permalink to this headline">¶</a></h2>
+<h2>TPM CONTROL (NV)<a class="headerlink" href="#tpm-control-nv" title="Link to this heading">¶</a></h2>
 <blockquote>
 <div><ul class="simple">
 <li><p>8b secboot header
@@ -217,8 +215,9 @@ device tree nodes are present in <code class="docutils literal notranslate"><spa
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">secboot_tpm secvar storage driver for P9 platforms</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#storage-layouts">Storage Layouts</a></li>
@@ -236,6 +235,7 @@ device tree nodes are present in <code class="docutils literal notranslate"><spa
 </li>
 </ul>
 
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -252,7 +252,7 @@ device tree nodes are present in <code class="docutils literal notranslate"><spa
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -263,14 +263,14 @@ device tree nodes are present in <code class="docutils literal notranslate"><spa
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">secboot_tpm secvar storage driver for P9 platforms</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Contributing to skiboot &#8212; skiboot bc7b85d
+    <title>Contributing to skiboot &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="dev-release-process.html" title="Development and Release Process"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Contributing to skiboot</a></li> 
       </ul>
@@ -45,7 +43,7 @@
           <div class="body" role="main">
             
   <section id="contributing-to-skiboot">
-<h1>Contributing to skiboot<a class="headerlink" href="#contributing-to-skiboot" title="Permalink to this headline">¶</a></h1>
+<h1>Contributing to skiboot<a class="headerlink" href="#contributing-to-skiboot" title="Link to this heading">¶</a></h1>
 <p>skiboot is OPAL (OpenPOWER Abstraction Layer) boot and runtime firmware for
 POWER.</p>
 <p>If you haven’t already, join us on IRC (#openpower on Freenode) and on
@@ -56,7 +54,7 @@ We expect participants to adhere to the GitHub Community Guidelines (found
 at <a class="reference external" href="https://help.github.com/articles/github-community-guidelines/">https://help.github.com/articles/github-community-guidelines/</a> ).</p>
 <p>All contributions should have a Developer Certificate of Origin (see below).</p>
 <section id="development-environment">
-<h2>Development Environment<a class="headerlink" href="#development-environment" title="Permalink to this headline">¶</a></h2>
+<h2>Development Environment<a class="headerlink" href="#development-environment" title="Link to this heading">¶</a></h2>
 <p>A host GCC of at least 4.9 is recommended (all modern Linux distributions
 provide this).</p>
 <p>You can build on x86-64, ppc64 or ppc64le, you just need a powerpc64 (BE)
@@ -64,7 +62,7 @@ cross compiler. The powerpc64le cross compilers packaged in Linux distributions
 can build BE code, so they are fine.</p>
 </section>
 <section id="developer-certificate-of-origin">
-<h2>Developer Certificate of Origin<a class="headerlink" href="#developer-certificate-of-origin" title="Permalink to this headline">¶</a></h2>
+<h2>Developer Certificate of Origin<a class="headerlink" href="#developer-certificate-of-origin" title="Link to this heading">¶</a></h2>
 <p>Contributions to this project should conform to the <cite>Developer Certificate
 of Origin</cite> as defined at <a class="reference external" href="http://elinux.org/Developer_Certificate_Of_Origin">http://elinux.org/Developer_Certificate_Of_Origin</a>.
 Commits to this project need to contain the following line to indicate
@@ -114,8 +112,9 @@ this project or the open source license(s) involved.</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Contributing to skiboot</a><ul>
 <li><a class="reference internal" href="#development-environment">Development Environment</a></li>
 <li><a class="reference internal" href="#developer-certificate-of-origin">Developer Certificate of Origin</a></li>
@@ -123,12 +122,17 @@ this project or the open source license(s) involved.</p></li>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="dev-release-process.html"
-                        title="previous chapter">Development and Release Process</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="stable-skiboot-rules.html"
-                        title="next chapter">Skiboot stable tree rules and releases</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="dev-release-process.html"
+                          title="previous chapter">Development and Release Process</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="stable-skiboot-rules.html"
+                          title="next chapter">Skiboot stable tree rules and releases</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -145,7 +149,7 @@ this project or the open source license(s) involved.</p></li>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -162,14 +166,14 @@ this project or the open source license(s) involved.</p></li>
         <li class="right" >
           <a href="dev-release-process.html" title="Development and Release Process"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Contributing to skiboot</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

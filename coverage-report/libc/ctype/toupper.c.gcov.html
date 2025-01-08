@@ -10,97 +10,97 @@
 
 <body>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="title">LCOV - code coverage report</td></tr>
-    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
 
-    <tr>
-      <td width="100%">
-        <table cellpadding=1 border=0 width="100%">
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
           <tr>
             <td width="10%" class="headerItem">Current view:</td>
-            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">libc/ctype</a> - toupper.c<span style="font-size: 80%;"> (source / <a href="toupper.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="10%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">libc/ctype</a> - toupper.c<span style="font-size: 80%;"> (source / <a href="toupper.c.func-c.html">functions</a>)</span></td>
             <td width="5%"></td>
-            <td width="15%"></td>
-            <td width="10%" class="headerCovTableHead">Hit</td>
-            <td width="10%" class="headerCovTableHead">Total</td>
-            <td width="15%" class="headerCovTableHead">Coverage</td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
             <td class="headerCovTableEntry">4</td>
             <td class="headerCovTableEntry">4</td>
-            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
-            <td class="headerItem">Date:</td>
-            <td class="headerValue">2024-09-10 18:37:41</td>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-01-08 15:53:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
             <td class="headerCovTableEntry">1</td>
             <td class="headerCovTableEntry">1</td>
-            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntry">0</td>
-            <td class="headerCovTableEntry">0</td>
             <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
           </tr>
-          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
-        </table>
-      </td>
-    </tr>
+                  <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
 
-    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
-  </table>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
 
-  <table cellpadding=0 cellspacing=0 border=0>
-    <tr>
-      <td><br></td>
-    </tr>
-    <tr>
-      <td>
-<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
 <pre class="source">
-<a name="1"><span class="lineNum">       1 </span>                :            : /******************************************************************************</a>
-<a name="2"><span class="lineNum">       2 </span>                :            :  * Copyright (c) 2004, 2008 IBM Corporation</a>
-<a name="3"><span class="lineNum">       3 </span>                :            :  * All rights reserved.</a>
-<a name="4"><span class="lineNum">       4 </span>                :            :  * This program and the accompanying materials</a>
-<a name="5"><span class="lineNum">       5 </span>                :            :  * are made available under the terms of the BSD License</a>
-<a name="6"><span class="lineNum">       6 </span>                :            :  * which accompanies this distribution, and is available at</a>
-<a name="7"><span class="lineNum">       7 </span>                :            :  * http://www.opensource.org/licenses/bsd-license.php</a>
-<a name="8"><span class="lineNum">       8 </span>                :            :  *</a>
-<a name="9"><span class="lineNum">       9 </span>                :            :  * Contributors:</a>
-<a name="10"><span class="lineNum">      10 </span>                :            :  *     IBM Corporation - initial implementation</a>
-<a name="11"><span class="lineNum">      11 </span>                :            :  *****************************************************************************/</a>
-<a name="12"><span class="lineNum">      12 </span>                :            : </a>
-<a name="13"><span class="lineNum">      13 </span>                :            : #include &lt;compiler.h&gt;</a>
-<a name="14"><span class="lineNum">      14 </span>                :            : #include &quot;ctype.h&quot;</a>
-<a name="15"><span class="lineNum">      15 </span>                :            : </a>
-<a name="16"><span class="lineNum">      16 </span>                :<span class="lineCov">       2570 : int __attrconst toupper (int cha)</span></a>
-<a name="17"><span class="lineNum">      17 </span>                :            : {</a>
-<a name="18"><span class="lineNum">      18 </span>                :<span class="lineCov">       2570 :         if((cha &gt;= 'a') &amp;&amp; (cha &lt;= 'z'))</span></a>
-<a name="19"><span class="lineNum">      19 </span>                :<span class="lineCov">        260 :                 return(cha - 'a' + 'A');</span></a>
-<a name="20"><span class="lineNum">      20 </span>                :<span class="lineCov">       2310 :         return(cha);</span></a>
-<a name="21"><span class="lineNum">      21 </span>                :            : }</a>
-</pre>
-      </td>
-    </tr>
-  </table>
-  <br>
+<span id="L1"><span class="lineNum">       1</span>                 :             : /******************************************************************************</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             :  * Copyright (c) 2004, 2008 IBM Corporation</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             :  * All rights reserved.</span>
+<span id="L4"><span class="lineNum">       4</span>                 :             :  * This program and the accompanying materials</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             :  * are made available under the terms of the BSD License</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             :  * which accompanies this distribution, and is available at</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             :  * http://www.opensource.org/licenses/bsd-license.php</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             :  *</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             :  * Contributors:</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             :  *     IBM Corporation - initial implementation</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             :  *****************************************************************************/</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : </span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : #include &lt;compiler.h&gt;</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : #include &quot;ctype.h&quot;</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : </span>
+<span id="L16"><span class="lineNum">      16</span>                 :<span class="tlaGNC tlaBgGNC">        2570 : int __attrconst toupper (int cha)</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : {</span>
+<span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">        2570 :         if((cha &gt;= 'a') &amp;&amp; (cha &lt;= 'z'))</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">         260 :                 return(cha - 'a' + 'A');</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">        2310 :         return(cha);</span></span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
-    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
-  </table>
-  <br>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
 
 </body>
 </html>

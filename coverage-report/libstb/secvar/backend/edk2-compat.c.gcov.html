@@ -10,373 +10,373 @@
 
 <body>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="title">LCOV - code coverage report</td></tr>
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
 
-    <tr>
-      <td width="100%">
-        <table cellpadding=1 border=0 width="100%">
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
           <tr>
             <td width="10%" class="headerItem">Current view:</td>
-            <td width="35%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">libstb/secvar/backend</a> - edk2-compat.c<span style="font-size: 80%;"> (source / <a href="edk2-compat.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="10%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">libstb/secvar/backend</a> - edk2-compat.c<span style="font-size: 80%;"> (source / <a href="edk2-compat.c.func-c.html">functions</a>)</span></td>
             <td width="5%"></td>
-            <td width="15%"></td>
-            <td width="10%" class="headerCovTableHead">Hit</td>
-            <td width="10%" class="headerCovTableHead">Total</td>
-            <td width="15%" class="headerCovTableHead">Coverage</td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">101</td>
+            <td class="headerCovTableEntryMed">84.2&nbsp;%</td>
             <td class="headerCovTableEntry">120</td>
-            <td class="headerCovTableEntryMed">84.2 %</td>
+            <td class="headerCovTableEntry">101</td>
           </tr>
           <tr>
-            <td class="headerItem">Date:</td>
-            <td class="headerValue">2024-09-10 18:37:41</td>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-01-08 15:53:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
             <td class="headerCovTableEntry">4</td>
             <td class="headerCovTableEntry">4</td>
-            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntry">0</td>
-            <td class="headerCovTableEntry">0</td>
             <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
           </tr>
-          <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-        </table>
-      </td>
-    </tr>
+                  <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
 
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-  </table>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
 
-  <table cellpadding=0 cellspacing=0 border=0>
-    <tr>
-      <td><br></td>
-    </tr>
-    <tr>
-      <td>
-<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
 <pre class="source">
-<a name="1"><span class="lineNum">       1 </span>                :            : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</a>
-<a name="2"><span class="lineNum">       2 </span>                :            : /* Copyright 2020 IBM Corp. */</a>
-<a name="3"><span class="lineNum">       3 </span>                :            : #ifndef pr_fmt</a>
-<a name="4"><span class="lineNum">       4 </span>                :            : #define pr_fmt(fmt) &quot;EDK2_COMPAT: &quot; fmt</a>
-<a name="5"><span class="lineNum">       5 </span>                :            : #endif</a>
-<a name="6"><span class="lineNum">       6 </span>                :            : </a>
-<a name="7"><span class="lineNum">       7 </span>                :            : #include &lt;opal.h&gt;</a>
-<a name="8"><span class="lineNum">       8 </span>                :            : #include &lt;string.h&gt;</a>
-<a name="9"><span class="lineNum">       9 </span>                :            : #include &lt;time.h&gt;</a>
-<a name="10"><span class="lineNum">      10 </span>                :            : #include &lt;unistd.h&gt;</a>
-<a name="11"><span class="lineNum">      11 </span>                :            : #include &lt;stdint.h&gt;</a>
-<a name="12"><span class="lineNum">      12 </span>                :            : #include &lt;skiboot.h&gt;</a>
-<a name="13"><span class="lineNum">      13 </span>                :            : #include &lt;ccan/endian/endian.h&gt;</a>
-<a name="14"><span class="lineNum">      14 </span>                :            : #include &lt;mbedtls/error.h&gt;</a>
-<a name="15"><span class="lineNum">      15 </span>                :            : #include &quot;libstb/crypto/pkcs7/pkcs7.h&quot;</a>
-<a name="16"><span class="lineNum">      16 </span>                :            : #include &quot;edk2.h&quot;</a>
-<a name="17"><span class="lineNum">      17 </span>                :            : #include &quot;../secvar.h&quot;</a>
-<a name="18"><span class="lineNum">      18 </span>                :            : #include &quot;edk2-compat-process.h&quot;</a>
-<a name="19"><span class="lineNum">      19 </span>                :            : #include &quot;edk2-compat-reset.h&quot;</a>
-<a name="20"><span class="lineNum">      20 </span>                :            : </a>
-<a name="21"><span class="lineNum">      21 </span>                :            : struct list_head staging_bank;</a>
-<a name="22"><span class="lineNum">      22 </span>                :            : </a>
-<a name="23"><span class="lineNum">      23 </span>                :            : /*</a>
-<a name="24"><span class="lineNum">      24 </span>                :            :  * Initializes supported variables as empty if not loaded from</a>
-<a name="25"><span class="lineNum">      25 </span>                :            :  * storage. Variables are initialized as volatile if not found.</a>
-<a name="26"><span class="lineNum">      26 </span>                :            :  * Updates should clear this flag.</a>
-<a name="27"><span class="lineNum">      27 </span>                :            :  * Returns OPAL Error if anything fails in initialization</a>
-<a name="28"><span class="lineNum">      28 </span>                :            :  */</a>
-<a name="29"><span class="lineNum">      29 </span>                :<span class="lineCov">          1 : static int edk2_compat_pre_process(struct list_head *variable_bank,</span></a>
-<a name="30"><span class="lineNum">      30 </span>                :            :                                    struct list_head *update_bank __unused)</a>
-<a name="31"><span class="lineNum">      31 </span>                :            : {</a>
-<a name="32"><span class="lineNum">      32 </span>                :            :         struct secvar *pkvar;</a>
-<a name="33"><span class="lineNum">      33 </span>                :            :         struct secvar *kekvar;</a>
-<a name="34"><span class="lineNum">      34 </span>                :            :         struct secvar *dbvar;</a>
-<a name="35"><span class="lineNum">      35 </span>                :            :         struct secvar *dbxvar;</a>
-<a name="36"><span class="lineNum">      36 </span>                :            :         struct secvar *tsvar;</a>
-<a name="37"><span class="lineNum">      37 </span>                :            : </a>
-<a name="38"><span class="lineNum">      38 </span>                :<span class="lineCov">          1 :         pkvar = find_secvar(&quot;PK&quot;, 3, variable_bank);</span></a>
-<a name="39"><span class="lineNum">      39 </span>                :<span class="lineCov">          1 :         if (!pkvar) {</span></a>
-<a name="40"><span class="lineNum">      40 </span>                :<span class="lineCov">          1 :                 pkvar = new_secvar(&quot;PK&quot;, 3, NULL, 0, SECVAR_FLAG_VOLATILE</span></a>
-<a name="41"><span class="lineNum">      41 </span>                :            :                                 | SECVAR_FLAG_PROTECTED);</a>
-<a name="42"><span class="lineNum">      42 </span>                :<span class="lineCov">          1 :                 if (!pkvar)</span></a>
-<a name="43"><span class="lineNum">      43 </span>                :<span class="lineNoCov">          0 :                         return OPAL_NO_MEM;</span></a>
-<a name="44"><span class="lineNum">      44 </span>                :            : </a>
-<a name="45"><span class="lineNum">      45 </span>                :<span class="lineCov">          1 :                 list_add_tail(variable_bank, &amp;pkvar-&gt;link);</span></a>
-<a name="46"><span class="lineNum">      46 </span>                :            :         }</a>
-<a name="47"><span class="lineNum">      47 </span>                :<span class="lineCov">          1 :         if (pkvar-&gt;data_size == 0)</span></a>
-<a name="48"><span class="lineNum">      48 </span>                :<span class="lineCov">          1 :                 setup_mode = true;</span></a>
-<a name="49"><span class="lineNum">      49 </span>                :            :         else</a>
-<a name="50"><span class="lineNum">      50 </span>                :<span class="lineNoCov">          0 :                 setup_mode = false;</span></a>
-<a name="51"><span class="lineNum">      51 </span>                :            : </a>
-<a name="52"><span class="lineNum">      52 </span>                :<span class="lineCov">          1 :         kekvar = find_secvar(&quot;KEK&quot;, 4, variable_bank);</span></a>
-<a name="53"><span class="lineNum">      53 </span>                :<span class="lineCov">          1 :         if (!kekvar) {</span></a>
-<a name="54"><span class="lineNum">      54 </span>                :<span class="lineCov">          1 :                 kekvar = new_secvar(&quot;KEK&quot;, 4, NULL, 0, SECVAR_FLAG_VOLATILE);</span></a>
-<a name="55"><span class="lineNum">      55 </span>                :<span class="lineCov">          1 :                 if (!kekvar)</span></a>
-<a name="56"><span class="lineNum">      56 </span>                :<span class="lineNoCov">          0 :                         return OPAL_NO_MEM;</span></a>
-<a name="57"><span class="lineNum">      57 </span>                :            : </a>
-<a name="58"><span class="lineNum">      58 </span>                :<span class="lineCov">          1 :                 list_add_tail(variable_bank, &amp;kekvar-&gt;link);</span></a>
-<a name="59"><span class="lineNum">      59 </span>                :            :         }</a>
-<a name="60"><span class="lineNum">      60 </span>                :            : </a>
-<a name="61"><span class="lineNum">      61 </span>                :<span class="lineCov">          1 :         dbvar = find_secvar(&quot;db&quot;, 3, variable_bank);</span></a>
-<a name="62"><span class="lineNum">      62 </span>                :<span class="lineCov">          1 :         if (!dbvar) {</span></a>
-<a name="63"><span class="lineNum">      63 </span>                :<span class="lineCov">          1 :                 dbvar = new_secvar(&quot;db&quot;, 3, NULL, 0, SECVAR_FLAG_VOLATILE);</span></a>
-<a name="64"><span class="lineNum">      64 </span>                :<span class="lineCov">          1 :                 if (!dbvar)</span></a>
-<a name="65"><span class="lineNum">      65 </span>                :<span class="lineNoCov">          0 :                         return OPAL_NO_MEM;</span></a>
-<a name="66"><span class="lineNum">      66 </span>                :            : </a>
-<a name="67"><span class="lineNum">      67 </span>                :<span class="lineCov">          1 :                 list_add_tail(variable_bank, &amp;dbvar-&gt;link);</span></a>
-<a name="68"><span class="lineNum">      68 </span>                :            :         }</a>
-<a name="69"><span class="lineNum">      69 </span>                :            : </a>
-<a name="70"><span class="lineNum">      70 </span>                :<span class="lineCov">          1 :         dbxvar = find_secvar(&quot;dbx&quot;, 4, variable_bank);</span></a>
-<a name="71"><span class="lineNum">      71 </span>                :<span class="lineCov">          1 :         if (!dbxvar) {</span></a>
-<a name="72"><span class="lineNum">      72 </span>                :<span class="lineCov">          1 :                 dbxvar = new_secvar(&quot;dbx&quot;, 4, NULL, 0, SECVAR_FLAG_VOLATILE);</span></a>
-<a name="73"><span class="lineNum">      73 </span>                :<span class="lineCov">          1 :                 if (!dbxvar)</span></a>
-<a name="74"><span class="lineNum">      74 </span>                :<span class="lineNoCov">          0 :                         return OPAL_NO_MEM;</span></a>
-<a name="75"><span class="lineNum">      75 </span>                :            : </a>
-<a name="76"><span class="lineNum">      76 </span>                :<span class="lineCov">          1 :                 list_add_tail(variable_bank, &amp;dbxvar-&gt;link);</span></a>
-<a name="77"><span class="lineNum">      77 </span>                :            :         }</a>
-<a name="78"><span class="lineNum">      78 </span>                :            : </a>
-<a name="79"><span class="lineNum">      79 </span>                :            :         /*</a>
-<a name="80"><span class="lineNum">      80 </span>                :            :          * Should only ever happen on first boot. Timestamp is</a>
-<a name="81"><span class="lineNum">      81 </span>                :            :          * initialized with all zeroes.</a>
-<a name="82"><span class="lineNum">      82 </span>                :            :          */</a>
-<a name="83"><span class="lineNum">      83 </span>                :<span class="lineCov">          1 :         tsvar = find_secvar(&quot;TS&quot;, 3, variable_bank);</span></a>
-<a name="84"><span class="lineNum">      84 </span>                :<span class="lineCov">          1 :         if (!tsvar) {</span></a>
-<a name="85"><span class="lineNum">      85 </span>                :<span class="lineCov">          1 :                 tsvar = alloc_secvar(3, sizeof(struct efi_time) * 4);</span></a>
-<a name="86"><span class="lineNum">      86 </span>                :<span class="lineCov">          1 :                 if (!tsvar)</span></a>
-<a name="87"><span class="lineNum">      87 </span>                :<span class="lineNoCov">          0 :                         return OPAL_NO_MEM;</span></a>
-<a name="88"><span class="lineNum">      88 </span>                :            : </a>
-<a name="89"><span class="lineNum">      89 </span>                :<span class="lineCov">          1 :                 memcpy(tsvar-&gt;key, &quot;TS&quot;, 3);</span></a>
-<a name="90"><span class="lineNum">      90 </span>                :<span class="lineCov">          1 :                 tsvar-&gt;key_len = 3;</span></a>
-<a name="91"><span class="lineNum">      91 </span>                :<span class="lineCov">          1 :                 tsvar-&gt;data_size = sizeof(struct efi_time) * 4;</span></a>
-<a name="92"><span class="lineNum">      92 </span>                :<span class="lineCov">          1 :                 tsvar-&gt;flags = SECVAR_FLAG_PROTECTED;</span></a>
-<a name="93"><span class="lineNum">      93 </span>                :<span class="lineCov">          1 :                 memset(tsvar-&gt;data, 0, tsvar-&gt;data_size);</span></a>
-<a name="94"><span class="lineNum">      94 </span>                :<span class="lineCov">          1 :                 list_add_tail(variable_bank, &amp;tsvar-&gt;link);</span></a>
-<a name="95"><span class="lineNum">      95 </span>                :            :         }</a>
-<a name="96"><span class="lineNum">      96 </span>                :            : </a>
-<a name="97"><span class="lineNum">      97 </span>                :<span class="lineCov">          1 :         return OPAL_SUCCESS;</span></a>
-<a name="98"><span class="lineNum">      98 </span>                :            : };</a>
-<a name="99"><span class="lineNum">      99 </span>                :            : </a>
-<a name="100"><span class="lineNum">     100 </span>                :<span class="lineCov">         29 : static int edk2_compat_process(struct list_head *variable_bank,</span></a>
-<a name="101"><span class="lineNum">     101 </span>                :            :                                struct list_head *update_bank)</a>
-<a name="102"><span class="lineNum">     102 </span>                :            : {</a>
-<a name="103"><span class="lineNum">     103 </span>                :<span class="lineCov">         29 :         struct secvar *var = NULL;</span></a>
-<a name="104"><span class="lineNum">     104 </span>                :<span class="lineCov">         29 :         struct secvar *tsvar = NULL;</span></a>
-<a name="105"><span class="lineNum">     105 </span>                :            :         struct efi_time timestamp;</a>
-<a name="106"><span class="lineNum">     106 </span>                :<span class="lineCov">         29 :         char *newesl = NULL;</span></a>
-<a name="107"><span class="lineNum">     107 </span>                :            :         int neweslsize;</a>
-<a name="108"><span class="lineNum">     108 </span>                :<span class="lineCov">         29 :         int rc = 0;</span></a>
-<a name="109"><span class="lineNum">     109 </span>                :            : </a>
-<a name="110"><span class="lineNum">     110 </span>                :<span class="lineCov">         29 :         prlog(PR_INFO, &quot;Setup mode = %d\n&quot;, setup_mode);</span></a>
-<a name="111"><span class="lineNum">     111 </span>                :            : </a>
-<a name="112"><span class="lineNum">     112 </span>                :            :         /* Check HW-KEY-HASH */</a>
-<a name="113"><span class="lineNum">     113 </span>                :<span class="lineCov">         29 :         if (!setup_mode) {</span></a>
-<a name="114"><span class="lineNum">     114 </span>                :<span class="lineCov">         21 :                 rc = verify_hw_key_hash();</span></a>
-<a name="115"><span class="lineNum">     115 </span>                :<span class="lineCov">         21 :                 if (rc != OPAL_SUCCESS) {</span></a>
-<a name="116"><span class="lineNum">     116 </span>                :<span class="lineCov">          1 :                         prlog(PR_ERR, &quot;Hardware key hash verification mismatch. Keystore and update queue is reset.\n&quot;);</span></a>
-<a name="117"><span class="lineNum">     117 </span>                :<span class="lineCov">          1 :                         rc = reset_keystore(variable_bank);</span></a>
-<a name="118"><span class="lineNum">     118 </span>                :<span class="lineCov">          1 :                         if (rc)</span></a>
-<a name="119"><span class="lineNum">     119 </span>                :<span class="lineNoCov">          0 :                                 goto cleanup;</span></a>
-<a name="120"><span class="lineNum">     120 </span>                :<span class="lineCov">          1 :                         setup_mode = true;</span></a>
-<a name="121"><span class="lineNum">     121 </span>                :<span class="lineCov">          1 :                         goto cleanup;</span></a>
-<a name="122"><span class="lineNum">     122 </span>                :            :                 }</a>
-<a name="123"><span class="lineNum">     123 </span>                :            :         }</a>
-<a name="124"><span class="lineNum">     124 </span>                :            : </a>
-<a name="125"><span class="lineNum">     125 </span>                :            :         /* Return early if we have no updates to process */</a>
-<a name="126"><span class="lineNum">     126 </span>                :<span class="lineCov">         28 :         if (list_empty(update_bank)) {</span></a>
-<a name="127"><span class="lineNum">     127 </span>                :<span class="lineNoCov">          0 :                 return OPAL_EMPTY;</span></a>
-<a name="128"><span class="lineNum">     128 </span>                :            :         }</a>
-<a name="129"><span class="lineNum">     129 </span>                :            : </a>
-<a name="130"><span class="lineNum">     130 </span>                :            :         /*</a>
-<a name="131"><span class="lineNum">     131 </span>                :            :          * Make a working copy of variable bank that is updated</a>
-<a name="132"><span class="lineNum">     132 </span>                :            :          * during process</a>
-<a name="133"><span class="lineNum">     133 </span>                :            :          */</a>
-<a name="134"><span class="lineNum">     134 </span>                :<span class="lineCov">         28 :         list_head_init(&amp;staging_bank);</span></a>
-<a name="135"><span class="lineNum">     135 </span>                :<span class="lineCov">         28 :         copy_bank_list(&amp;staging_bank, variable_bank);</span></a>
-<a name="136"><span class="lineNum">     136 </span>                :            : </a>
-<a name="137"><span class="lineNum">     137 </span>                :            :         /*</a>
-<a name="138"><span class="lineNum">     138 </span>                :            :          * Loop through each command in the update bank.</a>
-<a name="139"><span class="lineNum">     139 </span>                :            :          * If any command fails, it just loops out of the update bank.</a>
-<a name="140"><span class="lineNum">     140 </span>                :            :          * It should also clear the update bank.</a>
-<a name="141"><span class="lineNum">     141 </span>                :            :          */</a>
-<a name="142"><span class="lineNum">     142 </span>                :            : </a>
-<a name="143"><span class="lineNum">     143 </span>                :            :         /* Read the TS variable first time and then keep updating it in-memory */</a>
-<a name="144"><span class="lineNum">     144 </span>                :<span class="lineCov">         28 :         tsvar = find_secvar(&quot;TS&quot;, 3, &amp;staging_bank);</span></a>
-<a name="145"><span class="lineNum">     145 </span>                :            : </a>
-<a name="146"><span class="lineNum">     146 </span>                :            :         /*</a>
-<a name="147"><span class="lineNum">     147 </span>                :            :          * We cannot find timestamp variable, did someone tamper it ?, return</a>
-<a name="148"><span class="lineNum">     148 </span>                :            :          * OPAL_PERMISSION</a>
-<a name="149"><span class="lineNum">     149 </span>                :            :          */</a>
-<a name="150"><span class="lineNum">     150 </span>                :<span class="lineCov">         28 :         if (!tsvar)</span></a>
-<a name="151"><span class="lineNum">     151 </span>                :<span class="lineNoCov">          0 :                 return OPAL_PERMISSION;</span></a>
-<a name="152"><span class="lineNum">     152 </span>                :            : </a>
-<a name="153"><span class="lineNum">     153 </span>                :<span class="lineCov">         40 :         list_for_each(update_bank, var, link) {</span></a>
-<a name="154"><span class="lineNum">     154 </span>                :            : </a>
-<a name="155"><span class="lineNum">     155 </span>                :            :                 /*</a>
-<a name="156"><span class="lineNum">     156 </span>                :            :                  * Submitted data is auth_2 descriptor + new ESL data</a>
-<a name="157"><span class="lineNum">     157 </span>                :            :                  * Extract the auth_2 2 descriptor</a>
-<a name="158"><span class="lineNum">     158 </span>                :            :                  */</a>
-<a name="159"><span class="lineNum">     159 </span>                :<span class="lineCov">         32 :                 prlog(PR_INFO, &quot;Update for %s\n&quot;, var-&gt;key);</span></a>
-<a name="160"><span class="lineNum">     160 </span>                :            : </a>
-<a name="161"><span class="lineNum">     161 </span>                :<span class="lineCov">         32 :                 rc = process_update(var, &amp;newesl,</span></a>
-<a name="162"><span class="lineNum">     162 </span>                :            :                                     &amp;neweslsize, &amp;timestamp,</a>
-<a name="163"><span class="lineNum">     163 </span>                :            :                                     &amp;staging_bank,</a>
-<a name="164"><span class="lineNum">     164 </span>                :            :                                     tsvar-&gt;data);</a>
-<a name="165"><span class="lineNum">     165 </span>                :<span class="lineCov">         32 :                 if (rc) {</span></a>
-<a name="166"><span class="lineNum">     166 </span>                :<span class="lineCov">         20 :                         prlog(PR_ERR, &quot;Update processing failed with rc %04x\n&quot;, rc);</span></a>
-<a name="167"><span class="lineNum">     167 </span>                :<span class="lineCov">         20 :                         break;</span></a>
-<a name="168"><span class="lineNum">     168 </span>                :            :                 }</a>
-<a name="169"><span class="lineNum">     169 </span>                :            : </a>
-<a name="170"><span class="lineNum">     170 </span>                :            :                 /*</a>
-<a name="171"><span class="lineNum">     171 </span>                :            :                  * If reached here means, signature is verified so update the</a>
-<a name="172"><span class="lineNum">     172 </span>                :            :                  * value in the variable bank</a>
-<a name="173"><span class="lineNum">     173 </span>                :            :                  */</a>
-<a name="174"><span class="lineNum">     174 </span>                :<span class="lineCov">         12 :                 rc = update_variable_in_bank(var,</span></a>
-<a name="175"><span class="lineNum">     175 </span>                :            :                                              newesl,</a>
-<a name="176"><span class="lineNum">     176 </span>                :            :                                              neweslsize,</a>
-<a name="177"><span class="lineNum">     177 </span>                :            :                                              &amp;staging_bank);</a>
-<a name="178"><span class="lineNum">     178 </span>                :<span class="lineCov">         12 :                 if (rc) {</span></a>
-<a name="179"><span class="lineNum">     179 </span>                :<span class="lineNoCov">          0 :                         prlog(PR_ERR, &quot;Updating the variable data failed %04x\n&quot;, rc);</span></a>
-<a name="180"><span class="lineNum">     180 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
-<a name="181"><span class="lineNum">     181 </span>                :            :                 }</a>
-<a name="182"><span class="lineNum">     182 </span>                :            : </a>
-<a name="183"><span class="lineNum">     183 </span>                :<span class="lineCov">         12 :                 free(newesl);</span></a>
-<a name="184"><span class="lineNum">     184 </span>                :<span class="lineCov">         12 :                 newesl = NULL;</span></a>
-<a name="185"><span class="lineNum">     185 </span>                :            :                 /* Update the TS variable with the new timestamp */</a>
-<a name="186"><span class="lineNum">     186 </span>                :<span class="lineCov">         12 :                 rc = update_timestamp(var-&gt;key,</span></a>
-<a name="187"><span class="lineNum">     187 </span>                :            :                                       &amp;timestamp,</a>
-<a name="188"><span class="lineNum">     188 </span>                :            :                                       tsvar-&gt;data);</a>
-<a name="189"><span class="lineNum">     189 </span>                :<span class="lineCov">         12 :                 if (rc) {</span></a>
-<a name="190"><span class="lineNum">     190 </span>                :<span class="lineNoCov">          0 :                         prlog (PR_ERR, &quot;Variable updated, but timestamp updated failed %04x\n&quot;, rc);</span></a>
-<a name="191"><span class="lineNum">     191 </span>                :<span class="lineNoCov">          0 :                         break;</span></a>
-<a name="192"><span class="lineNum">     192 </span>                :            :                 }</a>
-<a name="193"><span class="lineNum">     193 </span>                :            : </a>
-<a name="194"><span class="lineNum">     194 </span>                :            :                 /*</a>
-<a name="195"><span class="lineNum">     195 </span>                :            :                  * If the PK is updated, update the secure boot state of the</a>
-<a name="196"><span class="lineNum">     196 </span>                :            :                  * system at the end of processing</a>
-<a name="197"><span class="lineNum">     197 </span>                :            :                  */</a>
-<a name="198"><span class="lineNum">     198 </span>                :<span class="lineCov">         12 :                 if (key_equals(var-&gt;key, &quot;PK&quot;)) {</span></a>
-<a name="199"><span class="lineNum">     199 </span>                :            :                         /*</a>
-<a name="200"><span class="lineNum">     200 </span>                :            :                          * PK is tied to a particular firmware image by mapping it with</a>
-<a name="201"><span class="lineNum">     201 </span>                :            :                          * hw-key-hash of that firmware. When PK is updated, hw-key-hash</a>
-<a name="202"><span class="lineNum">     202 </span>                :            :                          * is updated. And when PK is deleted, delete hw-key-hash as well</a>
-<a name="203"><span class="lineNum">     203 </span>                :            :                          */</a>
-<a name="204"><span class="lineNum">     204 </span>                :<span class="lineCov">          5 :                         if(neweslsize == 0) {</span></a>
-<a name="205"><span class="lineNum">     205 </span>                :<span class="lineCov">          2 :                                 setup_mode = true;</span></a>
-<a name="206"><span class="lineNum">     206 </span>                :<span class="lineCov">          2 :                                 delete_hw_key_hash(&amp;staging_bank);</span></a>
-<a name="207"><span class="lineNum">     207 </span>                :            :                         } else  {</a>
-<a name="208"><span class="lineNum">     208 </span>                :<span class="lineCov">          3 :                                 setup_mode = false;</span></a>
-<a name="209"><span class="lineNum">     209 </span>                :<span class="lineCov">          3 :                                 add_hw_key_hash(&amp;staging_bank);</span></a>
-<a name="210"><span class="lineNum">     210 </span>                :            :                         }</a>
-<a name="211"><span class="lineNum">     211 </span>                :<span class="lineCov">          5 :                         prlog(PR_DEBUG, &quot;setup mode is %d\n&quot;, setup_mode);</span></a>
-<a name="212"><span class="lineNum">     212 </span>                :            :                 }</a>
-<a name="213"><span class="lineNum">     213 </span>                :            :         }</a>
-<a name="214"><span class="lineNum">     214 </span>                :            : </a>
-<a name="215"><span class="lineNum">     215 </span>                :<span class="lineCov">         28 :         if (rc == 0) {</span></a>
-<a name="216"><span class="lineNum">     216 </span>                :            :                 /* Update the variable bank with updated working copy */</a>
-<a name="217"><span class="lineNum">     217 </span>                :<span class="lineCov">          8 :                 clear_bank_list(variable_bank);</span></a>
-<a name="218"><span class="lineNum">     218 </span>                :<span class="lineCov">          8 :                 copy_bank_list(variable_bank, &amp;staging_bank);</span></a>
-<a name="219"><span class="lineNum">     219 </span>                :            :         }</a>
-<a name="220"><span class="lineNum">     220 </span>                :            : </a>
-<a name="221"><span class="lineNum">     221 </span>                :<span class="lineCov">         28 :         free(newesl);</span></a>
-<a name="222"><span class="lineNum">     222 </span>                :<span class="lineCov">         28 :         clear_bank_list(&amp;staging_bank);</span></a>
-<a name="223"><span class="lineNum">     223 </span>                :            : </a>
-<a name="224"><span class="lineNum">     224 </span>                :            :         /* Set the global variable setup_mode as per final contents in variable_bank */</a>
-<a name="225"><span class="lineNum">     225 </span>                :<span class="lineCov">         28 :         var = find_secvar(&quot;PK&quot;, 3, variable_bank);</span></a>
-<a name="226"><span class="lineNum">     226 </span>                :<span class="lineCov">         28 :         if (!var) {</span></a>
-<a name="227"><span class="lineNum">     227 </span>                :            :                 /* This should not happen */</a>
-<a name="228"><span class="lineNum">     228 </span>                :<span class="lineNoCov">          0 :                 rc = OPAL_INTERNAL_ERROR;</span></a>
-<a name="229"><span class="lineNum">     229 </span>                :<span class="lineNoCov">          0 :                 goto cleanup;</span></a>
-<a name="230"><span class="lineNum">     230 </span>                :            :         }</a>
-<a name="231"><span class="lineNum">     231 </span>                :            : </a>
-<a name="232"><span class="lineNum">     232 </span>                :<span class="lineCov">         28 :         if (var-&gt;data_size == 0)</span></a>
-<a name="233"><span class="lineNum">     233 </span>                :<span class="lineCov">          8 :                 setup_mode = true;</span></a>
-<a name="234"><span class="lineNum">     234 </span>                :            :         else</a>
-<a name="235"><span class="lineNum">     235 </span>                :<span class="lineCov">         20 :                 setup_mode = false;</span></a>
-<a name="236"><span class="lineNum">     236 </span>                :            : </a>
-<a name="237"><span class="lineNum">     237 </span>                :<span class="lineCov">         29 : cleanup:</span></a>
-<a name="238"><span class="lineNum">     238 </span>                :            :         /*</a>
-<a name="239"><span class="lineNum">     239 </span>                :            :          * For any failure in processing update queue, we clear the update bank</a>
-<a name="240"><span class="lineNum">     240 </span>                :            :          * and return failure</a>
-<a name="241"><span class="lineNum">     241 </span>                :            :          */</a>
-<a name="242"><span class="lineNum">     242 </span>                :<span class="lineCov">         29 :         clear_bank_list(update_bank);</span></a>
-<a name="243"><span class="lineNum">     243 </span>                :            : </a>
-<a name="244"><span class="lineNum">     244 </span>                :<span class="lineCov">         29 :         return rc;</span></a>
-<a name="245"><span class="lineNum">     245 </span>                :            : }</a>
-<a name="246"><span class="lineNum">     246 </span>                :            : </a>
-<a name="247"><span class="lineNum">     247 </span>                :<span class="lineCov">          6 : static int edk2_compat_post_process(struct list_head *variable_bank,</span></a>
-<a name="248"><span class="lineNum">     248 </span>                :            :                                     struct list_head *update_bank __unused)</a>
-<a name="249"><span class="lineNum">     249 </span>                :            : {</a>
-<a name="250"><span class="lineNum">     250 </span>                :            :         struct secvar *hwvar;</a>
-<a name="251"><span class="lineNum">     251 </span>                :<span class="lineCov">          6 :         if (!setup_mode) {</span></a>
-<a name="252"><span class="lineNum">     252 </span>                :<span class="lineCov">          2 :                 secvar_set_secure_mode();</span></a>
-<a name="253"><span class="lineNum">     253 </span>                :<span class="lineCov">          2 :                 prlog(PR_INFO, &quot;Enforcing OS secure mode\n&quot;);</span></a>
-<a name="254"><span class="lineNum">     254 </span>                :            :                 /*</a>
-<a name="255"><span class="lineNum">     255 </span>                :            :                  * HW KEY HASH is no more needed after this point. It is already</a>
-<a name="256"><span class="lineNum">     256 </span>                :            :                  * visible to userspace via device-tree, so exposing via sysfs is</a>
-<a name="257"><span class="lineNum">     257 </span>                :            :                  * just a duplication. Remove it from in-memory copy.</a>
-<a name="258"><span class="lineNum">     258 </span>                :            :                  */</a>
-<a name="259"><span class="lineNum">     259 </span>                :<span class="lineCov">          2 :                 hwvar = find_secvar(&quot;HWKH&quot;, 5, variable_bank);</span></a>
-<a name="260"><span class="lineNum">     260 </span>                :<span class="lineCov">          2 :                 if (!hwvar) {</span></a>
-<a name="261"><span class="lineNum">     261 </span>                :<span class="lineNoCov">          0 :                         prlog(PR_ERR, &quot;cannot find hw-key-hash, should not happen\n&quot;);</span></a>
-<a name="262"><span class="lineNum">     262 </span>                :<span class="lineNoCov">          0 :                         return OPAL_INTERNAL_ERROR;</span></a>
-<a name="263"><span class="lineNum">     263 </span>                :            :                 }</a>
-<a name="264"><span class="lineNum">     264 </span>                :<span class="lineCov">          2 :                 list_del(&amp;hwvar-&gt;link);</span></a>
-<a name="265"><span class="lineNum">     265 </span>                :<span class="lineCov">          2 :                 dealloc_secvar(hwvar);</span></a>
-<a name="266"><span class="lineNum">     266 </span>                :            :         }</a>
-<a name="267"><span class="lineNum">     267 </span>                :            : </a>
-<a name="268"><span class="lineNum">     268 </span>                :<span class="lineCov">          6 :         return OPAL_SUCCESS;</span></a>
-<a name="269"><span class="lineNum">     269 </span>                :            : }</a>
-<a name="270"><span class="lineNum">     270 </span>                :            : </a>
-<a name="271"><span class="lineNum">     271 </span>                :<span class="lineCov">         34 : static int edk2_compat_validate(struct secvar *var)</span></a>
-<a name="272"><span class="lineNum">     272 </span>                :            : {</a>
-<a name="273"><span class="lineNum">     273 </span>                :            : </a>
-<a name="274"><span class="lineNum">     274 </span>                :            :         /*</a>
-<a name="275"><span class="lineNum">     275 </span>                :            :          * Checks if the update is for supported</a>
-<a name="276"><span class="lineNum">     276 </span>                :            :          * Non-volatile secure variables</a>
-<a name="277"><span class="lineNum">     277 </span>                :            :          */</a>
-<a name="278"><span class="lineNum">     278 </span>                :<span class="lineCov">         34 :         if (!key_equals(var-&gt;key, &quot;PK&quot;)</span></a>
-<a name="279"><span class="lineNum">     279 </span>                :<span class="lineCov">         26 :                         &amp;&amp; !key_equals(var-&gt;key, &quot;KEK&quot;)</span></a>
-<a name="280"><span class="lineNum">     280 </span>                :<span class="lineCov">         15 :                         &amp;&amp; !key_equals(var-&gt;key, &quot;db&quot;)</span></a>
-<a name="281"><span class="lineNum">     281 </span>                :<span class="lineCov">          6 :                         &amp;&amp; !key_equals(var-&gt;key, &quot;dbx&quot;))</span></a>
-<a name="282"><span class="lineNum">     282 </span>                :<span class="lineNoCov">          0 :                 return OPAL_PARAMETER;</span></a>
-<a name="283"><span class="lineNum">     283 </span>                :            : </a>
-<a name="284"><span class="lineNum">     284 </span>                :            :         /* Check that signature type is PKCS7 */</a>
-<a name="285"><span class="lineNum">     285 </span>                :<span class="lineCov">         34 :         if (!is_pkcs7_sig_format(var-&gt;data))</span></a>
-<a name="286"><span class="lineNum">     286 </span>                :<span class="lineNoCov">          0 :                 return OPAL_PARAMETER;</span></a>
-<a name="287"><span class="lineNum">     287 </span>                :            : </a>
-<a name="288"><span class="lineNum">     288 </span>                :<span class="lineCov">         34 :         return OPAL_SUCCESS;</span></a>
-<a name="289"><span class="lineNum">     289 </span>                :            : };</a>
-<a name="290"><span class="lineNum">     290 </span>                :            : </a>
-<a name="291"><span class="lineNum">     291 </span>                :            : struct secvar_backend_driver edk2_compatible_v1 = {</a>
-<a name="292"><span class="lineNum">     292 </span>                :            :         .pre_process = edk2_compat_pre_process,</a>
-<a name="293"><span class="lineNum">     293 </span>                :            :         .process = edk2_compat_process,</a>
-<a name="294"><span class="lineNum">     294 </span>                :            :         .post_process = edk2_compat_post_process,</a>
-<a name="295"><span class="lineNum">     295 </span>                :            :         .validate = edk2_compat_validate,</a>
-<a name="296"><span class="lineNum">     296 </span>                :            :         .compatible = &quot;ibm,edk2-compat-v1&quot;,</a>
-<a name="297"><span class="lineNum">     297 </span>                :            : };</a>
-</pre>
-      </td>
-    </tr>
-  </table>
-  <br>
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : /* Copyright 2020 IBM Corp. */</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : #ifndef pr_fmt</span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : #define pr_fmt(fmt) &quot;EDK2_COMPAT: &quot; fmt</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : #endif</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : </span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : #include &lt;opal.h&gt;</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : #include &lt;string.h&gt;</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : #include &lt;time.h&gt;</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : #include &lt;unistd.h&gt;</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : #include &lt;stdint.h&gt;</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : #include &lt;skiboot.h&gt;</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : #include &lt;ccan/endian/endian.h&gt;</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : #include &lt;mbedtls/error.h&gt;</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : #include &quot;libstb/crypto/pkcs7/pkcs7.h&quot;</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : #include &quot;edk2.h&quot;</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : #include &quot;../secvar.h&quot;</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : #include &quot;edk2-compat-process.h&quot;</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             : #include &quot;edk2-compat-reset.h&quot;</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : </span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : struct list_head staging_bank;</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             : </span>
+<span id="L23"><span class="lineNum">      23</span>                 :             : /*</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :  * Initializes supported variables as empty if not loaded from</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :  * storage. Variables are initialized as volatile if not found.</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :  * Updates should clear this flag.</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :  * Returns OPAL Error if anything fails in initialization</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             :  */</span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC tlaBgGNC">           1 : static int edk2_compat_pre_process(struct list_head *variable_bank,</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :                                    struct list_head *update_bank __unused)</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             : {</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :         struct secvar *pkvar;</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :         struct secvar *kekvar;</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :         struct secvar *dbvar;</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :         struct secvar *dbxvar;</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :         struct secvar *tsvar;</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             : </span>
+<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">           1 :         pkvar = find_secvar(&quot;PK&quot;, 3, variable_bank);</span></span>
+<span id="L39"><span class="lineNum">      39</span>                 :<span class="tlaGNC">           1 :         if (!pkvar) {</span></span>
+<span id="L40"><span class="lineNum">      40</span>                 :<span class="tlaGNC">           1 :                 pkvar = new_secvar(&quot;PK&quot;, 3, NULL, 0, SECVAR_FLAG_VOLATILE</span></span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :                                 | SECVAR_FLAG_PROTECTED);</span>
+<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">           1 :                 if (!pkvar)</span></span>
+<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         return OPAL_NO_MEM;</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :             : </span>
+<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 list_add_tail(variable_bank, &amp;pkvar-&gt;link);</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :         }</span>
+<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">           1 :         if (pkvar-&gt;data_size == 0)</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">           1 :                 setup_mode = true;</span></span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :         else</span>
+<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 setup_mode = false;</span></span>
+<span id="L51"><span class="lineNum">      51</span>                 :             : </span>
+<span id="L52"><span class="lineNum">      52</span>                 :<span class="tlaGNC tlaBgGNC">           1 :         kekvar = find_secvar(&quot;KEK&quot;, 4, variable_bank);</span></span>
+<span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">           1 :         if (!kekvar) {</span></span>
+<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">           1 :                 kekvar = new_secvar(&quot;KEK&quot;, 4, NULL, 0, SECVAR_FLAG_VOLATILE);</span></span>
+<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaGNC">           1 :                 if (!kekvar)</span></span>
+<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         return OPAL_NO_MEM;</span></span>
+<span id="L57"><span class="lineNum">      57</span>                 :             : </span>
+<span id="L58"><span class="lineNum">      58</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 list_add_tail(variable_bank, &amp;kekvar-&gt;link);</span></span>
+<span id="L59"><span class="lineNum">      59</span>                 :             :         }</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             : </span>
+<span id="L61"><span class="lineNum">      61</span>                 :<span class="tlaGNC">           1 :         dbvar = find_secvar(&quot;db&quot;, 3, variable_bank);</span></span>
+<span id="L62"><span class="lineNum">      62</span>                 :<span class="tlaGNC">           1 :         if (!dbvar) {</span></span>
+<span id="L63"><span class="lineNum">      63</span>                 :<span class="tlaGNC">           1 :                 dbvar = new_secvar(&quot;db&quot;, 3, NULL, 0, SECVAR_FLAG_VOLATILE);</span></span>
+<span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaGNC">           1 :                 if (!dbvar)</span></span>
+<span id="L65"><span class="lineNum">      65</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         return OPAL_NO_MEM;</span></span>
+<span id="L66"><span class="lineNum">      66</span>                 :             : </span>
+<span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 list_add_tail(variable_bank, &amp;dbvar-&gt;link);</span></span>
+<span id="L68"><span class="lineNum">      68</span>                 :             :         }</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             : </span>
+<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">           1 :         dbxvar = find_secvar(&quot;dbx&quot;, 4, variable_bank);</span></span>
+<span id="L71"><span class="lineNum">      71</span>                 :<span class="tlaGNC">           1 :         if (!dbxvar) {</span></span>
+<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">           1 :                 dbxvar = new_secvar(&quot;dbx&quot;, 4, NULL, 0, SECVAR_FLAG_VOLATILE);</span></span>
+<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">           1 :                 if (!dbxvar)</span></span>
+<span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         return OPAL_NO_MEM;</span></span>
+<span id="L75"><span class="lineNum">      75</span>                 :             : </span>
+<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 list_add_tail(variable_bank, &amp;dbxvar-&gt;link);</span></span>
+<span id="L77"><span class="lineNum">      77</span>                 :             :         }</span>
+<span id="L78"><span class="lineNum">      78</span>                 :             : </span>
+<span id="L79"><span class="lineNum">      79</span>                 :             :         /*</span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :          * Should only ever happen on first boot. Timestamp is</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             :          * initialized with all zeroes.</span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :          */</span>
+<span id="L83"><span class="lineNum">      83</span>                 :<span class="tlaGNC">           1 :         tsvar = find_secvar(&quot;TS&quot;, 3, variable_bank);</span></span>
+<span id="L84"><span class="lineNum">      84</span>                 :<span class="tlaGNC">           1 :         if (!tsvar) {</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">           1 :                 tsvar = alloc_secvar(3, sizeof(struct efi_time) * 4);</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">           1 :                 if (!tsvar)</span></span>
+<span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         return OPAL_NO_MEM;</span></span>
+<span id="L88"><span class="lineNum">      88</span>                 :             : </span>
+<span id="L89"><span class="lineNum">      89</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 memcpy(tsvar-&gt;key, &quot;TS&quot;, 3);</span></span>
+<span id="L90"><span class="lineNum">      90</span>                 :<span class="tlaGNC">           1 :                 tsvar-&gt;key_len = 3;</span></span>
+<span id="L91"><span class="lineNum">      91</span>                 :<span class="tlaGNC">           1 :                 tsvar-&gt;data_size = sizeof(struct efi_time) * 4;</span></span>
+<span id="L92"><span class="lineNum">      92</span>                 :<span class="tlaGNC">           1 :                 tsvar-&gt;flags = SECVAR_FLAG_PROTECTED;</span></span>
+<span id="L93"><span class="lineNum">      93</span>                 :<span class="tlaGNC">           1 :                 memset(tsvar-&gt;data, 0, tsvar-&gt;data_size);</span></span>
+<span id="L94"><span class="lineNum">      94</span>                 :<span class="tlaGNC">           1 :                 list_add_tail(variable_bank, &amp;tsvar-&gt;link);</span></span>
+<span id="L95"><span class="lineNum">      95</span>                 :             :         }</span>
+<span id="L96"><span class="lineNum">      96</span>                 :             : </span>
+<span id="L97"><span class="lineNum">      97</span>                 :<span class="tlaGNC">           1 :         return OPAL_SUCCESS;</span></span>
+<span id="L98"><span class="lineNum">      98</span>                 :             : };</span>
+<span id="L99"><span class="lineNum">      99</span>                 :             : </span>
+<span id="L100"><span class="lineNum">     100</span>                 :<span class="tlaGNC">          29 : static int edk2_compat_process(struct list_head *variable_bank,</span></span>
+<span id="L101"><span class="lineNum">     101</span>                 :             :                                struct list_head *update_bank)</span>
+<span id="L102"><span class="lineNum">     102</span>                 :             : {</span>
+<span id="L103"><span class="lineNum">     103</span>                 :<span class="tlaGNC">          29 :         struct secvar *var = NULL;</span></span>
+<span id="L104"><span class="lineNum">     104</span>                 :<span class="tlaGNC">          29 :         struct secvar *tsvar = NULL;</span></span>
+<span id="L105"><span class="lineNum">     105</span>                 :             :         struct efi_time timestamp;</span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">          29 :         char *newesl = NULL;</span></span>
+<span id="L107"><span class="lineNum">     107</span>                 :             :         int neweslsize;</span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">          29 :         int rc = 0;</span></span>
+<span id="L109"><span class="lineNum">     109</span>                 :             : </span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">          29 :         prlog(PR_INFO, &quot;Setup mode = %d\n&quot;, setup_mode);</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :             : </span>
+<span id="L112"><span class="lineNum">     112</span>                 :             :         /* Check HW-KEY-HASH */</span>
+<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">          29 :         if (!setup_mode) {</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">          21 :                 rc = verify_hw_key_hash();</span></span>
+<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">          21 :                 if (rc != OPAL_SUCCESS) {</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">           1 :                         prlog(PR_ERR, &quot;Hardware key hash verification mismatch. Keystore and update queue is reset.\n&quot;);</span></span>
+<span id="L117"><span class="lineNum">     117</span>                 :<span class="tlaGNC">           1 :                         rc = reset_keystore(variable_bank);</span></span>
+<span id="L118"><span class="lineNum">     118</span>                 :<span class="tlaGNC">           1 :                         if (rc)</span></span>
+<span id="L119"><span class="lineNum">     119</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                                 goto cleanup;</span></span>
+<span id="L120"><span class="lineNum">     120</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                         setup_mode = true;</span></span>
+<span id="L121"><span class="lineNum">     121</span>                 :<span class="tlaGNC">           1 :                         goto cleanup;</span></span>
+<span id="L122"><span class="lineNum">     122</span>                 :             :                 }</span>
+<span id="L123"><span class="lineNum">     123</span>                 :             :         }</span>
+<span id="L124"><span class="lineNum">     124</span>                 :             : </span>
+<span id="L125"><span class="lineNum">     125</span>                 :             :         /* Return early if we have no updates to process */</span>
+<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC">          28 :         if (list_empty(update_bank)) {</span></span>
+<span id="L127"><span class="lineNum">     127</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return OPAL_EMPTY;</span></span>
+<span id="L128"><span class="lineNum">     128</span>                 :             :         }</span>
+<span id="L129"><span class="lineNum">     129</span>                 :             : </span>
+<span id="L130"><span class="lineNum">     130</span>                 :             :         /*</span>
+<span id="L131"><span class="lineNum">     131</span>                 :             :          * Make a working copy of variable bank that is updated</span>
+<span id="L132"><span class="lineNum">     132</span>                 :             :          * during process</span>
+<span id="L133"><span class="lineNum">     133</span>                 :             :          */</span>
+<span id="L134"><span class="lineNum">     134</span>                 :<span class="tlaGNC tlaBgGNC">          28 :         list_head_init(&amp;staging_bank);</span></span>
+<span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaGNC">          28 :         copy_bank_list(&amp;staging_bank, variable_bank);</span></span>
+<span id="L136"><span class="lineNum">     136</span>                 :             : </span>
+<span id="L137"><span class="lineNum">     137</span>                 :             :         /*</span>
+<span id="L138"><span class="lineNum">     138</span>                 :             :          * Loop through each command in the update bank.</span>
+<span id="L139"><span class="lineNum">     139</span>                 :             :          * If any command fails, it just loops out of the update bank.</span>
+<span id="L140"><span class="lineNum">     140</span>                 :             :          * It should also clear the update bank.</span>
+<span id="L141"><span class="lineNum">     141</span>                 :             :          */</span>
+<span id="L142"><span class="lineNum">     142</span>                 :             : </span>
+<span id="L143"><span class="lineNum">     143</span>                 :             :         /* Read the TS variable first time and then keep updating it in-memory */</span>
+<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaGNC">          28 :         tsvar = find_secvar(&quot;TS&quot;, 3, &amp;staging_bank);</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :             : </span>
+<span id="L146"><span class="lineNum">     146</span>                 :             :         /*</span>
+<span id="L147"><span class="lineNum">     147</span>                 :             :          * We cannot find timestamp variable, did someone tamper it ?, return</span>
+<span id="L148"><span class="lineNum">     148</span>                 :             :          * OPAL_PERMISSION</span>
+<span id="L149"><span class="lineNum">     149</span>                 :             :          */</span>
+<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">          28 :         if (!tsvar)</span></span>
+<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return OPAL_PERMISSION;</span></span>
+<span id="L152"><span class="lineNum">     152</span>                 :             : </span>
+<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC tlaBgGNC">          40 :         list_for_each(update_bank, var, link) {</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :             : </span>
+<span id="L155"><span class="lineNum">     155</span>                 :             :                 /*</span>
+<span id="L156"><span class="lineNum">     156</span>                 :             :                  * Submitted data is auth_2 descriptor + new ESL data</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :                  * Extract the auth_2 2 descriptor</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :                  */</span>
+<span id="L159"><span class="lineNum">     159</span>                 :<span class="tlaGNC">          32 :                 prlog(PR_INFO, &quot;Update for %s\n&quot;, var-&gt;key);</span></span>
+<span id="L160"><span class="lineNum">     160</span>                 :             : </span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">          32 :                 rc = process_update(var, &amp;newesl,</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :             :                                     &amp;neweslsize, &amp;timestamp,</span>
+<span id="L163"><span class="lineNum">     163</span>                 :             :                                     &amp;staging_bank,</span>
+<span id="L164"><span class="lineNum">     164</span>                 :             :                                     tsvar-&gt;data);</span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">          32 :                 if (rc) {</span></span>
+<span id="L166"><span class="lineNum">     166</span>                 :<span class="tlaGNC">          20 :                         prlog(PR_ERR, &quot;Update processing failed with rc %04x\n&quot;, rc);</span></span>
+<span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">          20 :                         break;</span></span>
+<span id="L168"><span class="lineNum">     168</span>                 :             :                 }</span>
+<span id="L169"><span class="lineNum">     169</span>                 :             : </span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :                 /*</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :                  * If reached here means, signature is verified so update the</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             :                  * value in the variable bank</span>
+<span id="L173"><span class="lineNum">     173</span>                 :             :                  */</span>
+<span id="L174"><span class="lineNum">     174</span>                 :<span class="tlaGNC">          12 :                 rc = update_variable_in_bank(var,</span></span>
+<span id="L175"><span class="lineNum">     175</span>                 :             :                                              newesl,</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :                                              neweslsize,</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :                                              &amp;staging_bank);</span>
+<span id="L178"><span class="lineNum">     178</span>                 :<span class="tlaGNC">          12 :                 if (rc) {</span></span>
+<span id="L179"><span class="lineNum">     179</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prlog(PR_ERR, &quot;Updating the variable data failed %04x\n&quot;, rc);</span></span>
+<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaUNC">           0 :                         break;</span></span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :                 }</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             : </span>
+<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC tlaBgGNC">          12 :                 free(newesl);</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">          12 :                 newesl = NULL;</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :             :                 /* Update the TS variable with the new timestamp */</span>
+<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">          12 :                 rc = update_timestamp(var-&gt;key,</span></span>
+<span id="L187"><span class="lineNum">     187</span>                 :             :                                       &amp;timestamp,</span>
+<span id="L188"><span class="lineNum">     188</span>                 :             :                                       tsvar-&gt;data);</span>
+<span id="L189"><span class="lineNum">     189</span>                 :<span class="tlaGNC">          12 :                 if (rc) {</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prlog (PR_ERR, &quot;Variable updated, but timestamp updated failed %04x\n&quot;, rc);</span></span>
+<span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaUNC">           0 :                         break;</span></span>
+<span id="L192"><span class="lineNum">     192</span>                 :             :                 }</span>
+<span id="L193"><span class="lineNum">     193</span>                 :             : </span>
+<span id="L194"><span class="lineNum">     194</span>                 :             :                 /*</span>
+<span id="L195"><span class="lineNum">     195</span>                 :             :                  * If the PK is updated, update the secure boot state of the</span>
+<span id="L196"><span class="lineNum">     196</span>                 :             :                  * system at the end of processing</span>
+<span id="L197"><span class="lineNum">     197</span>                 :             :                  */</span>
+<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC tlaBgGNC">          12 :                 if (key_equals(var-&gt;key, &quot;PK&quot;)) {</span></span>
+<span id="L199"><span class="lineNum">     199</span>                 :             :                         /*</span>
+<span id="L200"><span class="lineNum">     200</span>                 :             :                          * PK is tied to a particular firmware image by mapping it with</span>
+<span id="L201"><span class="lineNum">     201</span>                 :             :                          * hw-key-hash of that firmware. When PK is updated, hw-key-hash</span>
+<span id="L202"><span class="lineNum">     202</span>                 :             :                          * is updated. And when PK is deleted, delete hw-key-hash as well</span>
+<span id="L203"><span class="lineNum">     203</span>                 :             :                          */</span>
+<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">           5 :                         if(neweslsize == 0) {</span></span>
+<span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaGNC">           2 :                                 setup_mode = true;</span></span>
+<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">           2 :                                 delete_hw_key_hash(&amp;staging_bank);</span></span>
+<span id="L207"><span class="lineNum">     207</span>                 :             :                         } else  {</span>
+<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaGNC">           3 :                                 setup_mode = false;</span></span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaGNC">           3 :                                 add_hw_key_hash(&amp;staging_bank);</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :             :                         }</span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">           5 :                         prlog(PR_DEBUG, &quot;setup mode is %d\n&quot;, setup_mode);</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :             :                 }</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             :         }</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             : </span>
+<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">          28 :         if (rc == 0) {</span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :                 /* Update the variable bank with updated working copy */</span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">           8 :                 clear_bank_list(variable_bank);</span></span>
+<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">           8 :                 copy_bank_list(variable_bank, &amp;staging_bank);</span></span>
+<span id="L219"><span class="lineNum">     219</span>                 :             :         }</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             : </span>
+<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaGNC">          28 :         free(newesl);</span></span>
+<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">          28 :         clear_bank_list(&amp;staging_bank);</span></span>
+<span id="L223"><span class="lineNum">     223</span>                 :             : </span>
+<span id="L224"><span class="lineNum">     224</span>                 :             :         /* Set the global variable setup_mode as per final contents in variable_bank */</span>
+<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">          28 :         var = find_secvar(&quot;PK&quot;, 3, variable_bank);</span></span>
+<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">          28 :         if (!var) {</span></span>
+<span id="L227"><span class="lineNum">     227</span>                 :             :                 /* This should not happen */</span>
+<span id="L228"><span class="lineNum">     228</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 rc = OPAL_INTERNAL_ERROR;</span></span>
+<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaUNC">           0 :                 goto cleanup;</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :             :         }</span>
+<span id="L231"><span class="lineNum">     231</span>                 :             : </span>
+<span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaGNC tlaBgGNC">          28 :         if (var-&gt;data_size == 0)</span></span>
+<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">           8 :                 setup_mode = true;</span></span>
+<span id="L234"><span class="lineNum">     234</span>                 :             :         else</span>
+<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">          20 :                 setup_mode = false;</span></span>
+<span id="L236"><span class="lineNum">     236</span>                 :             : </span>
+<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaGNC">          29 : cleanup:</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :             :         /*</span>
+<span id="L239"><span class="lineNum">     239</span>                 :             :          * For any failure in processing update queue, we clear the update bank</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :          * and return failure</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             :          */</span>
+<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC">          29 :         clear_bank_list(update_bank);</span></span>
+<span id="L243"><span class="lineNum">     243</span>                 :             : </span>
+<span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaGNC">          29 :         return rc;</span></span>
+<span id="L245"><span class="lineNum">     245</span>                 :             : }</span>
+<span id="L246"><span class="lineNum">     246</span>                 :             : </span>
+<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">           6 : static int edk2_compat_post_process(struct list_head *variable_bank,</span></span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :                                     struct list_head *update_bank __unused)</span>
+<span id="L249"><span class="lineNum">     249</span>                 :             : {</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :         struct secvar *hwvar;</span>
+<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC">           6 :         if (!setup_mode) {</span></span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">           2 :                 secvar_set_secure_mode();</span></span>
+<span id="L253"><span class="lineNum">     253</span>                 :<span class="tlaGNC">           2 :                 prlog(PR_INFO, &quot;Enforcing OS secure mode\n&quot;);</span></span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :                 /*</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :                  * HW KEY HASH is no more needed after this point. It is already</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :                  * visible to userspace via device-tree, so exposing via sysfs is</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :                  * just a duplication. Remove it from in-memory copy.</span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :                  */</span>
+<span id="L259"><span class="lineNum">     259</span>                 :<span class="tlaGNC">           2 :                 hwvar = find_secvar(&quot;HWKH&quot;, 5, variable_bank);</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">           2 :                 if (!hwvar) {</span></span>
+<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prlog(PR_ERR, &quot;cannot find hw-key-hash, should not happen\n&quot;);</span></span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaUNC">           0 :                         return OPAL_INTERNAL_ERROR;</span></span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :                 }</span>
+<span id="L264"><span class="lineNum">     264</span>                 :<span class="tlaGNC tlaBgGNC">           2 :                 list_del(&amp;hwvar-&gt;link);</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">           2 :                 dealloc_secvar(hwvar);</span></span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :         }</span>
+<span id="L267"><span class="lineNum">     267</span>                 :             : </span>
+<span id="L268"><span class="lineNum">     268</span>                 :<span class="tlaGNC">           6 :         return OPAL_SUCCESS;</span></span>
+<span id="L269"><span class="lineNum">     269</span>                 :             : }</span>
+<span id="L270"><span class="lineNum">     270</span>                 :             : </span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">          34 : static int edk2_compat_validate(struct secvar *var)</span></span>
+<span id="L272"><span class="lineNum">     272</span>                 :             : {</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             : </span>
+<span id="L274"><span class="lineNum">     274</span>                 :             :         /*</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :          * Checks if the update is for supported</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             :          * Non-volatile secure variables</span>
+<span id="L277"><span class="lineNum">     277</span>                 :             :          */</span>
+<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaGNC">          34 :         if (!key_equals(var-&gt;key, &quot;PK&quot;)</span></span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">          26 :                         &amp;&amp; !key_equals(var-&gt;key, &quot;KEK&quot;)</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">          15 :                         &amp;&amp; !key_equals(var-&gt;key, &quot;db&quot;)</span></span>
+<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC">           6 :                         &amp;&amp; !key_equals(var-&gt;key, &quot;dbx&quot;))</span></span>
+<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return OPAL_PARAMETER;</span></span>
+<span id="L283"><span class="lineNum">     283</span>                 :             : </span>
+<span id="L284"><span class="lineNum">     284</span>                 :             :         /* Check that signature type is PKCS7 */</span>
+<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC tlaBgGNC">          34 :         if (!is_pkcs7_sig_format(var-&gt;data))</span></span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return OPAL_PARAMETER;</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :             : </span>
+<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC tlaBgGNC">          34 :         return OPAL_SUCCESS;</span></span>
+<span id="L289"><span class="lineNum">     289</span>                 :             : };</span>
+<span id="L290"><span class="lineNum">     290</span>                 :             : </span>
+<span id="L291"><span class="lineNum">     291</span>                 :             : struct secvar_backend_driver edk2_compatible_v1 = {</span>
+<span id="L292"><span class="lineNum">     292</span>                 :             :         .pre_process = edk2_compat_pre_process,</span>
+<span id="L293"><span class="lineNum">     293</span>                 :             :         .process = edk2_compat_process,</span>
+<span id="L294"><span class="lineNum">     294</span>                 :             :         .post_process = edk2_compat_post_process,</span>
+<span id="L295"><span class="lineNum">     295</span>                 :             :         .validate = edk2_compat_validate,</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             :         .compatible = &quot;ibm,edk2-compat-v1&quot;,</span>
+<span id="L297"><span class="lineNum">     297</span>                 :             : };</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
-    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
-  </table>
-  <br>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
 
 </body>
 </html>

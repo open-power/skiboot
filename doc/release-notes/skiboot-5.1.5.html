@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.1.5 &#8212; skiboot bc7b85d
+    <title>skiboot-5.1.5 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.1.4.html" title="skiboot-5.1.4"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.5</a></li> 
@@ -46,18 +44,18 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-1-5">
-<h1>skiboot-5.1.5<a class="headerlink" href="#skiboot-5-1-5" title="Permalink to this headline">¶</a></h1>
+<h1>skiboot-5.1.5<a class="headerlink" href="#skiboot-5-1-5" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.1.5 was released on October 1st, 2015.</p>
 <p>skiboot-5.1.5 is the 6th stable release of 5.1, it follows skiboot-5.1.4
 (which was released September 26th, 2015).</p>
 <p>Skiboot 5.1.5 contains all fixes from skiboot-5.1.4 and is a minor bug
 fix release.</p>
 <section id="changes">
-<h2>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h2>
+<h2>Changes<a class="headerlink" href="#changes" title="Link to this heading">¶</a></h2>
 <p>Over skiboot-5.1.4, we have the following changes:</p>
 </section>
 <section id="generic">
-<h2>Generic<a class="headerlink" href="#generic" title="Permalink to this headline">¶</a></h2>
+<h2>Generic<a class="headerlink" href="#generic" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>centaur: Add indirect XSCOM support
 Fixes a bug where opal-prd would not be able to recover from a bunch
@@ -70,7 +68,7 @@ to BMCs.</p></li>
 </ul>
 </section>
 <section id="ast-bmc-machines">
-<h2>AST BMC machines<a class="headerlink" href="#ast-bmc-machines" title="Permalink to this headline">¶</a></h2>
+<h2>AST BMC machines<a class="headerlink" href="#ast-bmc-machines" title="Link to this heading">¶</a></h2>
 <ul>
 <li><dl>
 <dt>ipmi-sel: Run power action immediately if host not up</dt><dd><p>Our normal sequence for a soft power action (IPMI ‘power soft’ or
@@ -86,7 +84,7 @@ the action immediately if we know how.</p>
 </ul>
 </section>
 <section id="openpower-machines">
-<h2>OpenPower machines:<a class="headerlink" href="#openpower-machines" title="Permalink to this headline">¶</a></h2>
+<h2>OpenPower machines:<a class="headerlink" href="#openpower-machines" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>opal-prd: Increase IPMI timeout to a slightly better value
 Proactively bump the timeout to 5seconds to match current value in petitboot
@@ -102,8 +100,9 @@ Observed in the wild that this fixes bugs for petitboot.</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.1.5</a><ul>
 <li><a class="reference internal" href="#changes">Changes</a></li>
 <li><a class="reference internal" href="#generic">Generic</a></li>
@@ -113,12 +112,17 @@ Observed in the wild that this fixes bugs for petitboot.</p></li>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.1.4.html"
-                        title="previous chapter">skiboot-5.1.4</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.1.6.html"
-                        title="next chapter">skiboot-5.1.6</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.1.4.html"
+                          title="previous chapter">skiboot-5.1.4</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.1.6.html"
+                          title="next chapter">skiboot-5.1.6</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -135,7 +139,7 @@ Observed in the wild that this fixes bugs for petitboot.</p></li>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -152,15 +156,15 @@ Observed in the wild that this fixes bugs for petitboot.</p></li>
         <li class="right" >
           <a href="skiboot-5.1.4.html" title="skiboot-5.1.4"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.5</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

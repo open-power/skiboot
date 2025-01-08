@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_PCI_RESET &#8212; skiboot bc7b85d
+    <title>OPAL_PCI_RESET &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-pci-reinit-53.html" title="OPAL_PCI_REINIT"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_PCI_RESET</a></li> 
@@ -46,24 +44,24 @@
           <div class="body" role="main">
             
   <section id="opal-pci-reset">
-<span id="id1"></span><h1>OPAL_PCI_RESET<a class="headerlink" href="#opal-pci-reset" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_PCI_RESET<a class="headerlink" href="#opal-pci-reset" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PCI_RESET                               49</span>
 
-<span class="k">enum</span><span class="w"> </span><span class="n">OpalPciResetScope</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_RESET_PHB_COMPLETE</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_RESET_PCI_LINK</span><span class="w">             </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_RESET_PHB_ERROR</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_RESET_PCI_HOT</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_RESET_PCI_FUNDAMENTAL</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_RESET_PCI_IODA_TABLE</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mi">6</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalPciResetScope</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">OPAL_RESET_PHB_COMPLETE</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_RESET_PCI_LINK</span><span class="w">             </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_RESET_PHB_ERROR</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_RESET_PCI_HOT</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_RESET_PCI_FUNDAMENTAL</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_RESET_PCI_IODA_TABLE</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="mi">6</span>
+<span class="p">};</span>
 
-<span class="k">enum</span><span class="w"> </span><span class="n">OpalPciResetState</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_DEASSERT_RESET</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="n">OPAL_ASSERT_RESET</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="k">enum</span><span class="w"> </span><span class="n">OpalPciResetState</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">OPAL_DEASSERT_RESET</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">     </span><span class="n">OPAL_ASSERT_RESET</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="p">};</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_reset</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">reset_scope</span><span class="p">,</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">assert_state</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_pci_reset</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">reset_scope</span><span class="p">,</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">assert_state</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Kick off the requested PCI reset operation. This starts a state machine off to
@@ -72,7 +70,7 @@ wait before calling back into <a class="reference internal" href="opal-pci-poll-
 call <a class="reference internal" href="opal-pci-poll-62.html#opal-pci-poll"><span class="std std-ref">OPAL_PCI_POLL</span></a> earlier, but it is unlikely any progress will have
 been made.</p>
 <section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-parameter"><span class="std std-ref">OPAL_PARAMETER</span></a></dt><dd><p>Invalid <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">reset_scope</span></code>, or <code class="docutils literal notranslate"><span class="pre">assert_state</span></code>.</p>
 </dd>
@@ -92,20 +90,26 @@ Call <a class="reference internal" href="opal-pci-poll-62.html#opal-pci-poll"><s
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_PCI_RESET</a><ul>
 <li><a class="reference internal" href="#returns">Returns</a></li>
 </ul>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-pci-reinit-53.html"
-                        title="previous chapter">OPAL_PCI_REINIT</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-pci-set-p2p-157.html"
-                        title="next chapter">OPAL_PCI_SET_P2P</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-pci-reinit-53.html"
+                          title="previous chapter">OPAL_PCI_REINIT</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-pci-set-p2p-157.html"
+                          title="next chapter">OPAL_PCI_SET_P2P</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -122,7 +126,7 @@ Call <a class="reference internal" href="opal-pci-poll-62.html#opal-pci-poll"><s
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -139,15 +143,15 @@ Call <a class="reference internal" href="opal-pci-poll-62.html#opal-pci-poll"><s
         <li class="right" >
           <a href="opal-pci-reinit-53.html" title="OPAL_PCI_REINIT"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_PCI_RESET</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

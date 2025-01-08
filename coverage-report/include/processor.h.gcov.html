@@ -10,520 +10,520 @@
 
 <body>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="title">LCOV - code coverage report</td></tr>
-    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
 
-    <tr>
-      <td width="100%">
-        <table cellpadding=1 border=0 width="100%">
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
           <tr>
             <td width="10%" class="headerItem">Current view:</td>
-            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">include</a> - processor.h<span style="font-size: 80%;"> (source / <a href="processor.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="10%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">include</a> - processor.h<span style="font-size: 80%;"> (source / <a href="processor.h.func-c.html">functions</a>)</span></td>
             <td width="5%"></td>
-            <td width="15%"></td>
-            <td width="10%" class="headerCovTableHead">Hit</td>
-            <td width="10%" class="headerCovTableHead">Total</td>
-            <td width="15%" class="headerCovTableHead">Coverage</td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntryLo">33.3&nbsp;%</td>
             <td class="headerCovTableEntry">12</td>
-            <td class="headerCovTableEntryLo">33.3 %</td>
+            <td class="headerCovTableEntry">4</td>
           </tr>
           <tr>
-            <td class="headerItem">Date:</td>
-            <td class="headerValue">2024-09-10 18:37:41</td>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-01-08 15:53:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryLo">50.0&nbsp;%</td>
             <td class="headerCovTableEntry">2</td>
-            <td class="headerCovTableEntryLo">50.0 %</td>
+            <td class="headerCovTableEntry">1</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntry">0</td>
-            <td class="headerCovTableEntry">0</td>
             <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
           </tr>
-          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
-        </table>
-      </td>
-    </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
 
-    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
-  </table>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
 
-  <table cellpadding=0 cellspacing=0 border=0>
-    <tr>
-      <td><br></td>
-    </tr>
-    <tr>
-      <td>
-<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
 <pre class="source">
-<a name="1"><span class="lineNum">       1 </span>                :            : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</a>
-<a name="2"><span class="lineNum">       2 </span>                :            : /* Copyright 2013-2019 IBM Corp. */</a>
-<a name="3"><span class="lineNum">       3 </span>                :            : </a>
-<a name="4"><span class="lineNum">       4 </span>                :            : #ifndef __PROCESSOR_H</a>
-<a name="5"><span class="lineNum">       5 </span>                :            : #define __PROCESSOR_H</a>
-<a name="6"><span class="lineNum">       6 </span>                :            : </a>
-<a name="7"><span class="lineNum">       7 </span>                :            : #include &lt;bitutils.h&gt;</a>
-<a name="8"><span class="lineNum">       8 </span>                :            : </a>
-<a name="9"><span class="lineNum">       9 </span>                :            : /* MSR bits */</a>
-<a name="10"><span class="lineNum">      10 </span>                :            : #define MSR_SF          PPC_BIT(0)      /* 64-bit mode */</a>
-<a name="11"><span class="lineNum">      11 </span>                :            : #define MSR_HV          PPC_BIT(3)      /* Hypervisor mode */</a>
-<a name="12"><span class="lineNum">      12 </span>                :            : #define MSR_VEC         PPC_BIT(38)     /* VMX enable */</a>
-<a name="13"><span class="lineNum">      13 </span>                :            : #define MSR_VSX         PPC_BIT(40)     /* VSX enable */</a>
-<a name="14"><span class="lineNum">      14 </span>                :            : #define MSR_S           PPC_BIT(41)     /* Secure mode */</a>
-<a name="15"><span class="lineNum">      15 </span>                :            : #define MSR_EE          PPC_BIT(48)     /* External Int. Enable */</a>
-<a name="16"><span class="lineNum">      16 </span>                :            : #define MSR_PR          PPC_BIT(49)             /* Problem state */</a>
-<a name="17"><span class="lineNum">      17 </span>                :            : #define MSR_FP          PPC_BIT(50)     /* Floating Point Enable */</a>
-<a name="18"><span class="lineNum">      18 </span>                :            : #define MSR_ME          PPC_BIT(51)     /* Machine Check Enable */</a>
-<a name="19"><span class="lineNum">      19 </span>                :            : #define MSR_FE0         PPC_BIT(52)     /* FP Exception 0 */</a>
-<a name="20"><span class="lineNum">      20 </span>                :            : #define MSR_SE          PPC_BIT(53)     /* Step enable */</a>
-<a name="21"><span class="lineNum">      21 </span>                :            : #define MSR_BE          PPC_BIT(54)     /* Branch trace enable */</a>
-<a name="22"><span class="lineNum">      22 </span>                :            : #define MSR_FE1         PPC_BIT(55)     /* FP Exception 1 */</a>
-<a name="23"><span class="lineNum">      23 </span>                :            : #define MSR_IR          PPC_BIT(58)     /* Instructions reloc */</a>
-<a name="24"><span class="lineNum">      24 </span>                :            : #define MSR_DR          PPC_BIT(59)     /* Data reloc */</a>
-<a name="25"><span class="lineNum">      25 </span>                :            : #define MSR_PMM         PPC_BIT(61)     /* Perf Monitor */</a>
-<a name="26"><span class="lineNum">      26 </span>                :            : #define MSR_RI          PPC_BIT(62)     /* Recoverable Interrupt */</a>
-<a name="27"><span class="lineNum">      27 </span>                :            : #define MSR_LE          PPC_BIT(63)     /* Little Endian */</a>
-<a name="28"><span class="lineNum">      28 </span>                :            : </a>
-<a name="29"><span class="lineNum">      29 </span>                :            : /* PIR */</a>
-<a name="30"><span class="lineNum">      30 </span>                :            : #define SPR_PIR_P10_MASK        0x7fff  /* Mask of implemented bits */</a>
-<a name="31"><span class="lineNum">      31 </span>                :            : #define SPR_PIR_P9_MASK         0x7fff  /* Mask of implemented bits */</a>
-<a name="32"><span class="lineNum">      32 </span>                :            : #define SPR_PIR_P8_MASK         0x1fff  /* Mask of implemented bits */</a>
-<a name="33"><span class="lineNum">      33 </span>                :            : </a>
-<a name="34"><span class="lineNum">      34 </span>                :            : /* SPR register definitions */</a>
-<a name="35"><span class="lineNum">      35 </span>                :            : #define SPR_DSCR        0x011   /* RW: Data stream control reg */</a>
-<a name="36"><span class="lineNum">      36 </span>                :            : #define SPR_DSISR       0x012   /* RW: Data storage interrupt status reg */</a>
-<a name="37"><span class="lineNum">      37 </span>                :            : #define SPR_DAR         0x013   /* RW: Data address reg */</a>
-<a name="38"><span class="lineNum">      38 </span>                :            : #define SPR_DEC         0x016   /* RW: Decrement Register */</a>
-<a name="39"><span class="lineNum">      39 </span>                :            : #define SPR_SDR1        0x019</a>
-<a name="40"><span class="lineNum">      40 </span>                :            : #define SPR_SRR0        0x01a   /* RW: Exception save/restore reg 0 */</a>
-<a name="41"><span class="lineNum">      41 </span>                :            : #define SPR_SRR1        0x01b   /* RW: Exception save/restore reg 1 */</a>
-<a name="42"><span class="lineNum">      42 </span>                :            : #define SPR_CFAR        0x01c   /* RW: Come From Address Register */</a>
-<a name="43"><span class="lineNum">      43 </span>                :            : #define SPR_AMR         0x01d   /* RW: Authority Mask Register */</a>
-<a name="44"><span class="lineNum">      44 </span>                :            : #define SPR_IAMR        0x03d   /* RW: Instruction Authority Mask Register */</a>
-<a name="45"><span class="lineNum">      45 </span>                :            : #define SPR_RPR         0x0ba   /* RW: Relative Priority Register */</a>
-<a name="46"><span class="lineNum">      46 </span>                :            : #define SPR_TBRL        0x10c   /* RO: Timebase low */</a>
-<a name="47"><span class="lineNum">      47 </span>                :            : #define SPR_TBRU        0x10d   /* RO: Timebase high */</a>
-<a name="48"><span class="lineNum">      48 </span>                :            : #define SPR_SPRC        0x114   /* RW: Access to uArch SPRs (ex SCOMC) */</a>
-<a name="49"><span class="lineNum">      49 </span>                :            : #define SPR_SPRD        0x115   /* RW: Access to uArch SPRs (ex SCOMD) */</a>
-<a name="50"><span class="lineNum">      50 </span>                :            : #define SPR_SCOMC       0x114   /* RW: SCOM Control - old name of SPRC */</a>
-<a name="51"><span class="lineNum">      51 </span>                :            : #define SPR_SCOMD       0x115   /* RW: SCOM Data    - old name of SPRD */</a>
-<a name="52"><span class="lineNum">      52 </span>                :            : #define SPR_TBWL        0x11c   /* RW: Timebase low */</a>
-<a name="53"><span class="lineNum">      53 </span>                :            : #define SPR_TBWU        0x11d   /* RW: Timebase high */</a>
-<a name="54"><span class="lineNum">      54 </span>                :            : #define SPR_TBU40       0x11e   /* RW: Timebase Upper 40 bit */</a>
-<a name="55"><span class="lineNum">      55 </span>                :            : #define SPR_PVR         0x11f   /* RO: Processor version register */</a>
-<a name="56"><span class="lineNum">      56 </span>                :            : #define SPR_HSPRG0      0x130   /* RW: Hypervisor scratch 0 */</a>
-<a name="57"><span class="lineNum">      57 </span>                :            : #define SPR_HSPRG1      0x131   /* RW: Hypervisor scratch 1 */</a>
-<a name="58"><span class="lineNum">      58 </span>                :            : #define SPR_SPURR       0x134   /* RW: Scaled Processor Utilization Resource */</a>
-<a name="59"><span class="lineNum">      59 </span>                :            : #define SPR_PURR        0x135   /* RW: Processor Utilization Resource reg */</a>
-<a name="60"><span class="lineNum">      60 </span>                :            : #define SPR_HDEC        0x136   /* RW: Hypervisor Decrementer */</a>
-<a name="61"><span class="lineNum">      61 </span>                :            : #define SPR_HRMOR       0x139   /* RW: Hypervisor Real Mode Offset reg */</a>
-<a name="62"><span class="lineNum">      62 </span>                :            : #define SPR_HSRR0       0x13a   /* RW: HV Exception save/restore reg 0 */</a>
-<a name="63"><span class="lineNum">      63 </span>                :            : #define SPR_HSRR1       0x13b   /* RW: HV Exception save/restore reg 1 */</a>
-<a name="64"><span class="lineNum">      64 </span>                :            : #define SPR_TFMR        0x13d</a>
-<a name="65"><span class="lineNum">      65 </span>                :            : #define SPR_LPCR        0x13e</a>
-<a name="66"><span class="lineNum">      66 </span>                :            : #define SPR_HMER        0x150   /* Hypervisor Maintenance Exception */</a>
-<a name="67"><span class="lineNum">      67 </span>                :            : #define SPR_HMEER       0x151   /* HMER interrupt enable mask */</a>
-<a name="68"><span class="lineNum">      68 </span>                :            : #define SPR_PCR         0x152</a>
-<a name="69"><span class="lineNum">      69 </span>                :            : #define SPR_AMOR        0x15d</a>
-<a name="70"><span class="lineNum">      70 </span>                :            : #define SPR_USRR0       0x1fa   /* RW: Ultravisor Save/Restore Register 0 */</a>
-<a name="71"><span class="lineNum">      71 </span>                :            : #define SPR_USRR1       0x1fb   /* RW: Ultravisor Save/Restore Register 1 */</a>
-<a name="72"><span class="lineNum">      72 </span>                :            : #define SPR_SMFCTRL     0x1ff   /* RW: Secure Memory Facility Control */</a>
-<a name="73"><span class="lineNum">      73 </span>                :            : #define SPR_PSSCR       0x357   /* RW: Stop status and control (ISA 3) */</a>
-<a name="74"><span class="lineNum">      74 </span>                :            : #define SPR_PPR32       0x382</a>
-<a name="75"><span class="lineNum">      75 </span>                :            : #define SPR_TSCR        0x399</a>
-<a name="76"><span class="lineNum">      76 </span>                :            : #define SPR_HID0        0x3f0</a>
-<a name="77"><span class="lineNum">      77 </span>                :            : #define SPR_HID1        0x3f1</a>
-<a name="78"><span class="lineNum">      78 </span>                :            : #define SPR_HID2        0x3f8</a>
-<a name="79"><span class="lineNum">      79 </span>                :            : #define SPR_HID4        0x3f4</a>
-<a name="80"><span class="lineNum">      80 </span>                :            : #define SPR_HID5        0x3f6</a>
-<a name="81"><span class="lineNum">      81 </span>                :            : #define SPR_PIR         0x3ff   /* RO: Processor Identification */</a>
-<a name="82"><span class="lineNum">      82 </span>                :            : </a>
-<a name="83"><span class="lineNum">      83 </span>                :            : /* Bits in SRR1 */</a>
-<a name="84"><span class="lineNum">      84 </span>                :            : </a>
-<a name="85"><span class="lineNum">      85 </span>                :            : #define SPR_SRR1_PM_WAKE_MASK   0x3c0000        /* PM wake reason for P8/9 */</a>
-<a name="86"><span class="lineNum">      86 </span>                :            : #define SPR_SRR1_PM_WAKE_SRESET 0x100000</a>
-<a name="87"><span class="lineNum">      87 </span>                :            : #define SPR_SRR1_PM_WAKE_MCE    0x3c0000        /* Use reserved value for MCE */</a>
-<a name="88"><span class="lineNum">      88 </span>                :            : </a>
-<a name="89"><span class="lineNum">      89 </span>                :            : /* Bits in LPCR */</a>
-<a name="90"><span class="lineNum">      90 </span>                :            : </a>
-<a name="91"><span class="lineNum">      91 </span>                :            : /* Powersave Exit Cause Enable is different on each generation */</a>
-<a name="92"><span class="lineNum">      92 </span>                :            : #define SPR_LPCR_P8_PECE        PPC_BITMASK(47,51)</a>
-<a name="93"><span class="lineNum">      93 </span>                :            : #define SPR_LPCR_P8_PECE0       PPC_BIT(47)   /* Wake on priv doorbell */</a>
-<a name="94"><span class="lineNum">      94 </span>                :            : #define SPR_LPCR_P8_PECE1       PPC_BIT(48)   /* Wake on hv doorbell */</a>
-<a name="95"><span class="lineNum">      95 </span>                :            : #define SPR_LPCR_P8_PECE2       PPC_BIT(49)   /* Wake on external interrupts */</a>
-<a name="96"><span class="lineNum">      96 </span>                :            : #define SPR_LPCR_P8_PECE3       PPC_BIT(50)   /* Wake on decrementer */</a>
-<a name="97"><span class="lineNum">      97 </span>                :            : #define SPR_LPCR_P8_PECE4       PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */</a>
-<a name="98"><span class="lineNum">      98 </span>                :            : </a>
-<a name="99"><span class="lineNum">      99 </span>                :            : #define SPR_LPCR_P9_PECE        (PPC_BITMASK(47,51) | PPC_BITMASK(17,17))</a>
-<a name="100"><span class="lineNum">     100 </span>                :            : #define SPR_LPCR_P9_PECEU0      PPC_BIT(17)   /* Wake on HVI */</a>
-<a name="101"><span class="lineNum">     101 </span>                :            : #define SPR_LPCR_P9_PECEL0      PPC_BIT(47)   /* Wake on priv doorbell */</a>
-<a name="102"><span class="lineNum">     102 </span>                :            : #define SPR_LPCR_P9_PECEL1      PPC_BIT(48)   /* Wake on hv doorbell */</a>
-<a name="103"><span class="lineNum">     103 </span>                :            : #define SPR_LPCR_P9_PECEL2      PPC_BIT(49)   /* Wake on external interrupts */</a>
-<a name="104"><span class="lineNum">     104 </span>                :            : #define SPR_LPCR_P9_PECEL3      PPC_BIT(50)   /* Wake on decrementer */</a>
-<a name="105"><span class="lineNum">     105 </span>                :            : #define SPR_LPCR_P9_PECEL4      PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */</a>
-<a name="106"><span class="lineNum">     106 </span>                :            : #define SPR_LPCR_P9_LD          PPC_BIT(46)   /* Large decrementer mode bit */</a>
-<a name="107"><span class="lineNum">     107 </span>                :            : </a>
-<a name="108"><span class="lineNum">     108 </span>                :            : </a>
-<a name="109"><span class="lineNum">     109 </span>                :            : /* Bits in TFMR - control bits */</a>
-<a name="110"><span class="lineNum">     110 </span>                :            : #define SPR_TFMR_MAX_CYC_BET_STEPS      PPC_BITMASK(0,7)</a>
-<a name="111"><span class="lineNum">     111 </span>                :            : #define SPR_TFMR_N_CLKS_PER_STEP        PPC_BITMASK(8,9)</a>
-<a name="112"><span class="lineNum">     112 </span>                :            : #define SPR_TFMR_MASK_HMI               PPC_BIT(10)</a>
-<a name="113"><span class="lineNum">     113 </span>                :            : #define SPR_TFMR_SYNC_BIT_SEL           PPC_BITMASK(11,13)</a>
-<a name="114"><span class="lineNum">     114 </span>                :            : #define SPR_TFMR_TB_ECLIPZ              PPC_BIT(14)</a>
-<a name="115"><span class="lineNum">     115 </span>                :            : #define SPR_TFMR_LOAD_TOD_MOD           PPC_BIT(16)</a>
-<a name="116"><span class="lineNum">     116 </span>                :            : #define SPR_TFMR_MOVE_CHIP_TOD_TO_TB    PPC_BIT(18)</a>
-<a name="117"><span class="lineNum">     117 </span>                :            : #define SPR_TFMR_CLEAR_TB_ERRORS        PPC_BIT(24)</a>
-<a name="118"><span class="lineNum">     118 </span>                :            : /* Bits in TFMR - thread indep. status bits */</a>
-<a name="119"><span class="lineNum">     119 </span>                :            : #define SPR_TFMR_TFAC_XFER_ERROR        PPC_BIT(25)</a>
-<a name="120"><span class="lineNum">     120 </span>                :            : #define SPR_TFMR_HDEC_PARITY_ERROR      PPC_BIT(26)</a>
-<a name="121"><span class="lineNum">     121 </span>                :            : #define SPR_TFMR_TBST_CORRUPT           PPC_BIT(27)</a>
-<a name="122"><span class="lineNum">     122 </span>                :            : #define SPR_TFMR_TBST_ENCODED           PPC_BITMASK(28,31)</a>
-<a name="123"><span class="lineNum">     123 </span>                :            : #define SPR_TFMR_TBST_LAST              PPC_BITMASK(32,35)</a>
-<a name="124"><span class="lineNum">     124 </span>                :            : #define SPR_TFMR_TB_ENABLED             PPC_BIT(40)</a>
-<a name="125"><span class="lineNum">     125 </span>                :            : #define SPR_TFMR_TB_VALID               PPC_BIT(41)</a>
-<a name="126"><span class="lineNum">     126 </span>                :            : #define SPR_TFMR_TB_SYNC_OCCURED        PPC_BIT(42)</a>
-<a name="127"><span class="lineNum">     127 </span>                :            : #define SPR_TFMR_TB_MISSING_SYNC        PPC_BIT(43)</a>
-<a name="128"><span class="lineNum">     128 </span>                :            : #define SPR_TFMR_TB_MISSING_STEP        PPC_BIT(44)</a>
-<a name="129"><span class="lineNum">     129 </span>                :            : #define SPR_TFMR_TB_RESIDUE_ERR         PPC_BIT(45)</a>
-<a name="130"><span class="lineNum">     130 </span>                :            : #define SPR_TFMR_FW_CONTROL_ERR         PPC_BIT(46)</a>
-<a name="131"><span class="lineNum">     131 </span>                :            : #define SPR_TFMR_CHIP_TOD_STATUS        PPC_BITMASK(47,50)</a>
-<a name="132"><span class="lineNum">     132 </span>                :            : #define SPR_TFMR_CHIP_TOD_INTERRUPT     PPC_BIT(51)</a>
-<a name="133"><span class="lineNum">     133 </span>                :            : #define SPR_TFMR_CHIP_TOD_TIMEOUT       PPC_BIT(54)</a>
-<a name="134"><span class="lineNum">     134 </span>                :            : #define SPR_TFMR_CHIP_TOD_PARITY_ERR    PPC_BIT(56)</a>
-<a name="135"><span class="lineNum">     135 </span>                :            : /* Bits in TFMR - thread specific. status bits */</a>
-<a name="136"><span class="lineNum">     136 </span>                :            : #define SPR_TFMR_PURR_PARITY_ERR        PPC_BIT(57)</a>
-<a name="137"><span class="lineNum">     137 </span>                :            : #define SPR_TFMR_SPURR_PARITY_ERR       PPC_BIT(58)</a>
-<a name="138"><span class="lineNum">     138 </span>                :            : #define SPR_TFMR_DEC_PARITY_ERR         PPC_BIT(59)</a>
-<a name="139"><span class="lineNum">     139 </span>                :            : #define SPR_TFMR_TFMR_CORRUPT           PPC_BIT(60)</a>
-<a name="140"><span class="lineNum">     140 </span>                :            : #define SPR_TFMR_PURR_OVERFLOW          PPC_BIT(61)</a>
-<a name="141"><span class="lineNum">     141 </span>                :            : #define SPR_TFMR_SPURR_OVERFLOW         PPC_BIT(62)</a>
-<a name="142"><span class="lineNum">     142 </span>                :            : </a>
-<a name="143"><span class="lineNum">     143 </span>                :            : /* Bits in HMER/HMEER */</a>
-<a name="144"><span class="lineNum">     144 </span>                :            : #define SPR_HMER_MALFUNCTION_ALERT      PPC_BIT(0)</a>
-<a name="145"><span class="lineNum">     145 </span>                :            : #define SPR_HMER_PROC_RECV_DONE         PPC_BIT(2)</a>
-<a name="146"><span class="lineNum">     146 </span>                :            : #define SPR_HMER_PROC_RECV_ERROR_MASKED PPC_BIT(3) /* Not P10 */</a>
-<a name="147"><span class="lineNum">     147 </span>                :            : #define SPR_HMER_TFAC_ERROR             PPC_BIT(4)</a>
-<a name="148"><span class="lineNum">     148 </span>                :            : #define SPR_HMER_TFMR_PARITY_ERROR      PPC_BIT(5) /* P9 */</a>
-<a name="149"><span class="lineNum">     149 </span>                :            : #define SPR_HMER_TFAC_SHADOW_XFER_ERROR PPC_BIT(5) /* P10 */</a>
-<a name="150"><span class="lineNum">     150 </span>                :            : #define SPR_HMER_SPURR_SCALE_LIMIT      PPC_BIT(6) /* P10 */</a>
-<a name="151"><span class="lineNum">     151 </span>                :            : #define SPR_HMER_XSCOM_FAIL             PPC_BIT(8)</a>
-<a name="152"><span class="lineNum">     152 </span>                :            : #define SPR_HMER_XSCOM_DONE             PPC_BIT(9)</a>
-<a name="153"><span class="lineNum">     153 </span>                :            : #define SPR_HMER_PROC_RECV_AGAIN        PPC_BIT(11)</a>
-<a name="154"><span class="lineNum">     154 </span>                :            : #define SPR_HMER_WARN_RISE              PPC_BIT(14) /* Not P10 */</a>
-<a name="155"><span class="lineNum">     155 </span>                :            : #define SPR_HMER_WARN_FALL              PPC_BIT(15) /* Not P10 */</a>
-<a name="156"><span class="lineNum">     156 </span>                :            : #define SPR_HMER_SCOM_FIR_HMI           PPC_BIT(16)</a>
-<a name="157"><span class="lineNum">     157 </span>                :            : #define SPR_HMER_TRIG_FIR_HMI           PPC_BIT(17) /* Not P10 */</a>
-<a name="158"><span class="lineNum">     158 </span>                :            : #define SPR_HMER_THD_WAKE_BLOCKED_TM_SUSPEND    PPC_BIT(17) /* Not P10 */</a>
-<a name="159"><span class="lineNum">     159 </span>                :            : #define SPR_HMER_P10_TRIG_FIR_HMI       PPC_BIT(18)</a>
-<a name="160"><span class="lineNum">     160 </span>                :            : #define SPR_HMER_HYP_RESOURCE_ERR       PPC_BIT(20) /* Not P10 */</a>
-<a name="161"><span class="lineNum">     161 </span>                :            : #define SPR_HMER_XSCOM_STATUS           PPC_BITMASK(21,23)</a>
-<a name="162"><span class="lineNum">     162 </span>                :            : </a>
-<a name="163"><span class="lineNum">     163 </span>                :            : /*</a>
-<a name="164"><span class="lineNum">     164 </span>                :            :  * HMEER: initial bits for HMI interrupt enable mask.</a>
-<a name="165"><span class="lineNum">     165 </span>                :            :  * Per Dave Larson, never enable 8,9,21-23</a>
-<a name="166"><span class="lineNum">     166 </span>                :            :  */</a>
-<a name="167"><span class="lineNum">     167 </span>                :            : #define SPR_HMEER_HMI_ENABLE_MASK       (SPR_HMER_MALFUNCTION_ALERT |\</a>
-<a name="168"><span class="lineNum">     168 </span>                :            :                                          SPR_HMER_HYP_RESOURCE_ERR |\</a>
-<a name="169"><span class="lineNum">     169 </span>                :            :                                          SPR_HMER_PROC_RECV_DONE |\</a>
-<a name="170"><span class="lineNum">     170 </span>                :            :                                          SPR_HMER_PROC_RECV_ERROR_MASKED |\</a>
-<a name="171"><span class="lineNum">     171 </span>                :            :                                          SPR_HMER_TFAC_ERROR |\</a>
-<a name="172"><span class="lineNum">     172 </span>                :            :                                          SPR_HMER_TFMR_PARITY_ERROR |\</a>
-<a name="173"><span class="lineNum">     173 </span>                :            :                                          SPR_HMER_PROC_RECV_AGAIN)</a>
-<a name="174"><span class="lineNum">     174 </span>                :            : </a>
-<a name="175"><span class="lineNum">     175 </span>                :            : #define SPR_HMEER_P10_HMI_ENABLE_MASK   (SPR_HMER_MALFUNCTION_ALERT |\</a>
-<a name="176"><span class="lineNum">     176 </span>                :            :                                          SPR_HMER_PROC_RECV_DONE |\</a>
-<a name="177"><span class="lineNum">     177 </span>                :            :                                          SPR_HMER_TFAC_ERROR |\</a>
-<a name="178"><span class="lineNum">     178 </span>                :            :                                          SPR_HMER_TFAC_SHADOW_XFER_ERROR |\</a>
-<a name="179"><span class="lineNum">     179 </span>                :            :                                          SPR_HMER_SPURR_SCALE_LIMIT |\</a>
-<a name="180"><span class="lineNum">     180 </span>                :            :                                          SPR_HMER_PROC_RECV_AGAIN)</a>
-<a name="181"><span class="lineNum">     181 </span>                :            : </a>
-<a name="182"><span class="lineNum">     182 </span>                :            : /* Bits in HID0 */</a>
-<a name="183"><span class="lineNum">     183 </span>                :            : #define SPR_HID0_POWER8_4LPARMODE       PPC_BIT(2)</a>
-<a name="184"><span class="lineNum">     184 </span>                :            : #define SPR_HID0_POWER8_2LPARMODE       PPC_BIT(6)</a>
-<a name="185"><span class="lineNum">     185 </span>                :            : #define SPR_HID0_POWER8_DYNLPARDIS      PPC_BIT(15)</a>
-<a name="186"><span class="lineNum">     186 </span>                :            : #define SPR_HID0_POWER8_HILE            PPC_BIT(19)</a>
-<a name="187"><span class="lineNum">     187 </span>                :            : #define SPR_HID0_POWER9_HILE            PPC_BIT(4)</a>
-<a name="188"><span class="lineNum">     188 </span>                :            : #define SPR_HID0_POWER10_HILE           PPC_BIT(4)</a>
-<a name="189"><span class="lineNum">     189 </span>                :            : #define SPR_HID0_POWER8_ENABLE_ATTN     PPC_BIT(31)</a>
-<a name="190"><span class="lineNum">     190 </span>                :            : #define SPR_HID0_POWER9_ENABLE_ATTN     PPC_BIT(3)</a>
-<a name="191"><span class="lineNum">     191 </span>                :            : #define SPR_HID0_POWER10_ENABLE_ATTN    PPC_BIT(3)</a>
-<a name="192"><span class="lineNum">     192 </span>                :            : #define SPR_HID0_POWER9_FLUSH_ICACHE    PPC_BIT(2)</a>
-<a name="193"><span class="lineNum">     193 </span>                :            : #define SPR_HID0_POWER10_FLUSH_ICACHE   PPC_BIT(2)</a>
-<a name="194"><span class="lineNum">     194 </span>                :            : #define SPR_HID0_POWER9_RADIX           PPC_BIT(8)</a>
-<a name="195"><span class="lineNum">     195 </span>                :            : </a>
-<a name="196"><span class="lineNum">     196 </span>                :            : /* PVR bits */</a>
-<a name="197"><span class="lineNum">     197 </span>                :            : #define SPR_PVR_TYPE                    0xffff0000</a>
-<a name="198"><span class="lineNum">     198 </span>                :            : #define SPR_PVR_CHIP_TYPE               0x0000f000</a>
-<a name="199"><span class="lineNum">     199 </span>                :            : #define SPR_PVR_VERS_MAJ                0x00000f00</a>
-<a name="200"><span class="lineNum">     200 </span>                :            : #define SPR_PVR_VERS_MIN                0x000000ff</a>
-<a name="201"><span class="lineNum">     201 </span>                :            : </a>
-<a name="202"><span class="lineNum">     202 </span>                :            : #define PVR_TYPE(_pvr)          GETFIELD(SPR_PVR_TYPE, _pvr)</a>
-<a name="203"><span class="lineNum">     203 </span>                :            : #define PVR_CHIP_TYPE(_pvr)     GETFIELD(SPR_PVR_CHIP_TYPE, _pvr)</a>
-<a name="204"><span class="lineNum">     204 </span>                :            : #define PVR_VERS_MAJ(_pvr)      GETFIELD(SPR_PVR_VERS_MAJ, _pvr)</a>
-<a name="205"><span class="lineNum">     205 </span>                :            : #define PVR_VERS_MIN(_pvr)      GETFIELD(SPR_PVR_VERS_MIN, _pvr)</a>
-<a name="206"><span class="lineNum">     206 </span>                :            : </a>
-<a name="207"><span class="lineNum">     207 </span>                :            : /* PVR definitions */</a>
-<a name="208"><span class="lineNum">     208 </span>                :            : #define PVR_TYPE_P8E    0x004b /* Murano */</a>
-<a name="209"><span class="lineNum">     209 </span>                :            : #define PVR_TYPE_P8     0x004d /* Venice */</a>
-<a name="210"><span class="lineNum">     210 </span>                :            : #define PVR_TYPE_P8NVL  0x004c /* Naples */</a>
-<a name="211"><span class="lineNum">     211 </span>                :            : #define PVR_TYPE_P9     0x004e</a>
-<a name="212"><span class="lineNum">     212 </span>                :            : #define PVR_TYPE_P9P    0x004f /* Axone */</a>
-<a name="213"><span class="lineNum">     213 </span>                :            : #define PVR_TYPE_P10    0x0080</a>
-<a name="214"><span class="lineNum">     214 </span>                :            : </a>
-<a name="215"><span class="lineNum">     215 </span>                :            : #ifdef __ASSEMBLY__</a>
-<a name="216"><span class="lineNum">     216 </span>                :            : </a>
-<a name="217"><span class="lineNum">     217 </span>                :            : /* Thread priority control opcodes */</a>
-<a name="218"><span class="lineNum">     218 </span>                :            : #define smt_low         or 1,1,1</a>
-<a name="219"><span class="lineNum">     219 </span>                :            : #define smt_medium      or 2,2,2</a>
-<a name="220"><span class="lineNum">     220 </span>                :            : #define smt_high        or 3,3,3</a>
-<a name="221"><span class="lineNum">     221 </span>                :            : #define smt_medium_high or 5,5,5</a>
-<a name="222"><span class="lineNum">     222 </span>                :            : #define smt_medium_low  or 6,6,6</a>
-<a name="223"><span class="lineNum">     223 </span>                :            : #define smt_extra_high  or 7,7,7</a>
-<a name="224"><span class="lineNum">     224 </span>                :            : #define smt_very_low    or 31,31,31</a>
-<a name="225"><span class="lineNum">     225 </span>                :            : #define smt_lowest      smt_low ; smt_very_low</a>
-<a name="226"><span class="lineNum">     226 </span>                :            : </a>
-<a name="227"><span class="lineNum">     227 </span>                :            : #else /* __ASSEMBLY__ */</a>
-<a name="228"><span class="lineNum">     228 </span>                :            : </a>
-<a name="229"><span class="lineNum">     229 </span>                :            : #include &lt;ccan/str/str.h&gt;</a>
-<a name="230"><span class="lineNum">     230 </span>                :            : #include &lt;compiler.h&gt;</a>
-<a name="231"><span class="lineNum">     231 </span>                :            : #include &lt;stdbool.h&gt;</a>
-<a name="232"><span class="lineNum">     232 </span>                :            : #include &lt;stdint.h&gt;</a>
-<a name="233"><span class="lineNum">     233 </span>                :            : </a>
-<a name="234"><span class="lineNum">     234 </span>                :            : #define PPC_INST_NOP    0x60000000UL</a>
-<a name="235"><span class="lineNum">     235 </span>                :            : #define PPC_INST_TRAP   0x7fe00008UL</a>
-<a name="236"><span class="lineNum">     236 </span>                :            : </a>
-<a name="237"><span class="lineNum">     237 </span>                :            : #define RB(b)           (((b) &amp; 0x1f) &lt;&lt; 11)</a>
-<a name="238"><span class="lineNum">     238 </span>                :            : #define MSGSND(b)       stringify(.long 0x7c00019c | RB(b))</a>
-<a name="239"><span class="lineNum">     239 </span>                :            : #define MSGCLR(b)       stringify(.long 0x7c0001dc | RB(b))</a>
-<a name="240"><span class="lineNum">     240 </span>                :            : #define MSGSYNC         stringify(.long 0x7c0006ec)</a>
-<a name="241"><span class="lineNum">     241 </span>                :            : </a>
-<a name="242"><span class="lineNum">     242 </span>                :<span class="lineCov">          4 : static inline bool is_power9n(uint32_t version)</span></a>
-<a name="243"><span class="lineNum">     243 </span>                :            : {</a>
-<a name="244"><span class="lineNum">     244 </span>                :<span class="lineCov">          4 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></a>
-<a name="245"><span class="lineNum">     245 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="246"><span class="lineNum">     246 </span>                :            :         /*</a>
-<a name="247"><span class="lineNum">     247 </span>                :            :          * Bit 13 tells us:</a>
-<a name="248"><span class="lineNum">     248 </span>                :            :          *   0 = Scale out (aka Nimbus)</a>
-<a name="249"><span class="lineNum">     249 </span>                :            :          *   1 = Scale up  (aka Cumulus)</a>
-<a name="250"><span class="lineNum">     250 </span>                :            :          */</a>
-<a name="251"><span class="lineNum">     251 </span>                :<span class="lineCov">          4 :         if ((version &gt;&gt; 13) &amp; 1)</span></a>
-<a name="252"><span class="lineNum">     252 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="253"><span class="lineNum">     253 </span>                :<span class="lineCov">          4 :         return true;</span></a>
-<a name="254"><span class="lineNum">     254 </span>                :            : }</a>
-<a name="255"><span class="lineNum">     255 </span>                :            : </a>
-<a name="256"><span class="lineNum">     256 </span>                :            : static inline bool is_fused_core(uint32_t version)</a>
-<a name="257"><span class="lineNum">     257 </span>                :            : {</a>
-<a name="258"><span class="lineNum">     258 </span>                :            :         if (PVR_TYPE(version) == PVR_TYPE_P9) {</a>
-<a name="259"><span class="lineNum">     259 </span>                :            :                 switch(PVR_CHIP_TYPE(version)) {</a>
-<a name="260"><span class="lineNum">     260 </span>                :            :                         case 0:</a>
-<a name="261"><span class="lineNum">     261 </span>                :            :                         case 2:</a>
-<a name="262"><span class="lineNum">     262 </span>                :            :                                 return true;</a>
-<a name="263"><span class="lineNum">     263 </span>                :            :                         default:</a>
-<a name="264"><span class="lineNum">     264 </span>                :            :                                 return false;</a>
-<a name="265"><span class="lineNum">     265 </span>                :            :                 }</a>
-<a name="266"><span class="lineNum">     266 </span>                :            : </a>
-<a name="267"><span class="lineNum">     267 </span>                :            :         } else if(PVR_TYPE(version) == PVR_TYPE_P10) {</a>
-<a name="268"><span class="lineNum">     268 </span>                :            :                 if(PVR_CHIP_TYPE(version) &amp; 0x01)</a>
-<a name="269"><span class="lineNum">     269 </span>                :            :                         return false;</a>
-<a name="270"><span class="lineNum">     270 </span>                :            :                 else</a>
-<a name="271"><span class="lineNum">     271 </span>                :            :                         return true;</a>
-<a name="272"><span class="lineNum">     272 </span>                :            :         } else</a>
-<a name="273"><span class="lineNum">     273 </span>                :            :                 return false;</a>
-<a name="274"><span class="lineNum">     274 </span>                :            : }</a>
-<a name="275"><span class="lineNum">     275 </span>                :            : </a>
-<a name="276"><span class="lineNum">     276 </span>                :<span class="lineNoCov">          0 : static inline bool is_power9c(uint32_t version) </span></a>
-<a name="277"><span class="lineNum">     277 </span>                :            : {</a>
-<a name="278"><span class="lineNum">     278 </span>                :            : </a>
-<a name="279"><span class="lineNum">     279 </span>                :<span class="lineNoCov">          0 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></a>
-<a name="280"><span class="lineNum">     280 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="281"><span class="lineNum">     281 </span>                :            :         /*</a>
-<a name="282"><span class="lineNum">     282 </span>                :            :          * Bit 13 tells us:</a>
-<a name="283"><span class="lineNum">     283 </span>                :            :          *   0 = Scale out (aka Nimbus)</a>
-<a name="284"><span class="lineNum">     284 </span>                :            :          *   1 = Scale up  (aka Cumulus)</a>
-<a name="285"><span class="lineNum">     285 </span>                :            :          */</a>
-<a name="286"><span class="lineNum">     286 </span>                :<span class="lineNoCov">          0 :         if (!((version &gt;&gt; 13) &amp; 1))</span></a>
-<a name="287"><span class="lineNum">     287 </span>                :<span class="lineNoCov">          0 :                 return false;</span></a>
-<a name="288"><span class="lineNum">     288 </span>                :<span class="lineNoCov">          0 :         return true;</span></a>
-<a name="289"><span class="lineNum">     289 </span>                :            : }</a>
-<a name="290"><span class="lineNum">     290 </span>                :            : </a>
-<a name="291"><span class="lineNum">     291 </span>                :            : #ifndef __TEST__</a>
-<a name="292"><span class="lineNum">     292 </span>                :            : </a>
-<a name="293"><span class="lineNum">     293 </span>                :            : /* POWER9 and above only */</a>
-<a name="294"><span class="lineNum">     294 </span>                :            : static inline void flush_erat(void)</a>
-<a name="295"><span class="lineNum">     295 </span>                :            : {</a>
-<a name="296"><span class="lineNum">     296 </span>                :            :         asm volatile(&quot;slbia        7&quot;);</a>
-<a name="297"><span class="lineNum">     297 </span>                :            : }</a>
-<a name="298"><span class="lineNum">     298 </span>                :            : </a>
-<a name="299"><span class="lineNum">     299 </span>                :            : /*</a>
-<a name="300"><span class="lineNum">     300 </span>                :            :  * SMT priority</a>
-<a name="301"><span class="lineNum">     301 </span>                :            :  */</a>
-<a name="302"><span class="lineNum">     302 </span>                :            : </a>
-<a name="303"><span class="lineNum">     303 </span>                :            : static inline void smt_low(void)        { asm volatile(&quot;or 1,1,1&quot;);   }</a>
-<a name="304"><span class="lineNum">     304 </span>                :            : static inline void smt_medium(void)     { asm volatile(&quot;or 2,2,2&quot;);   }</a>
-<a name="305"><span class="lineNum">     305 </span>                :            : static inline void smt_high(void)       { asm volatile(&quot;or 3,3,3&quot;);   }</a>
-<a name="306"><span class="lineNum">     306 </span>                :            : static inline void smt_medium_high(void){ asm volatile(&quot;or 5,5,5&quot;);   }</a>
-<a name="307"><span class="lineNum">     307 </span>                :            : static inline void smt_medium_low(void) { asm volatile(&quot;or 6,6,6&quot;);   }</a>
-<a name="308"><span class="lineNum">     308 </span>                :            : static inline void smt_extra_high(void) { asm volatile(&quot;or 7,7,7&quot;);   }</a>
-<a name="309"><span class="lineNum">     309 </span>                :            : static inline void smt_very_low(void)   { asm volatile(&quot;or 31,31,31&quot;);        }</a>
-<a name="310"><span class="lineNum">     310 </span>                :            : static inline void smt_lowest(void)     { smt_low(); smt_very_low();    }</a>
-<a name="311"><span class="lineNum">     311 </span>                :            : </a>
-<a name="312"><span class="lineNum">     312 </span>                :            : /*</a>
-<a name="313"><span class="lineNum">     313 </span>                :            :  * SPR access functions</a>
-<a name="314"><span class="lineNum">     314 </span>                :            :  */</a>
-<a name="315"><span class="lineNum">     315 </span>                :            : </a>
-<a name="316"><span class="lineNum">     316 </span>                :            : static inline unsigned long mfmsr(void)</a>
-<a name="317"><span class="lineNum">     317 </span>                :            : {</a>
-<a name="318"><span class="lineNum">     318 </span>                :            :         unsigned long val;</a>
-<a name="319"><span class="lineNum">     319 </span>                :            :         </a>
-<a name="320"><span class="lineNum">     320 </span>                :            :         asm volatile(&quot;mfmsr %0&quot; : &quot;=r&quot;(val) : : &quot;memory&quot;);</a>
-<a name="321"><span class="lineNum">     321 </span>                :            :         return val;</a>
-<a name="322"><span class="lineNum">     322 </span>                :            : }</a>
-<a name="323"><span class="lineNum">     323 </span>                :            : </a>
-<a name="324"><span class="lineNum">     324 </span>                :            : static inline void mtmsr(unsigned long val)</a>
-<a name="325"><span class="lineNum">     325 </span>                :            : {</a>
-<a name="326"><span class="lineNum">     326 </span>                :            :         asm volatile(&quot;mtmsr %0&quot; : : &quot;r&quot;(val) : &quot;memory&quot;);</a>
-<a name="327"><span class="lineNum">     327 </span>                :            : }</a>
-<a name="328"><span class="lineNum">     328 </span>                :            : </a>
-<a name="329"><span class="lineNum">     329 </span>                :            : static inline void mtmsrd(unsigned long val, int l)</a>
-<a name="330"><span class="lineNum">     330 </span>                :            : {</a>
-<a name="331"><span class="lineNum">     331 </span>                :            :         asm volatile(&quot;mtmsrd %0,%1&quot; : : &quot;r&quot;(val), &quot;i&quot;(l) : &quot;memory&quot;);</a>
-<a name="332"><span class="lineNum">     332 </span>                :            : }</a>
-<a name="333"><span class="lineNum">     333 </span>                :            : </a>
-<a name="334"><span class="lineNum">     334 </span>                :            : static inline __attribute__((always_inline))</a>
-<a name="335"><span class="lineNum">     335 </span>                :            : unsigned long mfspr(const unsigned int spr)</a>
-<a name="336"><span class="lineNum">     336 </span>                :            : {</a>
-<a name="337"><span class="lineNum">     337 </span>                :            :         unsigned long val;</a>
-<a name="338"><span class="lineNum">     338 </span>                :            : </a>
-<a name="339"><span class="lineNum">     339 </span>                :            :         asm volatile(&quot;mfspr %0,%1&quot; : &quot;=r&quot;(val) : &quot;i&quot;(spr) : &quot;memory&quot;);</a>
-<a name="340"><span class="lineNum">     340 </span>                :            :         return val;</a>
-<a name="341"><span class="lineNum">     341 </span>                :            : }</a>
-<a name="342"><span class="lineNum">     342 </span>                :            : </a>
-<a name="343"><span class="lineNum">     343 </span>                :            : static inline __attribute__((always_inline))</a>
-<a name="344"><span class="lineNum">     344 </span>                :            : void mtspr(const unsigned int spr, unsigned long val)</a>
-<a name="345"><span class="lineNum">     345 </span>                :            : {</a>
-<a name="346"><span class="lineNum">     346 </span>                :            :         asm volatile(&quot;mtspr %0,%1&quot; : : &quot;i&quot;(spr), &quot;r&quot;(val) : &quot;memory&quot;);</a>
-<a name="347"><span class="lineNum">     347 </span>                :            : }</a>
-<a name="348"><span class="lineNum">     348 </span>                :            : </a>
-<a name="349"><span class="lineNum">     349 </span>                :            : /* Helpers for special sequences needed by some registers */</a>
-<a name="350"><span class="lineNum">     350 </span>                :            : extern void set_hid0(unsigned long hid0);</a>
-<a name="351"><span class="lineNum">     351 </span>                :            : extern void trigger_attn(void);</a>
-<a name="352"><span class="lineNum">     352 </span>                :            : </a>
-<a name="353"><span class="lineNum">     353 </span>                :            : /*</a>
-<a name="354"><span class="lineNum">     354 </span>                :            :  * Barriers</a>
-<a name="355"><span class="lineNum">     355 </span>                :            :  */</a>
-<a name="356"><span class="lineNum">     356 </span>                :            : </a>
-<a name="357"><span class="lineNum">     357 </span>                :            : static inline void eieio(void)</a>
-<a name="358"><span class="lineNum">     358 </span>                :            : {</a>
-<a name="359"><span class="lineNum">     359 </span>                :            :         asm volatile(&quot;eieio&quot; : : : &quot;memory&quot;);</a>
-<a name="360"><span class="lineNum">     360 </span>                :            : }</a>
-<a name="361"><span class="lineNum">     361 </span>                :            : </a>
-<a name="362"><span class="lineNum">     362 </span>                :            : static inline void sync(void)</a>
-<a name="363"><span class="lineNum">     363 </span>                :            : {</a>
-<a name="364"><span class="lineNum">     364 </span>                :            :         asm volatile(&quot;sync&quot; : : : &quot;memory&quot;);</a>
-<a name="365"><span class="lineNum">     365 </span>                :            : }</a>
-<a name="366"><span class="lineNum">     366 </span>                :            : </a>
-<a name="367"><span class="lineNum">     367 </span>                :            : static inline void lwsync(void)</a>
-<a name="368"><span class="lineNum">     368 </span>                :            : {</a>
-<a name="369"><span class="lineNum">     369 </span>                :            :         asm volatile(&quot;lwsync&quot; : : : &quot;memory&quot;);</a>
-<a name="370"><span class="lineNum">     370 </span>                :            : }</a>
-<a name="371"><span class="lineNum">     371 </span>                :            : </a>
-<a name="372"><span class="lineNum">     372 </span>                :            : static inline void isync(void)</a>
-<a name="373"><span class="lineNum">     373 </span>                :            : {</a>
-<a name="374"><span class="lineNum">     374 </span>                :            :         asm volatile(&quot;isync&quot; : : : &quot;memory&quot;);</a>
-<a name="375"><span class="lineNum">     375 </span>                :            : }</a>
-<a name="376"><span class="lineNum">     376 </span>                :            : </a>
-<a name="377"><span class="lineNum">     377 </span>                :            : </a>
-<a name="378"><span class="lineNum">     378 </span>                :            : /*</a>
-<a name="379"><span class="lineNum">     379 </span>                :            :  * Cache sync</a>
-<a name="380"><span class="lineNum">     380 </span>                :            :  */</a>
-<a name="381"><span class="lineNum">     381 </span>                :            : static inline void sync_icache(void)</a>
-<a name="382"><span class="lineNum">     382 </span>                :            : {</a>
-<a name="383"><span class="lineNum">     383 </span>                :            :         asm volatile(&quot;sync; icbi 0,%0; sync; isync&quot; : : &quot;r&quot; (0) : &quot;memory&quot;);</a>
-<a name="384"><span class="lineNum">     384 </span>                :            : }</a>
-<a name="385"><span class="lineNum">     385 </span>                :            : </a>
-<a name="386"><span class="lineNum">     386 </span>                :            : /*</a>
-<a name="387"><span class="lineNum">     387 </span>                :            :  * Doorbells</a>
-<a name="388"><span class="lineNum">     388 </span>                :            :  */</a>
-<a name="389"><span class="lineNum">     389 </span>                :            : static inline void msgclr(void)</a>
-<a name="390"><span class="lineNum">     390 </span>                :            : {</a>
-<a name="391"><span class="lineNum">     391 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36));</a>
-<a name="392"><span class="lineNum">     392 </span>                :            :         asm volatile(MSGCLR(%0) : : &quot;r&quot;(rb));</a>
-<a name="393"><span class="lineNum">     393 </span>                :            : }</a>
-<a name="394"><span class="lineNum">     394 </span>                :            : </a>
-<a name="395"><span class="lineNum">     395 </span>                :            : static inline void p9_dbell_receive(void)</a>
-<a name="396"><span class="lineNum">     396 </span>                :            : {</a>
-<a name="397"><span class="lineNum">     397 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36));</a>
-<a name="398"><span class="lineNum">     398 </span>                :            :         asm volatile(MSGCLR(%0) &quot;;&quot;</a>
-<a name="399"><span class="lineNum">     399 </span>                :            :                      MSGSYNC    &quot;;&quot;</a>
-<a name="400"><span class="lineNum">     400 </span>                :            :                      &quot;lwsync&quot;</a>
-<a name="401"><span class="lineNum">     401 </span>                :            :                      : : &quot;r&quot;(rb));</a>
-<a name="402"><span class="lineNum">     402 </span>                :            : }</a>
-<a name="403"><span class="lineNum">     403 </span>                :            : </a>
-<a name="404"><span class="lineNum">     404 </span>                :            : static inline void p9_dbell_send(uint32_t pir)</a>
-<a name="405"><span class="lineNum">     405 </span>                :            : {</a>
-<a name="406"><span class="lineNum">     406 </span>                :            :         uint64_t rb = (0x05 &lt;&lt; (63-36)) | pir;</a>
-<a name="407"><span class="lineNum">     407 </span>                :            :         asm volatile(&quot;sync ;&quot;</a>
-<a name="408"><span class="lineNum">     408 </span>                :            :                      MSGSND(%0)</a>
-<a name="409"><span class="lineNum">     409 </span>                :            :                      : : &quot;r&quot;(rb));</a>
-<a name="410"><span class="lineNum">     410 </span>                :            : }</a>
-<a name="411"><span class="lineNum">     411 </span>                :            : </a>
-<a name="412"><span class="lineNum">     412 </span>                :            : /*</a>
-<a name="413"><span class="lineNum">     413 </span>                :            :  * Byteswap load/stores</a>
-<a name="414"><span class="lineNum">     414 </span>                :            :  */</a>
-<a name="415"><span class="lineNum">     415 </span>                :            : </a>
-<a name="416"><span class="lineNum">     416 </span>                :            : static inline uint16_t ld_le16(const uint16_t *addr)</a>
-<a name="417"><span class="lineNum">     417 </span>                :            : {</a>
-<a name="418"><span class="lineNum">     418 </span>                :            :         uint16_t val;</a>
-<a name="419"><span class="lineNum">     419 </span>                :            :         asm volatile(&quot;lhbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="420"><span class="lineNum">     420 </span>                :            :         return val;</a>
-<a name="421"><span class="lineNum">     421 </span>                :            : }</a>
-<a name="422"><span class="lineNum">     422 </span>                :            : </a>
-<a name="423"><span class="lineNum">     423 </span>                :            : static inline uint32_t ld_le32(const uint32_t *addr)</a>
-<a name="424"><span class="lineNum">     424 </span>                :            : {</a>
-<a name="425"><span class="lineNum">     425 </span>                :            :         uint32_t val;</a>
-<a name="426"><span class="lineNum">     426 </span>                :            :         asm volatile(&quot;lwbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="427"><span class="lineNum">     427 </span>                :            :         return val;</a>
-<a name="428"><span class="lineNum">     428 </span>                :            : }</a>
-<a name="429"><span class="lineNum">     429 </span>                :            : </a>
-<a name="430"><span class="lineNum">     430 </span>                :            : static inline void st_le16(uint16_t *addr, uint16_t val)</a>
-<a name="431"><span class="lineNum">     431 </span>                :            : {</a>
-<a name="432"><span class="lineNum">     432 </span>                :            :         asm volatile(&quot;sthbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="433"><span class="lineNum">     433 </span>                :            : }</a>
-<a name="434"><span class="lineNum">     434 </span>                :            : </a>
-<a name="435"><span class="lineNum">     435 </span>                :            : static inline void st_le32(uint32_t *addr, uint32_t val)</a>
-<a name="436"><span class="lineNum">     436 </span>                :            : {</a>
-<a name="437"><span class="lineNum">     437 </span>                :            :         asm volatile(&quot;stwbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</a>
-<a name="438"><span class="lineNum">     438 </span>                :            : }</a>
-<a name="439"><span class="lineNum">     439 </span>                :            : </a>
-<a name="440"><span class="lineNum">     440 </span>                :            : #endif /* __TEST__ */</a>
-<a name="441"><span class="lineNum">     441 </span>                :            : </a>
-<a name="442"><span class="lineNum">     442 </span>                :            : #endif /* __ASSEMBLY__ */</a>
-<a name="443"><span class="lineNum">     443 </span>                :            : </a>
-<a name="444"><span class="lineNum">     444 </span>                :            : #endif /* __PROCESSOR_H */</a>
-</pre>
-      </td>
-    </tr>
-  </table>
-  <br>
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : /* Copyright 2013-2019 IBM Corp. */</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : #ifndef __PROCESSOR_H</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : #define __PROCESSOR_H</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : </span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : #include &lt;bitutils.h&gt;</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : </span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : /* MSR bits */</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : #define MSR_SF          PPC_BIT(0)      /* 64-bit mode */</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : #define MSR_HV          PPC_BIT(3)      /* Hypervisor mode */</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : #define MSR_VEC         PPC_BIT(38)     /* VMX enable */</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : #define MSR_VSX         PPC_BIT(40)     /* VSX enable */</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : #define MSR_S           PPC_BIT(41)     /* Secure mode */</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : #define MSR_EE          PPC_BIT(48)     /* External Int. Enable */</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : #define MSR_PR          PPC_BIT(49)             /* Problem state */</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : #define MSR_FP          PPC_BIT(50)     /* Floating Point Enable */</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : #define MSR_ME          PPC_BIT(51)     /* Machine Check Enable */</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             : #define MSR_FE0         PPC_BIT(52)     /* FP Exception 0 */</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : #define MSR_SE          PPC_BIT(53)     /* Step enable */</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : #define MSR_BE          PPC_BIT(54)     /* Branch trace enable */</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             : #define MSR_FE1         PPC_BIT(55)     /* FP Exception 1 */</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             : #define MSR_IR          PPC_BIT(58)     /* Instructions reloc */</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             : #define MSR_DR          PPC_BIT(59)     /* Data reloc */</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : #define MSR_PMM         PPC_BIT(61)     /* Perf Monitor */</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             : #define MSR_RI          PPC_BIT(62)     /* Recoverable Interrupt */</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             : #define MSR_LE          PPC_BIT(63)     /* Little Endian */</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : </span>
+<span id="L29"><span class="lineNum">      29</span>                 :             : /* PIR */</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             : #define SPR_PIR_P10_MASK        0x7fff  /* Mask of implemented bits */</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             : #define SPR_PIR_P9_MASK         0x7fff  /* Mask of implemented bits */</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             : #define SPR_PIR_P8_MASK         0x1fff  /* Mask of implemented bits */</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             : </span>
+<span id="L34"><span class="lineNum">      34</span>                 :             : /* SPR register definitions */</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             : #define SPR_DSCR        0x011   /* RW: Data stream control reg */</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             : #define SPR_DSISR       0x012   /* RW: Data storage interrupt status reg */</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             : #define SPR_DAR         0x013   /* RW: Data address reg */</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             : #define SPR_DEC         0x016   /* RW: Decrement Register */</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             : #define SPR_SDR1        0x019</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             : #define SPR_SRR0        0x01a   /* RW: Exception save/restore reg 0 */</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             : #define SPR_SRR1        0x01b   /* RW: Exception save/restore reg 1 */</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             : #define SPR_CFAR        0x01c   /* RW: Come From Address Register */</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             : #define SPR_AMR         0x01d   /* RW: Authority Mask Register */</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             : #define SPR_IAMR        0x03d   /* RW: Instruction Authority Mask Register */</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             : #define SPR_RPR         0x0ba   /* RW: Relative Priority Register */</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             : #define SPR_TBRL        0x10c   /* RO: Timebase low */</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             : #define SPR_TBRU        0x10d   /* RO: Timebase high */</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             : #define SPR_SPRC        0x114   /* RW: Access to uArch SPRs (ex SCOMC) */</span>
+<span id="L49"><span class="lineNum">      49</span>                 :             : #define SPR_SPRD        0x115   /* RW: Access to uArch SPRs (ex SCOMD) */</span>
+<span id="L50"><span class="lineNum">      50</span>                 :             : #define SPR_SCOMC       0x114   /* RW: SCOM Control - old name of SPRC */</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             : #define SPR_SCOMD       0x115   /* RW: SCOM Data    - old name of SPRD */</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             : #define SPR_TBWL        0x11c   /* RW: Timebase low */</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             : #define SPR_TBWU        0x11d   /* RW: Timebase high */</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             : #define SPR_TBU40       0x11e   /* RW: Timebase Upper 40 bit */</span>
+<span id="L55"><span class="lineNum">      55</span>                 :             : #define SPR_PVR         0x11f   /* RO: Processor version register */</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             : #define SPR_HSPRG0      0x130   /* RW: Hypervisor scratch 0 */</span>
+<span id="L57"><span class="lineNum">      57</span>                 :             : #define SPR_HSPRG1      0x131   /* RW: Hypervisor scratch 1 */</span>
+<span id="L58"><span class="lineNum">      58</span>                 :             : #define SPR_SPURR       0x134   /* RW: Scaled Processor Utilization Resource */</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             : #define SPR_PURR        0x135   /* RW: Processor Utilization Resource reg */</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             : #define SPR_HDEC        0x136   /* RW: Hypervisor Decrementer */</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             : #define SPR_HRMOR       0x139   /* RW: Hypervisor Real Mode Offset reg */</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             : #define SPR_HSRR0       0x13a   /* RW: HV Exception save/restore reg 0 */</span>
+<span id="L63"><span class="lineNum">      63</span>                 :             : #define SPR_HSRR1       0x13b   /* RW: HV Exception save/restore reg 1 */</span>
+<span id="L64"><span class="lineNum">      64</span>                 :             : #define SPR_TFMR        0x13d</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             : #define SPR_LPCR        0x13e</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             : #define SPR_HMER        0x150   /* Hypervisor Maintenance Exception */</span>
+<span id="L67"><span class="lineNum">      67</span>                 :             : #define SPR_HMEER       0x151   /* HMER interrupt enable mask */</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             : #define SPR_PCR         0x152</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             : #define SPR_AMOR        0x15d</span>
+<span id="L70"><span class="lineNum">      70</span>                 :             : #define SPR_USRR0       0x1fa   /* RW: Ultravisor Save/Restore Register 0 */</span>
+<span id="L71"><span class="lineNum">      71</span>                 :             : #define SPR_USRR1       0x1fb   /* RW: Ultravisor Save/Restore Register 1 */</span>
+<span id="L72"><span class="lineNum">      72</span>                 :             : #define SPR_SMFCTRL     0x1ff   /* RW: Secure Memory Facility Control */</span>
+<span id="L73"><span class="lineNum">      73</span>                 :             : #define SPR_PSSCR       0x357   /* RW: Stop status and control (ISA 3) */</span>
+<span id="L74"><span class="lineNum">      74</span>                 :             : #define SPR_PPR32       0x382</span>
+<span id="L75"><span class="lineNum">      75</span>                 :             : #define SPR_TSCR        0x399</span>
+<span id="L76"><span class="lineNum">      76</span>                 :             : #define SPR_HID0        0x3f0</span>
+<span id="L77"><span class="lineNum">      77</span>                 :             : #define SPR_HID1        0x3f1</span>
+<span id="L78"><span class="lineNum">      78</span>                 :             : #define SPR_HID2        0x3f8</span>
+<span id="L79"><span class="lineNum">      79</span>                 :             : #define SPR_HID4        0x3f4</span>
+<span id="L80"><span class="lineNum">      80</span>                 :             : #define SPR_HID5        0x3f6</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             : #define SPR_PIR         0x3ff   /* RO: Processor Identification */</span>
+<span id="L82"><span class="lineNum">      82</span>                 :             : </span>
+<span id="L83"><span class="lineNum">      83</span>                 :             : /* Bits in SRR1 */</span>
+<span id="L84"><span class="lineNum">      84</span>                 :             : </span>
+<span id="L85"><span class="lineNum">      85</span>                 :             : #define SPR_SRR1_PM_WAKE_MASK   0x3c0000        /* PM wake reason for P8/9 */</span>
+<span id="L86"><span class="lineNum">      86</span>                 :             : #define SPR_SRR1_PM_WAKE_SRESET 0x100000</span>
+<span id="L87"><span class="lineNum">      87</span>                 :             : #define SPR_SRR1_PM_WAKE_MCE    0x3c0000        /* Use reserved value for MCE */</span>
+<span id="L88"><span class="lineNum">      88</span>                 :             : </span>
+<span id="L89"><span class="lineNum">      89</span>                 :             : /* Bits in LPCR */</span>
+<span id="L90"><span class="lineNum">      90</span>                 :             : </span>
+<span id="L91"><span class="lineNum">      91</span>                 :             : /* Powersave Exit Cause Enable is different on each generation */</span>
+<span id="L92"><span class="lineNum">      92</span>                 :             : #define SPR_LPCR_P8_PECE        PPC_BITMASK(47,51)</span>
+<span id="L93"><span class="lineNum">      93</span>                 :             : #define SPR_LPCR_P8_PECE0       PPC_BIT(47)   /* Wake on priv doorbell */</span>
+<span id="L94"><span class="lineNum">      94</span>                 :             : #define SPR_LPCR_P8_PECE1       PPC_BIT(48)   /* Wake on hv doorbell */</span>
+<span id="L95"><span class="lineNum">      95</span>                 :             : #define SPR_LPCR_P8_PECE2       PPC_BIT(49)   /* Wake on external interrupts */</span>
+<span id="L96"><span class="lineNum">      96</span>                 :             : #define SPR_LPCR_P8_PECE3       PPC_BIT(50)   /* Wake on decrementer */</span>
+<span id="L97"><span class="lineNum">      97</span>                 :             : #define SPR_LPCR_P8_PECE4       PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */</span>
+<span id="L98"><span class="lineNum">      98</span>                 :             : </span>
+<span id="L99"><span class="lineNum">      99</span>                 :             : #define SPR_LPCR_P9_PECE        (PPC_BITMASK(47,51) | PPC_BITMASK(17,17))</span>
+<span id="L100"><span class="lineNum">     100</span>                 :             : #define SPR_LPCR_P9_PECEU0      PPC_BIT(17)   /* Wake on HVI */</span>
+<span id="L101"><span class="lineNum">     101</span>                 :             : #define SPR_LPCR_P9_PECEL0      PPC_BIT(47)   /* Wake on priv doorbell */</span>
+<span id="L102"><span class="lineNum">     102</span>                 :             : #define SPR_LPCR_P9_PECEL1      PPC_BIT(48)   /* Wake on hv doorbell */</span>
+<span id="L103"><span class="lineNum">     103</span>                 :             : #define SPR_LPCR_P9_PECEL2      PPC_BIT(49)   /* Wake on external interrupts */</span>
+<span id="L104"><span class="lineNum">     104</span>                 :             : #define SPR_LPCR_P9_PECEL3      PPC_BIT(50)   /* Wake on decrementer */</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             : #define SPR_LPCR_P9_PECEL4      PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */</span>
+<span id="L106"><span class="lineNum">     106</span>                 :             : #define SPR_LPCR_P9_LD          PPC_BIT(46)   /* Large decrementer mode bit */</span>
+<span id="L107"><span class="lineNum">     107</span>                 :             : </span>
+<span id="L108"><span class="lineNum">     108</span>                 :             : </span>
+<span id="L109"><span class="lineNum">     109</span>                 :             : /* Bits in TFMR - control bits */</span>
+<span id="L110"><span class="lineNum">     110</span>                 :             : #define SPR_TFMR_MAX_CYC_BET_STEPS      PPC_BITMASK(0,7)</span>
+<span id="L111"><span class="lineNum">     111</span>                 :             : #define SPR_TFMR_N_CLKS_PER_STEP        PPC_BITMASK(8,9)</span>
+<span id="L112"><span class="lineNum">     112</span>                 :             : #define SPR_TFMR_MASK_HMI               PPC_BIT(10)</span>
+<span id="L113"><span class="lineNum">     113</span>                 :             : #define SPR_TFMR_SYNC_BIT_SEL           PPC_BITMASK(11,13)</span>
+<span id="L114"><span class="lineNum">     114</span>                 :             : #define SPR_TFMR_TB_ECLIPZ              PPC_BIT(14)</span>
+<span id="L115"><span class="lineNum">     115</span>                 :             : #define SPR_TFMR_LOAD_TOD_MOD           PPC_BIT(16)</span>
+<span id="L116"><span class="lineNum">     116</span>                 :             : #define SPR_TFMR_MOVE_CHIP_TOD_TO_TB    PPC_BIT(18)</span>
+<span id="L117"><span class="lineNum">     117</span>                 :             : #define SPR_TFMR_CLEAR_TB_ERRORS        PPC_BIT(24)</span>
+<span id="L118"><span class="lineNum">     118</span>                 :             : /* Bits in TFMR - thread indep. status bits */</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             : #define SPR_TFMR_TFAC_XFER_ERROR        PPC_BIT(25)</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             : #define SPR_TFMR_HDEC_PARITY_ERROR      PPC_BIT(26)</span>
+<span id="L121"><span class="lineNum">     121</span>                 :             : #define SPR_TFMR_TBST_CORRUPT           PPC_BIT(27)</span>
+<span id="L122"><span class="lineNum">     122</span>                 :             : #define SPR_TFMR_TBST_ENCODED           PPC_BITMASK(28,31)</span>
+<span id="L123"><span class="lineNum">     123</span>                 :             : #define SPR_TFMR_TBST_LAST              PPC_BITMASK(32,35)</span>
+<span id="L124"><span class="lineNum">     124</span>                 :             : #define SPR_TFMR_TB_ENABLED             PPC_BIT(40)</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             : #define SPR_TFMR_TB_VALID               PPC_BIT(41)</span>
+<span id="L126"><span class="lineNum">     126</span>                 :             : #define SPR_TFMR_TB_SYNC_OCCURED        PPC_BIT(42)</span>
+<span id="L127"><span class="lineNum">     127</span>                 :             : #define SPR_TFMR_TB_MISSING_SYNC        PPC_BIT(43)</span>
+<span id="L128"><span class="lineNum">     128</span>                 :             : #define SPR_TFMR_TB_MISSING_STEP        PPC_BIT(44)</span>
+<span id="L129"><span class="lineNum">     129</span>                 :             : #define SPR_TFMR_TB_RESIDUE_ERR         PPC_BIT(45)</span>
+<span id="L130"><span class="lineNum">     130</span>                 :             : #define SPR_TFMR_FW_CONTROL_ERR         PPC_BIT(46)</span>
+<span id="L131"><span class="lineNum">     131</span>                 :             : #define SPR_TFMR_CHIP_TOD_STATUS        PPC_BITMASK(47,50)</span>
+<span id="L132"><span class="lineNum">     132</span>                 :             : #define SPR_TFMR_CHIP_TOD_INTERRUPT     PPC_BIT(51)</span>
+<span id="L133"><span class="lineNum">     133</span>                 :             : #define SPR_TFMR_CHIP_TOD_TIMEOUT       PPC_BIT(54)</span>
+<span id="L134"><span class="lineNum">     134</span>                 :             : #define SPR_TFMR_CHIP_TOD_PARITY_ERR    PPC_BIT(56)</span>
+<span id="L135"><span class="lineNum">     135</span>                 :             : /* Bits in TFMR - thread specific. status bits */</span>
+<span id="L136"><span class="lineNum">     136</span>                 :             : #define SPR_TFMR_PURR_PARITY_ERR        PPC_BIT(57)</span>
+<span id="L137"><span class="lineNum">     137</span>                 :             : #define SPR_TFMR_SPURR_PARITY_ERR       PPC_BIT(58)</span>
+<span id="L138"><span class="lineNum">     138</span>                 :             : #define SPR_TFMR_DEC_PARITY_ERR         PPC_BIT(59)</span>
+<span id="L139"><span class="lineNum">     139</span>                 :             : #define SPR_TFMR_TFMR_CORRUPT           PPC_BIT(60)</span>
+<span id="L140"><span class="lineNum">     140</span>                 :             : #define SPR_TFMR_PURR_OVERFLOW          PPC_BIT(61)</span>
+<span id="L141"><span class="lineNum">     141</span>                 :             : #define SPR_TFMR_SPURR_OVERFLOW         PPC_BIT(62)</span>
+<span id="L142"><span class="lineNum">     142</span>                 :             : </span>
+<span id="L143"><span class="lineNum">     143</span>                 :             : /* Bits in HMER/HMEER */</span>
+<span id="L144"><span class="lineNum">     144</span>                 :             : #define SPR_HMER_MALFUNCTION_ALERT      PPC_BIT(0)</span>
+<span id="L145"><span class="lineNum">     145</span>                 :             : #define SPR_HMER_PROC_RECV_DONE         PPC_BIT(2)</span>
+<span id="L146"><span class="lineNum">     146</span>                 :             : #define SPR_HMER_PROC_RECV_ERROR_MASKED PPC_BIT(3) /* Not P10 */</span>
+<span id="L147"><span class="lineNum">     147</span>                 :             : #define SPR_HMER_TFAC_ERROR             PPC_BIT(4)</span>
+<span id="L148"><span class="lineNum">     148</span>                 :             : #define SPR_HMER_TFMR_PARITY_ERROR      PPC_BIT(5) /* P9 */</span>
+<span id="L149"><span class="lineNum">     149</span>                 :             : #define SPR_HMER_TFAC_SHADOW_XFER_ERROR PPC_BIT(5) /* P10 */</span>
+<span id="L150"><span class="lineNum">     150</span>                 :             : #define SPR_HMER_SPURR_SCALE_LIMIT      PPC_BIT(6) /* P10 */</span>
+<span id="L151"><span class="lineNum">     151</span>                 :             : #define SPR_HMER_XSCOM_FAIL             PPC_BIT(8)</span>
+<span id="L152"><span class="lineNum">     152</span>                 :             : #define SPR_HMER_XSCOM_DONE             PPC_BIT(9)</span>
+<span id="L153"><span class="lineNum">     153</span>                 :             : #define SPR_HMER_PROC_RECV_AGAIN        PPC_BIT(11)</span>
+<span id="L154"><span class="lineNum">     154</span>                 :             : #define SPR_HMER_WARN_RISE              PPC_BIT(14) /* Not P10 */</span>
+<span id="L155"><span class="lineNum">     155</span>                 :             : #define SPR_HMER_WARN_FALL              PPC_BIT(15) /* Not P10 */</span>
+<span id="L156"><span class="lineNum">     156</span>                 :             : #define SPR_HMER_SCOM_FIR_HMI           PPC_BIT(16)</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             : #define SPR_HMER_TRIG_FIR_HMI           PPC_BIT(17) /* Not P10 */</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             : #define SPR_HMER_THD_WAKE_BLOCKED_TM_SUSPEND    PPC_BIT(17) /* Not P10 */</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             : #define SPR_HMER_P10_TRIG_FIR_HMI       PPC_BIT(18)</span>
+<span id="L160"><span class="lineNum">     160</span>                 :             : #define SPR_HMER_HYP_RESOURCE_ERR       PPC_BIT(20) /* Not P10 */</span>
+<span id="L161"><span class="lineNum">     161</span>                 :             : #define SPR_HMER_XSCOM_STATUS           PPC_BITMASK(21,23)</span>
+<span id="L162"><span class="lineNum">     162</span>                 :             : </span>
+<span id="L163"><span class="lineNum">     163</span>                 :             : /*</span>
+<span id="L164"><span class="lineNum">     164</span>                 :             :  * HMEER: initial bits for HMI interrupt enable mask.</span>
+<span id="L165"><span class="lineNum">     165</span>                 :             :  * Per Dave Larson, never enable 8,9,21-23</span>
+<span id="L166"><span class="lineNum">     166</span>                 :             :  */</span>
+<span id="L167"><span class="lineNum">     167</span>                 :             : #define SPR_HMEER_HMI_ENABLE_MASK       (SPR_HMER_MALFUNCTION_ALERT |\</span>
+<span id="L168"><span class="lineNum">     168</span>                 :             :                                          SPR_HMER_HYP_RESOURCE_ERR |\</span>
+<span id="L169"><span class="lineNum">     169</span>                 :             :                                          SPR_HMER_PROC_RECV_DONE |\</span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :                                          SPR_HMER_PROC_RECV_ERROR_MASKED |\</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :                                          SPR_HMER_TFAC_ERROR |\</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             :                                          SPR_HMER_TFMR_PARITY_ERROR |\</span>
+<span id="L173"><span class="lineNum">     173</span>                 :             :                                          SPR_HMER_PROC_RECV_AGAIN)</span>
+<span id="L174"><span class="lineNum">     174</span>                 :             : </span>
+<span id="L175"><span class="lineNum">     175</span>                 :             : #define SPR_HMEER_P10_HMI_ENABLE_MASK   (SPR_HMER_MALFUNCTION_ALERT |\</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :                                          SPR_HMER_PROC_RECV_DONE |\</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :                                          SPR_HMER_TFAC_ERROR |\</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :                                          SPR_HMER_TFAC_SHADOW_XFER_ERROR |\</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :                                          SPR_HMER_SPURR_SCALE_LIMIT |\</span>
+<span id="L180"><span class="lineNum">     180</span>                 :             :                                          SPR_HMER_PROC_RECV_AGAIN)</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             : </span>
+<span id="L182"><span class="lineNum">     182</span>                 :             : /* Bits in HID0 */</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             : #define SPR_HID0_POWER8_4LPARMODE       PPC_BIT(2)</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             : #define SPR_HID0_POWER8_2LPARMODE       PPC_BIT(6)</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             : #define SPR_HID0_POWER8_DYNLPARDIS      PPC_BIT(15)</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             : #define SPR_HID0_POWER8_HILE            PPC_BIT(19)</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             : #define SPR_HID0_POWER9_HILE            PPC_BIT(4)</span>
+<span id="L188"><span class="lineNum">     188</span>                 :             : #define SPR_HID0_POWER10_HILE           PPC_BIT(4)</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             : #define SPR_HID0_POWER8_ENABLE_ATTN     PPC_BIT(31)</span>
+<span id="L190"><span class="lineNum">     190</span>                 :             : #define SPR_HID0_POWER9_ENABLE_ATTN     PPC_BIT(3)</span>
+<span id="L191"><span class="lineNum">     191</span>                 :             : #define SPR_HID0_POWER10_ENABLE_ATTN    PPC_BIT(3)</span>
+<span id="L192"><span class="lineNum">     192</span>                 :             : #define SPR_HID0_POWER9_FLUSH_ICACHE    PPC_BIT(2)</span>
+<span id="L193"><span class="lineNum">     193</span>                 :             : #define SPR_HID0_POWER10_FLUSH_ICACHE   PPC_BIT(2)</span>
+<span id="L194"><span class="lineNum">     194</span>                 :             : #define SPR_HID0_POWER9_RADIX           PPC_BIT(8)</span>
+<span id="L195"><span class="lineNum">     195</span>                 :             : </span>
+<span id="L196"><span class="lineNum">     196</span>                 :             : /* PVR bits */</span>
+<span id="L197"><span class="lineNum">     197</span>                 :             : #define SPR_PVR_TYPE                    0xffff0000</span>
+<span id="L198"><span class="lineNum">     198</span>                 :             : #define SPR_PVR_CHIP_TYPE               0x0000f000</span>
+<span id="L199"><span class="lineNum">     199</span>                 :             : #define SPR_PVR_VERS_MAJ                0x00000f00</span>
+<span id="L200"><span class="lineNum">     200</span>                 :             : #define SPR_PVR_VERS_MIN                0x000000ff</span>
+<span id="L201"><span class="lineNum">     201</span>                 :             : </span>
+<span id="L202"><span class="lineNum">     202</span>                 :             : #define PVR_TYPE(_pvr)          GETFIELD(SPR_PVR_TYPE, _pvr)</span>
+<span id="L203"><span class="lineNum">     203</span>                 :             : #define PVR_CHIP_TYPE(_pvr)     GETFIELD(SPR_PVR_CHIP_TYPE, _pvr)</span>
+<span id="L204"><span class="lineNum">     204</span>                 :             : #define PVR_VERS_MAJ(_pvr)      GETFIELD(SPR_PVR_VERS_MAJ, _pvr)</span>
+<span id="L205"><span class="lineNum">     205</span>                 :             : #define PVR_VERS_MIN(_pvr)      GETFIELD(SPR_PVR_VERS_MIN, _pvr)</span>
+<span id="L206"><span class="lineNum">     206</span>                 :             : </span>
+<span id="L207"><span class="lineNum">     207</span>                 :             : /* PVR definitions */</span>
+<span id="L208"><span class="lineNum">     208</span>                 :             : #define PVR_TYPE_P8E    0x004b /* Murano */</span>
+<span id="L209"><span class="lineNum">     209</span>                 :             : #define PVR_TYPE_P8     0x004d /* Venice */</span>
+<span id="L210"><span class="lineNum">     210</span>                 :             : #define PVR_TYPE_P8NVL  0x004c /* Naples */</span>
+<span id="L211"><span class="lineNum">     211</span>                 :             : #define PVR_TYPE_P9     0x004e</span>
+<span id="L212"><span class="lineNum">     212</span>                 :             : #define PVR_TYPE_P9P    0x004f /* Axone */</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             : #define PVR_TYPE_P10    0x0080</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             : </span>
+<span id="L215"><span class="lineNum">     215</span>                 :             : #ifdef __ASSEMBLY__</span>
+<span id="L216"><span class="lineNum">     216</span>                 :             : </span>
+<span id="L217"><span class="lineNum">     217</span>                 :             : /* Thread priority control opcodes */</span>
+<span id="L218"><span class="lineNum">     218</span>                 :             : #define smt_low         or 1,1,1</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             : #define smt_medium      or 2,2,2</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             : #define smt_high        or 3,3,3</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             : #define smt_medium_high or 5,5,5</span>
+<span id="L222"><span class="lineNum">     222</span>                 :             : #define smt_medium_low  or 6,6,6</span>
+<span id="L223"><span class="lineNum">     223</span>                 :             : #define smt_extra_high  or 7,7,7</span>
+<span id="L224"><span class="lineNum">     224</span>                 :             : #define smt_very_low    or 31,31,31</span>
+<span id="L225"><span class="lineNum">     225</span>                 :             : #define smt_lowest      smt_low ; smt_very_low</span>
+<span id="L226"><span class="lineNum">     226</span>                 :             : </span>
+<span id="L227"><span class="lineNum">     227</span>                 :             : #else /* __ASSEMBLY__ */</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             : </span>
+<span id="L229"><span class="lineNum">     229</span>                 :             : #include &lt;ccan/str/str.h&gt;</span>
+<span id="L230"><span class="lineNum">     230</span>                 :             : #include &lt;compiler.h&gt;</span>
+<span id="L231"><span class="lineNum">     231</span>                 :             : #include &lt;stdbool.h&gt;</span>
+<span id="L232"><span class="lineNum">     232</span>                 :             : #include &lt;stdint.h&gt;</span>
+<span id="L233"><span class="lineNum">     233</span>                 :             : </span>
+<span id="L234"><span class="lineNum">     234</span>                 :             : #define PPC_INST_NOP    0x60000000UL</span>
+<span id="L235"><span class="lineNum">     235</span>                 :             : #define PPC_INST_TRAP   0x7fe00008UL</span>
+<span id="L236"><span class="lineNum">     236</span>                 :             : </span>
+<span id="L237"><span class="lineNum">     237</span>                 :             : #define RB(b)           (((b) &amp; 0x1f) &lt;&lt; 11)</span>
+<span id="L238"><span class="lineNum">     238</span>                 :             : #define MSGSND(b)       stringify(.long 0x7c00019c | RB(b))</span>
+<span id="L239"><span class="lineNum">     239</span>                 :             : #define MSGCLR(b)       stringify(.long 0x7c0001dc | RB(b))</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             : #define MSGSYNC         stringify(.long 0x7c0006ec)</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             : </span>
+<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC tlaBgGNC">           4 : static inline bool is_power9n(uint32_t version)</span></span>
+<span id="L243"><span class="lineNum">     243</span>                 :             : {</span>
+<span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaGNC">           4 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></span>
+<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return false;</span></span>
+<span id="L246"><span class="lineNum">     246</span>                 :             :         /*</span>
+<span id="L247"><span class="lineNum">     247</span>                 :             :          * Bit 13 tells us:</span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :          *   0 = Scale out (aka Nimbus)</span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :          *   1 = Scale up  (aka Cumulus)</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :          */</span>
+<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC tlaBgGNC">           4 :         if ((version &gt;&gt; 13) &amp; 1)</span></span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return false;</span></span>
+<span id="L253"><span class="lineNum">     253</span>                 :<span class="tlaGNC tlaBgGNC">           4 :         return true;</span></span>
+<span id="L254"><span class="lineNum">     254</span>                 :             : }</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             : </span>
+<span id="L256"><span class="lineNum">     256</span>                 :             : static inline bool is_fused_core(uint32_t version)</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             : {</span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :         if (PVR_TYPE(version) == PVR_TYPE_P9) {</span>
+<span id="L259"><span class="lineNum">     259</span>                 :             :                 switch(PVR_CHIP_TYPE(version)) {</span>
+<span id="L260"><span class="lineNum">     260</span>                 :             :                         case 0:</span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :                         case 2:</span>
+<span id="L262"><span class="lineNum">     262</span>                 :             :                                 return true;</span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :                         default:</span>
+<span id="L264"><span class="lineNum">     264</span>                 :             :                                 return false;</span>
+<span id="L265"><span class="lineNum">     265</span>                 :             :                 }</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             : </span>
+<span id="L267"><span class="lineNum">     267</span>                 :             :         } else if(PVR_TYPE(version) == PVR_TYPE_P10) {</span>
+<span id="L268"><span class="lineNum">     268</span>                 :             :                 if(PVR_CHIP_TYPE(version) &amp; 0x01)</span>
+<span id="L269"><span class="lineNum">     269</span>                 :             :                         return false;</span>
+<span id="L270"><span class="lineNum">     270</span>                 :             :                 else</span>
+<span id="L271"><span class="lineNum">     271</span>                 :             :                         return true;</span>
+<span id="L272"><span class="lineNum">     272</span>                 :             :         } else</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             :                 return false;</span>
+<span id="L274"><span class="lineNum">     274</span>                 :             : }</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             : </span>
+<span id="L276"><span class="lineNum">     276</span>                 :<span class="tlaUNC tlaBgUNC">           0 : static inline bool is_power9c(uint32_t version) </span></span>
+<span id="L277"><span class="lineNum">     277</span>                 :             : {</span>
+<span id="L278"><span class="lineNum">     278</span>                 :             : </span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaUNC">           0 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
+<span id="L281"><span class="lineNum">     281</span>                 :             :         /*</span>
+<span id="L282"><span class="lineNum">     282</span>                 :             :          * Bit 13 tells us:</span>
+<span id="L283"><span class="lineNum">     283</span>                 :             :          *   0 = Scale out (aka Nimbus)</span>
+<span id="L284"><span class="lineNum">     284</span>                 :             :          *   1 = Scale up  (aka Cumulus)</span>
+<span id="L285"><span class="lineNum">     285</span>                 :             :          */</span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaUNC">           0 :         if (!((version &gt;&gt; 13) &amp; 1))</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaUNC">           0 :         return true;</span></span>
+<span id="L289"><span class="lineNum">     289</span>                 :             : }</span>
+<span id="L290"><span class="lineNum">     290</span>                 :             : </span>
+<span id="L291"><span class="lineNum">     291</span>                 :             : #ifndef __TEST__</span>
+<span id="L292"><span class="lineNum">     292</span>                 :             : </span>
+<span id="L293"><span class="lineNum">     293</span>                 :             : /* POWER9 and above only */</span>
+<span id="L294"><span class="lineNum">     294</span>                 :             : static inline void flush_erat(void)</span>
+<span id="L295"><span class="lineNum">     295</span>                 :             : {</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             :         asm volatile(&quot;slbia        7&quot;);</span>
+<span id="L297"><span class="lineNum">     297</span>                 :             : }</span>
+<span id="L298"><span class="lineNum">     298</span>                 :             : </span>
+<span id="L299"><span class="lineNum">     299</span>                 :             : /*</span>
+<span id="L300"><span class="lineNum">     300</span>                 :             :  * SMT priority</span>
+<span id="L301"><span class="lineNum">     301</span>                 :             :  */</span>
+<span id="L302"><span class="lineNum">     302</span>                 :             : </span>
+<span id="L303"><span class="lineNum">     303</span>                 :             : static inline void smt_low(void)        { asm volatile(&quot;or 1,1,1&quot;);   }</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             : static inline void smt_medium(void)     { asm volatile(&quot;or 2,2,2&quot;);   }</span>
+<span id="L305"><span class="lineNum">     305</span>                 :             : static inline void smt_high(void)       { asm volatile(&quot;or 3,3,3&quot;);   }</span>
+<span id="L306"><span class="lineNum">     306</span>                 :             : static inline void smt_medium_high(void){ asm volatile(&quot;or 5,5,5&quot;);   }</span>
+<span id="L307"><span class="lineNum">     307</span>                 :             : static inline void smt_medium_low(void) { asm volatile(&quot;or 6,6,6&quot;);   }</span>
+<span id="L308"><span class="lineNum">     308</span>                 :             : static inline void smt_extra_high(void) { asm volatile(&quot;or 7,7,7&quot;);   }</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : static inline void smt_very_low(void)   { asm volatile(&quot;or 31,31,31&quot;);        }</span>
+<span id="L310"><span class="lineNum">     310</span>                 :             : static inline void smt_lowest(void)     { smt_low(); smt_very_low();    }</span>
+<span id="L311"><span class="lineNum">     311</span>                 :             : </span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : /*</span>
+<span id="L313"><span class="lineNum">     313</span>                 :             :  * SPR access functions</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             :  */</span>
+<span id="L315"><span class="lineNum">     315</span>                 :             : </span>
+<span id="L316"><span class="lineNum">     316</span>                 :             : static inline unsigned long mfmsr(void)</span>
+<span id="L317"><span class="lineNum">     317</span>                 :             : {</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             :         unsigned long val;</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :         </span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :         asm volatile(&quot;mfmsr %0&quot; : &quot;=r&quot;(val) : : &quot;memory&quot;);</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :         return val;</span>
+<span id="L322"><span class="lineNum">     322</span>                 :             : }</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             : </span>
+<span id="L324"><span class="lineNum">     324</span>                 :             : static inline void mtmsr(unsigned long val)</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             : {</span>
+<span id="L326"><span class="lineNum">     326</span>                 :             :         asm volatile(&quot;mtmsr %0&quot; : : &quot;r&quot;(val) : &quot;memory&quot;);</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             : }</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             : </span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : static inline void mtmsrd(unsigned long val, int l)</span>
+<span id="L330"><span class="lineNum">     330</span>                 :             : {</span>
+<span id="L331"><span class="lineNum">     331</span>                 :             :         asm volatile(&quot;mtmsrd %0,%1&quot; : : &quot;r&quot;(val), &quot;i&quot;(l) : &quot;memory&quot;);</span>
+<span id="L332"><span class="lineNum">     332</span>                 :             : }</span>
+<span id="L333"><span class="lineNum">     333</span>                 :             : </span>
+<span id="L334"><span class="lineNum">     334</span>                 :             : static inline __attribute__((always_inline))</span>
+<span id="L335"><span class="lineNum">     335</span>                 :             : unsigned long mfspr(const unsigned int spr)</span>
+<span id="L336"><span class="lineNum">     336</span>                 :             : {</span>
+<span id="L337"><span class="lineNum">     337</span>                 :             :         unsigned long val;</span>
+<span id="L338"><span class="lineNum">     338</span>                 :             : </span>
+<span id="L339"><span class="lineNum">     339</span>                 :             :         asm volatile(&quot;mfspr %0,%1&quot; : &quot;=r&quot;(val) : &quot;i&quot;(spr) : &quot;memory&quot;);</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             :         return val;</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             : }</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             : </span>
+<span id="L343"><span class="lineNum">     343</span>                 :             : static inline __attribute__((always_inline))</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             : void mtspr(const unsigned int spr, unsigned long val)</span>
+<span id="L345"><span class="lineNum">     345</span>                 :             : {</span>
+<span id="L346"><span class="lineNum">     346</span>                 :             :         asm volatile(&quot;mtspr %0,%1&quot; : : &quot;i&quot;(spr), &quot;r&quot;(val) : &quot;memory&quot;);</span>
+<span id="L347"><span class="lineNum">     347</span>                 :             : }</span>
+<span id="L348"><span class="lineNum">     348</span>                 :             : </span>
+<span id="L349"><span class="lineNum">     349</span>                 :             : /* Helpers for special sequences needed by some registers */</span>
+<span id="L350"><span class="lineNum">     350</span>                 :             : extern void set_hid0(unsigned long hid0);</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             : extern void trigger_attn(void);</span>
+<span id="L352"><span class="lineNum">     352</span>                 :             : </span>
+<span id="L353"><span class="lineNum">     353</span>                 :             : /*</span>
+<span id="L354"><span class="lineNum">     354</span>                 :             :  * Barriers</span>
+<span id="L355"><span class="lineNum">     355</span>                 :             :  */</span>
+<span id="L356"><span class="lineNum">     356</span>                 :             : </span>
+<span id="L357"><span class="lineNum">     357</span>                 :             : static inline void eieio(void)</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             : {</span>
+<span id="L359"><span class="lineNum">     359</span>                 :             :         asm volatile(&quot;eieio&quot; : : : &quot;memory&quot;);</span>
+<span id="L360"><span class="lineNum">     360</span>                 :             : }</span>
+<span id="L361"><span class="lineNum">     361</span>                 :             : </span>
+<span id="L362"><span class="lineNum">     362</span>                 :             : static inline void sync(void)</span>
+<span id="L363"><span class="lineNum">     363</span>                 :             : {</span>
+<span id="L364"><span class="lineNum">     364</span>                 :             :         asm volatile(&quot;sync&quot; : : : &quot;memory&quot;);</span>
+<span id="L365"><span class="lineNum">     365</span>                 :             : }</span>
+<span id="L366"><span class="lineNum">     366</span>                 :             : </span>
+<span id="L367"><span class="lineNum">     367</span>                 :             : static inline void lwsync(void)</span>
+<span id="L368"><span class="lineNum">     368</span>                 :             : {</span>
+<span id="L369"><span class="lineNum">     369</span>                 :             :         asm volatile(&quot;lwsync&quot; : : : &quot;memory&quot;);</span>
+<span id="L370"><span class="lineNum">     370</span>                 :             : }</span>
+<span id="L371"><span class="lineNum">     371</span>                 :             : </span>
+<span id="L372"><span class="lineNum">     372</span>                 :             : static inline void isync(void)</span>
+<span id="L373"><span class="lineNum">     373</span>                 :             : {</span>
+<span id="L374"><span class="lineNum">     374</span>                 :             :         asm volatile(&quot;isync&quot; : : : &quot;memory&quot;);</span>
+<span id="L375"><span class="lineNum">     375</span>                 :             : }</span>
+<span id="L376"><span class="lineNum">     376</span>                 :             : </span>
+<span id="L377"><span class="lineNum">     377</span>                 :             : </span>
+<span id="L378"><span class="lineNum">     378</span>                 :             : /*</span>
+<span id="L379"><span class="lineNum">     379</span>                 :             :  * Cache sync</span>
+<span id="L380"><span class="lineNum">     380</span>                 :             :  */</span>
+<span id="L381"><span class="lineNum">     381</span>                 :             : static inline void sync_icache(void)</span>
+<span id="L382"><span class="lineNum">     382</span>                 :             : {</span>
+<span id="L383"><span class="lineNum">     383</span>                 :             :         asm volatile(&quot;sync; icbi 0,%0; sync; isync&quot; : : &quot;r&quot; (0) : &quot;memory&quot;);</span>
+<span id="L384"><span class="lineNum">     384</span>                 :             : }</span>
+<span id="L385"><span class="lineNum">     385</span>                 :             : </span>
+<span id="L386"><span class="lineNum">     386</span>                 :             : /*</span>
+<span id="L387"><span class="lineNum">     387</span>                 :             :  * Doorbells</span>
+<span id="L388"><span class="lineNum">     388</span>                 :             :  */</span>
+<span id="L389"><span class="lineNum">     389</span>                 :             : static inline void msgclr(void)</span>
+<span id="L390"><span class="lineNum">     390</span>                 :             : {</span>
+<span id="L391"><span class="lineNum">     391</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36));</span>
+<span id="L392"><span class="lineNum">     392</span>                 :             :         asm volatile(MSGCLR(%0) : : &quot;r&quot;(rb));</span>
+<span id="L393"><span class="lineNum">     393</span>                 :             : }</span>
+<span id="L394"><span class="lineNum">     394</span>                 :             : </span>
+<span id="L395"><span class="lineNum">     395</span>                 :             : static inline void p9_dbell_receive(void)</span>
+<span id="L396"><span class="lineNum">     396</span>                 :             : {</span>
+<span id="L397"><span class="lineNum">     397</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36));</span>
+<span id="L398"><span class="lineNum">     398</span>                 :             :         asm volatile(MSGCLR(%0) &quot;;&quot;</span>
+<span id="L399"><span class="lineNum">     399</span>                 :             :                      MSGSYNC    &quot;;&quot;</span>
+<span id="L400"><span class="lineNum">     400</span>                 :             :                      &quot;lwsync&quot;</span>
+<span id="L401"><span class="lineNum">     401</span>                 :             :                      : : &quot;r&quot;(rb));</span>
+<span id="L402"><span class="lineNum">     402</span>                 :             : }</span>
+<span id="L403"><span class="lineNum">     403</span>                 :             : </span>
+<span id="L404"><span class="lineNum">     404</span>                 :             : static inline void p9_dbell_send(uint32_t pir)</span>
+<span id="L405"><span class="lineNum">     405</span>                 :             : {</span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36)) | pir;</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             :         asm volatile(&quot;sync ;&quot;</span>
+<span id="L408"><span class="lineNum">     408</span>                 :             :                      MSGSND(%0)</span>
+<span id="L409"><span class="lineNum">     409</span>                 :             :                      : : &quot;r&quot;(rb));</span>
+<span id="L410"><span class="lineNum">     410</span>                 :             : }</span>
+<span id="L411"><span class="lineNum">     411</span>                 :             : </span>
+<span id="L412"><span class="lineNum">     412</span>                 :             : /*</span>
+<span id="L413"><span class="lineNum">     413</span>                 :             :  * Byteswap load/stores</span>
+<span id="L414"><span class="lineNum">     414</span>                 :             :  */</span>
+<span id="L415"><span class="lineNum">     415</span>                 :             : </span>
+<span id="L416"><span class="lineNum">     416</span>                 :             : static inline uint16_t ld_le16(const uint16_t *addr)</span>
+<span id="L417"><span class="lineNum">     417</span>                 :             : {</span>
+<span id="L418"><span class="lineNum">     418</span>                 :             :         uint16_t val;</span>
+<span id="L419"><span class="lineNum">     419</span>                 :             :         asm volatile(&quot;lhbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L420"><span class="lineNum">     420</span>                 :             :         return val;</span>
+<span id="L421"><span class="lineNum">     421</span>                 :             : }</span>
+<span id="L422"><span class="lineNum">     422</span>                 :             : </span>
+<span id="L423"><span class="lineNum">     423</span>                 :             : static inline uint32_t ld_le32(const uint32_t *addr)</span>
+<span id="L424"><span class="lineNum">     424</span>                 :             : {</span>
+<span id="L425"><span class="lineNum">     425</span>                 :             :         uint32_t val;</span>
+<span id="L426"><span class="lineNum">     426</span>                 :             :         asm volatile(&quot;lwbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L427"><span class="lineNum">     427</span>                 :             :         return val;</span>
+<span id="L428"><span class="lineNum">     428</span>                 :             : }</span>
+<span id="L429"><span class="lineNum">     429</span>                 :             : </span>
+<span id="L430"><span class="lineNum">     430</span>                 :             : static inline void st_le16(uint16_t *addr, uint16_t val)</span>
+<span id="L431"><span class="lineNum">     431</span>                 :             : {</span>
+<span id="L432"><span class="lineNum">     432</span>                 :             :         asm volatile(&quot;sthbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L433"><span class="lineNum">     433</span>                 :             : }</span>
+<span id="L434"><span class="lineNum">     434</span>                 :             : </span>
+<span id="L435"><span class="lineNum">     435</span>                 :             : static inline void st_le32(uint32_t *addr, uint32_t val)</span>
+<span id="L436"><span class="lineNum">     436</span>                 :             : {</span>
+<span id="L437"><span class="lineNum">     437</span>                 :             :         asm volatile(&quot;stwbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L438"><span class="lineNum">     438</span>                 :             : }</span>
+<span id="L439"><span class="lineNum">     439</span>                 :             : </span>
+<span id="L440"><span class="lineNum">     440</span>                 :             : #endif /* __TEST__ */</span>
+<span id="L441"><span class="lineNum">     441</span>                 :             : </span>
+<span id="L442"><span class="lineNum">     442</span>                 :             : #endif /* __ASSEMBLY__ */</span>
+<span id="L443"><span class="lineNum">     443</span>                 :             : </span>
+<span id="L444"><span class="lineNum">     444</span>                 :             : #endif /* __PROCESSOR_H */</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
 
-  <table width="100%" border=0 cellspacing=0 cellpadding=0>
-    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
-    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
-  </table>
-  <br>
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
 
 </body>
 </html>

@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL API Return Codes &#8212; skiboot bc7b85d
+    <title>OPAL API Return Codes &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="power9-changes.html" title="POWER9 Changes to OPAL API"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL API Return Codes</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="opal-api-return-codes">
-<h1>OPAL API Return Codes<a class="headerlink" href="#opal-api-return-codes" title="Permalink to this headline">¶</a></h1>
+<h1>OPAL API Return Codes<a class="headerlink" href="#opal-api-return-codes" title="Link to this heading">¶</a></h1>
 <p>All OPAL calls return an integer relaying the success/failure of the OPAL
 call.</p>
 <p>Success is typically indicated by OPAL_SUCCESS. Failure is always indicated
@@ -64,13 +62,6 @@ need to gracefully handle unknown error codes.</p>
 POWER9 was introduced. We use the placeholder “v1.0” version for
 “since the dawn of time” even though there never was a skiboot v1.0</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 30%" />
-<col style="width: 17%" />
-<col style="width: 10%" />
-<col style="width: 10%" />
-<col style="width: 32%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Name</p></td>
 <td><p>Return Code</p></td>
@@ -298,14 +289,14 @@ POWER9 was introduced. We use the placeholder “v1.0” version for
 </table>
 <p>The core set of return codes are:</p>
 <section id="opal-success">
-<span id="id1"></span><h2>OPAL_SUCCESS<a class="headerlink" href="#opal-success" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>OPAL_SUCCESS<a class="headerlink" href="#opal-success" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_SUCCESS           0</span>
 </pre></div>
 </div>
 <p>Success!</p>
 </section>
 <section id="opal-parameter">
-<span id="id2"></span><h2>OPAL_PARAMETER<a class="headerlink" href="#opal-parameter" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>OPAL_PARAMETER<a class="headerlink" href="#opal-parameter" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PARAMETER         -1</span>
 </pre></div>
 </div>
@@ -315,7 +306,7 @@ or not, OPAL_CHECK_TOKEN should be called rather than relying on
 OPAL_PARAMETER being returned for an invalid token.</p>
 </section>
 <section id="opal-busy">
-<span id="id3"></span><h2>OPAL_BUSY<a class="headerlink" href="#opal-busy" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>OPAL_BUSY<a class="headerlink" href="#opal-busy" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_BUSY            -2</span>
 </pre></div>
 </div>
@@ -323,49 +314,49 @@ OPAL_PARAMETER being returned for an invalid token.</p>
 caller need not call <cite>OPAL_POLL_EVENTS</cite> itself. <strong>TODO</strong> Clarify current situation.</p>
 </section>
 <section id="opal-partial">
-<span id="id4"></span><h2>OPAL_PARTIAL<a class="headerlink" href="#opal-partial" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>OPAL_PARTIAL<a class="headerlink" href="#opal-partial" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PARTIAL         -3</span>
 </pre></div>
 </div>
 <p>The operation partially succeeded.</p>
 </section>
 <section id="opal-constrained">
-<span id="id5"></span><h2>OPAL_CONSTRAINED<a class="headerlink" href="#opal-constrained" title="Permalink to this headline">¶</a></h2>
+<span id="id5"></span><h2>OPAL_CONSTRAINED<a class="headerlink" href="#opal-constrained" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CONSTRAINED     -4</span>
 </pre></div>
 </div>
 <p><strong>FIXME</strong></p>
 </section>
 <section id="opal-closed">
-<span id="id6"></span><h2>OPAL_CLOSED<a class="headerlink" href="#opal-closed" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2>OPAL_CLOSED<a class="headerlink" href="#opal-closed" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CLOSED          -5</span>
 </pre></div>
 </div>
 <p><strong>FIXME</strong> document these</p>
 </section>
 <section id="opal-hardware">
-<span id="id7"></span><h2>OPAL_HARDWARE<a class="headerlink" href="#opal-hardware" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>OPAL_HARDWARE<a class="headerlink" href="#opal-hardware" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_HARDWARE                -6</span>
 </pre></div>
 </div>
 <p><strong>FIXME</strong> document these</p>
 </section>
 <section id="opal-unsupported">
-<span id="id8"></span><h2>OPAL_UNSUPPORTED<a class="headerlink" href="#opal-unsupported" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>OPAL_UNSUPPORTED<a class="headerlink" href="#opal-unsupported" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_UNSUPPORTED     -7</span>
 </pre></div>
 </div>
 <p>Unsupported operation. Non-fatal.</p>
 </section>
 <section id="opal-permission">
-<span id="id9"></span><h2>OPAL_PERMISSION<a class="headerlink" href="#opal-permission" title="Permalink to this headline">¶</a></h2>
+<span id="id9"></span><h2>OPAL_PERMISSION<a class="headerlink" href="#opal-permission" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_PERMISSION              -8</span>
 </pre></div>
 </div>
 <p>Inadequate permission to perform the operation.</p>
 </section>
 <section id="opal-no-mem">
-<span id="id10"></span><h2>OPAL_NO_MEM<a class="headerlink" href="#opal-no-mem" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2>OPAL_NO_MEM<a class="headerlink" href="#opal-no-mem" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_NO_MEM          -9</span>
 </pre></div>
 </div>
@@ -376,7 +367,7 @@ from this heap.</p>
 <p>If this is ever hit, you should likely file a bug.</p>
 </section>
 <section id="opal-resource">
-<span id="id11"></span><h2>OPAL_RESOURCE<a class="headerlink" href="#opal-resource" title="Permalink to this headline">¶</a></h2>
+<span id="id11"></span><h2>OPAL_RESOURCE<a class="headerlink" href="#opal-resource" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_RESOURCE                -10</span>
 </pre></div>
 </div>
@@ -386,7 +377,7 @@ OPAL_RESOURCE is a more permanent error and while the resource <em>may</em> beco
 available again in the future, it is not certain that it will.</p>
 </section>
 <section id="opal-internal-error">
-<span id="id12"></span><h2>OPAL_INTERNAL_ERROR<a class="headerlink" href="#opal-internal-error" title="Permalink to this headline">¶</a></h2>
+<span id="id12"></span><h2>OPAL_INTERNAL_ERROR<a class="headerlink" href="#opal-internal-error" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_INTERNAL_ERROR  -11</span>
 </pre></div>
 </div>
@@ -394,7 +385,7 @@ available again in the future, it is not certain that it will.</p>
 return OPAL_INTERNAL_ERROR for safety.</p>
 </section>
 <section id="opal-busy-event">
-<span id="id13"></span><h2>OPAL_BUSY_EVENT<a class="headerlink" href="#opal-busy-event" title="Permalink to this headline">¶</a></h2>
+<span id="id13"></span><h2>OPAL_BUSY_EVENT<a class="headerlink" href="#opal-busy-event" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_BUSY_EVENT              -12</span>
 </pre></div>
 </div>
@@ -402,13 +393,13 @@ return OPAL_INTERNAL_ERROR for safety.</p>
 that may be required to get into a state where the call will succeed.</p>
 </section>
 <section id="opal-hardware-frozen">
-<span id="id14"></span><h2>OPAL_HARDWARE_FROZEN<a class="headerlink" href="#opal-hardware-frozen" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2>OPAL_HARDWARE_FROZEN<a class="headerlink" href="#opal-hardware-frozen" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_HARDWARE_FROZEN -13</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-wrong-state">
-<span id="id15"></span><h2>OPAL_WRONG_STATE<a class="headerlink" href="#opal-wrong-state" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2>OPAL_WRONG_STATE<a class="headerlink" href="#opal-wrong-state" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_WRONG_STATE     -14</span>
 </pre></div>
 </div>
@@ -417,7 +408,7 @@ a different state. For example, you cannot call OPAL_START_CPU on a CPU that
 is not currently in OPAL.</p>
 </section>
 <section id="opal-async-completion">
-<span id="id16"></span><h2>OPAL_ASYNC_COMPLETION<a class="headerlink" href="#opal-async-completion" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2>OPAL_ASYNC_COMPLETION<a class="headerlink" href="#opal-async-completion" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_ASYNC_COMPLETION        -15</span>
 </pre></div>
 </div>
@@ -434,7 +425,7 @@ pseudo-code for an async call:</p>
 </div>
 </section>
 <section id="opal-empty">
-<span id="id17"></span><h2>OPAL_EMPTY<a class="headerlink" href="#opal-empty" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2>OPAL_EMPTY<a class="headerlink" href="#opal-empty" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_EMPTY           -16</span>
 </pre></div>
 </div>
@@ -443,111 +434,111 @@ OPAL_IPMI_RECV call can succeed and return that there is no waiting IPMI
 message.</p>
 </section>
 <section id="opal-i2c-timeout">
-<span id="id18"></span><h2>OPAL_I2C_TIMEOUT<a class="headerlink" href="#opal-i2c-timeout" title="Permalink to this headline">¶</a></h2>
+<span id="id18"></span><h2>OPAL_I2C_TIMEOUT<a class="headerlink" href="#opal-i2c-timeout" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_TIMEOUT      -17</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-i2c-invalid">
-<span id="opal-i2c-invalid-cmd"></span><h2>OPAL_I2C_INVALID<a class="headerlink" href="#opal-i2c-invalid" title="Permalink to this headline">¶</a></h2>
+<span id="opal-i2c-invalid-cmd"></span><h2>OPAL_I2C_INVALID<a class="headerlink" href="#opal-i2c-invalid" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_INVALID_CMD  -18</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-i2c-lbus-parity">
-<span id="id19"></span><h2>OPAL_I2C_LBUS_PARITY<a class="headerlink" href="#opal-i2c-lbus-parity" title="Permalink to this headline">¶</a></h2>
+<span id="id19"></span><h2>OPAL_I2C_LBUS_PARITY<a class="headerlink" href="#opal-i2c-lbus-parity" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_LBUS_PARITY  -19</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-i2c-bkend-overrun">
-<span id="id20"></span><h2>OPAL_I2C_BKEND_OVERRUN<a class="headerlink" href="#opal-i2c-bkend-overrun" title="Permalink to this headline">¶</a></h2>
+<span id="id20"></span><h2>OPAL_I2C_BKEND_OVERRUN<a class="headerlink" href="#opal-i2c-bkend-overrun" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_BKEND_OVERRUN        -20</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-i2c-bkend-access">
-<span id="id21"></span><h2>OPAL_I2C_BKEND_ACCESS<a class="headerlink" href="#opal-i2c-bkend-access" title="Permalink to this headline">¶</a></h2>
+<span id="id21"></span><h2>OPAL_I2C_BKEND_ACCESS<a class="headerlink" href="#opal-i2c-bkend-access" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_BKEND_ACCESS -21</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-i2c-arbt-lost">
-<span id="id22"></span><h2>OPAL_I2C_ARBT_LOST<a class="headerlink" href="#opal-i2c-arbt-lost" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2>OPAL_I2C_ARBT_LOST<a class="headerlink" href="#opal-i2c-arbt-lost" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_ARBT_LOST    -22</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-i2c-nack-rcvd">
-<span id="id23"></span><h2>OPAL_I2C_NACK_RCVD<a class="headerlink" href="#opal-i2c-nack-rcvd" title="Permalink to this headline">¶</a></h2>
+<span id="id23"></span><h2>OPAL_I2C_NACK_RCVD<a class="headerlink" href="#opal-i2c-nack-rcvd" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_NACK_RCVD    -23</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-i2c-stop-err">
-<span id="id24"></span><h2>OPAL_I2C_STOP_ERR<a class="headerlink" href="#opal-i2c-stop-err" title="Permalink to this headline">¶</a></h2>
+<span id="id24"></span><h2>OPAL_I2C_STOP_ERR<a class="headerlink" href="#opal-i2c-stop-err" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_I2C_STOP_ERR     -24</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xscom-busy">
-<span id="id25"></span><h2>OPAL_XSCOM_BUSY<a class="headerlink" href="#opal-xscom-busy" title="Permalink to this headline">¶</a></h2>
+<span id="id25"></span><h2>OPAL_XSCOM_BUSY<a class="headerlink" href="#opal-xscom-busy" title="Link to this heading">¶</a></h2>
 <p>An alias for <a class="reference internal" href="#opal-busy"><span class="std std-ref">OPAL_BUSY</span></a></p>
 </section>
 <section id="opal-xscom-chiplet-off">
-<span id="id26"></span><h2>OPAL_XSCOM_CHIPLET_OFF<a class="headerlink" href="#opal-xscom-chiplet-off" title="Permalink to this headline">¶</a></h2>
+<span id="id26"></span><h2>OPAL_XSCOM_CHIPLET_OFF<a class="headerlink" href="#opal-xscom-chiplet-off" title="Link to this heading">¶</a></h2>
 <p>An alias for <a class="reference internal" href="#opal-wrong-state"><span class="std std-ref">OPAL_WRONG_STATE</span></a></p>
 </section>
 <section id="opal-xscom-partial-good">
-<span id="id27"></span><h2>OPAL_XSCOM_PARTIAL_GOOD<a class="headerlink" href="#opal-xscom-partial-good" title="Permalink to this headline">¶</a></h2>
+<span id="id27"></span><h2>OPAL_XSCOM_PARTIAL_GOOD<a class="headerlink" href="#opal-xscom-partial-good" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_PARTIAL_GOOD -25</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xscom-addr-error">
-<span id="id28"></span><h2>OPAL_XSCOM_ADDR_ERROR<a class="headerlink" href="#opal-xscom-addr-error" title="Permalink to this headline">¶</a></h2>
+<span id="id28"></span><h2>OPAL_XSCOM_ADDR_ERROR<a class="headerlink" href="#opal-xscom-addr-error" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_ADDR_ERROR -26</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xscom-clock-error">
-<span id="id29"></span><h2>OPAL_XSCOM_CLOCK_ERROR<a class="headerlink" href="#opal-xscom-clock-error" title="Permalink to this headline">¶</a></h2>
+<span id="id29"></span><h2>OPAL_XSCOM_CLOCK_ERROR<a class="headerlink" href="#opal-xscom-clock-error" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_CLOCK_ERROR       -27</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xscom-parity-error">
-<span id="id30"></span><h2>OPAL_XSCOM_PARITY_ERROR<a class="headerlink" href="#opal-xscom-parity-error" title="Permalink to this headline">¶</a></h2>
+<span id="id30"></span><h2>OPAL_XSCOM_PARITY_ERROR<a class="headerlink" href="#opal-xscom-parity-error" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_PARITY_ERROR      -28</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xscom-timeout">
-<span id="id31"></span><h2>OPAL_XSCOM_TIMEOUT<a class="headerlink" href="#opal-xscom-timeout" title="Permalink to this headline">¶</a></h2>
+<span id="id31"></span><h2>OPAL_XSCOM_TIMEOUT<a class="headerlink" href="#opal-xscom-timeout" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_TIMEOUT   -29</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xscom-ctr-offlined">
-<span id="id32"></span><h2>OPAL_XSCOM_CTR_OFFLINED<a class="headerlink" href="#opal-xscom-ctr-offlined" title="Permalink to this headline">¶</a></h2>
+<span id="id32"></span><h2>OPAL_XSCOM_CTR_OFFLINED<a class="headerlink" href="#opal-xscom-ctr-offlined" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XSCOM_CTR_OFFLINED      -30</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xive-provisioning">
-<span id="id33"></span><h2>OPAL_XIVE_PROVISIONING<a class="headerlink" href="#opal-xive-provisioning" title="Permalink to this headline">¶</a></h2>
+<span id="id33"></span><h2>OPAL_XIVE_PROVISIONING<a class="headerlink" href="#opal-xive-provisioning" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XIVE_PROVISIONING       -31</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-xive-free-active">
-<span id="id34"></span><h2>OPAL_XIVE_FREE_ACTIVE<a class="headerlink" href="#opal-xive-free-active" title="Permalink to this headline">¶</a></h2>
+<span id="id34"></span><h2>OPAL_XIVE_FREE_ACTIVE<a class="headerlink" href="#opal-xive-free-active" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_XIVE_FREE_ACTIVE        -32</span>
 </pre></div>
 </div>
 </section>
 <section id="opal-timeout">
-<span id="id35"></span><h2>OPAL_TIMEOUT<a class="headerlink" href="#opal-timeout" title="Permalink to this headline">¶</a></h2>
+<span id="id35"></span><h2>OPAL_TIMEOUT<a class="headerlink" href="#opal-timeout" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_TIMEOUT         -33</span>
 </pre></div>
 </div>
@@ -561,8 +552,9 @@ message.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL API Return Codes</a><ul>
 <li><a class="reference internal" href="#opal-success">OPAL_SUCCESS</a></li>
 <li><a class="reference internal" href="#opal-parameter">OPAL_PARAMETER</a></li>
@@ -604,12 +596,17 @@ message.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="power9-changes.html"
-                        title="previous chapter">POWER9 Changes to OPAL API</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../release-notes/index.html"
-                        title="next chapter">Release Notes</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="power9-changes.html"
+                          title="previous chapter">POWER9 Changes to OPAL API</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../release-notes/index.html"
+                          title="next chapter">Release Notes</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -626,7 +623,7 @@ message.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -643,15 +640,15 @@ message.</p>
         <li class="right" >
           <a href="power9-changes.html" title="POWER9 Changes to OPAL API"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL API Return Codes</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

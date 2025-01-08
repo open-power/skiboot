@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.1.12 &#8212; skiboot bc7b85d
+    <title>skiboot-5.1.12 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.1.11.html" title="skiboot-5.1.11"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.12</a></li> 
@@ -46,13 +44,13 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-1-12">
-<h1>skiboot-5.1.12<a class="headerlink" href="#skiboot-5-1-12" title="Permalink to this headline">¶</a></h1>
+<h1>skiboot-5.1.12<a class="headerlink" href="#skiboot-5-1-12" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.1.12 was released on Friday December 4th, 2015.</p>
 <p>skiboot-5.1.12 is the 13th stable release of 5.1, it follows skiboot-5.1.11
 (which was released November 13th, 2015).</p>
 <p>Skiboot 5.1.12 contains bug fixes and a performance improvement.</p>
 <section id="opal-prd">
-<h2>opal-prd<a class="headerlink" href="#opal-prd" title="Permalink to this headline">¶</a></h2>
+<h2>opal-prd<a class="headerlink" href="#opal-prd" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Display an explict and obvious message if running on a system that does
 not support opal-prd, such as an IBM FSP based POWER system, where the
@@ -60,21 +58,21 @@ FSP takes on the role of opal-prd.</p></li>
 </ul>
 </section>
 <section id="pflash">
-<h2>pflash<a class="headerlink" href="#pflash" title="Permalink to this headline">¶</a></h2>
+<h2>pflash<a class="headerlink" href="#pflash" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Fix a missing (C) header
 - cherry-picked from master.</p></li>
 </ul>
 </section>
 <section id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<h2>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Don’t link with libgcc
 - On some toolchains, we don’t have libgcc available.</p></li>
 </ul>
 </section>
 <section id="power8-phb-pcie-specific">
-<h2>POWER8 PHB (PCIe) specific<a class="headerlink" href="#power8-phb-pcie-specific" title="Permalink to this headline">¶</a></h2>
+<h2>POWER8 PHB (PCIe) specific<a class="headerlink" href="#power8-phb-pcie-specific" title="Link to this heading">¶</a></h2>
 <ul>
 <li><dl>
 <dt>hw/phb3: Flush cache line after updating P/Q bits</dt><dd><p>When doing an MSI EOI, we update the P and Q bits in the IVE. That causes
@@ -91,7 +89,7 @@ The improvement will vary by workload.</p>
 </ul>
 </section>
 <section id="ibm-fsp-based-machines">
-<h2>IBM FSP based machines<a class="headerlink" href="#ibm-fsp-based-machines" title="Permalink to this headline">¶</a></h2>
+<h2>IBM FSP based machines<a class="headerlink" href="#ibm-fsp-based-machines" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>FSP: Give up PSI link on shutdown
 This clears up some erroneous SRCs (error logs) in some situations.</p></li>
@@ -114,8 +112,9 @@ This was introduced in skiboot-5.0-rc1.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.1.12</a><ul>
 <li><a class="reference internal" href="#opal-prd">opal-prd</a></li>
 <li><a class="reference internal" href="#pflash">pflash</a></li>
@@ -126,12 +125,17 @@ This was introduced in skiboot-5.0-rc1.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.1.11.html"
-                        title="previous chapter">skiboot-5.1.11</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.1.13.html"
-                        title="next chapter">skiboot-5.1.13</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.1.11.html"
+                          title="previous chapter">skiboot-5.1.11</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.1.13.html"
+                          title="next chapter">skiboot-5.1.13</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -148,7 +152,7 @@ This was introduced in skiboot-5.0-rc1.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -165,15 +169,15 @@ This was introduced in skiboot-5.0-rc1.</p>
         <li class="right" >
           <a href="skiboot-5.1.11.html" title="skiboot-5.1.11"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.12</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

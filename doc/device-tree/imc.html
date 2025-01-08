@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>IMC Device Tree Bindings &#8212; skiboot bc7b85d
+    <title>IMC Device Tree Bindings &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="ibm%2Csecureboot.html" title="ibm,secureboot"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">IMC Device Tree Bindings</a></li> 
@@ -46,10 +44,10 @@
           <div class="body" role="main">
             
   <section id="imc-device-tree-bindings">
-<span id="device-tree-imc"></span><h1>IMC Device Tree Bindings<a class="headerlink" href="#imc-device-tree-bindings" title="Permalink to this headline">¶</a></h1>
+<span id="device-tree-imc"></span><h1>IMC Device Tree Bindings<a class="headerlink" href="#imc-device-tree-bindings" title="Link to this heading">¶</a></h1>
 <p>See <a class="reference internal" href="../imc.html#imc"><span class="std std-ref">OPAL/Skiboot In-Memory Collection (IMC) interface Documentation</span></a> for general In-Memory Collection (IMC) counter information.</p>
 <section id="imc-counters-top-level-node">
-<h2>imc-counters top-level node<a class="headerlink" href="#imc-counters-top-level-node" title="Permalink to this headline">¶</a></h2>
+<h2>imc-counters top-level node<a class="headerlink" href="#imc-counters-top-level-node" title="Link to this heading">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">imc-counters</span> <span class="p">{</span>
   <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,opal-in-memory-counters&quot;</span><span class="p">;</span>
   <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
@@ -63,7 +61,7 @@
 </div>
 </section>
 <section id="imc-device-units-bindings">
-<h2>IMC device/units bindings<a class="headerlink" href="#imc-device-units-bindings" title="Permalink to this headline">¶</a></h2>
+<h2>IMC device/units bindings<a class="headerlink" href="#imc-device-units-bindings" title="Link to this heading">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">mcs3</span> <span class="p">{</span>
         <span class="nf">compatible</span> <span class="o">=</span> <span class="s">&quot;ibm,imc-counters&quot;</span><span class="p">;</span>
         <span class="nf">events-prefix</span> <span class="o">=</span> <span class="s">&quot;PM_MCS3_&quot;</span><span class="p">;</span> <span class="cm">/* denotes event name to be prefixed to get complete event name supported by this device */</span>
@@ -97,7 +95,7 @@
 </div>
 </section>
 <section id="imc-device-event-bindings">
-<h2>IMC device event bindings<a class="headerlink" href="#imc-device-event-bindings" title="Permalink to this headline">¶</a></h2>
+<h2>IMC device event bindings<a class="headerlink" href="#imc-device-event-bindings" title="Link to this heading">¶</a></h2>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">nest-mcs-events</span> <span class="p">{</span>
         <span class="nf">#address-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
         <span class="nf">#size-cells</span> <span class="o">=</span> <span class="p">&lt;</span><span class="mh">0x1</span><span class="p">&gt;;</span>
@@ -131,27 +129,27 @@
 </div>
 </section>
 <section id="trace-mode-scom">
-<h2>Trace-mode SCOM<a class="headerlink" href="#trace-mode-scom" title="Permalink to this headline">¶</a></h2>
+<h2>Trace-mode SCOM<a class="headerlink" href="#trace-mode-scom" title="Link to this heading">¶</a></h2>
 <p>Trace scom is a 64 bit value which contains the event information for
 IMC-trace mode. Following is the trace-scom layout.</p>
 <p><strong>TRACE_IMC_SCOM bit representation</strong></p>
 <dl class="field-list simple">
-<dt class="field-odd">0-1</dt>
+<dt class="field-odd">0-1<span class="colon">:</span></dt>
 <dd class="field-odd"><p>SAMPSEL</p>
 </dd>
-<dt class="field-even">2-33</dt>
+<dt class="field-even">2-33<span class="colon">:</span></dt>
 <dd class="field-even"><p>CPMC_LOAD</p>
 </dd>
-<dt class="field-odd">34-40</dt>
+<dt class="field-odd">34-40<span class="colon">:</span></dt>
 <dd class="field-odd"><p>CPMC1SEL</p>
 </dd>
-<dt class="field-even">41-47</dt>
+<dt class="field-even">41-47<span class="colon">:</span></dt>
 <dd class="field-even"><p>CPMC2SEL</p>
 </dd>
-<dt class="field-odd">48-50</dt>
+<dt class="field-odd">48-50<span class="colon">:</span></dt>
 <dd class="field-odd"><p>BUFFERSIZE</p>
 </dd>
-<dt class="field-even">51-63</dt>
+<dt class="field-even">51-63<span class="colon">:</span></dt>
 <dd class="field-even"><p>RESERVED</p>
 </dd>
 </dl>
@@ -175,8 +173,9 @@ b’100’ - 64K entries * 64 per entry = 4M
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">IMC Device Tree Bindings</a><ul>
 <li><a class="reference internal" href="#imc-counters-top-level-node">imc-counters top-level node</a></li>
 <li><a class="reference internal" href="#imc-device-units-bindings">IMC device/units bindings</a></li>
@@ -186,12 +185,17 @@ b’100’ - 64K entries * 64 per entry = 4M
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="ibm%2Csecureboot.html"
-                        title="previous chapter">ibm,secureboot</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="memory-hierarchy.html"
-                        title="next chapter">P9 memory hierarchy</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="ibm%2Csecureboot.html"
+                          title="previous chapter">ibm,secureboot</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="memory-hierarchy.html"
+                          title="next chapter">P9 memory hierarchy</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -208,7 +212,7 @@ b’100’ - 64K entries * 64 per entry = 4M
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -225,15 +229,15 @@ b’100’ - 64K entries * 64 per entry = 4M
         <li class="right" >
           <a href="ibm%2Csecureboot.html" title="ibm,secureboot"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">IMC Device Tree Bindings</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

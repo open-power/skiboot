@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_NPU_SPA_SETUP &#8212; skiboot bc7b85d
+    <title>OPAL_NPU_SPA_SETUP &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-npu2-get-set-relaxed-order-168-169.html" title="OPAL_NPU_SET_RELAXED_ORDER"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_NPU_SPA_SETUP</a></li> 
@@ -46,14 +44,14 @@
           <div class="body" role="main">
             
   <section id="opal-npu-spa-setup">
-<span id="id1"></span><h1>OPAL_NPU_SPA_SETUP<a class="headerlink" href="#opal-npu-spa-setup" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_NPU_SPA_SETUP<a class="headerlink" href="#opal-npu-spa-setup" title="Link to this heading">¶</a></h1>
 <p>OpenCAPI devices only.</p>
 <p>Sets up a Shared Process Area (SPA) with the Shared Process Area
 Pointer (SPAP) set to the provided address <cite>addr</cite>, and sets the OTL PE
 mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 <p>If <cite>addr</cite> is NULL, the SPA will be disabled. <cite>addr</cite> must be 4K aligned.</p>
 <section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
 <span class="nb">int</span> <span class="n">bdfn</span>
 <span class="n">uint64_t</span> <span class="n">addr</span>
@@ -72,7 +70,7 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 </dl>
 </section>
 <section id="return-values">
-<h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
+<h2>Return Values<a class="headerlink" href="#return-values" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>OPAL_SUCCESS</dt><dd><p>SPAP and PE mask were successfully set</p>
 </dd>
@@ -84,11 +82,11 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 </section>
 </section>
 <section id="opal-npu-spa-clear-cache">
-<span id="id2"></span><h1>OPAL_NPU_SPA_CLEAR_CACHE<a class="headerlink" href="#opal-npu-spa-clear-cache" title="Permalink to this headline">¶</a></h1>
+<span id="id2"></span><h1>OPAL_NPU_SPA_CLEAR_CACHE<a class="headerlink" href="#opal-npu-spa-clear-cache" title="Link to this heading">¶</a></h1>
 <p>OpenCAPI devices only.</p>
 <p>Invalidates the Process Element with the given <cite>PE_handle</cite> from the NPU’s SPA cache.</p>
 <section id="id3">
-<h2>Parameters<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
 <span class="n">uint32_t</span> <span class="n">bdfn</span>
 <span class="n">uint64_t</span> <span class="n">PE_handle</span>
@@ -104,7 +102,7 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 </dl>
 </section>
 <section id="id4">
-<h2>Return Values<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>Return Values<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>OPAL_SUCCESS</dt><dd><p>PE was successfully cleared from SPA cache</p>
 </dd>
@@ -116,11 +114,11 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 </section>
 </section>
 <section id="opal-npu-tl-set">
-<span id="id5"></span><h1>OPAL_NPU_TL_SET<a class="headerlink" href="#opal-npu-tl-set" title="Permalink to this headline">¶</a></h1>
+<span id="id5"></span><h1>OPAL_NPU_TL_SET<a class="headerlink" href="#opal-npu-tl-set" title="Link to this heading">¶</a></h1>
 <p>OpenCAPI devices only.</p>
 <p>Update the NPU OTL configuration with device capabilities.</p>
 <section id="id6">
-<h2>Parameters<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<h2>Parameters<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
 <span class="n">uint32_t</span> <span class="n">bdfn</span>
 <span class="n">long</span> <span class="n">capabilities</span>
@@ -142,7 +140,7 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 </dl>
 </section>
 <section id="id7">
-<h2>Return Values<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<h2>Return Values<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h2>
 <dl>
 <dt>OPAL_SUCCESS</dt><dd><p>OTL configuration was successfully updated</p>
 </dd>
@@ -154,13 +152,13 @@ mask (used for PASID to PE handle conversion) to <cite>PE_mask</cite>.</p>
 </section>
 </section>
 <section id="opal-npu-mem-alloc">
-<span id="id8"></span><h1>OPAL_NPU_MEM_ALLOC<a class="headerlink" href="#opal-npu-mem-alloc" title="Permalink to this headline">¶</a></h1>
+<span id="id8"></span><h1>OPAL_NPU_MEM_ALLOC<a class="headerlink" href="#opal-npu-mem-alloc" title="Link to this heading">¶</a></h1>
 <p>OpenCAPI devices only.</p>
 <p>Sets up the NPU memory BAR for Lowest Point of Coherency (LPC) memory.</p>
 <p>At present, only one device per CPU can use LPC memory, and a maximum of 4TB
 can be allocated.</p>
 <section id="id9">
-<h2>Parameters<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<h2>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
 <span class="n">uint32_t</span> <span class="n">bdfn</span>
 <span class="n">uint64_t</span> <span class="n">size</span>
@@ -179,7 +177,7 @@ can be allocated.</p>
 </dl>
 </section>
 <section id="id10">
-<h2>Return Values<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<h2>Return Values<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>OPAL_SUCCESS</dt><dd><p>BAR setup completed successfully</p>
 </dd>
@@ -191,11 +189,11 @@ can be allocated.</p>
 </section>
 </section>
 <section id="opal-npu-mem-release">
-<span id="id11"></span><h1>OPAL_NPU_MEM_RELEASE<a class="headerlink" href="#opal-npu-mem-release" title="Permalink to this headline">¶</a></h1>
+<span id="id11"></span><h1>OPAL_NPU_MEM_RELEASE<a class="headerlink" href="#opal-npu-mem-release" title="Link to this heading">¶</a></h1>
 <p>OpenCAPI devices only.</p>
 <p>Releases NPU memory BAR.</p>
 <section id="id12">
-<h2>Parameters<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<h2>Parameters<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uint64_t</span> <span class="n">phb_id</span>
 <span class="n">uint32_t</span> <span class="n">bdfn</span>
 </pre></div>
@@ -208,7 +206,7 @@ can be allocated.</p>
 </dl>
 </section>
 <section id="id13">
-<h2>Return Values<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
+<h2>Return Values<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>OPAL_SUCCESS</dt><dd><p>BAR setup completed successfully</p>
 </dd>
@@ -226,8 +224,9 @@ have LPC memory assigned</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_NPU_SPA_SETUP</a><ul>
 <li><a class="reference internal" href="#parameters">Parameters</a></li>
 <li><a class="reference internal" href="#return-values">Return Values</a></li>
@@ -255,12 +254,17 @@ have LPC memory assigned</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-npu2-get-set-relaxed-order-168-169.html"
-                        title="previous chapter">OPAL_NPU_SET_RELAXED_ORDER</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-nvram-read-write-7-8.html"
-                        title="next chapter">OPAL NVRAM</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-npu2-get-set-relaxed-order-168-169.html"
+                          title="previous chapter">OPAL_NPU_SET_RELAXED_ORDER</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-nvram-read-write-7-8.html"
+                          title="next chapter">OPAL NVRAM</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -277,7 +281,7 @@ have LPC memory assigned</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -294,15 +298,15 @@ have LPC memory assigned</p>
         <li class="right" >
           <a href="opal-npu2-get-set-relaxed-order-168-169.html" title="OPAL_NPU_SET_RELAXED_ORDER"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_NPU_SPA_SETUP</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

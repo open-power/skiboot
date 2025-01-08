@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_SIGNAL_SYSTEM_RESET &#8212; skiboot bc7b85d
+    <title>OPAL_SIGNAL_SYSTEM_RESET &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-set-xive-19.html" title="OPAL_SET_XIVE"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_SIGNAL_SYSTEM_RESET</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="opal-signal-system-reset">
-<span id="id1"></span><h1>OPAL_SIGNAL_SYSTEM_RESET<a class="headerlink" href="#opal-signal-system-reset" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_SIGNAL_SYSTEM_RESET<a class="headerlink" href="#opal-signal-system-reset" title="Link to this heading">¶</a></h1>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int64_t</span> <span class="n">signal_system_reset</span><span class="p">(</span><span class="n">int32_t</span> <span class="n">cpu_nr</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -65,7 +63,7 @@ through setting hardware registers), so OPAL_QUIESCE can be used
 before OPAL_SIGNAL_SYSTEM_RESET to (attempt to) ensure all CPUs are
 out of OPAL before being interrupted.</p>
 <section id="arguments">
-<h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h2>
+<h2>Arguments<a class="headerlink" href="#arguments" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">int32_t</span> <span class="n">cpu_nr</span>
   <span class="n">cpu_nr</span> <span class="o">&gt;=</span> <span class="mi">0</span>        <span class="n">The</span> <span class="n">cpu</span> <span class="n">server</span> <span class="n">number</span> <span class="n">of</span> <span class="n">the</span> <span class="n">target</span> <span class="n">cpu</span> <span class="n">to</span> <span class="n">reset</span><span class="o">.</span>
   <span class="n">SYS_RESET_ALL</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">All</span> <span class="n">cpus</span> <span class="n">should</span> <span class="n">be</span> <span class="n">reset</span><span class="o">.</span>
@@ -74,7 +72,7 @@ out of OPAL before being interrupted.</p>
 </div>
 </section>
 <section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>OPAL_SUCCESS</dt><dd><p>The system reset requests to target CPU(s) was successful. This returns
 asynchronously without acknowledgement from targets that system reset
@@ -103,8 +101,9 @@ None of the specified CPUs are reset in this case.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_SIGNAL_SYSTEM_RESET</a><ul>
 <li><a class="reference internal" href="#arguments">Arguments</a></li>
 <li><a class="reference internal" href="#returns">Returns</a></li>
@@ -112,12 +111,17 @@ None of the specified CPUs are reset in this case.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-set-xive-19.html"
-                        title="previous chapter">OPAL_SET_XIVE</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-slw-set-reg-100.html"
-                        title="next chapter">OPAL_SLW_SET_REG</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-set-xive-19.html"
+                          title="previous chapter">OPAL_SET_XIVE</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-slw-set-reg-100.html"
+                          title="next chapter">OPAL_SLW_SET_REG</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -134,7 +138,7 @@ None of the specified CPUs are reset in this case.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -151,15 +155,15 @@ None of the specified CPUs are reset in this case.</p>
         <li class="right" >
           <a href="opal-set-xive-19.html" title="OPAL_SET_XIVE"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_SIGNAL_SYSTEM_RESET</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

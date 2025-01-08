@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ibm,opal/power-mgt/occ device tree entries &#8212; skiboot bc7b85d
+    <title>ibm,opal/power-mgt/occ device tree entries &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="../power-mgt.html" title="ibm,opal/power-mgt device tree entries"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
@@ -48,7 +46,7 @@
           <div class="body" role="main">
             
   <section id="ibm-opal-power-mgt-occ-device-tree-entries">
-<h1>ibm,opal/power-mgt/occ device tree entries<a class="headerlink" href="#ibm-opal-power-mgt-occ-device-tree-entries" title="Permalink to this headline">¶</a></h1>
+<h1>ibm,opal/power-mgt/occ device tree entries<a class="headerlink" href="#ibm-opal-power-mgt-occ-device-tree-entries" title="Link to this heading">¶</a></h1>
 <p>This node exports the per-chip pstate table properties to kernel.</p>
 <p>Example:</p>
 <div class="highlight-dts notranslate"><div class="highlight"><pre><span></span><span class="nc">occ</span><span class="nf">@7ffddf8000</span> <span class="p">{</span>
@@ -61,11 +59,11 @@
 </pre></div>
 </div>
 <section id="ibm-chip-id">
-<h2>ibm,chip-id<a class="headerlink" href="#ibm-chip-id" title="Permalink to this headline">¶</a></h2>
+<h2>ibm,chip-id<a class="headerlink" href="#ibm-chip-id" title="Link to this heading">¶</a></h2>
 <p>This property denotes the ID of chip to which OCC belongs to.</p>
 </section>
 <section id="reg">
-<h2>reg<a class="headerlink" href="#reg" title="Permalink to this headline">¶</a></h2>
+<h2>reg<a class="headerlink" href="#reg" title="Link to this heading">¶</a></h2>
 <p>This tuple gives the statring address of the OPAL data in HOMER and
 the size of the OPAL data.</p>
 <p>The top-level /ibm,opal/power-mgt contains :</p>
@@ -75,13 +73,13 @@ the size of the OPAL data.</p>
 </div>
 </section>
 <section id="ibm-pstate-vcss-ibm-pstate-vdds">
-<h2>ibm,pstate-vcss ibm,pstate-vdds<a class="headerlink" href="#ibm-pstate-vcss-ibm-pstate-vdds" title="Permalink to this headline">¶</a></h2>
+<h2>ibm,pstate-vcss ibm,pstate-vdds<a class="headerlink" href="#ibm-pstate-vcss-ibm-pstate-vdds" title="Link to this heading">¶</a></h2>
 <p>These properties list a voltage-identifier of each of the pstates listed in
 ibm,pstate-ids for the Vcs and Vdd values used for that pstate in that chip.
 Each VID is a single byte.</p>
 </section>
 <section id="ibm-opal-power-mgt-freq-domain-mask">
-<h2>ibm,opal/power-mgt/freq-domain-mask<a class="headerlink" href="#ibm-opal-power-mgt-freq-domain-mask" title="Permalink to this headline">¶</a></h2>
+<h2>ibm,opal/power-mgt/freq-domain-mask<a class="headerlink" href="#ibm-opal-power-mgt-freq-domain-mask" title="Link to this heading">¶</a></h2>
 <p>This property is a bitmask which will have different value depending upon the
 generation of the processor. Frequency domain would indicate group of CPUs
 which would share same frequency. Bitwise AND is taken between this bitmask
@@ -97,7 +95,7 @@ the PIR of CPUs will yield us frequency domain which is quad wise
 distribution as last 4 bits have been masked which represent the cores.</p>
 </section>
 <section id="ibm-opal-power-mgt-domain-runs-at">
-<h2>ibm,opal/power-mgt/domain-runs-at<a class="headerlink" href="#ibm-opal-power-mgt-domain-runs-at" title="Permalink to this headline">¶</a></h2>
+<h2>ibm,opal/power-mgt/domain-runs-at<a class="headerlink" href="#ibm-opal-power-mgt-domain-runs-at" title="Link to this heading">¶</a></h2>
 <p>There are two strategies in which the OCC can change the frequency of the cores
 in the quad on P9.
 1) FREQ_MAX_IN_DOMAIN : the OCC sets the frequency of the quad to the maximum
@@ -120,8 +118,9 @@ of a frequency domain.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">ibm,opal/power-mgt/occ device tree entries</a><ul>
 <li><a class="reference internal" href="#ibm-chip-id">ibm,chip-id</a></li>
 <li><a class="reference internal" href="#reg">reg</a></li>
@@ -132,12 +131,17 @@ of a frequency domain.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="../power-mgt.html"
-                        title="previous chapter">ibm,opal/power-mgt device tree entries</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="powercap.html"
-                        title="next chapter">power-mgt/powercap</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../power-mgt.html"
+                          title="previous chapter">ibm,opal/power-mgt device tree entries</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="powercap.html"
+                          title="next chapter">power-mgt/powercap</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -154,7 +158,7 @@ of a frequency domain.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -171,7 +175,7 @@ of a frequency domain.</p>
         <li class="right" >
           <a href="../power-mgt.html" title="ibm,opal/power-mgt device tree entries"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../../../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Device Tree</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../ibm%2Copal.html" >ibm,opal</a> &#187;</li>
@@ -180,8 +184,8 @@ of a frequency domain.</p>
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

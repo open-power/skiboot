@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_CEC_POWER_DOWN &#8212; skiboot bc7b85d
+    <title>OPAL_CEC_POWER_DOWN &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="index.html" title="OPAL API Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_CEC_POWER_DOWN</a></li> 
@@ -46,29 +44,29 @@
           <div class="body" role="main">
             
   <section id="opal-cec-power-down">
-<span id="id1"></span><h1>OPAL_CEC_POWER_DOWN<a class="headerlink" href="#opal-cec-power-down" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_CEC_POWER_DOWN<a class="headerlink" href="#opal-cec-power-down" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CEC_POWER_DOWN                  5</span>
 
-<span class="n">int64</span><span class="w"> </span><span class="n">opal_cec_power_down</span><span class="p">(</span><span class="n">uint64</span><span class="w"> </span><span class="n">request</span><span class="p">)</span><span class="w"></span>
+<span class="n">int64</span><span class="w"> </span><span class="n">opal_cec_power_down</span><span class="p">(</span><span class="n">uint64</span><span class="w"> </span><span class="n">request</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>As powering down the system is likely an asynchronous operation that we
 have to wait for a service processor to do, <a class="reference internal" href="#opal-cec-power-down"><span class="std std-ref">OPAL_CEC_POWER_DOWN</span></a>
 should be called like the example code below:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OPAL_BUSY</span><span class="p">;</span><span class="w"></span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OPAL_BUSY</span><span class="p">;</span>
 
-<span class="k">do</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opal_cec_power_down</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w"></span>
-<span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">);</span><span class="w"></span>
+<span class="k">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opal_cec_power_down</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">)</span>
+<span class="w">    </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">OPAL_BUSY_EVENT</span><span class="p">);</span>
 
-<span class="k">for</span><span class="w"> </span><span class="p">(;;)</span><span class="w"></span>
-<span class="w">  </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w"></span>
+<span class="k">for</span><span class="w"> </span><span class="p">(;;)</span>
+<span class="w">  </span><span class="n">opal_poll_events</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
 </pre></div>
 </div>
 <section id="arguments">
-<h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h2>
+<h2>Arguments<a class="headerlink" href="#arguments" title="Link to this heading">¶</a></h2>
 <p><cite>uint64 request</cite> values as follows:</p>
 <dl class="simple">
 <dt>0</dt><dd><p>Power down normally</p>
@@ -82,7 +80,7 @@ between a normal and immediate shutdown is platform specific.</p>
 platform to only support some types of power down operations.</p>
 </section>
 <section id="return-values">
-<h2>Return Values<a class="headerlink" href="#return-values" title="Permalink to this headline">¶</a></h2>
+<h2>Return Values<a class="headerlink" href="#return-values" title="Link to this heading">¶</a></h2>
 <dl>
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>the power down request was successful.
 This may/may not result in immediate power down. An OS should
@@ -117,8 +115,9 @@ it’s plausible it is, so code should handle this gracefully.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_CEC_POWER_DOWN</a><ul>
 <li><a class="reference internal" href="#arguments">Arguments</a></li>
 <li><a class="reference internal" href="#return-values">Return Values</a></li>
@@ -126,12 +125,17 @@ it’s plausible it is, so code should handle this gracefully.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">OPAL API Documentation</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-cec-reboot-6-116.html"
-                        title="next chapter">OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">OPAL API Documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-cec-reboot-6-116.html"
+                          title="next chapter">OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -148,7 +152,7 @@ it’s plausible it is, so code should handle this gracefully.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -165,15 +169,15 @@ it’s plausible it is, so code should handle this gracefully.</p>
         <li class="right" >
           <a href="index.html" title="OPAL API Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_CEC_POWER_DOWN</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_POLL_EVENTS &#8212; skiboot bc7b85d
+    <title>OPAL_POLL_EVENTS &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-phb-flag-set-get-179-180.html" title="OPAL_PHB_SET_OPTION"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_POLL_EVENTS</a></li> 
@@ -46,20 +44,20 @@
           <div class="body" role="main">
             
   <section id="opal-poll-events">
-<span id="id1"></span><h1>OPAL_POLL_EVENTS<a class="headerlink" href="#opal-poll-events" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_POLL_EVENTS<a class="headerlink" href="#opal-poll-events" title="Link to this heading">¶</a></h1>
 <p>Poll for outstanding events.</p>
 <p>Fills in a bitmask of pending events.</p>
 <p>Current events are:</p>
 <section id="opal-event-opal-internal-0x1">
-<h2>OPAL_EVENT_OPAL_INTERNAL = 0x1<a class="headerlink" href="#opal-event-opal-internal-0x1" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_OPAL_INTERNAL = 0x1<a class="headerlink" href="#opal-event-opal-internal-0x1" title="Link to this heading">¶</a></h2>
 <p>Currently unused.</p>
 </section>
 <section id="opal-event-nvram-0x2">
-<h2>OPAL_EVENT_NVRAM = 0x2<a class="headerlink" href="#opal-event-nvram-0x2" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_NVRAM = 0x2<a class="headerlink" href="#opal-event-nvram-0x2" title="Link to this heading">¶</a></h2>
 <p>Unused</p>
 </section>
 <section id="opal-event-rtc-0x4">
-<span id="opal-event-rtc"></span><h2>OPAL_EVENT_RTC = 0x4<a class="headerlink" href="#opal-event-rtc-0x4" title="Permalink to this headline">¶</a></h2>
+<span id="opal-event-rtc"></span><h2>OPAL_EVENT_RTC = 0x4<a class="headerlink" href="#opal-event-rtc-0x4" title="Link to this heading">¶</a></h2>
 <p><strong>TODO</strong>: clean this up, this is just copied from hw/fsp/fsp-rtc.c:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="n">Because</span> <span class="n">the</span> <span class="n">RTC</span> <span class="n">calls</span> <span class="n">can</span> <span class="n">be</span> <span class="n">pretty</span> <span class="n">slow</span><span class="p">,</span> <span class="n">these</span> <span class="n">functions</span> <span class="n">will</span> <span class="n">shoot</span>
 <span class="o">*</span> <span class="n">an</span> <span class="n">asynchronous</span> <span class="n">request</span> <span class="n">to</span> <span class="n">the</span> <span class="n">FSP</span> <span class="p">(</span><span class="k">if</span> <span class="n">none</span> <span class="ow">is</span> <span class="n">already</span> <span class="n">pending</span><span class="p">)</span>
@@ -88,40 +86,40 @@
 </div>
 </section>
 <section id="opal-event-console-output-0x8">
-<h2>OPAL_EVENT_CONSOLE_OUTPUT = 0x8<a class="headerlink" href="#opal-event-console-output-0x8" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_CONSOLE_OUTPUT = 0x8<a class="headerlink" href="#opal-event-console-output-0x8" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 <section id="opal-event-console-input-0x10">
-<h2>OPAL_EVENT_CONSOLE_INPUT = 0x10<a class="headerlink" href="#opal-event-console-input-0x10" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_CONSOLE_INPUT = 0x10<a class="headerlink" href="#opal-event-console-input-0x10" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 <section id="opal-event-error-log-avail-0x20">
-<h2>OPAL_EVENT_ERROR_LOG_AVAIL = 0x20<a class="headerlink" href="#opal-event-error-log-avail-0x20" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_ERROR_LOG_AVAIL = 0x20<a class="headerlink" href="#opal-event-error-log-avail-0x20" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 <section id="opal-event-error-log-0x40">
-<h2>OPAL_EVENT_ERROR_LOG = 0x40<a class="headerlink" href="#opal-event-error-log-0x40" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_ERROR_LOG = 0x40<a class="headerlink" href="#opal-event-error-log-0x40" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 <section id="opal-event-epow-0x80">
-<h2>OPAL_EVENT_EPOW = 0x80<a class="headerlink" href="#opal-event-epow-0x80" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_EPOW = 0x80<a class="headerlink" href="#opal-event-epow-0x80" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 <section id="opal-event-led-status-0x100">
-<h2>OPAL_EVENT_LED_STATUS = 0x100<a class="headerlink" href="#opal-event-led-status-0x100" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_LED_STATUS = 0x100<a class="headerlink" href="#opal-event-led-status-0x100" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 <section id="opal-event-pci-error-0x200">
-<h2>OPAL_EVENT_PCI_ERROR = 0x200<a class="headerlink" href="#opal-event-pci-error-0x200" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_PCI_ERROR = 0x200<a class="headerlink" href="#opal-event-pci-error-0x200" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 <section id="opal-event-dump-avail-0x400">
-<span id="opal-event-dump-avail"></span><h2>OPAL_EVENT_DUMP_AVAIL = 0x400<a class="headerlink" href="#opal-event-dump-avail-0x400" title="Permalink to this headline">¶</a></h2>
+<span id="opal-event-dump-avail"></span><h2>OPAL_EVENT_DUMP_AVAIL = 0x400<a class="headerlink" href="#opal-event-dump-avail-0x400" title="Link to this heading">¶</a></h2>
 <p>Signifies that there is a pending system dump available. See <a class="reference internal" href="opal-dump-81-82-83-84-94-101-102.html#opal-dumps"><span class="std std-ref">OPAL Dumps</span></a> suite
 of calls for details.</p>
 </section>
 <section id="opal-event-msg-pending-0x800">
-<h2>OPAL_EVENT_MSG_PENDING = 0x800<a class="headerlink" href="#opal-event-msg-pending-0x800" title="Permalink to this headline">¶</a></h2>
+<h2>OPAL_EVENT_MSG_PENDING = 0x800<a class="headerlink" href="#opal-event-msg-pending-0x800" title="Link to this heading">¶</a></h2>
 </section>
 </section>
 
@@ -132,8 +130,9 @@ of calls for details.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_POLL_EVENTS</a><ul>
 <li><a class="reference internal" href="#opal-event-opal-internal-0x1">OPAL_EVENT_OPAL_INTERNAL = 0x1</a></li>
 <li><a class="reference internal" href="#opal-event-nvram-0x2">OPAL_EVENT_NVRAM = 0x2</a></li>
@@ -151,12 +150,17 @@ of calls for details.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-phb-flag-set-get-179-180.html"
-                        title="previous chapter">OPAL_PHB_SET_OPTION</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-power-shift-ratio.html"
-                        title="next chapter">OPAL Power Shift Ratio</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-phb-flag-set-get-179-180.html"
+                          title="previous chapter">OPAL_PHB_SET_OPTION</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-power-shift-ratio.html"
+                          title="next chapter">OPAL Power Shift Ratio</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -173,7 +177,7 @@ of calls for details.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -190,15 +194,15 @@ of calls for details.</p>
         <li class="right" >
           <a href="opal-phb-flag-set-get-179-180.html" title="OPAL_PHB_SET_OPTION"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_POLL_EVENTS</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

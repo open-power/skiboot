@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>XSCOM Bindings &#8212; skiboot bc7b85d
+    <title>XSCOM Bindings &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="pci-slot.html" title="PCI Slots"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">XSCOM Bindings</a></li> 
       </ul>
@@ -45,9 +43,9 @@
           <div class="body" role="main">
             
   <section id="xscom-bindings">
-<h1>XSCOM Bindings<a class="headerlink" href="#xscom-bindings" title="Permalink to this headline">¶</a></h1>
+<h1>XSCOM Bindings<a class="headerlink" href="#xscom-bindings" title="Link to this heading">¶</a></h1>
 <section id="xscom-regions">
-<h2>XSCOM regions<a class="headerlink" href="#xscom-regions" title="Permalink to this headline">¶</a></h2>
+<h2>XSCOM regions<a class="headerlink" href="#xscom-regions" title="Link to this heading">¶</a></h2>
 <p>The top-level xscom nodes specify the mapping range from the 64-bit address
 space into the PCB address space.</p>
 <p>There’s one mapping range per chip xscom, therefore one node per mapping range.</p>
@@ -77,14 +75,14 @@ bits (for chip n) OR-ed in.</p></li>
 </div></blockquote>
 </section>
 <section id="ecid">
-<h2>ECID<a class="headerlink" href="#ecid" title="Permalink to this headline">¶</a></h2>
+<h2>ECID<a class="headerlink" href="#ecid" title="Link to this heading">¶</a></h2>
 <p>Electronic Chip ID (ECID) is a process by which the wafer number, chip location
 (i.e. X,Y) and other optional data items are electrically encoded directly on
 the chip. wafer-id property represents wafer number and wafer-location property
 represents chip location (both X and Y location).</p>
 </section>
 <section id="chiplet-endpoints">
-<h2>Chiplet endpoints<a class="headerlink" href="#chiplet-endpoints" title="Permalink to this headline">¶</a></h2>
+<h2>Chiplet endpoints<a class="headerlink" href="#chiplet-endpoints" title="Link to this heading">¶</a></h2>
 <p>One sub-node per endpoint. Endpoints are defined by their (port,
 endpoint-address) data on the PCB, and are named according to their endpoint
 types:</p>
@@ -129,8 +127,9 @@ node’s reg property</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">XSCOM Bindings</a><ul>
 <li><a class="reference internal" href="#xscom-regions">XSCOM regions</a></li>
 <li><a class="reference internal" href="#ecid">ECID</a></li>
@@ -139,12 +138,17 @@ node’s reg property</p></li>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="pci-slot.html"
-                        title="previous chapter">PCI Slots</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="xive.html"
-                        title="next chapter">P9 XIVE Exploitation</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="pci-slot.html"
+                          title="previous chapter">PCI Slots</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="xive.html"
+                          title="next chapter">P9 XIVE Exploitation</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -161,7 +165,7 @@ node’s reg property</p></li>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -178,14 +182,14 @@ node’s reg property</p></li>
         <li class="right" >
           <a href="pci-slot.html" title="PCI Slots"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">XSCOM Bindings</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

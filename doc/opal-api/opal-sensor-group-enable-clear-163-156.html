@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL Sensor Groups &#8212; skiboot bc7b85d
+    <title>OPAL Sensor Groups &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-secvar.html" title="OPAL Secure Variable API"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Sensor Groups</a></li> 
@@ -46,13 +44,13 @@
           <div class="body" role="main">
             
   <section id="opal-sensor-groups">
-<span id="id1"></span><h1>OPAL Sensor Groups<a class="headerlink" href="#opal-sensor-groups" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL Sensor Groups<a class="headerlink" href="#opal-sensor-groups" title="Link to this heading">¶</a></h1>
 <p>See <a class="reference internal" href="../device-tree/ibm%2Copal/sensor-groups.html#device-tree-ibm-opal-sensor-groups"><span class="std std-ref">ibm,opal/sensor-groups</span></a> for device tree layout.</p>
 <section id="opal-sensor-group-enable">
-<span id="id2"></span><h2>OPAL_SENSOR_GROUP_ENABLE<a class="headerlink" href="#opal-sensor-group-enable" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>OPAL_SENSOR_GROUP_ENABLE<a class="headerlink" href="#opal-sensor-group-enable" title="Link to this heading">¶</a></h2>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_SENSOR_GROUP_ENABLE             163</span>
 
-<span class="kt">int</span><span class="w"> </span><span class="nf">opal_sensor_group_enable</span><span class="p">(</span><span class="n">u32</span><span class="w"> </span><span class="n">group_hndl</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">token</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">enable</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">opal_sensor_group_enable</span><span class="p">(</span><span class="n">u32</span><span class="w"> </span><span class="n">group_hndl</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">token</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">enable</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>OPAL call to enable/disable the sensor group using a handle to identify
@@ -62,7 +60,7 @@ group by OCC to main memory.</p>
 <p>The call can be asynchronus, where the token parameter is used to wait
 for the completion.</p>
 <section id="returns">
-<h3>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h3>
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success</p>
 </dd>
@@ -85,8 +83,8 @@ token and status of the request.</p>
 </section>
 </section>
 <section id="opal-sensor-group-clear">
-<span id="id3"></span><h2>OPAL_SENSOR_GROUP_CLEAR<a class="headerlink" href="#opal-sensor-group-clear" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">opal_sensor_group_clear</span><span class="p">(</span><span class="n">u32</span><span class="w"> </span><span class="n">group_hndl</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">token</span><span class="p">);</span><span class="w"></span>
+<span id="id3"></span><h2>OPAL_SENSOR_GROUP_CLEAR<a class="headerlink" href="#opal-sensor-group-clear" title="Link to this heading">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">opal_sensor_group_clear</span><span class="p">(</span><span class="n">u32</span><span class="w"> </span><span class="n">group_hndl</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">token</span><span class="p">);</span>
 
 <span class="cp">#define OPAL_SENSOR_GROUP_CLEAR                      156</span>
 </pre></div>
@@ -96,7 +94,7 @@ the type of sensor group which is exported via DT.</p>
 <p>The call can be asynchronus, where the token parameter is used to wait
 for the completion.</p>
 <section id="id4">
-<h3>Returns<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Success</p>
 </dd>
@@ -127,8 +125,9 @@ token and status of the request.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL Sensor Groups</a><ul>
 <li><a class="reference internal" href="#opal-sensor-group-enable">OPAL_SENSOR_GROUP_ENABLE</a><ul>
 <li><a class="reference internal" href="#returns">Returns</a></li>
@@ -142,12 +141,17 @@ token and status of the request.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-secvar.html"
-                        title="previous chapter">OPAL Secure Variable API</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-sensor-read-88.html"
-                        title="next chapter">OPAL_SENSOR_READ</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-secvar.html"
+                          title="previous chapter">OPAL Secure Variable API</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-sensor-read-88.html"
+                          title="next chapter">OPAL_SENSOR_READ</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -164,7 +168,7 @@ token and status of the request.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -181,15 +185,15 @@ token and status of the request.</p>
         <li class="right" >
           <a href="opal-secvar.html" title="OPAL Secure Variable API"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL Sensor Groups</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

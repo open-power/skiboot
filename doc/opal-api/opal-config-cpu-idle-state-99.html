@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OPAL_CONFIG_CPU_IDLE_STATE &#8212; skiboot bc7b85d
+    <title>OPAL_CONFIG_CPU_IDLE_STATE &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="opal-code-update-76-77-78.html" title="Code Update on FSP based machine"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_CONFIG_CPU_IDLE_STATE</a></li> 
@@ -46,7 +44,7 @@
           <div class="body" role="main">
             
   <section id="opal-config-cpu-idle-state">
-<span id="id1"></span><h1>OPAL_CONFIG_CPU_IDLE_STATE<a class="headerlink" href="#opal-config-cpu-idle-state" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>OPAL_CONFIG_CPU_IDLE_STATE<a class="headerlink" href="#opal-config-cpu-idle-state" title="Link to this heading">¶</a></h1>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define OPAL_CONFIG_CPU_IDLE_STATE           99</span>
 
 <span class="cm">/*</span>
@@ -54,11 +52,11 @@
 <span class="cm"> * state = 1 fast-sleep</span>
 <span class="cm"> * enter = 1 Enter state</span>
 <span class="cm"> * exit  = 0 Exit state</span>
-<span class="cm"> */</span><span class="w"></span>
+<span class="cm"> */</span>
 
-<span class="cp">#define OPAL_PM_SLEEP_ENABLED_ER1    0x00080000 </span><span class="cm">/* with workaround */</span><span class="cp"></span>
+<span class="cp">#define OPAL_PM_SLEEP_ENABLED_ER1    0x00080000 </span><span class="cm">/* with workaround */</span>
 
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_config_cpu_idle_state</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">enter</span><span class="p">);</span><span class="w"></span>
+<span class="kt">int64_t</span><span class="w"> </span><span class="nf">opal_config_cpu_idle_state</span><span class="p">(</span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">enter</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>If the <cite>OPAL_PM_SLEEP_ENABLED_ER1</cite> bit is set on a stop state, then this OPAL
@@ -66,7 +64,7 @@ call needs to be made upon entry and exit of stop state.
 This is currently needed for the <cite>fastsleep_</cite> idle state, present on POWER8
 systems.</p>
 <section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this headline">¶</a></h2>
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt><a class="reference internal" href="return-codes.html#opal-success"><span class="std std-ref">OPAL_SUCCESS</span></a></dt><dd><p>Applied workaround</p>
 </dd>
@@ -83,20 +81,26 @@ systems.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">OPAL_CONFIG_CPU_IDLE_STATE</a><ul>
 <li><a class="reference internal" href="#returns">Returns</a></li>
 </ul>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="opal-code-update-76-77-78.html"
-                        title="previous chapter">Code Update on FSP based machine</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="opal-console-read-write-1-2.html"
-                        title="next chapter">OPAL Console calls</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="opal-code-update-76-77-78.html"
+                          title="previous chapter">Code Update on FSP based machine</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="opal-console-read-write-1-2.html"
+                          title="next chapter">OPAL Console calls</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -113,7 +117,7 @@ systems.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -130,15 +134,15 @@ systems.</p>
         <li class="right" >
           <a href="opal-code-update-76-77-78.html" title="Code Update on FSP based machine"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >OPAL API Documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">OPAL_CONFIG_CPU_IDLE_STATE</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

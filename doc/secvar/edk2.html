@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Skiboot edk2-compatible Secure Variable Backend &#8212; skiboot bc7b85d
+    <title>Skiboot edk2-compatible Secure Variable Backend &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -25,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Skiboot edk2-compatible Secure Variable Backend</a></li> 
       </ul>
@@ -37,9 +35,9 @@
           <div class="body" role="main">
             
   <section id="skiboot-edk2-compatible-secure-variable-backend">
-<span id="secvar-edk2"></span><h1>Skiboot edk2-compatible Secure Variable Backend<a class="headerlink" href="#skiboot-edk2-compatible-secure-variable-backend" title="Permalink to this headline">¶</a></h1>
+<span id="secvar-edk2"></span><h1>Skiboot edk2-compatible Secure Variable Backend<a class="headerlink" href="#skiboot-edk2-compatible-secure-variable-backend" title="Link to this heading">¶</a></h1>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>The edk2 secure variable backend for skiboot borrows from edk2 concepts
 such as the three key hierarchy (PK, KEK, and db), and a similar
 structure. In general, variable updates must be signed with a key
@@ -62,17 +60,17 @@ error. The system will continue in an error state, reporting the error
 reason via the <code class="docutils literal notranslate"><span class="pre">update-status</span></code> device tree property.</p>
 </section>
 <section id="p9-special-case-for-the-platform-key">
-<h2>P9 Special Case for the Platform Key<a class="headerlink" href="#p9-special-case-for-the-platform-key" title="Permalink to this headline">¶</a></h2>
+<h2>P9 Special Case for the Platform Key<a class="headerlink" href="#p9-special-case-for-the-platform-key" title="Link to this heading">¶</a></h2>
 <p>Due to the powerful nature of the platform key and the lack of lockable
 flash, the edk2 backend will store the PK in TPM NV rather than PNOR on
 P9 systems. (TODO expand on this)</p>
 </section>
 <section id="update-status-return-codes">
-<h2>Update Status Return Codes<a class="headerlink" href="#update-status-return-codes" title="Permalink to this headline">¶</a></h2>
+<h2>Update Status Return Codes<a class="headerlink" href="#update-status-return-codes" title="Link to this heading">¶</a></h2>
 <p>TODO, edk2 driver needs to actually return these properly first</p>
 </section>
 <section id="device-tree-bindings">
-<h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Permalink to this headline">¶</a></h2>
+<h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Link to this heading">¶</a></h2>
 <p>TODO</p>
 </section>
 </section>
@@ -84,8 +82,9 @@ P9 systems. (TODO expand on this)</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Skiboot edk2-compatible Secure Variable Backend</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#p9-special-case-for-the-platform-key">P9 Special Case for the Platform Key</a></li>
@@ -95,6 +94,7 @@ P9 systems. (TODO expand on this)</p>
 </li>
 </ul>
 
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -111,7 +111,7 @@ P9 systems. (TODO expand on this)</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -122,14 +122,14 @@ P9 systems. (TODO expand on this)</p>
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Skiboot edk2-compatible Secure Variable Backend</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

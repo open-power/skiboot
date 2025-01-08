@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ibm,powerpc-cpu-features Design &#8212; skiboot bc7b85d
+    <title>ibm,powerpc-cpu-features Design &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="binding.html" title="ibm,powerpc-cpu-features Binding"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Design</a></li> 
@@ -46,12 +44,12 @@
           <div class="body" role="main">
             
   <section id="ibm-powerpc-cpu-features-design">
-<h1>ibm,powerpc-cpu-features Design<a class="headerlink" href="#ibm-powerpc-cpu-features-design" title="Permalink to this headline">¶</a></h1>
+<h1>ibm,powerpc-cpu-features Design<a class="headerlink" href="#ibm-powerpc-cpu-features-design" title="Link to this heading">¶</a></h1>
 <p>The OPAL / skiboot code is the canonical location for this specification.  All
 definitions of features, constant, bit positions, etc. must be documented here
 before being deployed in Linux. This is not presently part of LoPAPR.</p>
 <section id="interfaces">
-<h2>Interfaces<a class="headerlink" href="#interfaces" title="Permalink to this headline">¶</a></h2>
+<h2>Interfaces<a class="headerlink" href="#interfaces" title="Link to this heading">¶</a></h2>
 <p>This specification describes the ibm,powerpc-cpu-features binding (the formal
 definition of binding can be found in binding.txt in this directory).</p>
 <p>This specification also involves the Linux ELF AUXV AT_HWCAP and AT_HWCAP2
@@ -63,7 +61,7 @@ removed, and pass that to a guest OS. The OS may advertise features to
 userspace.</p>
 </section>
 <section id="background">
-<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading">¶</a></h2>
 <p>The cpu-features binding (subsequently “cpu-features”) aims to provide an
 extensible metadata and protocol between different levels of system software
 (firmware, hypervisor, OS/guest, userspace) to advertise the CPU features
@@ -84,7 +82,7 @@ components being upgraded (e.g., a new floating point instruction could be
 used by userspace math library without upgrading kernel and hypervisor).</p>
 </section>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>The cpu-features node is created by firmware and passed to the hypervisor.
 The hypervisor may create cpu-features node to be passed to guest, based on
 the features that have been enabled, and policy decisions. Hypervisor specific
@@ -140,7 +138,7 @@ for additional methods and metadata for enablement and advertisement.</p>
 is left for implementations.</p>
 </section>
 <section id="guidelines-for-defining-features">
-<h2>Guidelines for defining features<a class="headerlink" href="#guidelines-for-defining-features" title="Permalink to this headline">¶</a></h2>
+<h2>Guidelines for defining features<a class="headerlink" href="#guidelines-for-defining-features" title="Link to this heading">¶</a></h2>
 <p>As a rough guide, features should be based on functional groups of changes
 to the ISA, or related performance characteristics.</p>
 <p>Grouping should be made by one or a combination of those that:</p>
@@ -181,8 +179,9 @@ cases.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">ibm,powerpc-cpu-features Design</a><ul>
 <li><a class="reference internal" href="#interfaces">Interfaces</a></li>
 <li><a class="reference internal" href="#background">Background</a></li>
@@ -192,12 +191,17 @@ cases.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="binding.html"
-                        title="previous chapter">ibm,powerpc-cpu-features Binding</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../../opal-api/index.html"
-                        title="next chapter">OPAL API Documentation</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="binding.html"
+                          title="previous chapter">ibm,powerpc-cpu-features Binding</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../../opal-api/index.html"
+                          title="next chapter">OPAL API Documentation</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -214,7 +218,7 @@ cases.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -231,15 +235,15 @@ cases.</p>
         <li class="right" >
           <a href="binding.html" title="ibm,powerpc-cpu-features Binding"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Device Tree</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">ibm,powerpc-cpu-features Design</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

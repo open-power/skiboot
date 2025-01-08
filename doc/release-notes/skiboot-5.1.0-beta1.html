@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>skiboot-5.1.0-beta1 &#8212; skiboot bc7b85d
+    <title>skiboot-5.1.0-beta1 &#8212; skiboot dbe1a9a
  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=33aa6c03"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -33,7 +31,7 @@
         <li class="right" >
           <a href="skiboot-5.1.0.html" title="skiboot-5.1.0"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.0-beta1</a></li> 
@@ -46,14 +44,14 @@
           <div class="body" role="main">
             
   <section id="skiboot-5-1-0-beta1">
-<h1>skiboot-5.1.0-beta1<a class="headerlink" href="#skiboot-5-1-0-beta1" title="Permalink to this headline">¶</a></h1>
+<h1>skiboot-5.1.0-beta1<a class="headerlink" href="#skiboot-5-1-0-beta1" title="Link to this heading">¶</a></h1>
 <p>skiboot-5.1.0-beta1 was released on July 21st, 2015.</p>
 <p>skiboot-5.1.0-beta1 is the first beta release of skiboot 5.1, which will
 become a new stable release, replacing skiboot-5.0 (released April 14th 2015)</p>
 <p>Skiboot 5.1-beta1 contains all fixes from skiboot-5.0 stable branch up to
 skiboot-5.0.5.</p>
 <section id="new-features">
-<h2>New features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h2>
+<h2>New features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
 <p>Over skiboot-5.0, the following features have been added:</p>
 <ul class="simple">
 <li><p>Centaur i2c support</p></li>
@@ -104,7 +102,7 @@ was synced by OPAL)</p></li>
 </ul>
 </section>
 <section id="new-features-for-fsp-based-machines">
-<h2>New features for FSP based machines<a class="headerlink" href="#new-features-for-fsp-based-machines" title="Permalink to this headline">¶</a></h2>
+<h2>New features for FSP based machines<a class="headerlink" href="#new-features-for-fsp-based-machines" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>in-band IPMI support</p></li>
 <li><p>ethernet adaptor location codes</p></li>
@@ -118,7 +116,7 @@ was synced by OPAL)</p></li>
 </ul>
 </section>
 <section id="new-features-for-ami-bmc-based-machines">
-<h2>New features for AMI BMC based machines<a class="headerlink" href="#new-features-for-ami-bmc-based-machines" title="Permalink to this headline">¶</a></h2>
+<h2>New features for AMI BMC based machines<a class="headerlink" href="#new-features-for-ami-bmc-based-machines" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>PCIe power workaround for K80</p></li>
 <li><p>Added support for Macronix 128Mbit flash chips</p></li>
@@ -127,7 +125,7 @@ was synced by OPAL)</p></li>
 </ul>
 </section>
 <section id="bug-fixes">
-<h2>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permalink to this headline">¶</a></h2>
+<h2>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading">¶</a></h2>
 <p>The following bugs have been fixed:</p>
 <ul class="simple">
 <li><p>Increase PHB3 timeout for electrical links coming up to 2 seconds.</p>
@@ -149,7 +147,7 @@ lead to a crash (dereferencing invalid address, deadlock)</p></li>
 </ul>
 </section>
 <section id="fsp-specific-bugs-fixed">
-<h2>FSP-specific bugs fixed:<a class="headerlink" href="#fsp-specific-bugs-fixed" title="Permalink to this headline">¶</a></h2>
+<h2>FSP-specific bugs fixed:<a class="headerlink" href="#fsp-specific-bugs-fixed" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>(also fixed in skiboot-5.0.2) Fix race in firenze_get_slot_info() leading to
 assert() with many PCI cards</p>
@@ -167,7 +165,7 @@ during boot.</p>
 </ul>
 </section>
 <section id="general-improvements">
-<h2>General improvements:<a class="headerlink" href="#general-improvements" title="Permalink to this headline">¶</a></h2>
+<h2>General improvements:<a class="headerlink" href="#general-improvements" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>don’t run pollers on non-boot CPUs in time_wait</p></li>
 <li><p>improvements to opal-prd, pflash, libflash</p>
@@ -198,17 +196,13 @@ LPC bus exist (e.g. flash)</p></li>
 </li>
 </ul>
 <section id="contributors">
-<h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h3>
+<h3>Contributors<a class="headerlink" href="#contributors" title="Link to this heading">¶</a></h3>
 <p>Thanks to everyone who has made skiboot-5.1.0-beta1 happen!</p>
 <p>Processed 321 csets from 25 developers
 3 employers found
 A total of 13696 lines added, 2754 removed (delta 10942)</p>
 <p>Developers with the most changesets</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 70%" />
-<col style="width: 30%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>Changesets</p></th>
@@ -294,10 +288,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers with the most changed lines</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 67%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Developer</p></th>
 <th class="head"><p>Changed Lines</p></th>
@@ -383,10 +373,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers with the most lines removed:</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 64%" />
-<col style="width: 36%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -406,10 +392,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers with the most signoffs (total 214)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 64%" />
-<col style="width: 36%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Stewart Smith</p></td>
 <td><p>214 (100.0%)</p></td>
@@ -418,10 +400,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers with the most reviews (total 21)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 65%" />
-<col style="width: 35%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -462,10 +440,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers with the most test credits (total 1)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 64%" />
-<col style="width: 36%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -479,10 +453,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers who gave the most tested-by credits (total 1)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 64%" />
-<col style="width: 36%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -496,10 +466,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers with the most report credits (total 4)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 64%" />
-<col style="width: 36%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -519,10 +485,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Developers who gave the most report credits (total 4)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 64%" />
-<col style="width: 36%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -539,10 +501,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Top changeset contributors by employer</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 65%" />
-<col style="width: 35%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -562,10 +520,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Top lines changed by employer</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 65%" />
-<col style="width: 35%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -585,10 +539,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Employers with the most signoffs (total 214)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 64%" />
-<col style="width: 36%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>IBM</p></td>
 <td><p>214 (100.0%)</p></td>
@@ -597,10 +547,6 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </table>
 <p>Employers with the most hackers (total 25)</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 65%" />
-<col style="width: 35%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"></th>
 <th class="head"></th>
@@ -629,8 +575,9 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">skiboot-5.1.0-beta1</a><ul>
 <li><a class="reference internal" href="#new-features">New features</a></li>
 <li><a class="reference internal" href="#new-features-for-fsp-based-machines">New features for FSP based machines</a></li>
@@ -645,12 +592,17 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="skiboot-5.1.0.html"
-                        title="previous chapter">skiboot-5.1.0</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="skiboot-5.1.0-beta2.html"
-                        title="next chapter">skiboot-5.1.0-beta2</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="skiboot-5.1.0.html"
+                          title="previous chapter">skiboot-5.1.0</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="skiboot-5.1.0-beta2.html"
+                          title="next chapter">skiboot-5.1.0-beta2</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -667,7 +619,7 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -684,15 +636,15 @@ A total of 13696 lines added, 2754 removed (delta 10942)</p>
         <li class="right" >
           <a href="skiboot-5.1.0.html" title="skiboot-5.1.0"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">skiboot bc7b85d
+        <li class="nav-item nav-item-0"><a href="../index.html">skiboot dbe1a9a
  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Release Notes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">skiboot-5.1.0-beta1</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2017, IBM, others.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    &#169; Copyright 2016-2017, IBM, others.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>
