@@ -96,7 +96,7 @@ static uint64_t sbe_timer_def_tb;
  * We can update inflight timer if new timer request is lesser than inflight
  * one. Limit such updates so that SBE gets time to handle FIFO side requests.
  */
-#define SBE_TIMER_UPDATE_MAX	2
+#define SBE_TIMER_UPDATE_MAX	3
 static uint32_t timer_update_cnt = 0;
 
 /* Timer control message */
@@ -805,6 +805,10 @@ static void p9_sbe_timer_schedule(void)
 	u32 tick_us = SBE_TIMER_DEFAULT_US;
 	u64 tb_cnt, now = mftb();
 
+	/* Stop sending timer update chipop until inflight timer expires */
+	if (timer_update_cnt == SBE_TIMER_UPDATE_MAX)
+		return;
+
 	if (sbe_timer_in_progress) {
 		if (sbe_timer_target >= sbe_last_gen_stamp)
 			return;
@@ -817,12 +821,8 @@ static void p9_sbe_timer_schedule(void)
 			return;
 	}
 
-	/* Stop sending timer update chipop until inflight timer expires */
-	if (timer_update_cnt > SBE_TIMER_UPDATE_MAX)
-		return;
 	timer_update_cnt++;
-
-	if (now < sbe_timer_target) {
+	if (timer_update_cnt < SBE_TIMER_UPDATE_MAX && now < sbe_timer_target) {
 		/* Calculate how many microseconds from now, rounded up */
 		if ((sbe_timer_target - now) > sbe_timer_def_tb) {
 			tb_cnt = sbe_timer_target - now + usecs_to_tb(1) - 1;
