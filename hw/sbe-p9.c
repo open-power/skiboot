@@ -265,6 +265,12 @@ static int p9_sbe_msg_send(struct p9_sbe *sbe, struct p9_sbe_msg *msg)
 	int rc, i;
 	u64 addr, *data;
 
+	msg->reg[0] = msg->reg[0] | ((u64)sbe->cur_seq << 16);
+	sbe->cur_seq++;
+	/* Reset sequence number */
+	if (sbe->cur_seq == 0xffff)
+		sbe->cur_seq = 1;
+
 	addr = PSU_HOST_SBE_MBOX_REG0;
 	data = &msg->reg[0];
 
@@ -411,12 +417,6 @@ int p9_sbe_queue_msg(u32 chip_id, struct p9_sbe_msg *msg,
 	/* Set completion and update sequence number */
 	msg->complete = comp;
 	msg->state = sbe_msg_queued;
-	msg->reg[0] = msg->reg[0] | ((u64)sbe->cur_seq << 16);
-	sbe->cur_seq++;
-
-	/* Reset sequence number */
-	if (sbe->cur_seq == 0xffff)
-		sbe->cur_seq = 1;
 
 	/* Add message to queue */
 	list_add_tail(&sbe->msg_list, &msg->link);
