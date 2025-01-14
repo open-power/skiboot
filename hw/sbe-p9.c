@@ -78,7 +78,7 @@ static bool sbe_timer_in_progress = false;
 static bool has_new_target = false;
 
 /* Inflight and next timer in TB */
-static uint64_t sbe_last_gen_stamp;
+static uint64_t sbe_current_timer_tb;
 static uint64_t sbe_timer_target;
 
 /* Timer lock */
@@ -695,7 +695,7 @@ static void p9_sbe_timer_poll(struct p9_sbe *sbe)
 	if (!sbe_timer_good || !sbe_timer_in_progress)
 		return;
 
-	if (tb_compare(mftb(), sbe_last_gen_stamp + msecs_to_tb(10))
+	if (tb_compare(mftb(), sbe_current_timer_tb + msecs_to_tb(10))
 	    != TB_AAFTERB)
 		return;
 
@@ -783,8 +783,6 @@ static void p9_sbe_timer_resp(struct p9_sbe_msg *msg)
 		      sbe_default_chip_id);
 	} else {
 		/* Update last scheduled timer value */
-		sbe_last_gen_stamp = mftb() +
-			usecs_to_tb(timer_ctrl_msg->reg[1]);
 		sbe_timer_in_progress = true;
 	}
 
@@ -812,14 +810,14 @@ static void p9_sbe_timer_schedule(void)
 		return;
 
 	if (sbe_timer_in_progress) {
-		if (sbe_timer_target >= sbe_last_gen_stamp)
+		if (sbe_timer_target >= sbe_current_timer_tb)
 			return;
 
-		if (now >= sbe_last_gen_stamp)
+		if (now >= sbe_current_timer_tb)
 			return;
 
 		/* Remaining time of inflight timer <= sbe_timer_min_tb */
-		if ((sbe_last_gen_stamp - now) <= sbe_timer_min_tb)
+		if ((sbe_current_timer_tb - now) <= sbe_timer_min_tb)
 			return;
 	}
 
@@ -831,6 +829,7 @@ static void p9_sbe_timer_schedule(void)
 			tick_us = tb_to_usecs(tb_cnt);
 		}
 	}
+	sbe_current_timer_tb = now + usecs_to_tb(tick_us);
 
 	/* Clear sequence number. p9_sbe_queue_msg will add new sequene ID */
 	timer_ctrl_msg->reg[0] &= ~(PPC_BITMASK(32, 47));
@@ -965,7 +964,7 @@ static void p9_sbe_timer_init(void)
 	sbe_has_timer = true;
 	sbe_timer_good = true;
 	sbe_timer_target = ~0ull;
-	sbe_last_gen_stamp = ~0ull;
+	sbe_current_timer_tb = ~0ull;
 	sbe_timer_min_us = SBE_TIMER_MIN_US_P9;
 	sbe_timer_min_tb = usecs_to_tb(sbe_timer_min_us);
 
