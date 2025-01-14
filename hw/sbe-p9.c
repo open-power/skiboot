@@ -860,6 +860,93 @@ void p9_sbe_update_timer_expiry(uint64_t new_target)
 	unlock(&sbe_timer_lock);
 }
 
+/* If no response, consider the SBE bad */
+#define SBE_TEST_TIMEOUT_MS 20
+
+static bool p9_sbe_test(struct p9_sbe *sbe)
+{
+	struct p9_sbe_msg *msg;
+	u64 data;
+	u64 ts, now, timeout;
+	int rc;
+
+	/* Same as timer_ctrl_msg */
+	msg = p9_sbe_mkmsg(SBE_CMD_CONTROL_TIMER, CONTROL_TIMER_START,
+			   SBE_TIMER_DEFAULT_US, 0, 0);
+	if (!msg) {
+		prlog(PR_ERR, "Failed to allocate msg\n");
+		return false;
+	}
+
+	ts = mftb();
+	rc = p9_sbe_msg_send(sbe, msg);
+	now = mftb();
+	p9_sbe_freemsg(msg);
+	if (rc != OPAL_SUCCESS) {
+		prlog(PR_ERR, "Failed to send msg [chip id = %x]\n",
+		      sbe->chip_id);
+		return false;
+	}
+	prlog(PR_DEBUG, "SBE: sending msg took %lld ticks\n", now - ts);
+
+	ts = now;
+	timeout = now + msecs_to_tb(SBE_TEST_TIMEOUT_MS);
+	do {
+		rc = xscom_read(sbe->chip_id, PSU_HOST_DOORBELL_REG_RW, &data);
+		if (rc) {
+			prlog(PR_ERR, "Failed to read SBE to Host doorbell register "
+			      "[chip id = %x]\n", sbe->chip_id);
+			return false;
+		}
+
+		if (tb_compare(mftb(), timeout) == TB_AAFTERB) {
+			prlog(PR_ERR, "SBE failed to acknowledge msg "
+			      "[chip id = %x]\n", sbe->chip_id);
+			return false;
+		}
+	} while (!(data & SBE_HOST_MSG_READ));
+	now = mftb();
+	prlog(PR_DEBUG, "SBE: acking msg took %lld ticks\n", now - ts);
+	rc = p9_sbe_clear_interrupt(sbe, SBE_HOST_MSG_READ);
+	if (rc)
+		return false;
+
+	ts = now;
+	timeout = now + msecs_to_tb(SBE_TEST_TIMEOUT_MS) +
+			usecs_to_tb(SBE_TIMER_DEFAULT_US);
+	do {
+		rc = xscom_read(sbe->chip_id, PSU_HOST_DOORBELL_REG_RW, &data);
+		if (rc) {
+			prlog(PR_ERR, "Failed to read SBE to Host doorbell register "
+			      "[chip id = %x]\n", sbe->chip_id);
+			return false;
+		}
+		/* Could factor in granularity, but 10ms is more than enough */
+		if (tb_compare(mftb(), timeout) == TB_AAFTERB) {
+			prlog(PR_ERR, "SBE failed to raise timer expiry "
+			      "[chip id = %x]\n", sbe->chip_id);
+			return false;
+		}
+	} while (!(data & SBE_HOST_TIMER_EXPIRY));
+	now = mftb();
+	prlog(PR_DEBUG, "SBE: timer expiry took %lld ticks\n", now - ts);
+	rc = p9_sbe_clear_interrupt(sbe, SBE_HOST_TIMER_EXPIRY);
+	if (rc)
+		return false;
+
+	if (data & ~(SBE_HOST_RESPONSE_MASK)) {
+		prlog(PR_ERR, "Unhandled interrupt bit [chip id = %x] : "
+		      " %016llx\n", sbe->chip_id, data);
+		rc = p9_sbe_clear_interrupt(sbe, data);
+		if (rc)
+			return false;
+	}
+
+	sbe->state = sbe_mbox_idle;
+
+	return true;
+}
+
 /* Initialize SBE timer */
 static void p9_sbe_timer_init(void)
 {
@@ -942,6 +1029,12 @@ void p9_sbe_init(void)
 
 		chip = get_chip(sbe->chip_id);
 		assert(chip);
+
+		if (!p9_sbe_test(sbe)) {
+			free(sbe);
+			continue;
+		}
+
 		chip->sbe = sbe;
 
 		if (dt_has_node_property(xn, "primary", NULL)) {
@@ -951,6 +1044,7 @@ void p9_sbe_init(void)
 	}
 
 	if (sbe_default_chip_id == -1) {
+		/* Could we fail to secondary or just pick any working SBE? */
 		prlog(PR_ERR, "Master chip ID not found.\n");
 		return;
 	}
