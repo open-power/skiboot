@@ -90,10 +90,20 @@ static struct lock sbe_timer_lock;
  */
 #define SBE_TIMER_MIN_US_P9 500
 
+/*
+ * P10 minimum timeout is 100, maximum is around 10s. Minimum is not really
+ * the minimum so we could program shorter, it's just a "minimum accurate"
+ * number where fixed errors become relatively insignificant.
+ */
+#define SBE_TIMER_MIN_US_P10 100
+
 #define SBE_TIMER_MAX_US 10000000
 
 static uint64_t sbe_timer_min_us;
 static uint64_t sbe_timer_min_tb;
+
+/* Some P10s have a slow SBE timer */
+static bool slow_sbe_timer;
 
 /*
  * Rate limit continuous timer update.
@@ -836,6 +846,18 @@ static void p9_sbe_timer_schedule(void)
 
 	sbe_current_timer_tb = now + usecs_to_tb(tick_us);
 
+	if (slow_sbe_timer) {
+		/*
+		 * P10 SBE timer is 6.6% slow, speed it up about 6.3%.
+		 * This should not be reflected in sbe_current_timer_tb,
+		 * because that is used for the _intended_ expiry time.
+		 */
+		if (tick_us > 1000) {
+			tick_us *= 240;
+			tick_us /= 256;
+		}
+	}
+
 	/* Clear sequence number. p9_sbe_queue_msg will add new sequene ID */
 	timer_ctrl_msg->reg[0] &= ~(PPC_BITMASK(32, 47));
 	/* Update timeout value */
@@ -875,7 +897,7 @@ void p9_sbe_update_timer_expiry(uint64_t new_target)
 /* If no response, consider the SBE bad */
 #define SBE_TEST_TIMEOUT_MS 20
 
-static bool p9_sbe_test(struct p9_sbe *sbe)
+static bool p9_sbe_test(struct p9_sbe *sbe, unsigned long delay_us)
 {
 	struct p9_sbe_msg *msg;
 	u64 data;
@@ -884,7 +906,7 @@ static bool p9_sbe_test(struct p9_sbe *sbe)
 
 	/* Same as timer_ctrl_msg */
 	msg = p9_sbe_mkmsg(SBE_CMD_CONTROL_TIMER, CONTROL_TIMER_START,
-			   sbe_timer_min_us, 0, 0);
+			   delay_us, 0, 0);
 	if (!msg) {
 		prlog(PR_ERR, "Failed to allocate msg\n");
 		return false;
@@ -925,7 +947,7 @@ static bool p9_sbe_test(struct p9_sbe *sbe)
 
 	ts = now;
 	timeout = now + msecs_to_tb(SBE_TEST_TIMEOUT_MS) +
-			usecs_to_tb(sbe_timer_min_us);
+			usecs_to_tb(delay_us);
 	do {
 		rc = xscom_read(sbe->chip_id, PSU_HOST_DOORBELL_REG_RW, &data);
 		if (rc) {
@@ -970,7 +992,10 @@ static void p9_sbe_timer_init(void)
 	sbe_timer_good = true;
 	sbe_timer_target = ~0ull;
 	sbe_current_timer_tb = ~0ull;
-	sbe_timer_min_us = SBE_TIMER_MIN_US_P9;
+	if (proc_gen == proc_gen_p9)
+		sbe_timer_min_us = SBE_TIMER_MIN_US_P9;
+	else
+		sbe_timer_min_us = SBE_TIMER_MIN_US_P10;
 	sbe_timer_min_tb = usecs_to_tb(sbe_timer_min_us);
 
 	prlog(PR_INFO, "Timer facility on chip %x\n", sbe_default_chip_id);
@@ -1045,7 +1070,7 @@ void p9_sbe_init(void)
 		chip = get_chip(sbe->chip_id);
 		assert(chip);
 
-		if (!p9_sbe_test(sbe)) {
+		if (!p9_sbe_test(sbe, sbe_timer_min_us)) {
 			free(sbe);
 			continue;
 		}
@@ -1062,6 +1087,19 @@ void p9_sbe_init(void)
 		/* Could we fail to secondary or just pick any working SBE? */
 		prlog(PR_ERR, "Master chip ID not found.\n");
 		return;
+	}
+
+	if (proc_gen == proc_gen_p10) {
+		u64 tb = mftb();
+
+		if (!p9_sbe_test(p9_sbe_get_sbe(-1), 100 * 1000)) {
+			prlog(PR_ERR, "Error calibrating timer\n");
+			return;
+		}
+		if (mftb() - tb > usecs_to_tb(106 * 1000)) {
+			prlog(PR_INFO, "Slow P10 SBE timer detected, compensating.\n");
+			slow_sbe_timer = true;
+		}
 	}
 
 	/* Initiate SBE timer */
