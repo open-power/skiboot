@@ -344,8 +344,11 @@ static void p9_sbe_send_complete(struct p9_sbe *sbe)
 {
 	struct p9_sbe_msg *msg;
 
-	if (list_empty(&sbe->msg_list))
+	if (list_empty(&sbe->msg_list)) {
+		prlog(PR_ERR, "SBE ACK on empty msg_list [chip id = %x]\n",
+		      sbe->chip_id);
 		return;
+	}
 
 	msg = list_top(&sbe->msg_list, struct p9_sbe_msg, link);
 	/* Need response */
