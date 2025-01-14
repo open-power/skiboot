@@ -90,6 +90,8 @@ static struct lock sbe_timer_lock;
  */
 #define SBE_TIMER_MIN_US_P9 500
 
+#define SBE_TIMER_MAX_US 10000000
+
 static uint64_t sbe_timer_min_us;
 static uint64_t sbe_timer_min_tb;
 
@@ -827,8 +829,11 @@ static void p9_sbe_timer_schedule(void)
 		if ((sbe_timer_target - now) > sbe_timer_min_tb) {
 			tb_cnt = sbe_timer_target - now + usecs_to_tb(1) - 1;
 			tick_us = tb_to_usecs(tb_cnt);
+			if (tick_us > SBE_TIMER_MAX_US)
+				tick_us = SBE_TIMER_MAX_US;
 		}
 	}
+
 	sbe_current_timer_tb = now + usecs_to_tb(tick_us);
 
 	/* Clear sequence number. p9_sbe_queue_msg will add new sequene ID */
