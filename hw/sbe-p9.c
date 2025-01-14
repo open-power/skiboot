@@ -88,8 +88,10 @@ static struct lock sbe_timer_lock;
  * Minimum timeout value for P9 is 500 microseconds. After that
  * SBE timer can handle granularity of 1 microsecond.
  */
-#define SBE_TIMER_DEFAULT_US	500
-static uint64_t sbe_timer_def_tb;
+#define SBE_TIMER_MIN_US_P9 500
+
+static uint64_t sbe_timer_min_us;
+static uint64_t sbe_timer_min_tb;
 
 /*
  * Rate limit continuous timer update.
@@ -802,7 +804,7 @@ static void p9_sbe_timer_resp(struct p9_sbe_msg *msg)
 static void p9_sbe_timer_schedule(void)
 {
 	int rc;
-	u32 tick_us = SBE_TIMER_DEFAULT_US;
+	u64 tick_us = sbe_timer_min_us;
 	u64 tb_cnt, now = mftb();
 
 	/* Stop sending timer update chipop until inflight timer expires */
@@ -816,15 +818,15 @@ static void p9_sbe_timer_schedule(void)
 		if (now >= sbe_last_gen_stamp)
 			return;
 
-		/* Remaining time of inflight timer <= sbe_timer_def_tb */
-		if ((sbe_last_gen_stamp - now) <= sbe_timer_def_tb)
+		/* Remaining time of inflight timer <= sbe_timer_min_tb */
+		if ((sbe_last_gen_stamp - now) <= sbe_timer_min_tb)
 			return;
 	}
 
 	timer_update_cnt++;
 	if (timer_update_cnt < SBE_TIMER_UPDATE_MAX && now < sbe_timer_target) {
 		/* Calculate how many microseconds from now, rounded up */
-		if ((sbe_timer_target - now) > sbe_timer_def_tb) {
+		if ((sbe_timer_target - now) > sbe_timer_min_tb) {
 			tb_cnt = sbe_timer_target - now + usecs_to_tb(1) - 1;
 			tick_us = tb_to_usecs(tb_cnt);
 		}
@@ -878,7 +880,7 @@ static bool p9_sbe_test(struct p9_sbe *sbe)
 
 	/* Same as timer_ctrl_msg */
 	msg = p9_sbe_mkmsg(SBE_CMD_CONTROL_TIMER, CONTROL_TIMER_START,
-			   SBE_TIMER_DEFAULT_US, 0, 0);
+			   sbe_timer_min_us, 0, 0);
 	if (!msg) {
 		prlog(PR_ERR, "Failed to allocate msg\n");
 		return false;
@@ -919,7 +921,7 @@ static bool p9_sbe_test(struct p9_sbe *sbe)
 
 	ts = now;
 	timeout = now + msecs_to_tb(SBE_TEST_TIMEOUT_MS) +
-			usecs_to_tb(SBE_TIMER_DEFAULT_US);
+			usecs_to_tb(sbe_timer_min_us);
 	do {
 		rc = xscom_read(sbe->chip_id, PSU_HOST_DOORBELL_REG_RW, &data);
 		if (rc) {
@@ -964,7 +966,9 @@ static void p9_sbe_timer_init(void)
 	sbe_timer_good = true;
 	sbe_timer_target = ~0ull;
 	sbe_last_gen_stamp = ~0ull;
-	sbe_timer_def_tb = usecs_to_tb(SBE_TIMER_DEFAULT_US);
+	sbe_timer_min_us = SBE_TIMER_MIN_US_P9;
+	sbe_timer_min_tb = usecs_to_tb(sbe_timer_min_us);
+
 	prlog(PR_INFO, "Timer facility on chip %x\n", sbe_default_chip_id);
 }
 
