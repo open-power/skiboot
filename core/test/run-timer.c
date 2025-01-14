@@ -66,6 +66,11 @@ bool sbe_timer_ok(void)
 	return true;
 }
 
+bool sbe_timer_present(void)
+{
+	return true;
+}
+
 int main(void)
 {
 	unsigned int i;

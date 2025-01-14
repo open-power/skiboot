@@ -501,7 +501,7 @@ static int64_t opal_handle_interrupt(uint32_t isn, __be64 *outstanding_event_mas
 	/* Run it */
 	is->ops->interrupt(is, isn);
 
-	/* Check timers if SBE timer isn't working */
+	/* Check timers if SBE timer isn't working well */
 	if (!sbe_timer_ok())
 		check_timers(true);
 

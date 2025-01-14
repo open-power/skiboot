@@ -121,6 +121,7 @@ void p8_sbe_update_timer_expiry(uint64_t new_target)
 				prlog(PR_DEBUG, "SLW: Stuck with odd generation !\n");
 				_xscom_unlock();
 				sbe_has_timer = false;
+				sbe_timer_good = false;
 				p8_sbe_dump_timer_ffdc();
 				return;
 			}
@@ -154,6 +155,7 @@ void p8_sbe_update_timer_expiry(uint64_t new_target)
 			prlog(PR_ERR,
 			      "SLW: Timer appears to not be running !\n");
 			sbe_has_timer = false;
+			sbe_timer_good = false;
 			p8_sbe_dump_timer_ffdc();
 		}
 		sbe_last_gen = gen;
@@ -191,4 +193,5 @@ void p8_sbe_init_timer(void)
 	prlog(PR_INFO, "SLW: Timer facility on chip %d, resolution %dus\n",
 	      sbe_timer_chip, tick_us);
 	sbe_has_timer = true;
+	sbe_timer_good = true;
 }

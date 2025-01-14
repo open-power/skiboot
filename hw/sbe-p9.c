@@ -538,6 +538,10 @@ static void p9_sbe_timer_response(struct p9_sbe *sbe)
 	if (sbe->chip_id != sbe_default_chip_id)
 		return;
 
+	if (!sbe_timer_good) {
+		sbe_timer_good = true;
+		prlog_once(PR_WARNING, "Lagging timer fired, decreasing polling rate.\n");
+	}
 	sbe_timer_in_progress = false;
 	/* Drop lock and call timers */
 	unlock(&sbe->lock);
@@ -686,19 +690,16 @@ static void p9_sbe_timer_poll(struct p9_sbe *sbe)
 	if (sbe->chip_id != sbe_default_chip_id)
 		return;
 
-	if (!sbe_has_timer || !sbe_timer_in_progress)
+	if (!sbe_timer_good || !sbe_timer_in_progress)
 		return;
 
 	if (tb_compare(mftb(), sbe_last_gen_stamp + msecs_to_tb(10))
 	    != TB_AAFTERB)
 		return;
 
-	prlog(PR_ERR, "Timer stuck, falling back to OPAL pollers.\n");
-	prlog(PR_ERR, "You will likely have slower I2C and may have "
-	      "experienced increased jitter.\n");
-	p9_sbe_reg_dump(sbe->chip_id);
-	sbe_has_timer = false;
-	sbe_timer_in_progress = false;
+	sbe_timer_good = false;
+
+	prlog_once(PR_WARNING, "Timer is lagging, increasing polling rate.\n");
 }
 
 static void p9_sbe_timeout_poll_one(struct p9_sbe *sbe)
@@ -960,6 +961,7 @@ static void p9_sbe_timer_init(void)
 	assert(timer_ctrl_msg);
 	init_lock(&sbe_timer_lock);
 	sbe_has_timer = true;
+	sbe_timer_good = true;
 	sbe_timer_target = ~0ull;
 	sbe_last_gen_stamp = ~0ull;
 	sbe_timer_def_tb = usecs_to_tb(SBE_TIMER_DEFAULT_US);

@@ -54,7 +54,7 @@ static inline void this_cpu_set_running_timer(bool running)
 
 static inline void update_timer_expiry(uint64_t target)
 {
-	if (sbe_timer_ok())
+	if (sbe_timer_present())
 		sbe_update_timer_expiry(target);
 }
 
@@ -313,7 +313,7 @@ void late_init_timers(void)
 	 */
 	if (platform.heartbeat_time) {
 		heartbeat = platform.heartbeat_time();
-	} else if (sbe_timer_ok()) {
+	} else if (sbe_timer_present()) {
 		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
 	}
 

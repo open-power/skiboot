@@ -13,10 +13,11 @@
 #include <stdbool.h>
 
 bool sbe_has_timer = false;
+bool sbe_timer_good = false;
 
 void sbe_update_timer_expiry(uint64_t target)
 {
-	assert(sbe_timer_ok);
+	assert(sbe_has_timer);
 
 	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
 		p9_sbe_update_timer_expiry(target);
@@ -28,6 +29,11 @@ void sbe_update_timer_expiry(uint64_t target)
 }
 
 bool sbe_timer_ok(void)
+{
+	return sbe_timer_good;
+}
+
+bool sbe_timer_present(void)
 {
 	return sbe_has_timer;
 }

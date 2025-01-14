@@ -10,8 +10,12 @@
 extern void sbe_update_timer_expiry(uint64_t target);
 
 /* Is SBE timer available ? */
+extern bool sbe_timer_present(void);
+
+/* Is SBE timer keeping good time ? */
 extern bool sbe_timer_ok(void);
 
 extern bool sbe_has_timer;
+extern bool sbe_timer_good;
 
 #endif	/* __SBE_P9_H */
