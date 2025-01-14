@@ -56,6 +56,7 @@ struct cpu_thread {
 	uint32_t			con_suspend;
 	struct list_head		locks_held;
 	bool				con_need_flush;
+	bool				running_timer;
 	bool				in_mcount;
 	bool				in_poller;
 	bool				in_reinit;
