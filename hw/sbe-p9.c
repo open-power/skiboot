@@ -548,6 +548,8 @@ static void p9_sbe_timer_response(struct p9_sbe *sbe)
 	 * we can schedule next timer request.
 	 */
 	timer_update_cnt = 0;
+	sbe_timer_target = ~0ull;
+	has_new_target = false;
 	unlock(&sbe_timer_lock);
 
 	check_timers(true);
@@ -958,7 +960,7 @@ static void p9_sbe_timer_init(void)
 	assert(timer_ctrl_msg);
 	init_lock(&sbe_timer_lock);
 	sbe_has_timer = true;
-	sbe_timer_target = mftb();
+	sbe_timer_target = ~0ull;
 	sbe_last_gen_stamp = ~0ull;
 	sbe_timer_def_tb = usecs_to_tb(SBE_TIMER_DEFAULT_US);
 	prlog(PR_INFO, "Timer facility on chip %x\n", sbe_default_chip_id);
