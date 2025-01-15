@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-01-14 15:10:59</td>
+            <td class="headerValue">2025-01-15 20:37:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">76.5&nbsp;%</td>
@@ -294,19 +294,19 @@
 <span id="L223"><span class="lineNum">     223</span>                 :             : {</span>
 <span id="L224"><span class="lineNum">     224</span>                 :<span class="tlaGNC">        4469 :         *offset = 0;</span></span>
 <span id="L225"><span class="lineNum">     225</span>                 :             : </span>
-<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">       26229 :         while (f-&gt;hdr.num_longs &gt;= *offset + longs) {</span></span>
+<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">       25205 :         while (f-&gt;hdr.num_longs &gt;= *offset + longs) {</span></span>
 <span id="L227"><span class="lineNum">     227</span>                 :             :                 size_t addr;</span>
 <span id="L228"><span class="lineNum">     228</span>                 :             : </span>
-<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaGNC">       26217 :                 addr = (unsigned long)f</span></span>
-<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">       26217 :                         + (*offset + ALLOC_HDR_LONGS) * sizeof(long);</span></span>
-<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">       26217 :                 if ((addr &amp; (align - 1)) == 0)</span></span>
+<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaGNC">       25193 :                 addr = (unsigned long)f</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">       25193 :                         + (*offset + ALLOC_HDR_LONGS) * sizeof(long);</span></span>
+<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">       25193 :                 if ((addr &amp; (align - 1)) == 0)</span></span>
 <span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaGNC">        4457 :                         return true;</span></span>
 <span id="L233"><span class="lineNum">     233</span>                 :             : </span>
 <span id="L234"><span class="lineNum">     234</span>                 :             :                 /* Don't make tiny chunks! */</span>
-<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">       21760 :                 if (*offset == 0)</span></span>
+<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">       20736 :                 if (*offset == 0)</span></span>
 <span id="L236"><span class="lineNum">     236</span>                 :<span class="tlaGNC">          14 :                         *offset = ALLOC_MIN_LONGS;</span></span>
 <span id="L237"><span class="lineNum">     237</span>                 :             :                 else</span>
-<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">       21746 :                         (*offset)++;</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">       20722 :                         (*offset)++;</span></span>
 <span id="L239"><span class="lineNum">     239</span>                 :             :         }</span>
 <span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">          12 :         return false;</span></span>
 <span id="L241"><span class="lineNum">     241</span>                 :             : }</span>
