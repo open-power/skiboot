@@ -5,6 +5,7 @@
  * Copyright 2013-2018 IBM Corp.
  */
 
+#include <chip.h>
 #include <device.h>
 #include <sbe.h>
 #include <sbe-p8.h>
@@ -167,6 +168,9 @@ void p8_sbe_init_timer(void)
 	struct dt_node *np;
 	int64_t rc;
 	uint32_t tick_us;
+
+	if (proc_gen != proc_gen_p8 || chip_quirk(QUIRK_NO_SBE))
+		return;
 
 	np = dt_find_compatible_node(dt_root, NULL, "ibm,power8-sbe-timer");
 	if (!np)

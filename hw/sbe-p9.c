@@ -928,7 +928,7 @@ void p9_sbe_init(void)
 	struct proc_chip *chip;
 	struct p9_sbe *sbe;
 
-	if (proc_gen < proc_gen_p9)
+	if (proc_gen < proc_gen_p9 || chip_quirk(QUIRK_NO_SBE))
 		return;
 
 	dt_for_each_compatible(dt_root, xn, "ibm,xscom") {
@@ -969,6 +969,9 @@ void p9_sbe_terminate(void)
 	int rc;
 	u64 wait_tb;
 	struct proc_chip *chip;
+
+	if (proc_gen < proc_gen_p9 || chip_quirk(QUIRK_NO_SBE))
+		return;
 
 	/* Return if MPIPL is not supported */
 	if (!is_mpipl_enabled())
