@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-01-15 20:37:39</td>
+            <td class="headerValue">2025-01-24 18:40:10</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryLo">0.0&nbsp;%</td>
@@ -219,7 +219,7 @@
 <span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaUNC">           0 :         if (dt_find_by_path(dt_root, &quot;/mambo&quot;)) {</span></span>
 <span id="L149"><span class="lineNum">     149</span>                 :<span class="tlaUNC">           0 :                 proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_MAMBO_CALLOUTS</span></span>
 <span id="L150"><span class="lineNum">     150</span>                 :             :                         | QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ</span>
-<span id="L151"><span class="lineNum">     151</span>                 :             :                         | QUIRK_NO_RNG | QUIRK_NO_DIRECT_CTL;</span>
+<span id="L151"><span class="lineNum">     151</span>                 :             :                         | QUIRK_NO_RNG | QUIRK_NO_DIRECT_CTL | QUIRK_NO_SBE;</span>
 <span id="L152"><span class="lineNum">     152</span>                 :             : </span>
 <span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaUNC">           0 :                 enable_mambo_console();</span></span>
 <span id="L154"><span class="lineNum">     154</span>                 :             : </span>
@@ -247,7 +247,7 @@
 <span id="L176"><span class="lineNum">     176</span>                 :<span class="tlaUNC">           0 :                 model_type = dt_prop_get_def(xn, &quot;device_type&quot;, (void *)&quot;core&quot;);</span></span>
 <span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaUNC">           0 :                 if (strcmp(model_type, &quot;core&quot;) == 0) {</span></span>
 <span id="L178"><span class="lineNum">     178</span>                 :<span class="tlaUNC">           0 :                         proc_chip_quirks |= QUIRK_NO_RNG | QUIRK_NO_CHIPTOD</span></span>
-<span id="L179"><span class="lineNum">     179</span>                 :             :                                 | QUIRK_NO_F000F;</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :                                 | QUIRK_NO_F000F | QUIRK_NO_SBE;</span>
 <span id="L180"><span class="lineNum">     180</span>                 :             :                 }</span>
 <span id="L181"><span class="lineNum">     181</span>                 :<span class="tlaUNC">           0 :                 prlog(PR_NOTICE, &quot;CHIP: Detected Awan emulator %s model\n&quot;,</span></span>
 <span id="L182"><span class="lineNum">     182</span>                 :             :                                 model_type);</span>
