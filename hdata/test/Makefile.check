@@ -13,6 +13,8 @@ coverage: hdata-coverage
 LCOV_EXCLUDE += $(HDATA_TEST:%=%.c) hdata/test/stubs.c
 LCOV_EXCLUDE += /usr/include/valgrind/memcheck.h
 
+hdata/test/hdata_to_dt hdata/test/hdata_to_dt-gcov: HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wno-error=unterminated-string-initialization)
+
 hdata/test/hdata_to_dt-check: hdata/test/hdata_to_dt-check-q
 hdata/test/hdata_to_dt-check: hdata/test/hdata_to_dt-check-dt
 
