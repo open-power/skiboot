@@ -266,7 +266,10 @@ static void psi_spurious_fsp_irq(struct psi *psi)
 
 	prlog(PR_NOTICE, "PSI: Spurious interrupt, attempting clear\n");
 
-	if (proc_gen == proc_gen_p10) {
+	if (proc_gen == proc_gen_p11) {
+		reg = PSIHB_XSCOM_P10_HBCSR_CLR;
+		bit = PSIHB_XSCOM_P10_HBSCR_FSP_IRQ;
+	} else if (proc_gen == proc_gen_p10) {
 		reg = PSIHB_XSCOM_P10_HBCSR_CLR;
 		bit = PSIHB_XSCOM_P10_HBSCR_FSP_IRQ;
 	} else if (proc_gen == proc_gen_p9) {
@@ -569,6 +572,7 @@ static void psi_p9_mask_unhandled_irq(struct irq_source *is, uint32_t isn)
 		xive_source_mask(is, isn);
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		xive2_source_mask(is, isn);
 		return;
 	default:
@@ -854,6 +858,7 @@ static void psi_init_interrupts(struct psi *psi)
 		psi_init_p9_interrupts(psi);
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		psi_init_p10_interrupts(psi);
 		break;
 	default:
@@ -934,6 +939,7 @@ static void psi_create_mm_dtnode(struct psi *psi)
 		break;
 	case proc_gen_p9:
 	case proc_gen_p10:
+	case proc_gen_p11:
 		dt_add_property_strings(np, "compatible", "ibm,psi",
 					"ibm,power9-psi");
 		psi_create_p9_int_map(psi, np);

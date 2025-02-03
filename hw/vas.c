@@ -615,7 +615,7 @@ void vas_init(void)
 
 	if (proc_gen == proc_gen_p9)
 		compat = "ibm,power9-vas-x";
-	else if (proc_gen == proc_gen_p10)
+	else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		compat = "ibm,power10-vas-x";
 	else
 		return;

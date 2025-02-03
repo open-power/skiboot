@@ -94,7 +94,7 @@ static void xscom_reset(uint32_t gcid, bool need_delay)
 	mtspr(SPR_HMER, HMER_CLR_MASK);
 
 	/* Setup local and target scom addresses */
-	if (proc_gen == proc_gen_p10) {
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		recv_status_reg = 0x00090018;
 		log_reg = 0x0090012;
 		err_reg = 0x0090013;
@@ -825,7 +825,7 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 	 * something up
 	 */
 	if (chip_quirk(QUIRK_NO_F000F)) {
-		if (proc_gen == proc_gen_p10)
+		if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 			val = 0x220DA04980000000UL; /* P10 DD2.0 */
 		else if (proc_gen == proc_gen_p9)
 			val = 0x203D104980000000UL; /* P9 Nimbus DD2.3 */
@@ -860,6 +860,7 @@ static uint8_t xscom_get_ec_rev(struct proc_chip *chip)
 		table = p9table;
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		if (chip->ec_level < 0x20)
 			table = p10dd1table;
 		else
@@ -923,8 +924,12 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 		assert(proc_gen == proc_gen_p9);
 		break;
 	case 0xda:
-		chip->type = PROC_CHIP_P10;
-		assert(proc_gen == proc_gen_p10);
+		/* CFAM chip id for p10 and p11 is same. */
+		assert(proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11);
+		if (proc_gen == proc_gen_p10)
+			chip->type = PROC_CHIP_P10;
+		else
+			chip->type = PROC_CHIP_P11;
 		break;
 	default:
 		printf("CHIP: Unknown chip type 0x%02x !!!\n",

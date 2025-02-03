@@ -858,7 +858,8 @@ static void io_parse_fru(const void *sp_iohubs)
 		io_parse_slots(sp_iohubs, chip_id);
 	}
 
-	if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
+	if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10
+		|| proc_gen == proc_gen_p11)
 		io_add_p8_cec_vpd(sp_iohubs);
 }
 

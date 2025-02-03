@@ -621,7 +621,7 @@ void add_cpu_idle_state_properties(void)
 				states = power9_cpu_idle_states;
 				nr_states = ARRAY_SIZE(power9_cpu_idle_states);
 			}
-		} else if (chip->type == PROC_CHIP_P10) {
+		} else if (chip->type == PROC_CHIP_P10 || chip->type == PROC_CHIP_P11) {
 			states = power10_cpu_idle_states;
 			nr_states = ARRAY_SIZE(power10_cpu_idle_states);
 		} else {
@@ -652,7 +652,8 @@ void add_cpu_idle_state_properties(void)
 					slw_late_init_p9(chip);
 					xive_late_init();
 					nx_p9_rng_late_init();
-				} else if (chip->type == PROC_CHIP_P10) {
+				} else if (chip->type == PROC_CHIP_P10 ||
+					   chip->type == PROC_CHIP_P11) {
 					slw_late_init_p10(chip);
 					xive2_late_init();
 				}
@@ -935,7 +936,7 @@ void slw_init(void)
 			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 				slw_late_init_p9(chip);
 		}
-	} else if (proc_gen == proc_gen_p10) {
+	} else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		for_each_chip(chip) {
 			slw_init_chip_p10(chip);
 			if(slw_image_check_p9(chip))

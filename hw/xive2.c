@@ -2760,11 +2760,11 @@ static void xive_set_quirks(struct xive *x, struct proc_chip *chip __unused)
 	uint64_t quirks = 0;
 
 	/* This extension is dropped for P10 */
-	if (proc_gen == proc_gen_p10)
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		quirks |= XIVE_QUIRK_THREADID_7BITS;
 
 	/* Broken check on invalid priority when reduced priorities is in use */
-	if (proc_gen == proc_gen_p10)
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		quirks |= XIVE_QUIRK_BROKEN_PRIO_CHECK;
 
 	xive_dbg(x, "setting XIVE quirks to %016llx\n", quirks);

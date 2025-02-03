@@ -277,6 +277,7 @@ static struct dt_node *add_xscom_node(uint64_t base,
 		addr = base | (((uint64_t)hw_id) << 42);
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 	default:
 		/* Use Primary topology table index for xscom address */
 		addr = base | (((uint64_t)cinfo->topology_id_table[cinfo->primary_topology_loc]) << 44);
@@ -309,6 +310,10 @@ static struct dt_node *add_xscom_node(uint64_t base,
 	case proc_gen_p10:
 		dt_add_property_strings(node, "compatible",
 					"ibm,xscom", "ibm,power10-xscom");
+		break;
+	case proc_gen_p11:
+		dt_add_property_strings(node, "compatible",
+					"ibm,xscom", "ibm,power11-xscom");
 		break;
 	default:
 		dt_add_property_strings(node, "compatible", "ibm,xscom");
@@ -399,6 +404,7 @@ static void add_psihb_node(struct dt_node *np)
 		psi_comp = "ibm,power9-psihb-x";
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		psi_scom = 0x3011d00;
 		psi_slen = 0x100;
 		psi_comp = "ibm,power10-psihb-x";
@@ -432,6 +438,7 @@ static void add_xive_node(struct dt_node *np)
 		comp = "ibm,power9-xive-x";
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		scom = 0x2010800;
 		slen = 0x400;
 		comp = "ibm,power10-xive-x";
@@ -745,6 +752,9 @@ static void add_chiptod_node(unsigned int chip_id, int flags)
 	case proc_gen_p10:
 		compat_str = "ibm,power10-chiptod";
 		break;
+	case proc_gen_p11:
+		compat_str = "ibm,power11-chiptod";
+		break;
 	default:
 		return;
 	}
@@ -856,6 +866,7 @@ static void add_nx_node(u32 gcid)
 		break;
 	case proc_gen_p9:
 	case proc_gen_p10:
+	case proc_gen_p11:
 		/* POWER9 NX is not software compatible with P8 NX */
 		dt_add_property_strings(nx, "compatible", "ibm,power9-nx");
 		break;
@@ -903,7 +914,7 @@ static void add_nmmu(void)
 	if (proc_gen < proc_gen_p9)
 		return;
 
-	if (proc_gen == proc_gen_p10) {
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		scom1 = 0x2010c40;
 		scom2 = 0x3010c40;
 	} else
@@ -918,7 +929,7 @@ static void add_nmmu(void)
 		 * P10 has a second nMMU, a.k.a "south" nMMU.
 		 * It exists only on P1 and P3
 		 */
-		if (proc_gen == proc_gen_p10) {
+		if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 
 			chip_id = __dt_get_chip_id(xscom);
 			if (chip_id != 2 && chip_id != 6)

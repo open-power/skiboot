@@ -1026,7 +1026,7 @@ static void fixup_tod_reg_value(struct chiptod_tod_regs *treg_entry)
 {
 	int32_t chip_id = this_cpu()->chip_id;
 
-	if (proc_gen != proc_gen_p10)
+	if (proc_gen != proc_gen_p10 && proc_gen != proc_gen_p11)
 		return;
 
 	if (treg_entry->xscom_addr == TOD_SLAVE_PATH_CTRL)
@@ -1718,6 +1718,8 @@ static bool chiptod_probe(void)
 			if (dt_node_is_compatible(np, "ibm,power9-chiptod"))
 				chiptod_type = chiptod_p9;
 			if (dt_node_is_compatible(np, "ibm,power10-chiptod"))
+				chiptod_type = chiptod_p10;
+			if (dt_node_is_compatible(np, "ibm,power11-chiptod"))
 				chiptod_type = chiptod_p10;
 		}
 

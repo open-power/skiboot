@@ -147,7 +147,7 @@ static inline bool is_phb4(void)
 
 static inline bool is_phb5(void)
 {
-	return (proc_gen == proc_gen_p10);
+	return (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11);
 }
 
 /* PQ offloading on the XIVE IC. */

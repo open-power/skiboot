@@ -19,7 +19,7 @@ void sbe_update_timer_expiry(uint64_t target)
 {
 	assert(sbe_has_timer);
 
-	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
+	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		p9_sbe_update_timer_expiry(target);
 
 #ifdef CONFIG_P8

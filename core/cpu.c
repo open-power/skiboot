@@ -103,7 +103,8 @@ static void cpu_send_ipi(struct cpu_thread *cpu)
 	if (proc_gen == proc_gen_p8) {
 		/* Poke IPI */
 		icp_kick_cpu(cpu);
-	} else if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10) {
+	} else if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10 ||
+						proc_gen == proc_gen_p11) {
 		p9_dbell_send(cpu->pir);
 	}
 }
@@ -1057,6 +1058,13 @@ void init_boot_cpu(void)
 		hid0_attn = SPR_HID0_POWER10_ENABLE_ATTN;
 		hid0_icache = SPR_HID0_POWER10_FLUSH_ICACHE;
 		break;
+	case PVR_TYPE_P11:
+		proc_gen = proc_gen_p11;
+		radix_supported = true;
+		hid0_hile = SPR_HID0_POWER10_HILE;
+		hid0_attn = SPR_HID0_POWER10_ENABLE_ATTN;
+		hid0_icache = SPR_HID0_POWER10_FLUSH_ICACHE;
+		break;
 	default:
 		proc_gen = proc_gen_unknown;
 	}
@@ -1083,6 +1091,14 @@ void init_boot_cpu(void)
 			cpu_threads_max = 4;
 		prlog(PR_INFO, "CPU: P10 generation processor"
 		      " (max %d threads/core)\n", cpu_threads_max);
+		break;
+	case proc_gen_p11:
+		if (is_fused_core(pvr))
+			cpu_threads_max = 8;
+		else
+			cpu_threads_max = 4;
+		prlog(PR_INFO, "CPU: Power11 generation processor"
+		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	default:
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
