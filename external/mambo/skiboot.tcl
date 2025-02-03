@@ -368,6 +368,38 @@ foreach pmem_file $pmem_files { # PMEM_DISK
 	puts "ERROR: pmem: 'mysim mmap' $err"
 	exit
     }
+
+    # Linux requires the pmem size to be 2MB align.
+    # If not then mmap remaining bytes as padding to align mamp to 2MB
+    set pmem_map_align [expr 2 \* [expr 1024 \* 1024]]
+    puts $pmem_map_align
+    set pmem_remainder [expr $pmem_size % $pmem_map_align]
+    if { $pmem_remainder != 0 } {
+	set pmem_padding [expr $pmem_map_align - $pmem_remainder]
+	if { $pmem_padding > $pmem_map_align } {
+		puts "ERROR: pmem: Failed to calculate valid padding size"
+		exit
+	}
+	puts "pmem_padding: $pmem_padding"
+
+	# Create pad file of remiaing size and map it.
+	set pmem_pad_file [exec mktemp /tmp/pmem_padXXXXXX]
+	puts "Pad file: $pmem_pad_file"
+	if {[catch {exec dd if=/dev/zero of=$pmem_pad_file bs=$pmem_padding count=1 status=none} err]} {
+		puts "ERROR: pmem: 'Failed to create paded file' $err"
+		exec rm -f $pmem_pad_file
+		exit
+	}
+
+	set pmem_end [expr $pmem_start + $pmem_size]
+	if {[catch {mysim memory mmap $pmem_end $pmem_padding $pmem_pad_file $pmem_mode} err]} {
+		puts "ERROR: pmem: 'mysim mmap padding' $err"
+		exit
+	}
+	exec rm -f $pmem_pad_file
+	set pmem_size [expr $pmem_size + $pmem_padding]
+    }
+
     set pmem_start [pmem_node_add $pmem_root $pmem_start $pmem_size]
     set pmem_file_ix [expr $pmem_file_ix + 1]
 }
