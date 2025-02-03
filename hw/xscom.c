@@ -846,6 +846,7 @@ static uint8_t xscom_get_ec_rev(struct proc_chip *chip)
 {
 	uint64_t ecid2 = 0;
 	int8_t rev;
+	int8_t proc_gen_num;
 	const int8_t *table;
 	/*                             0   1   2   3   4   5   6   7 */
 	const int8_t p9table[8] =     {0,  1, -1,  2, -1, -1, -1,  3};
@@ -876,8 +877,19 @@ static uint8_t xscom_get_ec_rev(struct proc_chip *chip)
 	if (rev < 0)
 		return 0;
 
+	switch (proc_gen) {
+	case proc_gen_p9:
+		proc_gen_num = 9; break;
+	case proc_gen_p10:
+		proc_gen_num = 10; break;
+	case proc_gen_p11:
+		proc_gen_num = 11; break;
+	default:
+		proc_gen_num = -1; break;
+	}
+
 	prlog(PR_INFO, "P%d DD%i.%i%d detected\n",
-			proc_gen == proc_gen_p9 ? 9 : 10,
+			proc_gen_num,
 			0xf & (chip->ec_level >> 4),
 			chip->ec_level & 0xf,
 			rev);
@@ -980,7 +992,7 @@ void xscom_init(void)
 		const char *chip_name;
 		static const char *chip_names[] = {
 			"UNKNOWN", "P8E", "P8", "P8NVL", "P9N", "P9C", "P9P",
-			"P10",
+			"P10", "P11",
 		};
 
 		chip = get_chip(gcid);

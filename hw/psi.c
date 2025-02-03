@@ -1045,6 +1045,8 @@ static bool psi_init_psihb(struct dt_node *psihb)
 		psi = psi_probe_p9(chip, base);
 	else if (dt_node_is_compatible(psihb, "ibm,power10-psihb-x"))
 		psi = psi_probe_p10(chip, base);
+	else if (dt_node_is_compatible(psihb, "ibm,power11-psihb-x"))
+		psi = psi_probe_p10(chip, base);
 	else {
 		prerror("PSI: Unknown processor type\n");
 		return false;
