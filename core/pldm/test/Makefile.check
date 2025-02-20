@@ -13,6 +13,7 @@ HOSTCFLAG_PLDM:= $(filter-out -Wmissing-prototypes,$(HOSTCFLAG_PLDM))
 HOSTCFLAG_PLDM:= $(filter-out -Wmissing-declarations,$(HOSTCFLAG_PLDM))
 HOSTCFLAG_PLDM += -Wno-type-limits
 HOSTCFLAG_PLDM += -Wno-format
+HOSTCFLAG_PLDM += -Wno-error=attributes
 
 include $(SRC)/libmctp/Makefile.inc
 
@@ -34,7 +35,7 @@ $(PLDM_TEST) : % : %.c core/test/stubs.o $(CUR_DIR)/libmctptest.a
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAG_PLDM) -O0 -g -I include -I . -I pldm/include/ -I libmctp/ -I pldm/include/libpldm/ -I pldm/include/libpldm/oem/ibm/ -I core/pldm/ -I libfdt -o $@ $< core/test/stubs.o -L$(CUR_DIR) -Bstatic -lmctptest -lgcov --coverage -lrt -lpthread, $<)
 
 $(PLDM_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTFLAG_PLDM) $(HOSTGCOVCFLAGS) -I include -I . -I pldm/libpldm/ -I libfdt -lgcov -o $@ $<, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTFLAG_PLDM) $(HOSTGCOVCFLAGS) -I include -I . -I pldm/include/libpldm/oem/ibm/ -I libmctp/ -I pldm/ -I pldm/include/libpldm/ -I pldm/include/ -I libfdt -lgcov -o $@ $< core/test/stubs.o, $<)
 
 $(PLDM_TEST:%=%-gcov): % : $(%.d:-gcov=)
 
