@@ -45,7 +45,7 @@ struct pldm_tx_data {
  * @example enum_bit(1) = 0x00000002
  * @example enum_bit(4) = 0x00000010
  */
-inline uint32_t enum_bit(unsigned int enumeration)
+static inline uint32_t enum_bit(unsigned int enumeration)
 {
 	return 1 << enumeration;
 }
