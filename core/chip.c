@@ -182,8 +182,9 @@ void init_chips(void)
 				model_type);
 	}
 	/* Detect Qemu */
-	if (dt_node_is_compatible(dt_root, "qemu,powernv10")) {
-		/* POWER10 has direct controls */
+	if (dt_node_is_compatible(dt_root, "qemu,powernv10") ||
+	    dt_node_is_compatible(dt_root, "qemu,powernv11")) {
+		/* POWER10 and Power11 has direct controls */
 		proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_RNG;
 		prlog(PR_NOTICE, "CHIP: Detected QEMU simulator\n");
 	} else if (dt_node_is_compatible(dt_root, "qemu,powernv") ||
