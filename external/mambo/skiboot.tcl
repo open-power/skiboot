@@ -175,6 +175,34 @@ if { $default_config == "P10" } {
     }
 }
 
+if { $default_config == "P11" } {
+    # PVR configured for POWER11 DD2.0, LPAR-per-thread
+    myconf config processor/initial/SIM_CTRL  0x0c1dd60000000000
+    if { $mconf(threads) == 8 } {
+        # Big-core mode.
+        myconf config processor/initial/PVR 0x00820200
+        myconf config processor/initial/SIM_CTRL1 0xc0400c0400040a40
+	puts "Set P11 big-core mode"
+    } else {
+        # Small-core mode.
+        myconf config processor/initial/PVR 0x00821200
+        myconf config processor/initial/SIM_CTRL1 0xc0400c0401040a40
+        if { $mconf(threads) != 1 && $mconf(threads) != 2 && $mconf(threads) != 4 } {
+            puts "ERROR: Bad threads configuration"
+            exit
+        }
+        if { $mconf(threads) != 4 && $mconf(cpus) != 1 } {
+            puts "ERROR: Bad threads, cpus configuration"
+            exit
+        }
+
+	puts "Set P11 small-core mode"
+    }
+
+    if { $mconf(numa) } {
+        myconf config memory_region_id_shift 44
+    }
+}
 
 if { $mconf(numa) } {
     myconf config memory_regions $mconf(cpus)
