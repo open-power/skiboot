@@ -404,6 +404,7 @@ static int setup_scom_addresses(void)
 		nx_pbi_fir = P9_NX_PBI_FIR;
 		return 1;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		malf_alert_scom = P10_MALFUNC_ALERT;
 		nx_status_reg = P10_NX_STATUS_REG;
 		nx_dma_engine_fir = P10_NX_DMA_ENGINE_FIR;
@@ -460,6 +461,7 @@ static int read_core_fir(uint32_t chip_id, uint32_t core_id, uint64_t *core_fir)
 			XSCOM_ADDR_P9_EC(core_id, P9_CORE_FIR), core_fir);
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		rc = xscom_read(chip_id,
 			XSCOM_ADDR_P10_EC(core_id, P10_CORE_FIR), core_fir);
 		break;
@@ -479,6 +481,7 @@ static int read_core_wof(uint32_t chip_id, uint32_t core_id, uint64_t *core_wof)
 			XSCOM_ADDR_P9_EC(core_id, P9_CORE_WOF), core_wof);
 		break;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		rc = xscom_read(chip_id,
 			XSCOM_ADDR_P10_EC(core_id, P10_CORE_WOF), core_wof);
 		break;
@@ -541,7 +544,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 			loc ? loc : "Not Available",
 			cpu->chip_id, core_id, core_fir);
 
-	if (proc_gen == proc_gen_p10) {
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		for (i = 0; i < ARRAY_SIZE(p10_core_fir_bits); i++) {
 			if (core_fir & PPC_BIT(p10_core_fir_bits[i].bit))
 				prlog(PR_INFO, "    %s\n", p10_core_fir_bits[i].reason);
@@ -949,7 +952,7 @@ static void decode_malfunction(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags
 			xscom_write(this_cpu()->chip_id, malf_alert_scom,
 								~PPC_BIT(i));
 			find_capp_checkstop_reason(i, hmi_evt, &flags);
-			if (proc_gen != proc_gen_p10)
+			if (proc_gen != proc_gen_p10 && proc_gen != proc_gen_p11)
 				find_nx_checkstop_reason(i, hmi_evt, &flags);
 			find_npu_checkstop_reason(i, hmi_evt, &flags);
 		}
@@ -1413,7 +1416,7 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 					if (core_wof & PPC_BIT(p9_recoverable_bits[i].bit))
 						prlog(PR_DEBUG, "    %s\n", p9_recoverable_bits[i].reason);
 				}
-			} else if (proc_gen == proc_gen_p10) {
+			} else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 				for (i = 0; i < ARRAY_SIZE(p10_core_fir_bits); i++) {
 					if (core_wof & PPC_BIT(p10_core_fir_bits[i].bit))
 						prlog(PR_DEBUG, "    %s\n", p10_core_fir_bits[i].reason);
@@ -1508,7 +1511,8 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 				queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 	}
-	if ((proc_gen == proc_gen_p10) && (hmer & SPR_HMER_P10_TRIG_FIR_HMI)) {
+	if ((proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
+		&& (hmer & SPR_HMER_P10_TRIG_FIR_HMI)) {
 		handled |= SPR_HMER_P10_TRIG_FIR_HMI;
 		hmer &= ~SPR_HMER_P10_TRIG_FIR_HMI;
 

@@ -13,7 +13,7 @@ enum proc_chip_quirks proc_chip_quirks;
 
 uint32_t pir_to_chip_id(uint32_t pir)
 {
-	if (proc_gen == proc_gen_p10)
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		return P10_PIR2GCID(pir);
 	else if (proc_gen == proc_gen_p9)
 		return P9_PIR2GCID(pir);
@@ -25,7 +25,7 @@ uint32_t pir_to_chip_id(uint32_t pir)
 
 uint32_t pir_to_core_id(uint32_t pir)
 {
-	if (proc_gen == proc_gen_p10) {
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		if (this_cpu()->is_fused_core)
 			return P10_PIRFUSED2NORMALCOREID(pir);
 		else
@@ -44,7 +44,7 @@ uint32_t pir_to_core_id(uint32_t pir)
 
 uint32_t pir_to_fused_core_id(uint32_t pir)
 {
-	if (proc_gen == proc_gen_p10) {
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		if (this_cpu()->is_fused_core)
 			return P10_PIR2FUSEDCOREID(pir);
 		else
@@ -63,7 +63,7 @@ uint32_t pir_to_fused_core_id(uint32_t pir)
 
 uint32_t pir_to_thread_id(uint32_t pir)
 {
-	if (proc_gen == proc_gen_p10) {
+	if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		if (this_cpu()->is_fused_core)
 			return P10_PIRFUSED2NORMALTHREADID(pir);
 		else

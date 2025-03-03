@@ -1005,7 +1005,7 @@ static void mask_pc_system_xstop(void)
         uint32_t chip_id, core_id;
         int rc;
 
-	if (proc_gen != proc_gen_p10)
+	if (proc_gen != proc_gen_p10 && proc_gen != proc_gen_p11)
                 return;
 
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS) || chip_quirk(QUIRK_AWAN))
@@ -1046,7 +1046,7 @@ static void probe_lpar_per_core(void)
 
 	if (proc_gen == proc_gen_p9)
 		addr = XSCOM_ADDR_P9_EC(core_id, P9_CORE_THREAD_STATE);
-	else if (proc_gen == proc_gen_p10)
+	else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		addr = XSCOM_ADDR_P10_EC(core_id, P10_EC_CORE_THREAD_STATE);
 	else
 		return;
@@ -1243,7 +1243,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Initialize the rest of the cpu thread structs */
 	init_all_cpus();
-	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)
+	if (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		cpu_set_ipi_enable(true);
 
         /* Once all CPU are up apply this workaround */
@@ -1274,7 +1274,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* On P9 and P10, initialize XIVE */
 	if (proc_gen == proc_gen_p9)
 		init_xive();
-	else if (proc_gen == proc_gen_p10)
+	else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		xive2_init();
 
 	/* Grab centaurs from device-tree if present (only on FSP-less) */
@@ -1483,7 +1483,7 @@ void __noreturn __secondary_cpu_entry(void)
 	/* Some XIVE setup */
 	if (proc_gen == proc_gen_p9)
 		xive_cpu_callin(cpu);
-	else if (proc_gen == proc_gen_p10)
+	else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		xive2_cpu_callin(cpu);
 
 	/* Wait for work to do */

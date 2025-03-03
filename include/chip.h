@@ -172,6 +172,7 @@ enum proc_chip_type {
 	PROC_CHIP_P9_CUMULUS,
 	PROC_CHIP_P9P,
 	PROC_CHIP_P10,
+	PROC_CHIP_P11,
 };
 
 /* Simulator quirks */

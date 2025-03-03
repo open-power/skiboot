@@ -481,7 +481,7 @@ static void disable_unavailable_units(struct dt_node *dev)
 				dt_free(target);
 			}
 		}
-	} else if (proc_gen == proc_gen_p10) {
+	} else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11) {
 		int val;
 		char name[8];
 
@@ -761,6 +761,7 @@ static int setup_imc_scoms(void)
 						IMC_TRACE_BUFF_SIZE);
 		return 0;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		CORE_IMC_EVENT_MASK_ADDR = CORE_IMC_EVENT_MASK_ADDR_P10;
 		TRACE_IMC_ADDR = TRACE_IMC_ADDR_P10;
 		pdbar_scom_index = pdbar_scom_index_p10;
@@ -933,6 +934,7 @@ static uint32_t get_imc_scom_addr_for_core(int core, uint64_t addr)
 		scom_addr = XSCOM_ADDR_P9_EC(core, addr);
 		return scom_addr;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		scom_addr = XSCOM_ADDR_P10_EC(core, addr);
 		return scom_addr;
 	default:
@@ -950,6 +952,7 @@ static uint32_t get_imc_scom_addr_for_quad(int core, uint64_t addr)
 		scom_addr = XSCOM_ADDR_P9_EQ(core, addr);
 		return scom_addr;
 	case proc_gen_p10:
+	case proc_gen_p11:
 		scom_addr = XSCOM_ADDR_P10_EQ(core, addr);
 		return scom_addr;
 	default:

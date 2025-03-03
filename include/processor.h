@@ -211,6 +211,7 @@
 #define PVR_TYPE_P9	0x004e
 #define PVR_TYPE_P9P	0x004f /* Axone */
 #define PVR_TYPE_P10	0x0080
+#define PVR_TYPE_P11	0x0082
 
 #ifdef __ASSEMBLY__
 
@@ -266,6 +267,11 @@ static inline bool is_fused_core(uint32_t version)
 
 	} else if(PVR_TYPE(version) == PVR_TYPE_P10) {
 		if(PVR_CHIP_TYPE(version) & 0x01)
+			return false;
+		else
+			return true;
+	} else if (PVR_TYPE(version) == PVR_TYPE_P11) {
+		if (PVR_CHIP_TYPE(version) & 0x01)
 			return false;
 		else
 			return true;

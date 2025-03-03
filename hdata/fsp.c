@@ -371,7 +371,7 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	dt_add_property_cells(bmc_node, "#size-cells", 0);
 
 	/* Add sensor info under /bmc */
-	if (proc_gen < proc_gen_p10)
+	if (proc_gen < proc_gen_p11)
 		add_ipmi_sensors(bmc_node);
 
 	sp_impl = HDIF_get_idata(sp, SPSS_IDATA_SP_IMPL, &size);

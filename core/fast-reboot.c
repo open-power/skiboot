@@ -263,7 +263,7 @@ static void cleanup_cpu_state(void)
 
 	if (proc_gen == proc_gen_p9)
 		xive_cpu_reset();
-	else if (proc_gen == proc_gen_p10)
+	else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		xive2_cpu_reset();
 
 	/* Per core cleanup */
@@ -388,7 +388,7 @@ void __noreturn fast_reboot_entry(void)
 
 	if (proc_gen == proc_gen_p9)
 		xive_reset();
-	else if (proc_gen == proc_gen_p10)
+	else if (proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11)
 		xive2_reset();
 
 	/* Let the CPU layer do some last minute global cleanups */

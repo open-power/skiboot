@@ -251,7 +251,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	 * This code makes a few assumptions about XSCOM addrs, etc
 	 * and will need updating for new processors
 	 */
-	assert(proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10);
+	assert(proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11);
 
 	/*
 	 * Emit an error if we get a newer version. This is an interim measure
@@ -303,7 +303,8 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 * i2cm@<addr> nodes.
 		 */
 		if (dev->i2cm_engine >= 4 &&
-			(proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10))
+			(proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10 ||
+							proc_gen == proc_gen_p11))
 			continue;
 
 		bus = p8_i2c_add_port_node(xscom, dev->i2cm_engine, dev->i2cm_port,

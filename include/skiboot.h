@@ -101,6 +101,7 @@ enum proc_gen {
 	proc_gen_p8,
 	proc_gen_p9,
 	proc_gen_p10,
+	proc_gen_p11,
 };
 extern enum proc_gen proc_gen;
 
