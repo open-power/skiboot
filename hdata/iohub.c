@@ -843,6 +843,10 @@ static void io_parse_fru(const void *sp_iohubs)
 			prlog(PR_INFO, "CEC:     Rainier !\n");
 			io_add_p9(hub, sp_iohubs);
 			break;
+		case CECHUB_HUB_EVEREST:
+			prlog(PR_INFO, "CEC:     Everest !\n");
+			io_add_p9(hub, sp_iohubs);
+			break;
 		case CECHUB_HUB_DENALI:
 			prlog(PR_INFO, "CEC:     Denali !\n");
 			io_add_p9(hub, sp_iohubs);
