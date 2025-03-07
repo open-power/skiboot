@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, ubuntu-rolling, fedora40, fedora41, fedora-rawhide, docs ]
+        os: [ ubuntu-20.04, ubuntu-22.04, ubuntu-rolling, fedora40, fedora41, fedora-rawhide, docs ]
 
     steps:
       - uses: actions/checkout@v4
