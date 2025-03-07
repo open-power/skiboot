@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-02-26 14:45:00</td>
+            <td class="headerValue">2025-03-07 16:19:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -172,275 +172,276 @@
 <span id="L101"><span class="lineNum">     101</span>                 :             :         proc_gen_p8,</span>
 <span id="L102"><span class="lineNum">     102</span>                 :             :         proc_gen_p9,</span>
 <span id="L103"><span class="lineNum">     103</span>                 :             :         proc_gen_p10,</span>
-<span id="L104"><span class="lineNum">     104</span>                 :             : };</span>
-<span id="L105"><span class="lineNum">     105</span>                 :             : extern enum proc_gen proc_gen;</span>
-<span id="L106"><span class="lineNum">     106</span>                 :             : </span>
-<span id="L107"><span class="lineNum">     107</span>                 :             : extern bool lpar_per_core;</span>
-<span id="L108"><span class="lineNum">     108</span>                 :             : </span>
-<span id="L109"><span class="lineNum">     109</span>                 :             : extern unsigned int pcie_max_link_speed;</span>
-<span id="L110"><span class="lineNum">     110</span>                 :             : </span>
-<span id="L111"><span class="lineNum">     111</span>                 :             : /* Convert a 4-bit number to a hex char */</span>
-<span id="L112"><span class="lineNum">     112</span>                 :             : extern char __attrconst tohex(uint8_t nibble);</span>
-<span id="L113"><span class="lineNum">     113</span>                 :             : </span>
-<span id="L114"><span class="lineNum">     114</span>                 :             : #ifndef __TEST__</span>
-<span id="L115"><span class="lineNum">     115</span>                 :             : /* Bit position of the most significant 1-bit (LSB=0, MSB=63) */</span>
-<span id="L116"><span class="lineNum">     116</span>                 :             : static inline int ilog2(unsigned long val)</span>
-<span id="L117"><span class="lineNum">     117</span>                 :             : {</span>
-<span id="L118"><span class="lineNum">     118</span>                 :             :         int left_zeros;</span>
-<span id="L119"><span class="lineNum">     119</span>                 :             : </span>
-<span id="L120"><span class="lineNum">     120</span>                 :             :         asm volatile (&quot;cntlzd %0,%1&quot; : &quot;=r&quot; (left_zeros) : &quot;r&quot; (val));</span>
-<span id="L121"><span class="lineNum">     121</span>                 :             : </span>
-<span id="L122"><span class="lineNum">     122</span>                 :             :         return 63 - left_zeros;</span>
-<span id="L123"><span class="lineNum">     123</span>                 :             : }</span>
-<span id="L124"><span class="lineNum">     124</span>                 :             : </span>
-<span id="L125"><span class="lineNum">     125</span>                 :             : static inline bool is_pow2(unsigned long val)</span>
-<span id="L126"><span class="lineNum">     126</span>                 :             : {</span>
-<span id="L127"><span class="lineNum">     127</span>                 :             :         return val == (1ul &lt;&lt; ilog2(val));</span>
-<span id="L128"><span class="lineNum">     128</span>                 :             : }</span>
-<span id="L129"><span class="lineNum">     129</span>                 :             : #endif</span>
-<span id="L130"><span class="lineNum">     130</span>                 :             : </span>
-<span id="L131"><span class="lineNum">     131</span>                 :             : #define lo32(x) ((x) &amp; 0xffffffff)</span>
-<span id="L132"><span class="lineNum">     132</span>                 :             : #define hi32(x) (((x) &gt;&gt; 32) &amp; 0xffffffff)</span>
-<span id="L133"><span class="lineNum">     133</span>                 :             : </span>
-<span id="L134"><span class="lineNum">     134</span>                 :             : /* WARNING: _a *MUST* be a power of two */</span>
-<span id="L135"><span class="lineNum">     135</span>                 :             : #define ALIGN_UP(_v, _a)        (((_v) + (_a) - 1) &amp; ~((_a) - 1))</span>
-<span id="L136"><span class="lineNum">     136</span>                 :             : #define ALIGN_DOWN(_v, _a)      ((_v) &amp; ~((_a) - 1))</span>
-<span id="L137"><span class="lineNum">     137</span>                 :             : </span>
-<span id="L138"><span class="lineNum">     138</span>                 :             : /* TCE alignment */</span>
-<span id="L139"><span class="lineNum">     139</span>                 :             : #define TCE_SHIFT       12</span>
-<span id="L140"><span class="lineNum">     140</span>                 :             : #define TCE_PSIZE       (1ul &lt;&lt; 12)</span>
-<span id="L141"><span class="lineNum">     141</span>                 :             : #define TCE_MASK        (TCE_PSIZE - 1)</span>
-<span id="L142"><span class="lineNum">     142</span>                 :             : </span>
-<span id="L143"><span class="lineNum">     143</span>                 :             : /* Not the greatest variants but will do for now ... */</span>
-<span id="L144"><span class="lineNum">     144</span>                 :             : #define MIN(a, b)       ((a) &lt; (b) ? (a) : (b))</span>
-<span id="L145"><span class="lineNum">     145</span>                 :             : #define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))</span>
-<span id="L146"><span class="lineNum">     146</span>                 :             : </span>
-<span id="L147"><span class="lineNum">     147</span>                 :             : /* PCI Geographical Addressing */</span>
-<span id="L148"><span class="lineNum">     148</span>                 :             : #define PCI_BUS_NUM(bdfn)       (((bdfn) &gt;&gt; 8) &amp; 0xff)</span>
-<span id="L149"><span class="lineNum">     149</span>                 :             : #define PCI_DEV(bdfn)           (((bdfn) &gt;&gt; 3) &amp; 0x1f)</span>
-<span id="L150"><span class="lineNum">     150</span>                 :             : #define PCI_FUNC(bdfn)          ((bdfn) &amp; 0x07)</span>
-<span id="L151"><span class="lineNum">     151</span>                 :             : </span>
-<span id="L152"><span class="lineNum">     152</span>                 :             : /*</span>
-<span id="L153"><span class="lineNum">     153</span>                 :             :  * To help the FSP to distinguish between physical address and TCE mapped address.</span>
-<span id="L154"><span class="lineNum">     154</span>                 :             :  * Also to help hostboot to distinguish physical and relative address.</span>
-<span id="L155"><span class="lineNum">     155</span>                 :             :  */</span>
-<span id="L156"><span class="lineNum">     156</span>                 :             : #define HRMOR_BIT (1ul &lt;&lt; 63)</span>
-<span id="L157"><span class="lineNum">     157</span>                 :             : </span>
-<span id="L158"><span class="lineNum">     158</span>                 :             : /* Clean the stray high bit which the FSP inserts: we only have 52 bits real */</span>
-<span id="L159"><span class="lineNum">     159</span>                 :<span class="tlaGNC">          53 : static inline u64 cleanup_addr(u64 addr)</span></span>
-<span id="L160"><span class="lineNum">     160</span>                 :             : {</span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">          53 :         return addr &amp; ((1ULL &lt;&lt; 52) - 1);</span></span>
-<span id="L162"><span class="lineNum">     162</span>                 :             : }</span>
-<span id="L163"><span class="lineNum">     163</span>                 :             : </span>
-<span id="L164"><span class="lineNum">     164</span>                 :             : /* Start the kernel */</span>
-<span id="L165"><span class="lineNum">     165</span>                 :             : extern void start_kernel(uint64_t entry, void* fdt,</span>
-<span id="L166"><span class="lineNum">     166</span>                 :             :                          uint64_t mem_top) __noreturn;</span>
-<span id="L167"><span class="lineNum">     167</span>                 :             : extern void start_kernel32(uint64_t entry, void* fdt,</span>
-<span id="L168"><span class="lineNum">     168</span>                 :             :                            uint64_t mem_top) __noreturn;</span>
-<span id="L169"><span class="lineNum">     169</span>                 :             : extern void start_kernel_secondary(uint64_t entry) __noreturn;</span>
-<span id="L170"><span class="lineNum">     170</span>                 :             : </span>
-<span id="L171"><span class="lineNum">     171</span>                 :             : /* Re-set r16 register with CPU pointer, based on stack (r1) value */</span>
-<span id="L172"><span class="lineNum">     172</span>                 :             : extern void restore_cpu_ptr_r16(void);</span>
-<span id="L173"><span class="lineNum">     173</span>                 :             : /* Set r16 register with value in 'r16' parameter */</span>
-<span id="L174"><span class="lineNum">     174</span>                 :             : extern void set_cpu_ptr_r16(uint64_t r16);</span>
-<span id="L175"><span class="lineNum">     175</span>                 :             : </span>
-<span id="L176"><span class="lineNum">     176</span>                 :             : /* Get description of machine from HDAT and create device-tree */</span>
-<span id="L177"><span class="lineNum">     177</span>                 :             : extern int parse_hdat(bool is_opal);</span>
-<span id="L178"><span class="lineNum">     178</span>                 :             : </span>
-<span id="L179"><span class="lineNum">     179</span>                 :             : struct dt_node;</span>
-<span id="L180"><span class="lineNum">     180</span>                 :             : </span>
-<span id="L181"><span class="lineNum">     181</span>                 :             : /* Add /cpus/features node for boot environment that passes an fdt */</span>
-<span id="L182"><span class="lineNum">     182</span>                 :             : extern void dt_add_cpufeatures(struct dt_node *root);</span>
-<span id="L183"><span class="lineNum">     183</span>                 :             : </span>
-<span id="L184"><span class="lineNum">     184</span>                 :             : /* Root of device tree. */</span>
-<span id="L185"><span class="lineNum">     185</span>                 :             : extern struct dt_node *dt_root;</span>
-<span id="L186"><span class="lineNum">     186</span>                 :             : </span>
-<span id="L187"><span class="lineNum">     187</span>                 :             : /* Full skiboot version number (possibly includes gitid). */</span>
-<span id="L188"><span class="lineNum">     188</span>                 :             : extern const char version[];</span>
-<span id="L189"><span class="lineNum">     189</span>                 :             : </span>
-<span id="L190"><span class="lineNum">     190</span>                 :             : /* Debug support */</span>
-<span id="L191"><span class="lineNum">     191</span>                 :             : extern char __sym_map_start[];</span>
-<span id="L192"><span class="lineNum">     192</span>                 :             : extern char __sym_map_end[];</span>
-<span id="L193"><span class="lineNum">     193</span>                 :             : extern size_t snprintf_symbol(char *buf, size_t len, uint64_t addr);</span>
-<span id="L194"><span class="lineNum">     194</span>                 :             : </span>
-<span id="L195"><span class="lineNum">     195</span>                 :             : /* Direct controls */</span>
-<span id="L196"><span class="lineNum">     196</span>                 :             : extern void direct_controls_init(void);</span>
-<span id="L197"><span class="lineNum">     197</span>                 :             : extern int64_t opal_signal_system_reset(int cpu_nr);</span>
-<span id="L198"><span class="lineNum">     198</span>                 :             : </span>
-<span id="L199"><span class="lineNum">     199</span>                 :             : /* Fast reboot support */</span>
-<span id="L200"><span class="lineNum">     200</span>                 :             : extern void disable_fast_reboot(const char *reason);</span>
-<span id="L201"><span class="lineNum">     201</span>                 :             : extern void add_fast_reboot_dt_entries(void);</span>
-<span id="L202"><span class="lineNum">     202</span>                 :             : extern void fast_reboot(void);</span>
-<span id="L203"><span class="lineNum">     203</span>                 :             : extern void __noreturn __secondary_cpu_entry(void);</span>
-<span id="L204"><span class="lineNum">     204</span>                 :             : extern void __noreturn load_and_boot_kernel(bool is_reboot);</span>
-<span id="L205"><span class="lineNum">     205</span>                 :             : extern void cleanup_local_tlb(void);</span>
-<span id="L206"><span class="lineNum">     206</span>                 :             : extern void cleanup_global_tlb(void);</span>
-<span id="L207"><span class="lineNum">     207</span>                 :             : extern void init_shared_sprs(void);</span>
-<span id="L208"><span class="lineNum">     208</span>                 :             : extern void init_replicated_sprs(void);</span>
-<span id="L209"><span class="lineNum">     209</span>                 :             : extern bool start_preload_kernel(void);</span>
-<span id="L210"><span class="lineNum">     210</span>                 :             : extern void copy_exception_vectors(void);</span>
-<span id="L211"><span class="lineNum">     211</span>                 :             : extern void copy_sreset_vector(void);</span>
-<span id="L212"><span class="lineNum">     212</span>                 :             : extern void copy_sreset_vector_fast_reboot(void);</span>
-<span id="L213"><span class="lineNum">     213</span>                 :             : extern void patch_traps(bool enable);</span>
-<span id="L214"><span class="lineNum">     214</span>                 :             : </span>
-<span id="L215"><span class="lineNum">     215</span>                 :             : /* Various probe routines, to replace with an initcall system */</span>
-<span id="L216"><span class="lineNum">     216</span>                 :             : extern int preload_capp_ucode(void);</span>
-<span id="L217"><span class="lineNum">     217</span>                 :             : extern void preload_io_vpd(void);</span>
-<span id="L218"><span class="lineNum">     218</span>                 :             : extern void uart_init(void);</span>
-<span id="L219"><span class="lineNum">     219</span>                 :             : extern void mbox_init(void);</span>
-<span id="L220"><span class="lineNum">     220</span>                 :             : extern void early_uart_init(void);</span>
-<span id="L221"><span class="lineNum">     221</span>                 :             : extern void homer_init(void);</span>
-<span id="L222"><span class="lineNum">     222</span>                 :             : extern void add_cpu_idle_state_properties(void);</span>
-<span id="L223"><span class="lineNum">     223</span>                 :             : extern void lpc_rtc_init(void);</span>
-<span id="L224"><span class="lineNum">     224</span>                 :             : </span>
-<span id="L225"><span class="lineNum">     225</span>                 :             : /* flash support */</span>
-<span id="L226"><span class="lineNum">     226</span>                 :             : struct flash_chip;</span>
-<span id="L227"><span class="lineNum">     227</span>                 :             : extern int flash_register(struct blocklevel_device *bl);</span>
-<span id="L228"><span class="lineNum">     228</span>                 :             : extern int flash_start_preload_resource(enum resource_id id, uint32_t subid,</span>
-<span id="L229"><span class="lineNum">     229</span>                 :             :                                         void *buf, size_t *len);</span>
-<span id="L230"><span class="lineNum">     230</span>                 :             : extern int flash_resource_loaded(enum resource_id id, uint32_t idx);</span>
-<span id="L231"><span class="lineNum">     231</span>                 :             : extern bool flash_reserve(void);</span>
-<span id="L232"><span class="lineNum">     232</span>                 :             : extern void flash_release(void);</span>
-<span id="L233"><span class="lineNum">     233</span>                 :             : extern bool flash_unregister(void);</span>
-<span id="L234"><span class="lineNum">     234</span>                 :             : #define FLASH_SUBPART_ALIGNMENT 0x1000</span>
-<span id="L235"><span class="lineNum">     235</span>                 :             : #define FLASH_SUBPART_HEADER_SIZE FLASH_SUBPART_ALIGNMENT</span>
-<span id="L236"><span class="lineNum">     236</span>                 :             : extern int flash_subpart_info(void *part_header, uint32_t header_len,</span>
-<span id="L237"><span class="lineNum">     237</span>                 :             :                               uint32_t part_size, uint32_t *part_actual,</span>
-<span id="L238"><span class="lineNum">     238</span>                 :             :                               uint32_t subid, uint32_t *offset,</span>
-<span id="L239"><span class="lineNum">     239</span>                 :             :                               uint32_t *size);</span>
-<span id="L240"><span class="lineNum">     240</span>                 :             : extern void flash_fw_version_preload(void);</span>
-<span id="L241"><span class="lineNum">     241</span>                 :             : extern void flash_dt_add_fw_version(void);</span>
-<span id="L242"><span class="lineNum">     242</span>                 :             : extern const char *flash_map_resource_name(enum resource_id id);</span>
-<span id="L243"><span class="lineNum">     243</span>                 :             : extern int flash_secboot_info(uint32_t *total_size);</span>
-<span id="L244"><span class="lineNum">     244</span>                 :             : extern int flash_secboot_read(void *dst, uint32_t src, uint32_t len);</span>
-<span id="L245"><span class="lineNum">     245</span>                 :             : extern int flash_secboot_write(uint32_t dst, void *src, uint32_t len);</span>
-<span id="L246"><span class="lineNum">     246</span>                 :             : </span>
-<span id="L247"><span class="lineNum">     247</span>                 :             : /*</span>
-<span id="L248"><span class="lineNum">     248</span>                 :             :  * Decompression routines</span>
-<span id="L249"><span class="lineNum">     249</span>                 :             :  *</span>
-<span id="L250"><span class="lineNum">     250</span>                 :             :  * The below structure members are needed for the xz library routines,</span>
-<span id="L251"><span class="lineNum">     251</span>                 :             :  *   src: Source address (The compressed binary)</span>
-<span id="L252"><span class="lineNum">     252</span>                 :             :  *   src_size: Source size</span>
-<span id="L253"><span class="lineNum">     253</span>                 :             :  *   dst: Destination address (The memory area where the `src` will be</span>
-<span id="L254"><span class="lineNum">     254</span>                 :             :  *        decompressed)</span>
-<span id="L255"><span class="lineNum">     255</span>                 :             :  *   dst_size: Destination size</span>
-<span id="L256"><span class="lineNum">     256</span>                 :             :  */</span>
-<span id="L257"><span class="lineNum">     257</span>                 :             : struct xz_decompress {</span>
-<span id="L258"><span class="lineNum">     258</span>                 :             :         void *dst;</span>
-<span id="L259"><span class="lineNum">     259</span>                 :             :         void *src;</span>
-<span id="L260"><span class="lineNum">     260</span>                 :             :         size_t dst_size;</span>
-<span id="L261"><span class="lineNum">     261</span>                 :             :         size_t src_size;</span>
-<span id="L262"><span class="lineNum">     262</span>                 :             :         /* The status of the decompress process:</span>
-<span id="L263"><span class="lineNum">     263</span>                 :             :              - OPAL_PARTIAL: if the job is in progress</span>
-<span id="L264"><span class="lineNum">     264</span>                 :             :              - OPAL_SUCCESS: if the job is successful</span>
-<span id="L265"><span class="lineNum">     265</span>                 :             :              - OPAL_NO_MEM: memory allocation failure</span>
-<span id="L266"><span class="lineNum">     266</span>                 :             :              - OPAL_PARAMETER: If any of the above (src, dst..) are invalid or</span>
-<span id="L267"><span class="lineNum">     267</span>                 :             :              if xz decompress fails. In which case the caller should check the</span>
-<span id="L268"><span class="lineNum">     268</span>                 :             :              xz_error for failure reason.</span>
-<span id="L269"><span class="lineNum">     269</span>                 :             :          */</span>
-<span id="L270"><span class="lineNum">     270</span>                 :             :         int status;</span>
-<span id="L271"><span class="lineNum">     271</span>                 :             :         int xz_error;</span>
-<span id="L272"><span class="lineNum">     272</span>                 :             :         /* The decompression job, this will be freed if the caller uses</span>
-<span id="L273"><span class="lineNum">     273</span>                 :             :          * `wait_xz_decompression` function, in any other case its the</span>
-<span id="L274"><span class="lineNum">     274</span>                 :             :          * responsibility of caller to free the allocation job.  */</span>
-<span id="L275"><span class="lineNum">     275</span>                 :             :         struct cpu_job *job;</span>
-<span id="L276"><span class="lineNum">     276</span>                 :             : };</span>
-<span id="L277"><span class="lineNum">     277</span>                 :             : </span>
-<span id="L278"><span class="lineNum">     278</span>                 :             : extern void xz_start_decompress(struct xz_decompress *);</span>
-<span id="L279"><span class="lineNum">     279</span>                 :             : extern void wait_xz_decompress(struct xz_decompress *);</span>
-<span id="L280"><span class="lineNum">     280</span>                 :             : </span>
-<span id="L281"><span class="lineNum">     281</span>                 :             : /* NVRAM support */</span>
-<span id="L282"><span class="lineNum">     282</span>                 :             : extern void nvram_init(void);</span>
-<span id="L283"><span class="lineNum">     283</span>                 :             : extern void nvram_read_complete(bool success);</span>
-<span id="L284"><span class="lineNum">     284</span>                 :             : </span>
-<span id="L285"><span class="lineNum">     285</span>                 :             : /* UART stuff */</span>
-<span id="L286"><span class="lineNum">     286</span>                 :             : enum {</span>
-<span id="L287"><span class="lineNum">     287</span>                 :             :         UART_CONSOLE_OPAL,</span>
-<span id="L288"><span class="lineNum">     288</span>                 :             :         UART_CONSOLE_OS</span>
-<span id="L289"><span class="lineNum">     289</span>                 :             : };</span>
-<span id="L290"><span class="lineNum">     290</span>                 :             : extern void uart_set_console_policy(int policy);</span>
-<span id="L291"><span class="lineNum">     291</span>                 :             : extern bool uart_enabled(void);</span>
-<span id="L292"><span class="lineNum">     292</span>                 :             : </span>
-<span id="L293"><span class="lineNum">     293</span>                 :             : /* PRD */</span>
-<span id="L294"><span class="lineNum">     294</span>                 :             : extern void prd_psi_interrupt(uint32_t proc);</span>
-<span id="L295"><span class="lineNum">     295</span>                 :             : extern void prd_tmgt_interrupt(uint32_t proc);</span>
-<span id="L296"><span class="lineNum">     296</span>                 :             : extern void prd_occ_reset(uint32_t proc);</span>
-<span id="L297"><span class="lineNum">     297</span>                 :             : extern void prd_sbe_passthrough(uint32_t proc);</span>
-<span id="L298"><span class="lineNum">     298</span>                 :             : extern void prd_init(void);</span>
-<span id="L299"><span class="lineNum">     299</span>                 :             : extern void prd_register_reserved_memory(void);</span>
-<span id="L300"><span class="lineNum">     300</span>                 :             : extern void prd_fsp_occ_reset(uint32_t proc);</span>
-<span id="L301"><span class="lineNum">     301</span>                 :             : extern void prd_fsp_occ_load_start(u32 proc);</span>
-<span id="L302"><span class="lineNum">     302</span>                 :             : extern void prd_fw_resp_fsp_response(int status);</span>
-<span id="L303"><span class="lineNum">     303</span>                 :             : extern int  prd_hbrt_fsp_msg_notify(void *data, u32 dsize);</span>
-<span id="L304"><span class="lineNum">     304</span>                 :             : </span>
-<span id="L305"><span class="lineNum">     305</span>                 :             : /* Flatten device-tree */</span>
-<span id="L306"><span class="lineNum">     306</span>                 :             : extern void *create_dtb(const struct dt_node *root, bool exclusive);</span>
-<span id="L307"><span class="lineNum">     307</span>                 :             : </span>
-<span id="L308"><span class="lineNum">     308</span>                 :             : extern void nx_p9_rng_late_init(void);</span>
-<span id="L309"><span class="lineNum">     309</span>                 :             : </span>
-<span id="L310"><span class="lineNum">     310</span>                 :             : extern void fast_sleep_exit(void);</span>
-<span id="L311"><span class="lineNum">     311</span>                 :             : </span>
-<span id="L312"><span class="lineNum">     312</span>                 :             : /* Fallback fake RTC */</span>
-<span id="L313"><span class="lineNum">     313</span>                 :             : extern void fake_rtc_init(void);</span>
-<span id="L314"><span class="lineNum">     314</span>                 :             : </span>
-<span id="L315"><span class="lineNum">     315</span>                 :             : /* Exceptions */</span>
-<span id="L316"><span class="lineNum">     316</span>                 :             : struct stack_frame;</span>
-<span id="L317"><span class="lineNum">     317</span>                 :             : extern void exception_entry(struct stack_frame *stack);</span>
-<span id="L318"><span class="lineNum">     318</span>                 :             : extern void exception_entry_pm_sreset(void);</span>
-<span id="L319"><span class="lineNum">     319</span>                 :             : extern void __noreturn exception_entry_pm_mce(void);</span>
-<span id="L320"><span class="lineNum">     320</span>                 :             : </span>
-<span id="L321"><span class="lineNum">     321</span>                 :             : /* Assembly in head.S */</span>
-<span id="L322"><span class="lineNum">     322</span>                 :             : extern void disable_machine_check(void);</span>
-<span id="L323"><span class="lineNum">     323</span>                 :             : extern void enable_machine_check(void);</span>
-<span id="L324"><span class="lineNum">     324</span>                 :             : extern unsigned int enter_p8_pm_state(bool winkle);</span>
-<span id="L325"><span class="lineNum">     325</span>                 :             : extern unsigned int enter_p9_pm_state(uint64_t psscr);</span>
-<span id="L326"><span class="lineNum">     326</span>                 :             : extern void enter_p9_pm_lite_state(uint64_t psscr);</span>
-<span id="L327"><span class="lineNum">     327</span>                 :             : extern uint32_t reset_patch_start;</span>
-<span id="L328"><span class="lineNum">     328</span>                 :             : extern uint32_t reset_patch_end;</span>
-<span id="L329"><span class="lineNum">     329</span>                 :             : extern uint32_t reset_fast_reboot_patch_start;</span>
-<span id="L330"><span class="lineNum">     330</span>                 :             : extern uint32_t reset_fast_reboot_patch_end;</span>
-<span id="L331"><span class="lineNum">     331</span>                 :             : </span>
-<span id="L332"><span class="lineNum">     332</span>                 :             : /* Fallback fake NVRAM */</span>
-<span id="L333"><span class="lineNum">     333</span>                 :             : extern int fake_nvram_info(uint32_t *total_size);</span>
-<span id="L334"><span class="lineNum">     334</span>                 :             : extern int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len);</span>
-<span id="L335"><span class="lineNum">     335</span>                 :             : extern int fake_nvram_write(uint32_t offset, void *src, uint32_t size);</span>
-<span id="L336"><span class="lineNum">     336</span>                 :             : </span>
-<span id="L337"><span class="lineNum">     337</span>                 :             : /*</span>
-<span id="L338"><span class="lineNum">     338</span>                 :             :  * A bunch of hardware needs to be probed, sometimes in a particular order.</span>
-<span id="L339"><span class="lineNum">     339</span>                 :             :  * Very simple dependency graph, with a even simpler way to resolve it.</span>
-<span id="L340"><span class="lineNum">     340</span>                 :             :  * But it means we can now at link time choose what hardware we support.</span>
-<span id="L341"><span class="lineNum">     341</span>                 :             :  * This struct should not be defined directly but with the macros.</span>
-<span id="L342"><span class="lineNum">     342</span>                 :             :  */</span>
-<span id="L343"><span class="lineNum">     343</span>                 :             : struct hwprobe {</span>
-<span id="L344"><span class="lineNum">     344</span>                 :             :         const char      *name;</span>
-<span id="L345"><span class="lineNum">     345</span>                 :             :         void            (*probe)(void);</span>
-<span id="L346"><span class="lineNum">     346</span>                 :             : </span>
-<span id="L347"><span class="lineNum">     347</span>                 :             :         bool            probed;</span>
-<span id="L348"><span class="lineNum">     348</span>                 :             : </span>
-<span id="L349"><span class="lineNum">     349</span>                 :             :         /* NULL or NULL-terminated array of strings */</span>
-<span id="L350"><span class="lineNum">     350</span>                 :             :         const char      **deps;</span>
-<span id="L351"><span class="lineNum">     351</span>                 :             : };</span>
-<span id="L352"><span class="lineNum">     352</span>                 :             : </span>
-<span id="L353"><span class="lineNum">     353</span>                 :             : #define DEFINE_HWPROBE(__name, __probe)         \</span>
-<span id="L354"><span class="lineNum">     354</span>                 :             : static const struct hwprobe __used __section(&quot;.hwprobes&quot;) hwprobe_##__name = { \</span>
-<span id="L355"><span class="lineNum">     355</span>                 :             :         .name = #__name,                                \</span>
-<span id="L356"><span class="lineNum">     356</span>                 :             :         .probe = __probe,                               \</span>
-<span id="L357"><span class="lineNum">     357</span>                 :             :         .deps = NULL,                                   \</span>
-<span id="L358"><span class="lineNum">     358</span>                 :             : }</span>
-<span id="L359"><span class="lineNum">     359</span>                 :             : </span>
-<span id="L360"><span class="lineNum">     360</span>                 :             : #define DEFINE_HWPROBE_DEPS(__name, __probe, ...)       \</span>
-<span id="L361"><span class="lineNum">     361</span>                 :             : static const struct hwprobe __used __section(&quot;.hwprobes&quot;) hwprobe_##__name = { \</span>
-<span id="L362"><span class="lineNum">     362</span>                 :             :         .name = #__name,                                \</span>
-<span id="L363"><span class="lineNum">     363</span>                 :             :         .probe = __probe,                               \</span>
-<span id="L364"><span class="lineNum">     364</span>                 :             :         .deps = (const char *[]){ __VA_ARGS__, NULL},   \</span>
-<span id="L365"><span class="lineNum">     365</span>                 :             : }</span>
-<span id="L366"><span class="lineNum">     366</span>                 :             : </span>
-<span id="L367"><span class="lineNum">     367</span>                 :             : extern struct hwprobe __hwprobes_start;</span>
-<span id="L368"><span class="lineNum">     368</span>                 :             : extern struct hwprobe __hwprobes_end;</span>
-<span id="L369"><span class="lineNum">     369</span>                 :             : </span>
-<span id="L370"><span class="lineNum">     370</span>                 :             : extern void probe_hardware(void);</span>
-<span id="L371"><span class="lineNum">     371</span>                 :             : </span>
-<span id="L372"><span class="lineNum">     372</span>                 :             : #endif /* __SKIBOOT_H */</span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :         proc_gen_p11,</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             : };</span>
+<span id="L106"><span class="lineNum">     106</span>                 :             : extern enum proc_gen proc_gen;</span>
+<span id="L107"><span class="lineNum">     107</span>                 :             : </span>
+<span id="L108"><span class="lineNum">     108</span>                 :             : extern bool lpar_per_core;</span>
+<span id="L109"><span class="lineNum">     109</span>                 :             : </span>
+<span id="L110"><span class="lineNum">     110</span>                 :             : extern unsigned int pcie_max_link_speed;</span>
+<span id="L111"><span class="lineNum">     111</span>                 :             : </span>
+<span id="L112"><span class="lineNum">     112</span>                 :             : /* Convert a 4-bit number to a hex char */</span>
+<span id="L113"><span class="lineNum">     113</span>                 :             : extern char __attrconst tohex(uint8_t nibble);</span>
+<span id="L114"><span class="lineNum">     114</span>                 :             : </span>
+<span id="L115"><span class="lineNum">     115</span>                 :             : #ifndef __TEST__</span>
+<span id="L116"><span class="lineNum">     116</span>                 :             : /* Bit position of the most significant 1-bit (LSB=0, MSB=63) */</span>
+<span id="L117"><span class="lineNum">     117</span>                 :             : static inline int ilog2(unsigned long val)</span>
+<span id="L118"><span class="lineNum">     118</span>                 :             : {</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             :         int left_zeros;</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             : </span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :         asm volatile (&quot;cntlzd %0,%1&quot; : &quot;=r&quot; (left_zeros) : &quot;r&quot; (val));</span>
+<span id="L122"><span class="lineNum">     122</span>                 :             : </span>
+<span id="L123"><span class="lineNum">     123</span>                 :             :         return 63 - left_zeros;</span>
+<span id="L124"><span class="lineNum">     124</span>                 :             : }</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             : </span>
+<span id="L126"><span class="lineNum">     126</span>                 :             : static inline bool is_pow2(unsigned long val)</span>
+<span id="L127"><span class="lineNum">     127</span>                 :             : {</span>
+<span id="L128"><span class="lineNum">     128</span>                 :             :         return val == (1ul &lt;&lt; ilog2(val));</span>
+<span id="L129"><span class="lineNum">     129</span>                 :             : }</span>
+<span id="L130"><span class="lineNum">     130</span>                 :             : #endif</span>
+<span id="L131"><span class="lineNum">     131</span>                 :             : </span>
+<span id="L132"><span class="lineNum">     132</span>                 :             : #define lo32(x) ((x) &amp; 0xffffffff)</span>
+<span id="L133"><span class="lineNum">     133</span>                 :             : #define hi32(x) (((x) &gt;&gt; 32) &amp; 0xffffffff)</span>
+<span id="L134"><span class="lineNum">     134</span>                 :             : </span>
+<span id="L135"><span class="lineNum">     135</span>                 :             : /* WARNING: _a *MUST* be a power of two */</span>
+<span id="L136"><span class="lineNum">     136</span>                 :             : #define ALIGN_UP(_v, _a)        (((_v) + (_a) - 1) &amp; ~((_a) - 1))</span>
+<span id="L137"><span class="lineNum">     137</span>                 :             : #define ALIGN_DOWN(_v, _a)      ((_v) &amp; ~((_a) - 1))</span>
+<span id="L138"><span class="lineNum">     138</span>                 :             : </span>
+<span id="L139"><span class="lineNum">     139</span>                 :             : /* TCE alignment */</span>
+<span id="L140"><span class="lineNum">     140</span>                 :             : #define TCE_SHIFT       12</span>
+<span id="L141"><span class="lineNum">     141</span>                 :             : #define TCE_PSIZE       (1ul &lt;&lt; 12)</span>
+<span id="L142"><span class="lineNum">     142</span>                 :             : #define TCE_MASK        (TCE_PSIZE - 1)</span>
+<span id="L143"><span class="lineNum">     143</span>                 :             : </span>
+<span id="L144"><span class="lineNum">     144</span>                 :             : /* Not the greatest variants but will do for now ... */</span>
+<span id="L145"><span class="lineNum">     145</span>                 :             : #define MIN(a, b)       ((a) &lt; (b) ? (a) : (b))</span>
+<span id="L146"><span class="lineNum">     146</span>                 :             : #define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))</span>
+<span id="L147"><span class="lineNum">     147</span>                 :             : </span>
+<span id="L148"><span class="lineNum">     148</span>                 :             : /* PCI Geographical Addressing */</span>
+<span id="L149"><span class="lineNum">     149</span>                 :             : #define PCI_BUS_NUM(bdfn)       (((bdfn) &gt;&gt; 8) &amp; 0xff)</span>
+<span id="L150"><span class="lineNum">     150</span>                 :             : #define PCI_DEV(bdfn)           (((bdfn) &gt;&gt; 3) &amp; 0x1f)</span>
+<span id="L151"><span class="lineNum">     151</span>                 :             : #define PCI_FUNC(bdfn)          ((bdfn) &amp; 0x07)</span>
+<span id="L152"><span class="lineNum">     152</span>                 :             : </span>
+<span id="L153"><span class="lineNum">     153</span>                 :             : /*</span>
+<span id="L154"><span class="lineNum">     154</span>                 :             :  * To help the FSP to distinguish between physical address and TCE mapped address.</span>
+<span id="L155"><span class="lineNum">     155</span>                 :             :  * Also to help hostboot to distinguish physical and relative address.</span>
+<span id="L156"><span class="lineNum">     156</span>                 :             :  */</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             : #define HRMOR_BIT (1ul &lt;&lt; 63)</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             : </span>
+<span id="L159"><span class="lineNum">     159</span>                 :             : /* Clean the stray high bit which the FSP inserts: we only have 52 bits real */</span>
+<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">          53 : static inline u64 cleanup_addr(u64 addr)</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :             : {</span>
+<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">          53 :         return addr &amp; ((1ULL &lt;&lt; 52) - 1);</span></span>
+<span id="L163"><span class="lineNum">     163</span>                 :             : }</span>
+<span id="L164"><span class="lineNum">     164</span>                 :             : </span>
+<span id="L165"><span class="lineNum">     165</span>                 :             : /* Start the kernel */</span>
+<span id="L166"><span class="lineNum">     166</span>                 :             : extern void start_kernel(uint64_t entry, void* fdt,</span>
+<span id="L167"><span class="lineNum">     167</span>                 :             :                          uint64_t mem_top) __noreturn;</span>
+<span id="L168"><span class="lineNum">     168</span>                 :             : extern void start_kernel32(uint64_t entry, void* fdt,</span>
+<span id="L169"><span class="lineNum">     169</span>                 :             :                            uint64_t mem_top) __noreturn;</span>
+<span id="L170"><span class="lineNum">     170</span>                 :             : extern void start_kernel_secondary(uint64_t entry) __noreturn;</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             : </span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : /* Re-set r16 register with CPU pointer, based on stack (r1) value */</span>
+<span id="L173"><span class="lineNum">     173</span>                 :             : extern void restore_cpu_ptr_r16(void);</span>
+<span id="L174"><span class="lineNum">     174</span>                 :             : /* Set r16 register with value in 'r16' parameter */</span>
+<span id="L175"><span class="lineNum">     175</span>                 :             : extern void set_cpu_ptr_r16(uint64_t r16);</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             : </span>
+<span id="L177"><span class="lineNum">     177</span>                 :             : /* Get description of machine from HDAT and create device-tree */</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             : extern int parse_hdat(bool is_opal);</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             : </span>
+<span id="L180"><span class="lineNum">     180</span>                 :             : struct dt_node;</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             : </span>
+<span id="L182"><span class="lineNum">     182</span>                 :             : /* Add /cpus/features node for boot environment that passes an fdt */</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             : extern void dt_add_cpufeatures(struct dt_node *root);</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             : </span>
+<span id="L185"><span class="lineNum">     185</span>                 :             : /* Root of device tree. */</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             : extern struct dt_node *dt_root;</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             : </span>
+<span id="L188"><span class="lineNum">     188</span>                 :             : /* Full skiboot version number (possibly includes gitid). */</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             : extern const char version[];</span>
+<span id="L190"><span class="lineNum">     190</span>                 :             : </span>
+<span id="L191"><span class="lineNum">     191</span>                 :             : /* Debug support */</span>
+<span id="L192"><span class="lineNum">     192</span>                 :             : extern char __sym_map_start[];</span>
+<span id="L193"><span class="lineNum">     193</span>                 :             : extern char __sym_map_end[];</span>
+<span id="L194"><span class="lineNum">     194</span>                 :             : extern size_t snprintf_symbol(char *buf, size_t len, uint64_t addr);</span>
+<span id="L195"><span class="lineNum">     195</span>                 :             : </span>
+<span id="L196"><span class="lineNum">     196</span>                 :             : /* Direct controls */</span>
+<span id="L197"><span class="lineNum">     197</span>                 :             : extern void direct_controls_init(void);</span>
+<span id="L198"><span class="lineNum">     198</span>                 :             : extern int64_t opal_signal_system_reset(int cpu_nr);</span>
+<span id="L199"><span class="lineNum">     199</span>                 :             : </span>
+<span id="L200"><span class="lineNum">     200</span>                 :             : /* Fast reboot support */</span>
+<span id="L201"><span class="lineNum">     201</span>                 :             : extern void disable_fast_reboot(const char *reason);</span>
+<span id="L202"><span class="lineNum">     202</span>                 :             : extern void add_fast_reboot_dt_entries(void);</span>
+<span id="L203"><span class="lineNum">     203</span>                 :             : extern void fast_reboot(void);</span>
+<span id="L204"><span class="lineNum">     204</span>                 :             : extern void __noreturn __secondary_cpu_entry(void);</span>
+<span id="L205"><span class="lineNum">     205</span>                 :             : extern void __noreturn load_and_boot_kernel(bool is_reboot);</span>
+<span id="L206"><span class="lineNum">     206</span>                 :             : extern void cleanup_local_tlb(void);</span>
+<span id="L207"><span class="lineNum">     207</span>                 :             : extern void cleanup_global_tlb(void);</span>
+<span id="L208"><span class="lineNum">     208</span>                 :             : extern void init_shared_sprs(void);</span>
+<span id="L209"><span class="lineNum">     209</span>                 :             : extern void init_replicated_sprs(void);</span>
+<span id="L210"><span class="lineNum">     210</span>                 :             : extern bool start_preload_kernel(void);</span>
+<span id="L211"><span class="lineNum">     211</span>                 :             : extern void copy_exception_vectors(void);</span>
+<span id="L212"><span class="lineNum">     212</span>                 :             : extern void copy_sreset_vector(void);</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             : extern void copy_sreset_vector_fast_reboot(void);</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             : extern void patch_traps(bool enable);</span>
+<span id="L215"><span class="lineNum">     215</span>                 :             : </span>
+<span id="L216"><span class="lineNum">     216</span>                 :             : /* Various probe routines, to replace with an initcall system */</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             : extern int preload_capp_ucode(void);</span>
+<span id="L218"><span class="lineNum">     218</span>                 :             : extern void preload_io_vpd(void);</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             : extern void uart_init(void);</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             : extern void mbox_init(void);</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             : extern void early_uart_init(void);</span>
+<span id="L222"><span class="lineNum">     222</span>                 :             : extern void homer_init(void);</span>
+<span id="L223"><span class="lineNum">     223</span>                 :             : extern void add_cpu_idle_state_properties(void);</span>
+<span id="L224"><span class="lineNum">     224</span>                 :             : extern void lpc_rtc_init(void);</span>
+<span id="L225"><span class="lineNum">     225</span>                 :             : </span>
+<span id="L226"><span class="lineNum">     226</span>                 :             : /* flash support */</span>
+<span id="L227"><span class="lineNum">     227</span>                 :             : struct flash_chip;</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             : extern int flash_register(struct blocklevel_device *bl);</span>
+<span id="L229"><span class="lineNum">     229</span>                 :             : extern int flash_start_preload_resource(enum resource_id id, uint32_t subid,</span>
+<span id="L230"><span class="lineNum">     230</span>                 :             :                                         void *buf, size_t *len);</span>
+<span id="L231"><span class="lineNum">     231</span>                 :             : extern int flash_resource_loaded(enum resource_id id, uint32_t idx);</span>
+<span id="L232"><span class="lineNum">     232</span>                 :             : extern bool flash_reserve(void);</span>
+<span id="L233"><span class="lineNum">     233</span>                 :             : extern void flash_release(void);</span>
+<span id="L234"><span class="lineNum">     234</span>                 :             : extern bool flash_unregister(void);</span>
+<span id="L235"><span class="lineNum">     235</span>                 :             : #define FLASH_SUBPART_ALIGNMENT 0x1000</span>
+<span id="L236"><span class="lineNum">     236</span>                 :             : #define FLASH_SUBPART_HEADER_SIZE FLASH_SUBPART_ALIGNMENT</span>
+<span id="L237"><span class="lineNum">     237</span>                 :             : extern int flash_subpart_info(void *part_header, uint32_t header_len,</span>
+<span id="L238"><span class="lineNum">     238</span>                 :             :                               uint32_t part_size, uint32_t *part_actual,</span>
+<span id="L239"><span class="lineNum">     239</span>                 :             :                               uint32_t subid, uint32_t *offset,</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :                               uint32_t *size);</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             : extern void flash_fw_version_preload(void);</span>
+<span id="L242"><span class="lineNum">     242</span>                 :             : extern void flash_dt_add_fw_version(void);</span>
+<span id="L243"><span class="lineNum">     243</span>                 :             : extern const char *flash_map_resource_name(enum resource_id id);</span>
+<span id="L244"><span class="lineNum">     244</span>                 :             : extern int flash_secboot_info(uint32_t *total_size);</span>
+<span id="L245"><span class="lineNum">     245</span>                 :             : extern int flash_secboot_read(void *dst, uint32_t src, uint32_t len);</span>
+<span id="L246"><span class="lineNum">     246</span>                 :             : extern int flash_secboot_write(uint32_t dst, void *src, uint32_t len);</span>
+<span id="L247"><span class="lineNum">     247</span>                 :             : </span>
+<span id="L248"><span class="lineNum">     248</span>                 :             : /*</span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :  * Decompression routines</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :  *</span>
+<span id="L251"><span class="lineNum">     251</span>                 :             :  * The below structure members are needed for the xz library routines,</span>
+<span id="L252"><span class="lineNum">     252</span>                 :             :  *   src: Source address (The compressed binary)</span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :  *   src_size: Source size</span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :  *   dst: Destination address (The memory area where the `src` will be</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :  *        decompressed)</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :  *   dst_size: Destination size</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :  */</span>
+<span id="L258"><span class="lineNum">     258</span>                 :             : struct xz_decompress {</span>
+<span id="L259"><span class="lineNum">     259</span>                 :             :         void *dst;</span>
+<span id="L260"><span class="lineNum">     260</span>                 :             :         void *src;</span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :         size_t dst_size;</span>
+<span id="L262"><span class="lineNum">     262</span>                 :             :         size_t src_size;</span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :         /* The status of the decompress process:</span>
+<span id="L264"><span class="lineNum">     264</span>                 :             :              - OPAL_PARTIAL: if the job is in progress</span>
+<span id="L265"><span class="lineNum">     265</span>                 :             :              - OPAL_SUCCESS: if the job is successful</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :              - OPAL_NO_MEM: memory allocation failure</span>
+<span id="L267"><span class="lineNum">     267</span>                 :             :              - OPAL_PARAMETER: If any of the above (src, dst..) are invalid or</span>
+<span id="L268"><span class="lineNum">     268</span>                 :             :              if xz decompress fails. In which case the caller should check the</span>
+<span id="L269"><span class="lineNum">     269</span>                 :             :              xz_error for failure reason.</span>
+<span id="L270"><span class="lineNum">     270</span>                 :             :          */</span>
+<span id="L271"><span class="lineNum">     271</span>                 :             :         int status;</span>
+<span id="L272"><span class="lineNum">     272</span>                 :             :         int xz_error;</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             :         /* The decompression job, this will be freed if the caller uses</span>
+<span id="L274"><span class="lineNum">     274</span>                 :             :          * `wait_xz_decompression` function, in any other case its the</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :          * responsibility of caller to free the allocation job.  */</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             :         struct cpu_job *job;</span>
+<span id="L277"><span class="lineNum">     277</span>                 :             : };</span>
+<span id="L278"><span class="lineNum">     278</span>                 :             : </span>
+<span id="L279"><span class="lineNum">     279</span>                 :             : extern void xz_start_decompress(struct xz_decompress *);</span>
+<span id="L280"><span class="lineNum">     280</span>                 :             : extern void wait_xz_decompress(struct xz_decompress *);</span>
+<span id="L281"><span class="lineNum">     281</span>                 :             : </span>
+<span id="L282"><span class="lineNum">     282</span>                 :             : /* NVRAM support */</span>
+<span id="L283"><span class="lineNum">     283</span>                 :             : extern void nvram_init(void);</span>
+<span id="L284"><span class="lineNum">     284</span>                 :             : extern void nvram_read_complete(bool success);</span>
+<span id="L285"><span class="lineNum">     285</span>                 :             : </span>
+<span id="L286"><span class="lineNum">     286</span>                 :             : /* UART stuff */</span>
+<span id="L287"><span class="lineNum">     287</span>                 :             : enum {</span>
+<span id="L288"><span class="lineNum">     288</span>                 :             :         UART_CONSOLE_OPAL,</span>
+<span id="L289"><span class="lineNum">     289</span>                 :             :         UART_CONSOLE_OS</span>
+<span id="L290"><span class="lineNum">     290</span>                 :             : };</span>
+<span id="L291"><span class="lineNum">     291</span>                 :             : extern void uart_set_console_policy(int policy);</span>
+<span id="L292"><span class="lineNum">     292</span>                 :             : extern bool uart_enabled(void);</span>
+<span id="L293"><span class="lineNum">     293</span>                 :             : </span>
+<span id="L294"><span class="lineNum">     294</span>                 :             : /* PRD */</span>
+<span id="L295"><span class="lineNum">     295</span>                 :             : extern void prd_psi_interrupt(uint32_t proc);</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             : extern void prd_tmgt_interrupt(uint32_t proc);</span>
+<span id="L297"><span class="lineNum">     297</span>                 :             : extern void prd_occ_reset(uint32_t proc);</span>
+<span id="L298"><span class="lineNum">     298</span>                 :             : extern void prd_sbe_passthrough(uint32_t proc);</span>
+<span id="L299"><span class="lineNum">     299</span>                 :             : extern void prd_init(void);</span>
+<span id="L300"><span class="lineNum">     300</span>                 :             : extern void prd_register_reserved_memory(void);</span>
+<span id="L301"><span class="lineNum">     301</span>                 :             : extern void prd_fsp_occ_reset(uint32_t proc);</span>
+<span id="L302"><span class="lineNum">     302</span>                 :             : extern void prd_fsp_occ_load_start(u32 proc);</span>
+<span id="L303"><span class="lineNum">     303</span>                 :             : extern void prd_fw_resp_fsp_response(int status);</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             : extern int  prd_hbrt_fsp_msg_notify(void *data, u32 dsize);</span>
+<span id="L305"><span class="lineNum">     305</span>                 :             : </span>
+<span id="L306"><span class="lineNum">     306</span>                 :             : /* Flatten device-tree */</span>
+<span id="L307"><span class="lineNum">     307</span>                 :             : extern void *create_dtb(const struct dt_node *root, bool exclusive);</span>
+<span id="L308"><span class="lineNum">     308</span>                 :             : </span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : extern void nx_p9_rng_late_init(void);</span>
+<span id="L310"><span class="lineNum">     310</span>                 :             : </span>
+<span id="L311"><span class="lineNum">     311</span>                 :             : extern void fast_sleep_exit(void);</span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : </span>
+<span id="L313"><span class="lineNum">     313</span>                 :             : /* Fallback fake RTC */</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             : extern void fake_rtc_init(void);</span>
+<span id="L315"><span class="lineNum">     315</span>                 :             : </span>
+<span id="L316"><span class="lineNum">     316</span>                 :             : /* Exceptions */</span>
+<span id="L317"><span class="lineNum">     317</span>                 :             : struct stack_frame;</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             : extern void exception_entry(struct stack_frame *stack);</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             : extern void exception_entry_pm_sreset(void);</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             : extern void __noreturn exception_entry_pm_mce(void);</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             : </span>
+<span id="L322"><span class="lineNum">     322</span>                 :             : /* Assembly in head.S */</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             : extern void disable_machine_check(void);</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             : extern void enable_machine_check(void);</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             : extern unsigned int enter_p8_pm_state(bool winkle);</span>
+<span id="L326"><span class="lineNum">     326</span>                 :             : extern unsigned int enter_p9_pm_state(uint64_t psscr);</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             : extern void enter_p9_pm_lite_state(uint64_t psscr);</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             : extern uint32_t reset_patch_start;</span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : extern uint32_t reset_patch_end;</span>
+<span id="L330"><span class="lineNum">     330</span>                 :             : extern uint32_t reset_fast_reboot_patch_start;</span>
+<span id="L331"><span class="lineNum">     331</span>                 :             : extern uint32_t reset_fast_reboot_patch_end;</span>
+<span id="L332"><span class="lineNum">     332</span>                 :             : </span>
+<span id="L333"><span class="lineNum">     333</span>                 :             : /* Fallback fake NVRAM */</span>
+<span id="L334"><span class="lineNum">     334</span>                 :             : extern int fake_nvram_info(uint32_t *total_size);</span>
+<span id="L335"><span class="lineNum">     335</span>                 :             : extern int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len);</span>
+<span id="L336"><span class="lineNum">     336</span>                 :             : extern int fake_nvram_write(uint32_t offset, void *src, uint32_t size);</span>
+<span id="L337"><span class="lineNum">     337</span>                 :             : </span>
+<span id="L338"><span class="lineNum">     338</span>                 :             : /*</span>
+<span id="L339"><span class="lineNum">     339</span>                 :             :  * A bunch of hardware needs to be probed, sometimes in a particular order.</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             :  * Very simple dependency graph, with a even simpler way to resolve it.</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             :  * But it means we can now at link time choose what hardware we support.</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             :  * This struct should not be defined directly but with the macros.</span>
+<span id="L343"><span class="lineNum">     343</span>                 :             :  */</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             : struct hwprobe {</span>
+<span id="L345"><span class="lineNum">     345</span>                 :             :         const char      *name;</span>
+<span id="L346"><span class="lineNum">     346</span>                 :             :         void            (*probe)(void);</span>
+<span id="L347"><span class="lineNum">     347</span>                 :             : </span>
+<span id="L348"><span class="lineNum">     348</span>                 :             :         bool            probed;</span>
+<span id="L349"><span class="lineNum">     349</span>                 :             : </span>
+<span id="L350"><span class="lineNum">     350</span>                 :             :         /* NULL or NULL-terminated array of strings */</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             :         const char      **deps;</span>
+<span id="L352"><span class="lineNum">     352</span>                 :             : };</span>
+<span id="L353"><span class="lineNum">     353</span>                 :             : </span>
+<span id="L354"><span class="lineNum">     354</span>                 :             : #define DEFINE_HWPROBE(__name, __probe)         \</span>
+<span id="L355"><span class="lineNum">     355</span>                 :             : static const struct hwprobe __used __section(&quot;.hwprobes&quot;) hwprobe_##__name = { \</span>
+<span id="L356"><span class="lineNum">     356</span>                 :             :         .name = #__name,                                \</span>
+<span id="L357"><span class="lineNum">     357</span>                 :             :         .probe = __probe,                               \</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             :         .deps = NULL,                                   \</span>
+<span id="L359"><span class="lineNum">     359</span>                 :             : }</span>
+<span id="L360"><span class="lineNum">     360</span>                 :             : </span>
+<span id="L361"><span class="lineNum">     361</span>                 :             : #define DEFINE_HWPROBE_DEPS(__name, __probe, ...)       \</span>
+<span id="L362"><span class="lineNum">     362</span>                 :             : static const struct hwprobe __used __section(&quot;.hwprobes&quot;) hwprobe_##__name = { \</span>
+<span id="L363"><span class="lineNum">     363</span>                 :             :         .name = #__name,                                \</span>
+<span id="L364"><span class="lineNum">     364</span>                 :             :         .probe = __probe,                               \</span>
+<span id="L365"><span class="lineNum">     365</span>                 :             :         .deps = (const char *[]){ __VA_ARGS__, NULL},   \</span>
+<span id="L366"><span class="lineNum">     366</span>                 :             : }</span>
+<span id="L367"><span class="lineNum">     367</span>                 :             : </span>
+<span id="L368"><span class="lineNum">     368</span>                 :             : extern struct hwprobe __hwprobes_start;</span>
+<span id="L369"><span class="lineNum">     369</span>                 :             : extern struct hwprobe __hwprobes_end;</span>
+<span id="L370"><span class="lineNum">     370</span>                 :             : </span>
+<span id="L371"><span class="lineNum">     371</span>                 :             : extern void probe_hardware(void);</span>
+<span id="L372"><span class="lineNum">     372</span>                 :             : </span>
+<span id="L373"><span class="lineNum">     373</span>                 :             : #endif /* __SKIBOOT_H */</span>
         </pre>
               </td>
             </tr>

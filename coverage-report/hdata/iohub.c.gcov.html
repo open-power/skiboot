@@ -31,13 +31,13 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryLo">25.6&nbsp;%</td>
-            <td class="headerCovTableEntry">390</td>
+            <td class="headerCovTableEntryLo">25.3&nbsp;%</td>
+            <td class="headerCovTableEntry">395</td>
             <td class="headerCovTableEntry">100</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-02-26 14:45:00</td>
+            <td class="headerValue">2025-03-07 16:19:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryLo">40.0&nbsp;%</td>
@@ -914,88 +914,93 @@
 <span id="L843"><span class="lineNum">     843</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_INFO, &quot;CEC:     Rainier !\n&quot;);</span></span>
 <span id="L844"><span class="lineNum">     844</span>                 :<span class="tlaUNC">           0 :                         io_add_p9(hub, sp_iohubs);</span></span>
 <span id="L845"><span class="lineNum">     845</span>                 :<span class="tlaUNC">           0 :                         break;</span></span>
-<span id="L846"><span class="lineNum">     846</span>                 :<span class="tlaUNC">           0 :                 case CECHUB_HUB_DENALI:</span></span>
-<span id="L847"><span class="lineNum">     847</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_INFO, &quot;CEC:     Denali !\n&quot;);</span></span>
+<span id="L846"><span class="lineNum">     846</span>                 :<span class="tlaUNC">           0 :                 case CECHUB_HUB_EVEREST:</span></span>
+<span id="L847"><span class="lineNum">     847</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_INFO, &quot;CEC:     Everest !\n&quot;);</span></span>
 <span id="L848"><span class="lineNum">     848</span>                 :<span class="tlaUNC">           0 :                         io_add_p9(hub, sp_iohubs);</span></span>
 <span id="L849"><span class="lineNum">     849</span>                 :<span class="tlaUNC">           0 :                         break;</span></span>
-<span id="L850"><span class="lineNum">     850</span>                 :<span class="tlaUNC">           0 :                 default:</span></span>
-<span id="L851"><span class="lineNum">     851</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_ERR, &quot;CEC:     Hub ID 0x%04x unsupported !\n&quot;,</span></span>
-<span id="L852"><span class="lineNum">     852</span>                 :             :                               hub_id);</span>
-<span id="L853"><span class="lineNum">     853</span>                 :             :                 }</span>
-<span id="L854"><span class="lineNum">     854</span>                 :             : </span>
-<span id="L855"><span class="lineNum">     855</span>                 :<span class="tlaGNC tlaBgGNC">           2 :                 chip_id = pcid_to_chip_id(be32_to_cpu(hub-&gt;proc_chip_id));</span></span>
-<span id="L856"><span class="lineNum">     856</span>                 :             : </span>
-<span id="L857"><span class="lineNum">     857</span>                 :             :                 /* parse the slot map if we have one */</span>
-<span id="L858"><span class="lineNum">     858</span>                 :<span class="tlaGNC">           2 :                 io_parse_slots(sp_iohubs, chip_id);</span></span>
-<span id="L859"><span class="lineNum">     859</span>                 :             :         }</span>
+<span id="L850"><span class="lineNum">     850</span>                 :<span class="tlaUNC">           0 :                 case CECHUB_HUB_DENALI:</span></span>
+<span id="L851"><span class="lineNum">     851</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_INFO, &quot;CEC:     Denali !\n&quot;);</span></span>
+<span id="L852"><span class="lineNum">     852</span>                 :<span class="tlaUNC">           0 :                         io_add_p9(hub, sp_iohubs);</span></span>
+<span id="L853"><span class="lineNum">     853</span>                 :<span class="tlaUNC">           0 :                         break;</span></span>
+<span id="L854"><span class="lineNum">     854</span>                 :<span class="tlaUNC">           0 :                 default:</span></span>
+<span id="L855"><span class="lineNum">     855</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_ERR, &quot;CEC:     Hub ID 0x%04x unsupported !\n&quot;,</span></span>
+<span id="L856"><span class="lineNum">     856</span>                 :             :                               hub_id);</span>
+<span id="L857"><span class="lineNum">     857</span>                 :             :                 }</span>
+<span id="L858"><span class="lineNum">     858</span>                 :             : </span>
+<span id="L859"><span class="lineNum">     859</span>                 :<span class="tlaGNC tlaBgGNC">           2 :                 chip_id = pcid_to_chip_id(be32_to_cpu(hub-&gt;proc_chip_id));</span></span>
 <span id="L860"><span class="lineNum">     860</span>                 :             : </span>
-<span id="L861"><span class="lineNum">     861</span>                 :<span class="tlaGNC">           1 :         if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10)</span></span>
-<span id="L862"><span class="lineNum">     862</span>                 :<span class="tlaGNC">           1 :                 io_add_p8_cec_vpd(sp_iohubs);</span></span>
-<span id="L863"><span class="lineNum">     863</span>                 :             : }</span>
+<span id="L861"><span class="lineNum">     861</span>                 :             :                 /* parse the slot map if we have one */</span>
+<span id="L862"><span class="lineNum">     862</span>                 :<span class="tlaGNC">           2 :                 io_parse_slots(sp_iohubs, chip_id);</span></span>
+<span id="L863"><span class="lineNum">     863</span>                 :             :         }</span>
 <span id="L864"><span class="lineNum">     864</span>                 :             : </span>
-<span id="L865"><span class="lineNum">     865</span>                 :<span class="tlaGNC">           1 : void io_parse(void)</span></span>
-<span id="L866"><span class="lineNum">     866</span>                 :             : {</span>
-<span id="L867"><span class="lineNum">     867</span>                 :             :         const struct HDIF_common_hdr *sp_iohubs;</span>
-<span id="L868"><span class="lineNum">     868</span>                 :             :         unsigned int i, size;</span>
+<span id="L865"><span class="lineNum">     865</span>                 :<span class="tlaGNC">           1 :         if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10</span></span>
+<span id="L866"><span class="lineNum">     866</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 || proc_gen == proc_gen_p11)</span></span>
+<span id="L867"><span class="lineNum">     867</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 io_add_p8_cec_vpd(sp_iohubs);</span></span>
+<span id="L868"><span class="lineNum">     868</span>                 :             : }</span>
 <span id="L869"><span class="lineNum">     869</span>                 :             : </span>
-<span id="L870"><span class="lineNum">     870</span>                 :             :         /* Look for IO Hubs */</span>
-<span id="L871"><span class="lineNum">     871</span>                 :<span class="tlaGNC">           1 :         if (!get_hdif(&amp;spiras-&gt;ntuples.cec_iohub_fru, &quot;IO HUB&quot;)) {</span></span>
-<span id="L872"><span class="lineNum">     872</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prerror(&quot;CEC: Cannot locate IO Hub FRU data !\n&quot;);</span></span>
-<span id="L873"><span class="lineNum">     873</span>                 :<span class="tlaUNC">           0 :                 return;</span></span>
-<span id="L874"><span class="lineNum">     874</span>                 :             :         }</span>
-<span id="L875"><span class="lineNum">     875</span>                 :             : </span>
-<span id="L876"><span class="lineNum">     876</span>                 :             :         /*</span>
-<span id="L877"><span class="lineNum">     877</span>                 :             :          * Note about LXRn numbering ...</span>
-<span id="L878"><span class="lineNum">     878</span>                 :             :          *</span>
-<span id="L879"><span class="lineNum">     879</span>                 :             :          * I can't completely make sense of what that is supposed to be, so</span>
-<span id="L880"><span class="lineNum">     880</span>                 :             :          * for now, what we do is look for the first one we can find and</span>
-<span id="L881"><span class="lineNum">     881</span>                 :             :          * increment it for each chip. Works for the machines I have here</span>
-<span id="L882"><span class="lineNum">     882</span>                 :             :          */</span>
-<span id="L883"><span class="lineNum">     883</span>                 :             : </span>
-<span id="L884"><span class="lineNum">     884</span>                 :<span class="tlaGNC tlaBgGNC">           2 :         for_each_ntuple_idx(&amp;spiras-&gt;ntuples.cec_iohub_fru, sp_iohubs, i,</span></span>
-<span id="L885"><span class="lineNum">     885</span>                 :             :                             CECHUB_FRU_HDIF_SIG) {</span>
-<span id="L886"><span class="lineNum">     886</span>                 :             :                 const struct cechub_hub_fru_id *fru_id_data;</span>
-<span id="L887"><span class="lineNum">     887</span>                 :             :                 unsigned int type;</span>
-<span id="L888"><span class="lineNum">     888</span>                 :             :                 static const char *typestr[] = {</span>
-<span id="L889"><span class="lineNum">     889</span>                 :             :                         &quot;Reservation&quot;,</span>
-<span id="L890"><span class="lineNum">     890</span>                 :             :                         &quot;Card&quot;,</span>
-<span id="L891"><span class="lineNum">     891</span>                 :             :                         &quot;CPU Card&quot;,</span>
-<span id="L892"><span class="lineNum">     892</span>                 :             :                         &quot;Backplane&quot;,</span>
-<span id="L893"><span class="lineNum">     893</span>                 :             :                         &quot;Backplane Extension&quot;</span>
-<span id="L894"><span class="lineNum">     894</span>                 :             :                 };</span>
-<span id="L895"><span class="lineNum">     895</span>                 :<span class="tlaGNC">           1 :                 fru_id_data = HDIF_get_idata(sp_iohubs, CECHUB_FRU_ID_DATA_AREA,</span></span>
-<span id="L896"><span class="lineNum">     896</span>                 :             :                                              &amp;size);</span>
-<span id="L897"><span class="lineNum">     897</span>                 :<span class="tlaGNC">           1 :                 if (!fru_id_data || size &lt; sizeof(struct cechub_hub_fru_id)) {</span></span>
-<span id="L898"><span class="lineNum">     898</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prerror(&quot;CEC: IO-HUB FRU %d, bad ID data\n&quot;, i);</span></span>
-<span id="L899"><span class="lineNum">     899</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L900"><span class="lineNum">     900</span>                 :             :                 }</span>
-<span id="L901"><span class="lineNum">     901</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 type = be32_to_cpu(fru_id_data-&gt;card_type);</span></span>
-<span id="L902"><span class="lineNum">     902</span>                 :             : </span>
-<span id="L903"><span class="lineNum">     903</span>                 :<span class="tlaGNC">           1 :                 prlog(PR_INFO, &quot;CEC: HUB FRU %d is %s\n&quot;,</span></span>
-<span id="L904"><span class="lineNum">     904</span>                 :             :                       i, type &gt; 4 ? &quot;Unknown&quot; : typestr[type]);</span>
-<span id="L905"><span class="lineNum">     905</span>                 :             : </span>
-<span id="L906"><span class="lineNum">     906</span>                 :             :                 /*</span>
-<span id="L907"><span class="lineNum">     907</span>                 :             :                  * We currently only handle the backplane (Juno) and</span>
-<span id="L908"><span class="lineNum">     908</span>                 :             :                  * processor FRU (P8 machines)</span>
-<span id="L909"><span class="lineNum">     909</span>                 :             :                  */</span>
-<span id="L910"><span class="lineNum">     910</span>                 :<span class="tlaGNC">           1 :                 if (type != CECHUB_FRU_TYPE_CEC_BKPLANE &amp;&amp;</span></span>
-<span id="L911"><span class="lineNum">     911</span>                 :             :                     type != CECHUB_FRU_TYPE_CPU_CARD) {</span>
-<span id="L912"><span class="lineNum">     912</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prerror(&quot;CEC:   Unsupported type\n&quot;);</span></span>
-<span id="L913"><span class="lineNum">     913</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L914"><span class="lineNum">     914</span>                 :             :                 }</span>
-<span id="L915"><span class="lineNum">     915</span>                 :             : </span>
-<span id="L916"><span class="lineNum">     916</span>                 :             :                 /* We don't support Hubs connected to pass-through ports */</span>
-<span id="L917"><span class="lineNum">     917</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 if (fru_id_data-&gt;flags &amp; (CECHUB_FRU_FLAG_HEADLESS |</span></span>
-<span id="L918"><span class="lineNum">     918</span>                 :             :                                           CECHUB_FRU_FLAG_PASSTHROUGH)) {</span>
-<span id="L919"><span class="lineNum">     919</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prerror(&quot;CEC:   Headless or Passthrough unsupported\n&quot;);</span></span>
-<span id="L920"><span class="lineNum">     920</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L921"><span class="lineNum">     921</span>                 :             :                 }</span>
-<span id="L922"><span class="lineNum">     922</span>                 :             : </span>
-<span id="L923"><span class="lineNum">     923</span>                 :             :                 /* Ok, we have a reasonable candidate */</span>
-<span id="L924"><span class="lineNum">     924</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 io_parse_fru(sp_iohubs);</span></span>
-<span id="L925"><span class="lineNum">     925</span>                 :             :         }</span>
-<span id="L926"><span class="lineNum">     926</span>                 :             : }</span>
+<span id="L870"><span class="lineNum">     870</span>                 :<span class="tlaGNC">           1 : void io_parse(void)</span></span>
+<span id="L871"><span class="lineNum">     871</span>                 :             : {</span>
+<span id="L872"><span class="lineNum">     872</span>                 :             :         const struct HDIF_common_hdr *sp_iohubs;</span>
+<span id="L873"><span class="lineNum">     873</span>                 :             :         unsigned int i, size;</span>
+<span id="L874"><span class="lineNum">     874</span>                 :             : </span>
+<span id="L875"><span class="lineNum">     875</span>                 :             :         /* Look for IO Hubs */</span>
+<span id="L876"><span class="lineNum">     876</span>                 :<span class="tlaGNC">           1 :         if (!get_hdif(&amp;spiras-&gt;ntuples.cec_iohub_fru, &quot;IO HUB&quot;)) {</span></span>
+<span id="L877"><span class="lineNum">     877</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prerror(&quot;CEC: Cannot locate IO Hub FRU data !\n&quot;);</span></span>
+<span id="L878"><span class="lineNum">     878</span>                 :<span class="tlaUNC">           0 :                 return;</span></span>
+<span id="L879"><span class="lineNum">     879</span>                 :             :         }</span>
+<span id="L880"><span class="lineNum">     880</span>                 :             : </span>
+<span id="L881"><span class="lineNum">     881</span>                 :             :         /*</span>
+<span id="L882"><span class="lineNum">     882</span>                 :             :          * Note about LXRn numbering ...</span>
+<span id="L883"><span class="lineNum">     883</span>                 :             :          *</span>
+<span id="L884"><span class="lineNum">     884</span>                 :             :          * I can't completely make sense of what that is supposed to be, so</span>
+<span id="L885"><span class="lineNum">     885</span>                 :             :          * for now, what we do is look for the first one we can find and</span>
+<span id="L886"><span class="lineNum">     886</span>                 :             :          * increment it for each chip. Works for the machines I have here</span>
+<span id="L887"><span class="lineNum">     887</span>                 :             :          */</span>
+<span id="L888"><span class="lineNum">     888</span>                 :             : </span>
+<span id="L889"><span class="lineNum">     889</span>                 :<span class="tlaGNC tlaBgGNC">           2 :         for_each_ntuple_idx(&amp;spiras-&gt;ntuples.cec_iohub_fru, sp_iohubs, i,</span></span>
+<span id="L890"><span class="lineNum">     890</span>                 :             :                             CECHUB_FRU_HDIF_SIG) {</span>
+<span id="L891"><span class="lineNum">     891</span>                 :             :                 const struct cechub_hub_fru_id *fru_id_data;</span>
+<span id="L892"><span class="lineNum">     892</span>                 :             :                 unsigned int type;</span>
+<span id="L893"><span class="lineNum">     893</span>                 :             :                 static const char *typestr[] = {</span>
+<span id="L894"><span class="lineNum">     894</span>                 :             :                         &quot;Reservation&quot;,</span>
+<span id="L895"><span class="lineNum">     895</span>                 :             :                         &quot;Card&quot;,</span>
+<span id="L896"><span class="lineNum">     896</span>                 :             :                         &quot;CPU Card&quot;,</span>
+<span id="L897"><span class="lineNum">     897</span>                 :             :                         &quot;Backplane&quot;,</span>
+<span id="L898"><span class="lineNum">     898</span>                 :             :                         &quot;Backplane Extension&quot;</span>
+<span id="L899"><span class="lineNum">     899</span>                 :             :                 };</span>
+<span id="L900"><span class="lineNum">     900</span>                 :<span class="tlaGNC">           1 :                 fru_id_data = HDIF_get_idata(sp_iohubs, CECHUB_FRU_ID_DATA_AREA,</span></span>
+<span id="L901"><span class="lineNum">     901</span>                 :             :                                              &amp;size);</span>
+<span id="L902"><span class="lineNum">     902</span>                 :<span class="tlaGNC">           1 :                 if (!fru_id_data || size &lt; sizeof(struct cechub_hub_fru_id)) {</span></span>
+<span id="L903"><span class="lineNum">     903</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prerror(&quot;CEC: IO-HUB FRU %d, bad ID data\n&quot;, i);</span></span>
+<span id="L904"><span class="lineNum">     904</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L905"><span class="lineNum">     905</span>                 :             :                 }</span>
+<span id="L906"><span class="lineNum">     906</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 type = be32_to_cpu(fru_id_data-&gt;card_type);</span></span>
+<span id="L907"><span class="lineNum">     907</span>                 :             : </span>
+<span id="L908"><span class="lineNum">     908</span>                 :<span class="tlaGNC">           1 :                 prlog(PR_INFO, &quot;CEC: HUB FRU %d is %s\n&quot;,</span></span>
+<span id="L909"><span class="lineNum">     909</span>                 :             :                       i, type &gt; 4 ? &quot;Unknown&quot; : typestr[type]);</span>
+<span id="L910"><span class="lineNum">     910</span>                 :             : </span>
+<span id="L911"><span class="lineNum">     911</span>                 :             :                 /*</span>
+<span id="L912"><span class="lineNum">     912</span>                 :             :                  * We currently only handle the backplane (Juno) and</span>
+<span id="L913"><span class="lineNum">     913</span>                 :             :                  * processor FRU (P8 machines)</span>
+<span id="L914"><span class="lineNum">     914</span>                 :             :                  */</span>
+<span id="L915"><span class="lineNum">     915</span>                 :<span class="tlaGNC">           1 :                 if (type != CECHUB_FRU_TYPE_CEC_BKPLANE &amp;&amp;</span></span>
+<span id="L916"><span class="lineNum">     916</span>                 :             :                     type != CECHUB_FRU_TYPE_CPU_CARD) {</span>
+<span id="L917"><span class="lineNum">     917</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prerror(&quot;CEC:   Unsupported type\n&quot;);</span></span>
+<span id="L918"><span class="lineNum">     918</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L919"><span class="lineNum">     919</span>                 :             :                 }</span>
+<span id="L920"><span class="lineNum">     920</span>                 :             : </span>
+<span id="L921"><span class="lineNum">     921</span>                 :             :                 /* We don't support Hubs connected to pass-through ports */</span>
+<span id="L922"><span class="lineNum">     922</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 if (fru_id_data-&gt;flags &amp; (CECHUB_FRU_FLAG_HEADLESS |</span></span>
+<span id="L923"><span class="lineNum">     923</span>                 :             :                                           CECHUB_FRU_FLAG_PASSTHROUGH)) {</span>
+<span id="L924"><span class="lineNum">     924</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         prerror(&quot;CEC:   Headless or Passthrough unsupported\n&quot;);</span></span>
+<span id="L925"><span class="lineNum">     925</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L926"><span class="lineNum">     926</span>                 :             :                 }</span>
 <span id="L927"><span class="lineNum">     927</span>                 :             : </span>
+<span id="L928"><span class="lineNum">     928</span>                 :             :                 /* Ok, we have a reasonable candidate */</span>
+<span id="L929"><span class="lineNum">     929</span>                 :<span class="tlaGNC tlaBgGNC">           1 :                 io_parse_fru(sp_iohubs);</span></span>
+<span id="L930"><span class="lineNum">     930</span>                 :             :         }</span>
+<span id="L931"><span class="lineNum">     931</span>                 :             : }</span>
+<span id="L932"><span class="lineNum">     932</span>                 :             : </span>
         </pre>
               </td>
             </tr>

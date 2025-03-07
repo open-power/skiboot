@@ -31,13 +31,13 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryMed">77.6&nbsp;%</td>
-            <td class="headerCovTableEntry">49</td>
+            <td class="headerCovTableEntryLo">73.1&nbsp;%</td>
+            <td class="headerCovTableEntry">52</td>
             <td class="headerCovTableEntry">38</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-02-26 14:45:00</td>
+            <td class="headerValue">2025-03-07 16:19:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">75.0&nbsp;%</td>
@@ -557,11 +557,14 @@
 <span id="L486"><span class="lineNum">     486</span>                 :<span class="tlaGNC">           1 :         } else if (proc_gen == proc_gen_p10) {</span></span>
 <span id="L487"><span class="lineNum">     487</span>                 :<span class="tlaGNC">           1 :                 name = &quot;p10&quot;;</span></span>
 <span id="L488"><span class="lineNum">     488</span>                 :<span class="tlaGNC">           1 :                 phys_map = &amp;phys_map_p10;</span></span>
-<span id="L489"><span class="lineNum">     489</span>                 :             :         }</span>
-<span id="L490"><span class="lineNum">     490</span>                 :             : </span>
-<span id="L491"><span class="lineNum">     491</span>                 :<span class="tlaGNC">           3 :         prlog(PR_DEBUG, &quot;Assigning physical memory map table for %s\n&quot;, name);</span></span>
-<span id="L492"><span class="lineNum">     492</span>                 :             : </span>
-<span id="L493"><span class="lineNum">     493</span>                 :<span class="tlaGNC">           3 : }</span></span>
+<span id="L489"><span class="lineNum">     489</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         } else if (proc_gen == proc_gen_p11) {</span></span>
+<span id="L490"><span class="lineNum">     490</span>                 :<span class="tlaUNC">           0 :                 name = &quot;p11&quot;;</span></span>
+<span id="L491"><span class="lineNum">     491</span>                 :<span class="tlaUNC">           0 :                 phys_map = &amp;phys_map_p10;</span></span>
+<span id="L492"><span class="lineNum">     492</span>                 :             :         }</span>
+<span id="L493"><span class="lineNum">     493</span>                 :             : </span>
+<span id="L494"><span class="lineNum">     494</span>                 :<span class="tlaGNC tlaBgGNC">           3 :         prlog(PR_DEBUG, &quot;Assigning physical memory map table for %s\n&quot;, name);</span></span>
+<span id="L495"><span class="lineNum">     495</span>                 :             : </span>
+<span id="L496"><span class="lineNum">     496</span>                 :<span class="tlaGNC">           3 : }</span></span>
         </pre>
               </td>
             </tr>

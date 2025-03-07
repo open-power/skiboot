@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-02-26 14:45:00</td>
+            <td class="headerValue">2025-03-07 16:19:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryLo">50.0&nbsp;%</td>
@@ -282,237 +282,243 @@
 <span id="L211"><span class="lineNum">     211</span>                 :             : #define PVR_TYPE_P9     0x004e</span>
 <span id="L212"><span class="lineNum">     212</span>                 :             : #define PVR_TYPE_P9P    0x004f /* Axone */</span>
 <span id="L213"><span class="lineNum">     213</span>                 :             : #define PVR_TYPE_P10    0x0080</span>
-<span id="L214"><span class="lineNum">     214</span>                 :             : </span>
-<span id="L215"><span class="lineNum">     215</span>                 :             : #ifdef __ASSEMBLY__</span>
-<span id="L216"><span class="lineNum">     216</span>                 :             : </span>
-<span id="L217"><span class="lineNum">     217</span>                 :             : /* Thread priority control opcodes */</span>
-<span id="L218"><span class="lineNum">     218</span>                 :             : #define smt_low         or 1,1,1</span>
-<span id="L219"><span class="lineNum">     219</span>                 :             : #define smt_medium      or 2,2,2</span>
-<span id="L220"><span class="lineNum">     220</span>                 :             : #define smt_high        or 3,3,3</span>
-<span id="L221"><span class="lineNum">     221</span>                 :             : #define smt_medium_high or 5,5,5</span>
-<span id="L222"><span class="lineNum">     222</span>                 :             : #define smt_medium_low  or 6,6,6</span>
-<span id="L223"><span class="lineNum">     223</span>                 :             : #define smt_extra_high  or 7,7,7</span>
-<span id="L224"><span class="lineNum">     224</span>                 :             : #define smt_very_low    or 31,31,31</span>
-<span id="L225"><span class="lineNum">     225</span>                 :             : #define smt_lowest      smt_low ; smt_very_low</span>
-<span id="L226"><span class="lineNum">     226</span>                 :             : </span>
-<span id="L227"><span class="lineNum">     227</span>                 :             : #else /* __ASSEMBLY__ */</span>
-<span id="L228"><span class="lineNum">     228</span>                 :             : </span>
-<span id="L229"><span class="lineNum">     229</span>                 :             : #include &lt;ccan/str/str.h&gt;</span>
-<span id="L230"><span class="lineNum">     230</span>                 :             : #include &lt;compiler.h&gt;</span>
-<span id="L231"><span class="lineNum">     231</span>                 :             : #include &lt;stdbool.h&gt;</span>
-<span id="L232"><span class="lineNum">     232</span>                 :             : #include &lt;stdint.h&gt;</span>
-<span id="L233"><span class="lineNum">     233</span>                 :             : </span>
-<span id="L234"><span class="lineNum">     234</span>                 :             : #define PPC_INST_NOP    0x60000000UL</span>
-<span id="L235"><span class="lineNum">     235</span>                 :             : #define PPC_INST_TRAP   0x7fe00008UL</span>
-<span id="L236"><span class="lineNum">     236</span>                 :             : </span>
-<span id="L237"><span class="lineNum">     237</span>                 :             : #define RB(b)           (((b) &amp; 0x1f) &lt;&lt; 11)</span>
-<span id="L238"><span class="lineNum">     238</span>                 :             : #define MSGSND(b)       stringify(.long 0x7c00019c | RB(b))</span>
-<span id="L239"><span class="lineNum">     239</span>                 :             : #define MSGCLR(b)       stringify(.long 0x7c0001dc | RB(b))</span>
-<span id="L240"><span class="lineNum">     240</span>                 :             : #define MSGSYNC         stringify(.long 0x7c0006ec)</span>
-<span id="L241"><span class="lineNum">     241</span>                 :             : </span>
-<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC tlaBgGNC">           4 : static inline bool is_power9n(uint32_t version)</span></span>
-<span id="L243"><span class="lineNum">     243</span>                 :             : {</span>
-<span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaGNC">           4 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></span>
-<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return false;</span></span>
-<span id="L246"><span class="lineNum">     246</span>                 :             :         /*</span>
-<span id="L247"><span class="lineNum">     247</span>                 :             :          * Bit 13 tells us:</span>
-<span id="L248"><span class="lineNum">     248</span>                 :             :          *   0 = Scale out (aka Nimbus)</span>
-<span id="L249"><span class="lineNum">     249</span>                 :             :          *   1 = Scale up  (aka Cumulus)</span>
-<span id="L250"><span class="lineNum">     250</span>                 :             :          */</span>
-<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC tlaBgGNC">           4 :         if ((version &gt;&gt; 13) &amp; 1)</span></span>
-<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return false;</span></span>
-<span id="L253"><span class="lineNum">     253</span>                 :<span class="tlaGNC tlaBgGNC">           4 :         return true;</span></span>
-<span id="L254"><span class="lineNum">     254</span>                 :             : }</span>
-<span id="L255"><span class="lineNum">     255</span>                 :             : </span>
-<span id="L256"><span class="lineNum">     256</span>                 :             : static inline bool is_fused_core(uint32_t version)</span>
-<span id="L257"><span class="lineNum">     257</span>                 :             : {</span>
-<span id="L258"><span class="lineNum">     258</span>                 :             :         if (PVR_TYPE(version) == PVR_TYPE_P9) {</span>
-<span id="L259"><span class="lineNum">     259</span>                 :             :                 switch(PVR_CHIP_TYPE(version)) {</span>
-<span id="L260"><span class="lineNum">     260</span>                 :             :                         case 0:</span>
-<span id="L261"><span class="lineNum">     261</span>                 :             :                         case 2:</span>
-<span id="L262"><span class="lineNum">     262</span>                 :             :                                 return true;</span>
-<span id="L263"><span class="lineNum">     263</span>                 :             :                         default:</span>
-<span id="L264"><span class="lineNum">     264</span>                 :             :                                 return false;</span>
-<span id="L265"><span class="lineNum">     265</span>                 :             :                 }</span>
-<span id="L266"><span class="lineNum">     266</span>                 :             : </span>
-<span id="L267"><span class="lineNum">     267</span>                 :             :         } else if(PVR_TYPE(version) == PVR_TYPE_P10) {</span>
-<span id="L268"><span class="lineNum">     268</span>                 :             :                 if(PVR_CHIP_TYPE(version) &amp; 0x01)</span>
-<span id="L269"><span class="lineNum">     269</span>                 :             :                         return false;</span>
-<span id="L270"><span class="lineNum">     270</span>                 :             :                 else</span>
-<span id="L271"><span class="lineNum">     271</span>                 :             :                         return true;</span>
-<span id="L272"><span class="lineNum">     272</span>                 :             :         } else</span>
-<span id="L273"><span class="lineNum">     273</span>                 :             :                 return false;</span>
-<span id="L274"><span class="lineNum">     274</span>                 :             : }</span>
-<span id="L275"><span class="lineNum">     275</span>                 :             : </span>
-<span id="L276"><span class="lineNum">     276</span>                 :<span class="tlaUNC tlaBgUNC">           0 : static inline bool is_power9c(uint32_t version) </span></span>
-<span id="L277"><span class="lineNum">     277</span>                 :             : {</span>
-<span id="L278"><span class="lineNum">     278</span>                 :             : </span>
-<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaUNC">           0 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></span>
-<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
-<span id="L281"><span class="lineNum">     281</span>                 :             :         /*</span>
-<span id="L282"><span class="lineNum">     282</span>                 :             :          * Bit 13 tells us:</span>
-<span id="L283"><span class="lineNum">     283</span>                 :             :          *   0 = Scale out (aka Nimbus)</span>
-<span id="L284"><span class="lineNum">     284</span>                 :             :          *   1 = Scale up  (aka Cumulus)</span>
-<span id="L285"><span class="lineNum">     285</span>                 :             :          */</span>
-<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaUNC">           0 :         if (!((version &gt;&gt; 13) &amp; 1))</span></span>
-<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
-<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaUNC">           0 :         return true;</span></span>
-<span id="L289"><span class="lineNum">     289</span>                 :             : }</span>
-<span id="L290"><span class="lineNum">     290</span>                 :             : </span>
-<span id="L291"><span class="lineNum">     291</span>                 :             : #ifndef __TEST__</span>
-<span id="L292"><span class="lineNum">     292</span>                 :             : </span>
-<span id="L293"><span class="lineNum">     293</span>                 :             : /* POWER9 and above only */</span>
-<span id="L294"><span class="lineNum">     294</span>                 :             : static inline void flush_erat(void)</span>
-<span id="L295"><span class="lineNum">     295</span>                 :             : {</span>
-<span id="L296"><span class="lineNum">     296</span>                 :             :         asm volatile(&quot;slbia        7&quot;);</span>
-<span id="L297"><span class="lineNum">     297</span>                 :             : }</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             : #define PVR_TYPE_P11    0x0082</span>
+<span id="L215"><span class="lineNum">     215</span>                 :             : </span>
+<span id="L216"><span class="lineNum">     216</span>                 :             : #ifdef __ASSEMBLY__</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             : </span>
+<span id="L218"><span class="lineNum">     218</span>                 :             : /* Thread priority control opcodes */</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             : #define smt_low         or 1,1,1</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             : #define smt_medium      or 2,2,2</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             : #define smt_high        or 3,3,3</span>
+<span id="L222"><span class="lineNum">     222</span>                 :             : #define smt_medium_high or 5,5,5</span>
+<span id="L223"><span class="lineNum">     223</span>                 :             : #define smt_medium_low  or 6,6,6</span>
+<span id="L224"><span class="lineNum">     224</span>                 :             : #define smt_extra_high  or 7,7,7</span>
+<span id="L225"><span class="lineNum">     225</span>                 :             : #define smt_very_low    or 31,31,31</span>
+<span id="L226"><span class="lineNum">     226</span>                 :             : #define smt_lowest      smt_low ; smt_very_low</span>
+<span id="L227"><span class="lineNum">     227</span>                 :             : </span>
+<span id="L228"><span class="lineNum">     228</span>                 :             : #else /* __ASSEMBLY__ */</span>
+<span id="L229"><span class="lineNum">     229</span>                 :             : </span>
+<span id="L230"><span class="lineNum">     230</span>                 :             : #include &lt;ccan/str/str.h&gt;</span>
+<span id="L231"><span class="lineNum">     231</span>                 :             : #include &lt;compiler.h&gt;</span>
+<span id="L232"><span class="lineNum">     232</span>                 :             : #include &lt;stdbool.h&gt;</span>
+<span id="L233"><span class="lineNum">     233</span>                 :             : #include &lt;stdint.h&gt;</span>
+<span id="L234"><span class="lineNum">     234</span>                 :             : </span>
+<span id="L235"><span class="lineNum">     235</span>                 :             : #define PPC_INST_NOP    0x60000000UL</span>
+<span id="L236"><span class="lineNum">     236</span>                 :             : #define PPC_INST_TRAP   0x7fe00008UL</span>
+<span id="L237"><span class="lineNum">     237</span>                 :             : </span>
+<span id="L238"><span class="lineNum">     238</span>                 :             : #define RB(b)           (((b) &amp; 0x1f) &lt;&lt; 11)</span>
+<span id="L239"><span class="lineNum">     239</span>                 :             : #define MSGSND(b)       stringify(.long 0x7c00019c | RB(b))</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             : #define MSGCLR(b)       stringify(.long 0x7c0001dc | RB(b))</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             : #define MSGSYNC         stringify(.long 0x7c0006ec)</span>
+<span id="L242"><span class="lineNum">     242</span>                 :             : </span>
+<span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC tlaBgGNC">           4 : static inline bool is_power9n(uint32_t version)</span></span>
+<span id="L244"><span class="lineNum">     244</span>                 :             : {</span>
+<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">           4 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></span>
+<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return false;</span></span>
+<span id="L247"><span class="lineNum">     247</span>                 :             :         /*</span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :          * Bit 13 tells us:</span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :          *   0 = Scale out (aka Nimbus)</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :          *   1 = Scale up  (aka Cumulus)</span>
+<span id="L251"><span class="lineNum">     251</span>                 :             :          */</span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC tlaBgGNC">           4 :         if ((version &gt;&gt; 13) &amp; 1)</span></span>
+<span id="L253"><span class="lineNum">     253</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return false;</span></span>
+<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaGNC tlaBgGNC">           4 :         return true;</span></span>
+<span id="L255"><span class="lineNum">     255</span>                 :             : }</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             : </span>
+<span id="L257"><span class="lineNum">     257</span>                 :             : static inline bool is_fused_core(uint32_t version)</span>
+<span id="L258"><span class="lineNum">     258</span>                 :             : {</span>
+<span id="L259"><span class="lineNum">     259</span>                 :             :         if (PVR_TYPE(version) == PVR_TYPE_P9) {</span>
+<span id="L260"><span class="lineNum">     260</span>                 :             :                 switch(PVR_CHIP_TYPE(version)) {</span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :                         case 0:</span>
+<span id="L262"><span class="lineNum">     262</span>                 :             :                         case 2:</span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :                                 return true;</span>
+<span id="L264"><span class="lineNum">     264</span>                 :             :                         default:</span>
+<span id="L265"><span class="lineNum">     265</span>                 :             :                                 return false;</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :                 }</span>
+<span id="L267"><span class="lineNum">     267</span>                 :             : </span>
+<span id="L268"><span class="lineNum">     268</span>                 :             :         } else if(PVR_TYPE(version) == PVR_TYPE_P10) {</span>
+<span id="L269"><span class="lineNum">     269</span>                 :             :                 if(PVR_CHIP_TYPE(version) &amp; 0x01)</span>
+<span id="L270"><span class="lineNum">     270</span>                 :             :                         return false;</span>
+<span id="L271"><span class="lineNum">     271</span>                 :             :                 else</span>
+<span id="L272"><span class="lineNum">     272</span>                 :             :                         return true;</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             :         } else if (PVR_TYPE(version) == PVR_TYPE_P11) {</span>
+<span id="L274"><span class="lineNum">     274</span>                 :             :                 if (PVR_CHIP_TYPE(version) &amp; 0x01)</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :                         return false;</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             :                 else</span>
+<span id="L277"><span class="lineNum">     277</span>                 :             :                         return true;</span>
+<span id="L278"><span class="lineNum">     278</span>                 :             :         } else</span>
+<span id="L279"><span class="lineNum">     279</span>                 :             :                 return false;</span>
+<span id="L280"><span class="lineNum">     280</span>                 :             : }</span>
+<span id="L281"><span class="lineNum">     281</span>                 :             : </span>
+<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaUNC tlaBgUNC">           0 : static inline bool is_power9c(uint32_t version) </span></span>
+<span id="L283"><span class="lineNum">     283</span>                 :             : {</span>
+<span id="L284"><span class="lineNum">     284</span>                 :             : </span>
+<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaUNC">           0 :         if (PVR_TYPE(version) != PVR_TYPE_P9)</span></span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :             :         /*</span>
+<span id="L288"><span class="lineNum">     288</span>                 :             :          * Bit 13 tells us:</span>
+<span id="L289"><span class="lineNum">     289</span>                 :             :          *   0 = Scale out (aka Nimbus)</span>
+<span id="L290"><span class="lineNum">     290</span>                 :             :          *   1 = Scale up  (aka Cumulus)</span>
+<span id="L291"><span class="lineNum">     291</span>                 :             :          */</span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaUNC">           0 :         if (!((version &gt;&gt; 13) &amp; 1))</span></span>
+<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaUNC">           0 :         return true;</span></span>
+<span id="L295"><span class="lineNum">     295</span>                 :             : }</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             : </span>
+<span id="L297"><span class="lineNum">     297</span>                 :             : #ifndef __TEST__</span>
 <span id="L298"><span class="lineNum">     298</span>                 :             : </span>
-<span id="L299"><span class="lineNum">     299</span>                 :             : /*</span>
-<span id="L300"><span class="lineNum">     300</span>                 :             :  * SMT priority</span>
-<span id="L301"><span class="lineNum">     301</span>                 :             :  */</span>
-<span id="L302"><span class="lineNum">     302</span>                 :             : </span>
-<span id="L303"><span class="lineNum">     303</span>                 :             : static inline void smt_low(void)        { asm volatile(&quot;or 1,1,1&quot;);   }</span>
-<span id="L304"><span class="lineNum">     304</span>                 :             : static inline void smt_medium(void)     { asm volatile(&quot;or 2,2,2&quot;);   }</span>
-<span id="L305"><span class="lineNum">     305</span>                 :             : static inline void smt_high(void)       { asm volatile(&quot;or 3,3,3&quot;);   }</span>
-<span id="L306"><span class="lineNum">     306</span>                 :             : static inline void smt_medium_high(void){ asm volatile(&quot;or 5,5,5&quot;);   }</span>
-<span id="L307"><span class="lineNum">     307</span>                 :             : static inline void smt_medium_low(void) { asm volatile(&quot;or 6,6,6&quot;);   }</span>
-<span id="L308"><span class="lineNum">     308</span>                 :             : static inline void smt_extra_high(void) { asm volatile(&quot;or 7,7,7&quot;);   }</span>
-<span id="L309"><span class="lineNum">     309</span>                 :             : static inline void smt_very_low(void)   { asm volatile(&quot;or 31,31,31&quot;);        }</span>
-<span id="L310"><span class="lineNum">     310</span>                 :             : static inline void smt_lowest(void)     { smt_low(); smt_very_low();    }</span>
-<span id="L311"><span class="lineNum">     311</span>                 :             : </span>
-<span id="L312"><span class="lineNum">     312</span>                 :             : /*</span>
-<span id="L313"><span class="lineNum">     313</span>                 :             :  * SPR access functions</span>
-<span id="L314"><span class="lineNum">     314</span>                 :             :  */</span>
-<span id="L315"><span class="lineNum">     315</span>                 :             : </span>
-<span id="L316"><span class="lineNum">     316</span>                 :             : static inline unsigned long mfmsr(void)</span>
-<span id="L317"><span class="lineNum">     317</span>                 :             : {</span>
-<span id="L318"><span class="lineNum">     318</span>                 :             :         unsigned long val;</span>
-<span id="L319"><span class="lineNum">     319</span>                 :             :         </span>
-<span id="L320"><span class="lineNum">     320</span>                 :             :         asm volatile(&quot;mfmsr %0&quot; : &quot;=r&quot;(val) : : &quot;memory&quot;);</span>
-<span id="L321"><span class="lineNum">     321</span>                 :             :         return val;</span>
-<span id="L322"><span class="lineNum">     322</span>                 :             : }</span>
-<span id="L323"><span class="lineNum">     323</span>                 :             : </span>
-<span id="L324"><span class="lineNum">     324</span>                 :             : static inline void mtmsr(unsigned long val)</span>
-<span id="L325"><span class="lineNum">     325</span>                 :             : {</span>
-<span id="L326"><span class="lineNum">     326</span>                 :             :         asm volatile(&quot;mtmsr %0&quot; : : &quot;r&quot;(val) : &quot;memory&quot;);</span>
-<span id="L327"><span class="lineNum">     327</span>                 :             : }</span>
-<span id="L328"><span class="lineNum">     328</span>                 :             : </span>
-<span id="L329"><span class="lineNum">     329</span>                 :             : static inline void mtmsrd(unsigned long val, int l)</span>
-<span id="L330"><span class="lineNum">     330</span>                 :             : {</span>
-<span id="L331"><span class="lineNum">     331</span>                 :             :         asm volatile(&quot;mtmsrd %0,%1&quot; : : &quot;r&quot;(val), &quot;i&quot;(l) : &quot;memory&quot;);</span>
-<span id="L332"><span class="lineNum">     332</span>                 :             : }</span>
-<span id="L333"><span class="lineNum">     333</span>                 :             : </span>
-<span id="L334"><span class="lineNum">     334</span>                 :             : static inline __attribute__((always_inline))</span>
-<span id="L335"><span class="lineNum">     335</span>                 :             : unsigned long mfspr(const unsigned int spr)</span>
+<span id="L299"><span class="lineNum">     299</span>                 :             : /* POWER9 and above only */</span>
+<span id="L300"><span class="lineNum">     300</span>                 :             : static inline void flush_erat(void)</span>
+<span id="L301"><span class="lineNum">     301</span>                 :             : {</span>
+<span id="L302"><span class="lineNum">     302</span>                 :             :         asm volatile(&quot;slbia        7&quot;);</span>
+<span id="L303"><span class="lineNum">     303</span>                 :             : }</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             : </span>
+<span id="L305"><span class="lineNum">     305</span>                 :             : /*</span>
+<span id="L306"><span class="lineNum">     306</span>                 :             :  * SMT priority</span>
+<span id="L307"><span class="lineNum">     307</span>                 :             :  */</span>
+<span id="L308"><span class="lineNum">     308</span>                 :             : </span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : static inline void smt_low(void)        { asm volatile(&quot;or 1,1,1&quot;);   }</span>
+<span id="L310"><span class="lineNum">     310</span>                 :             : static inline void smt_medium(void)     { asm volatile(&quot;or 2,2,2&quot;);   }</span>
+<span id="L311"><span class="lineNum">     311</span>                 :             : static inline void smt_high(void)       { asm volatile(&quot;or 3,3,3&quot;);   }</span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : static inline void smt_medium_high(void){ asm volatile(&quot;or 5,5,5&quot;);   }</span>
+<span id="L313"><span class="lineNum">     313</span>                 :             : static inline void smt_medium_low(void) { asm volatile(&quot;or 6,6,6&quot;);   }</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             : static inline void smt_extra_high(void) { asm volatile(&quot;or 7,7,7&quot;);   }</span>
+<span id="L315"><span class="lineNum">     315</span>                 :             : static inline void smt_very_low(void)   { asm volatile(&quot;or 31,31,31&quot;);        }</span>
+<span id="L316"><span class="lineNum">     316</span>                 :             : static inline void smt_lowest(void)     { smt_low(); smt_very_low();    }</span>
+<span id="L317"><span class="lineNum">     317</span>                 :             : </span>
+<span id="L318"><span class="lineNum">     318</span>                 :             : /*</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :  * SPR access functions</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :  */</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             : </span>
+<span id="L322"><span class="lineNum">     322</span>                 :             : static inline unsigned long mfmsr(void)</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             : {</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             :         unsigned long val;</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             :         </span>
+<span id="L326"><span class="lineNum">     326</span>                 :             :         asm volatile(&quot;mfmsr %0&quot; : &quot;=r&quot;(val) : : &quot;memory&quot;);</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             :         return val;</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             : }</span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : </span>
+<span id="L330"><span class="lineNum">     330</span>                 :             : static inline void mtmsr(unsigned long val)</span>
+<span id="L331"><span class="lineNum">     331</span>                 :             : {</span>
+<span id="L332"><span class="lineNum">     332</span>                 :             :         asm volatile(&quot;mtmsr %0&quot; : : &quot;r&quot;(val) : &quot;memory&quot;);</span>
+<span id="L333"><span class="lineNum">     333</span>                 :             : }</span>
+<span id="L334"><span class="lineNum">     334</span>                 :             : </span>
+<span id="L335"><span class="lineNum">     335</span>                 :             : static inline void mtmsrd(unsigned long val, int l)</span>
 <span id="L336"><span class="lineNum">     336</span>                 :             : {</span>
-<span id="L337"><span class="lineNum">     337</span>                 :             :         unsigned long val;</span>
-<span id="L338"><span class="lineNum">     338</span>                 :             : </span>
-<span id="L339"><span class="lineNum">     339</span>                 :             :         asm volatile(&quot;mfspr %0,%1&quot; : &quot;=r&quot;(val) : &quot;i&quot;(spr) : &quot;memory&quot;);</span>
-<span id="L340"><span class="lineNum">     340</span>                 :             :         return val;</span>
-<span id="L341"><span class="lineNum">     341</span>                 :             : }</span>
-<span id="L342"><span class="lineNum">     342</span>                 :             : </span>
-<span id="L343"><span class="lineNum">     343</span>                 :             : static inline __attribute__((always_inline))</span>
-<span id="L344"><span class="lineNum">     344</span>                 :             : void mtspr(const unsigned int spr, unsigned long val)</span>
-<span id="L345"><span class="lineNum">     345</span>                 :             : {</span>
-<span id="L346"><span class="lineNum">     346</span>                 :             :         asm volatile(&quot;mtspr %0,%1&quot; : : &quot;i&quot;(spr), &quot;r&quot;(val) : &quot;memory&quot;);</span>
+<span id="L337"><span class="lineNum">     337</span>                 :             :         asm volatile(&quot;mtmsrd %0,%1&quot; : : &quot;r&quot;(val), &quot;i&quot;(l) : &quot;memory&quot;);</span>
+<span id="L338"><span class="lineNum">     338</span>                 :             : }</span>
+<span id="L339"><span class="lineNum">     339</span>                 :             : </span>
+<span id="L340"><span class="lineNum">     340</span>                 :             : static inline __attribute__((always_inline))</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             : unsigned long mfspr(const unsigned int spr)</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             : {</span>
+<span id="L343"><span class="lineNum">     343</span>                 :             :         unsigned long val;</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             : </span>
+<span id="L345"><span class="lineNum">     345</span>                 :             :         asm volatile(&quot;mfspr %0,%1&quot; : &quot;=r&quot;(val) : &quot;i&quot;(spr) : &quot;memory&quot;);</span>
+<span id="L346"><span class="lineNum">     346</span>                 :             :         return val;</span>
 <span id="L347"><span class="lineNum">     347</span>                 :             : }</span>
 <span id="L348"><span class="lineNum">     348</span>                 :             : </span>
-<span id="L349"><span class="lineNum">     349</span>                 :             : /* Helpers for special sequences needed by some registers */</span>
-<span id="L350"><span class="lineNum">     350</span>                 :             : extern void set_hid0(unsigned long hid0);</span>
-<span id="L351"><span class="lineNum">     351</span>                 :             : extern void trigger_attn(void);</span>
-<span id="L352"><span class="lineNum">     352</span>                 :             : </span>
-<span id="L353"><span class="lineNum">     353</span>                 :             : /*</span>
-<span id="L354"><span class="lineNum">     354</span>                 :             :  * Barriers</span>
-<span id="L355"><span class="lineNum">     355</span>                 :             :  */</span>
-<span id="L356"><span class="lineNum">     356</span>                 :             : </span>
-<span id="L357"><span class="lineNum">     357</span>                 :             : static inline void eieio(void)</span>
-<span id="L358"><span class="lineNum">     358</span>                 :             : {</span>
-<span id="L359"><span class="lineNum">     359</span>                 :             :         asm volatile(&quot;eieio&quot; : : : &quot;memory&quot;);</span>
-<span id="L360"><span class="lineNum">     360</span>                 :             : }</span>
-<span id="L361"><span class="lineNum">     361</span>                 :             : </span>
-<span id="L362"><span class="lineNum">     362</span>                 :             : static inline void sync(void)</span>
-<span id="L363"><span class="lineNum">     363</span>                 :             : {</span>
-<span id="L364"><span class="lineNum">     364</span>                 :             :         asm volatile(&quot;sync&quot; : : : &quot;memory&quot;);</span>
-<span id="L365"><span class="lineNum">     365</span>                 :             : }</span>
-<span id="L366"><span class="lineNum">     366</span>                 :             : </span>
-<span id="L367"><span class="lineNum">     367</span>                 :             : static inline void lwsync(void)</span>
-<span id="L368"><span class="lineNum">     368</span>                 :             : {</span>
-<span id="L369"><span class="lineNum">     369</span>                 :             :         asm volatile(&quot;lwsync&quot; : : : &quot;memory&quot;);</span>
-<span id="L370"><span class="lineNum">     370</span>                 :             : }</span>
-<span id="L371"><span class="lineNum">     371</span>                 :             : </span>
-<span id="L372"><span class="lineNum">     372</span>                 :             : static inline void isync(void)</span>
-<span id="L373"><span class="lineNum">     373</span>                 :             : {</span>
-<span id="L374"><span class="lineNum">     374</span>                 :             :         asm volatile(&quot;isync&quot; : : : &quot;memory&quot;);</span>
-<span id="L375"><span class="lineNum">     375</span>                 :             : }</span>
-<span id="L376"><span class="lineNum">     376</span>                 :             : </span>
+<span id="L349"><span class="lineNum">     349</span>                 :             : static inline __attribute__((always_inline))</span>
+<span id="L350"><span class="lineNum">     350</span>                 :             : void mtspr(const unsigned int spr, unsigned long val)</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             : {</span>
+<span id="L352"><span class="lineNum">     352</span>                 :             :         asm volatile(&quot;mtspr %0,%1&quot; : : &quot;i&quot;(spr), &quot;r&quot;(val) : &quot;memory&quot;);</span>
+<span id="L353"><span class="lineNum">     353</span>                 :             : }</span>
+<span id="L354"><span class="lineNum">     354</span>                 :             : </span>
+<span id="L355"><span class="lineNum">     355</span>                 :             : /* Helpers for special sequences needed by some registers */</span>
+<span id="L356"><span class="lineNum">     356</span>                 :             : extern void set_hid0(unsigned long hid0);</span>
+<span id="L357"><span class="lineNum">     357</span>                 :             : extern void trigger_attn(void);</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             : </span>
+<span id="L359"><span class="lineNum">     359</span>                 :             : /*</span>
+<span id="L360"><span class="lineNum">     360</span>                 :             :  * Barriers</span>
+<span id="L361"><span class="lineNum">     361</span>                 :             :  */</span>
+<span id="L362"><span class="lineNum">     362</span>                 :             : </span>
+<span id="L363"><span class="lineNum">     363</span>                 :             : static inline void eieio(void)</span>
+<span id="L364"><span class="lineNum">     364</span>                 :             : {</span>
+<span id="L365"><span class="lineNum">     365</span>                 :             :         asm volatile(&quot;eieio&quot; : : : &quot;memory&quot;);</span>
+<span id="L366"><span class="lineNum">     366</span>                 :             : }</span>
+<span id="L367"><span class="lineNum">     367</span>                 :             : </span>
+<span id="L368"><span class="lineNum">     368</span>                 :             : static inline void sync(void)</span>
+<span id="L369"><span class="lineNum">     369</span>                 :             : {</span>
+<span id="L370"><span class="lineNum">     370</span>                 :             :         asm volatile(&quot;sync&quot; : : : &quot;memory&quot;);</span>
+<span id="L371"><span class="lineNum">     371</span>                 :             : }</span>
+<span id="L372"><span class="lineNum">     372</span>                 :             : </span>
+<span id="L373"><span class="lineNum">     373</span>                 :             : static inline void lwsync(void)</span>
+<span id="L374"><span class="lineNum">     374</span>                 :             : {</span>
+<span id="L375"><span class="lineNum">     375</span>                 :             :         asm volatile(&quot;lwsync&quot; : : : &quot;memory&quot;);</span>
+<span id="L376"><span class="lineNum">     376</span>                 :             : }</span>
 <span id="L377"><span class="lineNum">     377</span>                 :             : </span>
-<span id="L378"><span class="lineNum">     378</span>                 :             : /*</span>
-<span id="L379"><span class="lineNum">     379</span>                 :             :  * Cache sync</span>
-<span id="L380"><span class="lineNum">     380</span>                 :             :  */</span>
-<span id="L381"><span class="lineNum">     381</span>                 :             : static inline void sync_icache(void)</span>
-<span id="L382"><span class="lineNum">     382</span>                 :             : {</span>
-<span id="L383"><span class="lineNum">     383</span>                 :             :         asm volatile(&quot;sync; icbi 0,%0; sync; isync&quot; : : &quot;r&quot; (0) : &quot;memory&quot;);</span>
-<span id="L384"><span class="lineNum">     384</span>                 :             : }</span>
-<span id="L385"><span class="lineNum">     385</span>                 :             : </span>
-<span id="L386"><span class="lineNum">     386</span>                 :             : /*</span>
-<span id="L387"><span class="lineNum">     387</span>                 :             :  * Doorbells</span>
-<span id="L388"><span class="lineNum">     388</span>                 :             :  */</span>
-<span id="L389"><span class="lineNum">     389</span>                 :             : static inline void msgclr(void)</span>
-<span id="L390"><span class="lineNum">     390</span>                 :             : {</span>
-<span id="L391"><span class="lineNum">     391</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36));</span>
-<span id="L392"><span class="lineNum">     392</span>                 :             :         asm volatile(MSGCLR(%0) : : &quot;r&quot;(rb));</span>
-<span id="L393"><span class="lineNum">     393</span>                 :             : }</span>
-<span id="L394"><span class="lineNum">     394</span>                 :             : </span>
-<span id="L395"><span class="lineNum">     395</span>                 :             : static inline void p9_dbell_receive(void)</span>
+<span id="L378"><span class="lineNum">     378</span>                 :             : static inline void isync(void)</span>
+<span id="L379"><span class="lineNum">     379</span>                 :             : {</span>
+<span id="L380"><span class="lineNum">     380</span>                 :             :         asm volatile(&quot;isync&quot; : : : &quot;memory&quot;);</span>
+<span id="L381"><span class="lineNum">     381</span>                 :             : }</span>
+<span id="L382"><span class="lineNum">     382</span>                 :             : </span>
+<span id="L383"><span class="lineNum">     383</span>                 :             : </span>
+<span id="L384"><span class="lineNum">     384</span>                 :             : /*</span>
+<span id="L385"><span class="lineNum">     385</span>                 :             :  * Cache sync</span>
+<span id="L386"><span class="lineNum">     386</span>                 :             :  */</span>
+<span id="L387"><span class="lineNum">     387</span>                 :             : static inline void sync_icache(void)</span>
+<span id="L388"><span class="lineNum">     388</span>                 :             : {</span>
+<span id="L389"><span class="lineNum">     389</span>                 :             :         asm volatile(&quot;sync; icbi 0,%0; sync; isync&quot; : : &quot;r&quot; (0) : &quot;memory&quot;);</span>
+<span id="L390"><span class="lineNum">     390</span>                 :             : }</span>
+<span id="L391"><span class="lineNum">     391</span>                 :             : </span>
+<span id="L392"><span class="lineNum">     392</span>                 :             : /*</span>
+<span id="L393"><span class="lineNum">     393</span>                 :             :  * Doorbells</span>
+<span id="L394"><span class="lineNum">     394</span>                 :             :  */</span>
+<span id="L395"><span class="lineNum">     395</span>                 :             : static inline void msgclr(void)</span>
 <span id="L396"><span class="lineNum">     396</span>                 :             : {</span>
 <span id="L397"><span class="lineNum">     397</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36));</span>
-<span id="L398"><span class="lineNum">     398</span>                 :             :         asm volatile(MSGCLR(%0) &quot;;&quot;</span>
-<span id="L399"><span class="lineNum">     399</span>                 :             :                      MSGSYNC    &quot;;&quot;</span>
-<span id="L400"><span class="lineNum">     400</span>                 :             :                      &quot;lwsync&quot;</span>
-<span id="L401"><span class="lineNum">     401</span>                 :             :                      : : &quot;r&quot;(rb));</span>
-<span id="L402"><span class="lineNum">     402</span>                 :             : }</span>
-<span id="L403"><span class="lineNum">     403</span>                 :             : </span>
-<span id="L404"><span class="lineNum">     404</span>                 :             : static inline void p9_dbell_send(uint32_t pir)</span>
-<span id="L405"><span class="lineNum">     405</span>                 :             : {</span>
-<span id="L406"><span class="lineNum">     406</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36)) | pir;</span>
-<span id="L407"><span class="lineNum">     407</span>                 :             :         asm volatile(&quot;sync ;&quot;</span>
-<span id="L408"><span class="lineNum">     408</span>                 :             :                      MSGSND(%0)</span>
-<span id="L409"><span class="lineNum">     409</span>                 :             :                      : : &quot;r&quot;(rb));</span>
-<span id="L410"><span class="lineNum">     410</span>                 :             : }</span>
-<span id="L411"><span class="lineNum">     411</span>                 :             : </span>
-<span id="L412"><span class="lineNum">     412</span>                 :             : /*</span>
-<span id="L413"><span class="lineNum">     413</span>                 :             :  * Byteswap load/stores</span>
-<span id="L414"><span class="lineNum">     414</span>                 :             :  */</span>
-<span id="L415"><span class="lineNum">     415</span>                 :             : </span>
-<span id="L416"><span class="lineNum">     416</span>                 :             : static inline uint16_t ld_le16(const uint16_t *addr)</span>
-<span id="L417"><span class="lineNum">     417</span>                 :             : {</span>
-<span id="L418"><span class="lineNum">     418</span>                 :             :         uint16_t val;</span>
-<span id="L419"><span class="lineNum">     419</span>                 :             :         asm volatile(&quot;lhbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
-<span id="L420"><span class="lineNum">     420</span>                 :             :         return val;</span>
-<span id="L421"><span class="lineNum">     421</span>                 :             : }</span>
-<span id="L422"><span class="lineNum">     422</span>                 :             : </span>
-<span id="L423"><span class="lineNum">     423</span>                 :             : static inline uint32_t ld_le32(const uint32_t *addr)</span>
-<span id="L424"><span class="lineNum">     424</span>                 :             : {</span>
-<span id="L425"><span class="lineNum">     425</span>                 :             :         uint32_t val;</span>
-<span id="L426"><span class="lineNum">     426</span>                 :             :         asm volatile(&quot;lwbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
-<span id="L427"><span class="lineNum">     427</span>                 :             :         return val;</span>
-<span id="L428"><span class="lineNum">     428</span>                 :             : }</span>
-<span id="L429"><span class="lineNum">     429</span>                 :             : </span>
-<span id="L430"><span class="lineNum">     430</span>                 :             : static inline void st_le16(uint16_t *addr, uint16_t val)</span>
-<span id="L431"><span class="lineNum">     431</span>                 :             : {</span>
-<span id="L432"><span class="lineNum">     432</span>                 :             :         asm volatile(&quot;sthbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
-<span id="L433"><span class="lineNum">     433</span>                 :             : }</span>
-<span id="L434"><span class="lineNum">     434</span>                 :             : </span>
-<span id="L435"><span class="lineNum">     435</span>                 :             : static inline void st_le32(uint32_t *addr, uint32_t val)</span>
-<span id="L436"><span class="lineNum">     436</span>                 :             : {</span>
-<span id="L437"><span class="lineNum">     437</span>                 :             :         asm volatile(&quot;stwbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
-<span id="L438"><span class="lineNum">     438</span>                 :             : }</span>
-<span id="L439"><span class="lineNum">     439</span>                 :             : </span>
-<span id="L440"><span class="lineNum">     440</span>                 :             : #endif /* __TEST__ */</span>
-<span id="L441"><span class="lineNum">     441</span>                 :             : </span>
-<span id="L442"><span class="lineNum">     442</span>                 :             : #endif /* __ASSEMBLY__ */</span>
-<span id="L443"><span class="lineNum">     443</span>                 :             : </span>
-<span id="L444"><span class="lineNum">     444</span>                 :             : #endif /* __PROCESSOR_H */</span>
+<span id="L398"><span class="lineNum">     398</span>                 :             :         asm volatile(MSGCLR(%0) : : &quot;r&quot;(rb));</span>
+<span id="L399"><span class="lineNum">     399</span>                 :             : }</span>
+<span id="L400"><span class="lineNum">     400</span>                 :             : </span>
+<span id="L401"><span class="lineNum">     401</span>                 :             : static inline void p9_dbell_receive(void)</span>
+<span id="L402"><span class="lineNum">     402</span>                 :             : {</span>
+<span id="L403"><span class="lineNum">     403</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36));</span>
+<span id="L404"><span class="lineNum">     404</span>                 :             :         asm volatile(MSGCLR(%0) &quot;;&quot;</span>
+<span id="L405"><span class="lineNum">     405</span>                 :             :                      MSGSYNC    &quot;;&quot;</span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :                      &quot;lwsync&quot;</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             :                      : : &quot;r&quot;(rb));</span>
+<span id="L408"><span class="lineNum">     408</span>                 :             : }</span>
+<span id="L409"><span class="lineNum">     409</span>                 :             : </span>
+<span id="L410"><span class="lineNum">     410</span>                 :             : static inline void p9_dbell_send(uint32_t pir)</span>
+<span id="L411"><span class="lineNum">     411</span>                 :             : {</span>
+<span id="L412"><span class="lineNum">     412</span>                 :             :         uint64_t rb = (0x05 &lt;&lt; (63-36)) | pir;</span>
+<span id="L413"><span class="lineNum">     413</span>                 :             :         asm volatile(&quot;sync ;&quot;</span>
+<span id="L414"><span class="lineNum">     414</span>                 :             :                      MSGSND(%0)</span>
+<span id="L415"><span class="lineNum">     415</span>                 :             :                      : : &quot;r&quot;(rb));</span>
+<span id="L416"><span class="lineNum">     416</span>                 :             : }</span>
+<span id="L417"><span class="lineNum">     417</span>                 :             : </span>
+<span id="L418"><span class="lineNum">     418</span>                 :             : /*</span>
+<span id="L419"><span class="lineNum">     419</span>                 :             :  * Byteswap load/stores</span>
+<span id="L420"><span class="lineNum">     420</span>                 :             :  */</span>
+<span id="L421"><span class="lineNum">     421</span>                 :             : </span>
+<span id="L422"><span class="lineNum">     422</span>                 :             : static inline uint16_t ld_le16(const uint16_t *addr)</span>
+<span id="L423"><span class="lineNum">     423</span>                 :             : {</span>
+<span id="L424"><span class="lineNum">     424</span>                 :             :         uint16_t val;</span>
+<span id="L425"><span class="lineNum">     425</span>                 :             :         asm volatile(&quot;lhbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L426"><span class="lineNum">     426</span>                 :             :         return val;</span>
+<span id="L427"><span class="lineNum">     427</span>                 :             : }</span>
+<span id="L428"><span class="lineNum">     428</span>                 :             : </span>
+<span id="L429"><span class="lineNum">     429</span>                 :             : static inline uint32_t ld_le32(const uint32_t *addr)</span>
+<span id="L430"><span class="lineNum">     430</span>                 :             : {</span>
+<span id="L431"><span class="lineNum">     431</span>                 :             :         uint32_t val;</span>
+<span id="L432"><span class="lineNum">     432</span>                 :             :         asm volatile(&quot;lwbrx %0,0,%1&quot; : &quot;=r&quot;(val) : &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L433"><span class="lineNum">     433</span>                 :             :         return val;</span>
+<span id="L434"><span class="lineNum">     434</span>                 :             : }</span>
+<span id="L435"><span class="lineNum">     435</span>                 :             : </span>
+<span id="L436"><span class="lineNum">     436</span>                 :             : static inline void st_le16(uint16_t *addr, uint16_t val)</span>
+<span id="L437"><span class="lineNum">     437</span>                 :             : {</span>
+<span id="L438"><span class="lineNum">     438</span>                 :             :         asm volatile(&quot;sthbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L439"><span class="lineNum">     439</span>                 :             : }</span>
+<span id="L440"><span class="lineNum">     440</span>                 :             : </span>
+<span id="L441"><span class="lineNum">     441</span>                 :             : static inline void st_le32(uint32_t *addr, uint32_t val)</span>
+<span id="L442"><span class="lineNum">     442</span>                 :             : {</span>
+<span id="L443"><span class="lineNum">     443</span>                 :             :         asm volatile(&quot;stwbrx %0,0,%1&quot; : : &quot;r&quot;(val), &quot;r&quot;(addr), &quot;m&quot;(*addr));</span>
+<span id="L444"><span class="lineNum">     444</span>                 :             : }</span>
+<span id="L445"><span class="lineNum">     445</span>                 :             : </span>
+<span id="L446"><span class="lineNum">     446</span>                 :             : #endif /* __TEST__ */</span>
+<span id="L447"><span class="lineNum">     447</span>                 :             : </span>
+<span id="L448"><span class="lineNum">     448</span>                 :             : #endif /* __ASSEMBLY__ */</span>
+<span id="L449"><span class="lineNum">     449</span>                 :             : </span>
+<span id="L450"><span class="lineNum">     450</span>                 :             : #endif /* __PROCESSOR_H */</span>
         </pre>
               </td>
             </tr>

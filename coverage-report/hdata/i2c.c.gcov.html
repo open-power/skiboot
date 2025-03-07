@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryLo">0.0&nbsp;%</td>
-            <td class="headerCovTableEntry">124</td>
+            <td class="headerCovTableEntry">125</td>
             <td class="headerCovTableEntry">0</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-02-26 14:45:00</td>
+            <td class="headerValue">2025-03-07 16:19:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryLo">0.0&nbsp;%</td>
@@ -322,7 +322,7 @@
 <span id="L251"><span class="lineNum">     251</span>                 :             :          * This code makes a few assumptions about XSCOM addrs, etc</span>
 <span id="L252"><span class="lineNum">     252</span>                 :             :          * and will need updating for new processors</span>
 <span id="L253"><span class="lineNum">     253</span>                 :             :          */</span>
-<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaUNC">           0 :         assert(proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10);</span></span>
+<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaUNC">           0 :         assert(proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10 || proc_gen == proc_gen_p11);</span></span>
 <span id="L255"><span class="lineNum">     255</span>                 :             : </span>
 <span id="L256"><span class="lineNum">     256</span>                 :             :         /*</span>
 <span id="L257"><span class="lineNum">     257</span>                 :             :          * Emit an error if we get a newer version. This is an interim measure</span>
@@ -374,110 +374,111 @@
 <span id="L303"><span class="lineNum">     303</span>                 :             :                  * i2cm@&lt;addr&gt; nodes.</span>
 <span id="L304"><span class="lineNum">     304</span>                 :             :                  */</span>
 <span id="L305"><span class="lineNum">     305</span>                 :<span class="tlaUNC">           0 :                 if (dev-&gt;i2cm_engine &gt;= 4 &amp;&amp;</span></span>
-<span id="L306"><span class="lineNum">     306</span>                 :<span class="tlaUNC">           0 :                         (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10))</span></span>
-<span id="L307"><span class="lineNum">     307</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L308"><span class="lineNum">     308</span>                 :             : </span>
-<span id="L309"><span class="lineNum">     309</span>                 :<span class="tlaUNC">           0 :                 bus = p8_i2c_add_port_node(xscom, dev-&gt;i2cm_engine, dev-&gt;i2cm_port,</span></span>
-<span id="L310"><span class="lineNum">     310</span>                 :<span class="tlaUNC">           0 :                                         be16_to_cpu(dev-&gt;i2c_bus_freq) * 1000);</span></span>
-<span id="L311"><span class="lineNum">     311</span>                 :             : </span>
-<span id="L312"><span class="lineNum">     312</span>                 :<span class="tlaUNC">           0 :                 if (!bus) {</span></span>
-<span id="L313"><span class="lineNum">     313</span>                 :<span class="tlaUNC">           0 :                         prerror(&quot;Unable to add node for e%dp%d under %s\n&quot;,</span></span>
-<span id="L314"><span class="lineNum">     314</span>                 :             :                                 dev-&gt;i2cm_engine, dev-&gt;i2cm_port, xscom-&gt;name);</span>
-<span id="L315"><span class="lineNum">     315</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L316"><span class="lineNum">     316</span>                 :             :                 }</span>
-<span id="L317"><span class="lineNum">     317</span>                 :             : </span>
-<span id="L318"><span class="lineNum">     318</span>                 :             :                 /*</span>
-<span id="L319"><span class="lineNum">     319</span>                 :             :                  * Looks like hostboot gives the address as an 8 bit, left</span>
-<span id="L320"><span class="lineNum">     320</span>                 :             :                  * justified quantity (i.e it includes the R/W bit). So we need</span>
-<span id="L321"><span class="lineNum">     321</span>                 :             :                  * to strip it off to get an address linux can use.</span>
-<span id="L322"><span class="lineNum">     322</span>                 :             :                  */</span>
-<span id="L323"><span class="lineNum">     323</span>                 :<span class="tlaUNC">           0 :                 dev_addr = dev-&gt;dev_addr &gt;&gt; 1;</span></span>
-<span id="L324"><span class="lineNum">     324</span>                 :             : </span>
-<span id="L325"><span class="lineNum">     325</span>                 :<span class="tlaUNC">           0 :                 purpose = be32_to_cpu(dev-&gt;purpose);</span></span>
-<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaUNC">           0 :                 type = map_type(dev-&gt;type);</span></span>
-<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaUNC">           0 :                 info = get_info(purpose);</span></span>
-<span id="L328"><span class="lineNum">     328</span>                 :             : </span>
-<span id="L329"><span class="lineNum">     329</span>                 :             :                 /* HACK: Hostboot doesn't export the correct type information</span>
-<span id="L330"><span class="lineNum">     330</span>                 :             :                  * for the DIMM SPD EEPROMs. This is a problem because SPD</span>
-<span id="L331"><span class="lineNum">     331</span>                 :             :                  * EEPROMs have a different wire protocol to the atmel,24XXXX</span>
-<span id="L332"><span class="lineNum">     332</span>                 :             :                  * series. The main difference being that SPD EEPROMs have an</span>
-<span id="L333"><span class="lineNum">     333</span>                 :             :                  * 8bit offset rather than a 16bit offset. This means that the</span>
-<span id="L334"><span class="lineNum">     334</span>                 :             :                  * driver will send 2 bytes when doing a random read,</span>
-<span id="L335"><span class="lineNum">     335</span>                 :             :                  * potentially overwriting part of the SPD information.</span>
-<span id="L336"><span class="lineNum">     336</span>                 :             :                  *</span>
-<span id="L337"><span class="lineNum">     337</span>                 :             :                  * Just to make things interested the FSP also gets the device</span>
-<span id="L338"><span class="lineNum">     338</span>                 :             :                  * type wrong. To work around both just set the device-type to</span>
-<span id="L339"><span class="lineNum">     339</span>                 :             :                  * &quot;spd&quot; for anything in the 0x50 to 0x57 range since that's the</span>
-<span id="L340"><span class="lineNum">     340</span>                 :             :                  * SPD eeprom range.</span>
-<span id="L341"><span class="lineNum">     341</span>                 :             :                  *</span>
-<span id="L342"><span class="lineNum">     342</span>                 :             :                  * XXX: Future chips might not use engine 3 for the DIMM buses.</span>
-<span id="L343"><span class="lineNum">     343</span>                 :             :                  */</span>
-<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaUNC">           0 :                 if (dev-&gt;i2cm_engine == 3 &amp;&amp; dev_addr &gt;= 0x50</span></span>
-<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaUNC">           0 :                     &amp;&amp; dev_addr &lt; 0x58) {</span></span>
-<span id="L346"><span class="lineNum">     346</span>                 :<span class="tlaUNC">           0 :                         compat = &quot;spd&quot;;</span></span>
-<span id="L347"><span class="lineNum">     347</span>                 :<span class="tlaUNC">           0 :                         name = &quot;eeprom&quot;;</span></span>
-<span id="L348"><span class="lineNum">     348</span>                 :<span class="tlaUNC">           0 :                 } else if (type) {</span></span>
-<span id="L349"><span class="lineNum">     349</span>                 :<span class="tlaUNC">           0 :                         compat = type-&gt;compat;</span></span>
-<span id="L350"><span class="lineNum">     350</span>                 :<span class="tlaUNC">           0 :                         name = type-&gt;name;</span></span>
-<span id="L351"><span class="lineNum">     351</span>                 :             :                 } else {</span>
-<span id="L352"><span class="lineNum">     352</span>                 :<span class="tlaUNC">           0 :                         name = &quot;unknown&quot;;</span></span>
-<span id="L353"><span class="lineNum">     353</span>                 :<span class="tlaUNC">           0 :                         compat = NULL;</span></span>
-<span id="L354"><span class="lineNum">     354</span>                 :             :                 }</span>
-<span id="L355"><span class="lineNum">     355</span>                 :             : </span>
-<span id="L356"><span class="lineNum">     356</span>                 :             :                 /*</span>
-<span id="L357"><span class="lineNum">     357</span>                 :             :                  * An i2c device is unknown if either the i2c device list is</span>
-<span id="L358"><span class="lineNum">     358</span>                 :             :                  * outdated or the device is marked as unknown (0xFF) in the</span>
-<span id="L359"><span class="lineNum">     359</span>                 :             :                  * hdat. Log both cases to see what/where/why.</span>
-<span id="L360"><span class="lineNum">     360</span>                 :             :                  */</span>
-<span id="L361"><span class="lineNum">     361</span>                 :<span class="tlaUNC">           0 :                 if (!type || dev-&gt;type == 0xFF) {</span></span>
-<span id="L362"><span class="lineNum">     362</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_NOTICE, &quot;HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n&quot;,</span></span>
-<span id="L363"><span class="lineNum">     363</span>                 :             :                               dev-&gt;i2cm_engine, dev-&gt;i2cm_port, name, dev_addr,</span>
-<span id="L364"><span class="lineNum">     364</span>                 :             :                               dev-&gt;dev_port, purpose, info-&gt;label);</span>
-<span id="L365"><span class="lineNum">     365</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L366"><span class="lineNum">     366</span>                 :             :                 }</span>
-<span id="L367"><span class="lineNum">     367</span>                 :             : </span>
-<span id="L368"><span class="lineNum">     368</span>                 :<span class="tlaUNC">           0 :                 prlog(PR_DEBUG, &quot;HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n&quot;,</span></span>
-<span id="L369"><span class="lineNum">     369</span>                 :             :                       dev-&gt;i2cm_engine, dev-&gt;i2cm_port, name, dev_addr,</span>
-<span id="L370"><span class="lineNum">     370</span>                 :             :                       dev-&gt;dev_port, purpose, info-&gt;label);</span>
-<span id="L371"><span class="lineNum">     371</span>                 :             : </span>
-<span id="L372"><span class="lineNum">     372</span>                 :             :                 /*</span>
-<span id="L373"><span class="lineNum">     373</span>                 :             :                  * Multi-port device require special handling since we need to</span>
-<span id="L374"><span class="lineNum">     374</span>                 :             :                  * generate the device-specific DT bindings. For now we're just</span>
-<span id="L375"><span class="lineNum">     375</span>                 :             :                  * going to ignore them since these devices are owned by FW</span>
-<span id="L376"><span class="lineNum">     376</span>                 :             :                  * any way.</span>
-<span id="L377"><span class="lineNum">     377</span>                 :             :                  */</span>
-<span id="L378"><span class="lineNum">     378</span>                 :<span class="tlaUNC">           0 :                 if (dev-&gt;dev_port != 0xff)</span></span>
-<span id="L379"><span class="lineNum">     379</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L380"><span class="lineNum">     380</span>                 :             : </span>
-<span id="L381"><span class="lineNum">     381</span>                 :<span class="tlaUNC">           0 :                 node = dt_new_addr(bus, name, dev_addr);</span></span>
-<span id="L382"><span class="lineNum">     382</span>                 :<span class="tlaUNC">           0 :                 if (!node)</span></span>
-<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
-<span id="L384"><span class="lineNum">     384</span>                 :             : </span>
-<span id="L385"><span class="lineNum">     385</span>                 :<span class="tlaUNC">           0 :                 dt_add_property_cells(node, &quot;reg&quot;, dev_addr);</span></span>
-<span id="L386"><span class="lineNum">     386</span>                 :<span class="tlaUNC">           0 :                 dt_add_property_cells(node, &quot;link-id&quot;,</span></span>
-<span id="L387"><span class="lineNum">     387</span>                 :             :                         be32_to_cpu(dev-&gt;i2c_link));</span>
-<span id="L388"><span class="lineNum">     388</span>                 :<span class="tlaUNC">           0 :                 if (compat)</span></span>
-<span id="L389"><span class="lineNum">     389</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_string(node, &quot;compatible&quot;, compat);</span></span>
-<span id="L390"><span class="lineNum">     390</span>                 :<span class="tlaUNC">           0 :                 if (info-&gt;label)</span></span>
-<span id="L391"><span class="lineNum">     391</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_string(node, &quot;label&quot;, info-&gt;label);</span></span>
-<span id="L392"><span class="lineNum">     392</span>                 :<span class="tlaUNC">           0 :                 if (!info-&gt;allowed)</span></span>
-<span id="L393"><span class="lineNum">     393</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_string(node, &quot;status&quot;, &quot;reserved&quot;);</span></span>
-<span id="L394"><span class="lineNum">     394</span>                 :             : </span>
-<span id="L395"><span class="lineNum">     395</span>                 :             :                 /*</span>
-<span id="L396"><span class="lineNum">     396</span>                 :             :                  * Set a default timeout of 2s on the ports with a TPM. This is</span>
-<span id="L397"><span class="lineNum">     397</span>                 :             :                  * to work around a bug with certain TPM firmwares that can</span>
-<span id="L398"><span class="lineNum">     398</span>                 :             :                  * clock stretch for long periods of time and will lock up</span>
-<span id="L399"><span class="lineNum">     399</span>                 :             :                  * until they are power cycled if a STOP condition is sent</span>
-<span id="L400"><span class="lineNum">     400</span>                 :             :                  * during this period.</span>
-<span id="L401"><span class="lineNum">     401</span>                 :             :                  */</span>
-<span id="L402"><span class="lineNum">     402</span>                 :<span class="tlaUNC">           0 :                 if (dev-&gt;type == 0x3)</span></span>
-<span id="L403"><span class="lineNum">     403</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_cells(bus, &quot;timeout-ms&quot;, 2000);</span></span>
-<span id="L404"><span class="lineNum">     404</span>                 :             : </span>
-<span id="L405"><span class="lineNum">     405</span>                 :             :                 /* XXX: SLCA index? */</span>
-<span id="L406"><span class="lineNum">     406</span>                 :             :         }</span>
-<span id="L407"><span class="lineNum">     407</span>                 :             : </span>
-<span id="L408"><span class="lineNum">     408</span>                 :<span class="tlaUNC">           0 :         return 0;</span></span>
-<span id="L409"><span class="lineNum">     409</span>                 :             : }</span>
+<span id="L306"><span class="lineNum">     306</span>                 :<span class="tlaUNC">           0 :                         (proc_gen == proc_gen_p9 || proc_gen == proc_gen_p10 ||</span></span>
+<span id="L307"><span class="lineNum">     307</span>                 :<span class="tlaUNC">           0 :                                                         proc_gen == proc_gen_p11))</span></span>
+<span id="L308"><span class="lineNum">     308</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : </span>
+<span id="L310"><span class="lineNum">     310</span>                 :<span class="tlaUNC">           0 :                 bus = p8_i2c_add_port_node(xscom, dev-&gt;i2cm_engine, dev-&gt;i2cm_port,</span></span>
+<span id="L311"><span class="lineNum">     311</span>                 :<span class="tlaUNC">           0 :                                         be16_to_cpu(dev-&gt;i2c_bus_freq) * 1000);</span></span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : </span>
+<span id="L313"><span class="lineNum">     313</span>                 :<span class="tlaUNC">           0 :                 if (!bus) {</span></span>
+<span id="L314"><span class="lineNum">     314</span>                 :<span class="tlaUNC">           0 :                         prerror(&quot;Unable to add node for e%dp%d under %s\n&quot;,</span></span>
+<span id="L315"><span class="lineNum">     315</span>                 :             :                                 dev-&gt;i2cm_engine, dev-&gt;i2cm_port, xscom-&gt;name);</span>
+<span id="L316"><span class="lineNum">     316</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L317"><span class="lineNum">     317</span>                 :             :                 }</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             : </span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :                 /*</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :                  * Looks like hostboot gives the address as an 8 bit, left</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :                  * justified quantity (i.e it includes the R/W bit). So we need</span>
+<span id="L322"><span class="lineNum">     322</span>                 :             :                  * to strip it off to get an address linux can use.</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :                  */</span>
+<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaUNC">           0 :                 dev_addr = dev-&gt;dev_addr &gt;&gt; 1;</span></span>
+<span id="L325"><span class="lineNum">     325</span>                 :             : </span>
+<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaUNC">           0 :                 purpose = be32_to_cpu(dev-&gt;purpose);</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaUNC">           0 :                 type = map_type(dev-&gt;type);</span></span>
+<span id="L328"><span class="lineNum">     328</span>                 :<span class="tlaUNC">           0 :                 info = get_info(purpose);</span></span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : </span>
+<span id="L330"><span class="lineNum">     330</span>                 :             :                 /* HACK: Hostboot doesn't export the correct type information</span>
+<span id="L331"><span class="lineNum">     331</span>                 :             :                  * for the DIMM SPD EEPROMs. This is a problem because SPD</span>
+<span id="L332"><span class="lineNum">     332</span>                 :             :                  * EEPROMs have a different wire protocol to the atmel,24XXXX</span>
+<span id="L333"><span class="lineNum">     333</span>                 :             :                  * series. The main difference being that SPD EEPROMs have an</span>
+<span id="L334"><span class="lineNum">     334</span>                 :             :                  * 8bit offset rather than a 16bit offset. This means that the</span>
+<span id="L335"><span class="lineNum">     335</span>                 :             :                  * driver will send 2 bytes when doing a random read,</span>
+<span id="L336"><span class="lineNum">     336</span>                 :             :                  * potentially overwriting part of the SPD information.</span>
+<span id="L337"><span class="lineNum">     337</span>                 :             :                  *</span>
+<span id="L338"><span class="lineNum">     338</span>                 :             :                  * Just to make things interested the FSP also gets the device</span>
+<span id="L339"><span class="lineNum">     339</span>                 :             :                  * type wrong. To work around both just set the device-type to</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             :                  * &quot;spd&quot; for anything in the 0x50 to 0x57 range since that's the</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             :                  * SPD eeprom range.</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             :                  *</span>
+<span id="L343"><span class="lineNum">     343</span>                 :             :                  * XXX: Future chips might not use engine 3 for the DIMM buses.</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             :                  */</span>
+<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaUNC">           0 :                 if (dev-&gt;i2cm_engine == 3 &amp;&amp; dev_addr &gt;= 0x50</span></span>
+<span id="L346"><span class="lineNum">     346</span>                 :<span class="tlaUNC">           0 :                     &amp;&amp; dev_addr &lt; 0x58) {</span></span>
+<span id="L347"><span class="lineNum">     347</span>                 :<span class="tlaUNC">           0 :                         compat = &quot;spd&quot;;</span></span>
+<span id="L348"><span class="lineNum">     348</span>                 :<span class="tlaUNC">           0 :                         name = &quot;eeprom&quot;;</span></span>
+<span id="L349"><span class="lineNum">     349</span>                 :<span class="tlaUNC">           0 :                 } else if (type) {</span></span>
+<span id="L350"><span class="lineNum">     350</span>                 :<span class="tlaUNC">           0 :                         compat = type-&gt;compat;</span></span>
+<span id="L351"><span class="lineNum">     351</span>                 :<span class="tlaUNC">           0 :                         name = type-&gt;name;</span></span>
+<span id="L352"><span class="lineNum">     352</span>                 :             :                 } else {</span>
+<span id="L353"><span class="lineNum">     353</span>                 :<span class="tlaUNC">           0 :                         name = &quot;unknown&quot;;</span></span>
+<span id="L354"><span class="lineNum">     354</span>                 :<span class="tlaUNC">           0 :                         compat = NULL;</span></span>
+<span id="L355"><span class="lineNum">     355</span>                 :             :                 }</span>
+<span id="L356"><span class="lineNum">     356</span>                 :             : </span>
+<span id="L357"><span class="lineNum">     357</span>                 :             :                 /*</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             :                  * An i2c device is unknown if either the i2c device list is</span>
+<span id="L359"><span class="lineNum">     359</span>                 :             :                  * outdated or the device is marked as unknown (0xFF) in the</span>
+<span id="L360"><span class="lineNum">     360</span>                 :             :                  * hdat. Log both cases to see what/where/why.</span>
+<span id="L361"><span class="lineNum">     361</span>                 :             :                  */</span>
+<span id="L362"><span class="lineNum">     362</span>                 :<span class="tlaUNC">           0 :                 if (!type || dev-&gt;type == 0xFF) {</span></span>
+<span id="L363"><span class="lineNum">     363</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_NOTICE, &quot;HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n&quot;,</span></span>
+<span id="L364"><span class="lineNum">     364</span>                 :             :                               dev-&gt;i2cm_engine, dev-&gt;i2cm_port, name, dev_addr,</span>
+<span id="L365"><span class="lineNum">     365</span>                 :             :                               dev-&gt;dev_port, purpose, info-&gt;label);</span>
+<span id="L366"><span class="lineNum">     366</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L367"><span class="lineNum">     367</span>                 :             :                 }</span>
+<span id="L368"><span class="lineNum">     368</span>                 :             : </span>
+<span id="L369"><span class="lineNum">     369</span>                 :<span class="tlaUNC">           0 :                 prlog(PR_DEBUG, &quot;HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n&quot;,</span></span>
+<span id="L370"><span class="lineNum">     370</span>                 :             :                       dev-&gt;i2cm_engine, dev-&gt;i2cm_port, name, dev_addr,</span>
+<span id="L371"><span class="lineNum">     371</span>                 :             :                       dev-&gt;dev_port, purpose, info-&gt;label);</span>
+<span id="L372"><span class="lineNum">     372</span>                 :             : </span>
+<span id="L373"><span class="lineNum">     373</span>                 :             :                 /*</span>
+<span id="L374"><span class="lineNum">     374</span>                 :             :                  * Multi-port device require special handling since we need to</span>
+<span id="L375"><span class="lineNum">     375</span>                 :             :                  * generate the device-specific DT bindings. For now we're just</span>
+<span id="L376"><span class="lineNum">     376</span>                 :             :                  * going to ignore them since these devices are owned by FW</span>
+<span id="L377"><span class="lineNum">     377</span>                 :             :                  * any way.</span>
+<span id="L378"><span class="lineNum">     378</span>                 :             :                  */</span>
+<span id="L379"><span class="lineNum">     379</span>                 :<span class="tlaUNC">           0 :                 if (dev-&gt;dev_port != 0xff)</span></span>
+<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L381"><span class="lineNum">     381</span>                 :             : </span>
+<span id="L382"><span class="lineNum">     382</span>                 :<span class="tlaUNC">           0 :                 node = dt_new_addr(bus, name, dev_addr);</span></span>
+<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaUNC">           0 :                 if (!node)</span></span>
+<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaUNC">           0 :                         continue;</span></span>
+<span id="L385"><span class="lineNum">     385</span>                 :             : </span>
+<span id="L386"><span class="lineNum">     386</span>                 :<span class="tlaUNC">           0 :                 dt_add_property_cells(node, &quot;reg&quot;, dev_addr);</span></span>
+<span id="L387"><span class="lineNum">     387</span>                 :<span class="tlaUNC">           0 :                 dt_add_property_cells(node, &quot;link-id&quot;,</span></span>
+<span id="L388"><span class="lineNum">     388</span>                 :             :                         be32_to_cpu(dev-&gt;i2c_link));</span>
+<span id="L389"><span class="lineNum">     389</span>                 :<span class="tlaUNC">           0 :                 if (compat)</span></span>
+<span id="L390"><span class="lineNum">     390</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_string(node, &quot;compatible&quot;, compat);</span></span>
+<span id="L391"><span class="lineNum">     391</span>                 :<span class="tlaUNC">           0 :                 if (info-&gt;label)</span></span>
+<span id="L392"><span class="lineNum">     392</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_string(node, &quot;label&quot;, info-&gt;label);</span></span>
+<span id="L393"><span class="lineNum">     393</span>                 :<span class="tlaUNC">           0 :                 if (!info-&gt;allowed)</span></span>
+<span id="L394"><span class="lineNum">     394</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_string(node, &quot;status&quot;, &quot;reserved&quot;);</span></span>
+<span id="L395"><span class="lineNum">     395</span>                 :             : </span>
+<span id="L396"><span class="lineNum">     396</span>                 :             :                 /*</span>
+<span id="L397"><span class="lineNum">     397</span>                 :             :                  * Set a default timeout of 2s on the ports with a TPM. This is</span>
+<span id="L398"><span class="lineNum">     398</span>                 :             :                  * to work around a bug with certain TPM firmwares that can</span>
+<span id="L399"><span class="lineNum">     399</span>                 :             :                  * clock stretch for long periods of time and will lock up</span>
+<span id="L400"><span class="lineNum">     400</span>                 :             :                  * until they are power cycled if a STOP condition is sent</span>
+<span id="L401"><span class="lineNum">     401</span>                 :             :                  * during this period.</span>
+<span id="L402"><span class="lineNum">     402</span>                 :             :                  */</span>
+<span id="L403"><span class="lineNum">     403</span>                 :<span class="tlaUNC">           0 :                 if (dev-&gt;type == 0x3)</span></span>
+<span id="L404"><span class="lineNum">     404</span>                 :<span class="tlaUNC">           0 :                         dt_add_property_cells(bus, &quot;timeout-ms&quot;, 2000);</span></span>
+<span id="L405"><span class="lineNum">     405</span>                 :             : </span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :                 /* XXX: SLCA index? */</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             :         }</span>
+<span id="L408"><span class="lineNum">     408</span>                 :             : </span>
+<span id="L409"><span class="lineNum">     409</span>                 :<span class="tlaUNC">           0 :         return 0;</span></span>
+<span id="L410"><span class="lineNum">     410</span>                 :             : }</span>
         </pre>
               </td>
             </tr>
