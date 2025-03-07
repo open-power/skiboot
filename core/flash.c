@@ -88,7 +88,16 @@ void flash_release(void)
 
 bool flash_unregister(void)
 {
-	struct blocklevel_device *bl = system_flash->bl;
+	struct blocklevel_device *bl;
+
+	if (!system_flash) {
+		prlog(PR_WARNING, "System Flash is not registered, ignoring"
+				" unregister request\n");
+
+		return true;
+	}
+
+	bl = system_flash->bl;
 
 	if (bl->exit)
 		return bl->exit(bl);
