@@ -77,7 +77,7 @@ void skiboot_gcov_done(void)
 		prlog(PR_WARNING, "GCOV: gcov_info_list doesn't look sane. "
 		      "i->filename == NULL.");
 
-	printf("GCOV: gcov_info_list at 0x%p\n", gcov_info_list);
+	printf("GCOV: gcov_info_list at %p\n", gcov_info_list);
 }
 
 void __gcov_merge_add(gcov_type *counters, unsigned int n_counters)
