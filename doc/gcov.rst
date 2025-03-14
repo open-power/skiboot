@@ -42,9 +42,13 @@ FSP: ::
 
   getmemproc 30000000 3407872 -fb skiboot.dump
 
-linux (e.g. petitboot environment): ::
+linux (e.g. petitboot environment) via ``proc``: ::
 
   dd if=/proc/kcore skip=1572864 count=6656  of=skiboot.dump
+
+linux (e.g. petitboot environment) via ``sysfs``: ::
+
+  cp /sys/firmware/opal/exports/gcov skiboot.dump
 
 You basically need to dump out the first 3MB of skiboot memory.
 
