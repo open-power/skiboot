@@ -97,8 +97,15 @@ static size_t write_u64(int fd, u64 v)
 #define GCOV_TAG_FOR_COUNTER(count)                                     \
         (GCOV_TAG_COUNTER_BASE + ((unsigned int) (count) << 17))
 
-// gcc 4.7/4.8 specific
-#define GCOV_TAG_FUNCTION_LENGTH        3
+#define GCOV_WORD_SIZE			4
+
+#if TARGET__GNUC__ >= 12
+#define GCOV_TAG_FUNCTION_LENGTH	(3 * GCOV_WORD_SIZE)
+#define GCOV_TAG_COUNTER_LENGTH(num)	((num) * 2 * GCOV_WORD_SIZE)
+#else
+#define GCOV_TAG_FUNCTION_LENGTH	3
+#define GCOV_TAG_COUNTER_LENGTH(num)	((num) * 2)
+#endif
 
 size_t skiboot_dump_size = 0x240000;
 
@@ -163,7 +170,7 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 				continue;
 
 			write_u32(fd, (GCOV_TAG_FOR_COUNTER(ctr)));
-			write_u32(fd, be32toh(ctr_info->num)*2);
+			write_u32(fd, GCOV_TAG_COUNTER_LENGTH(be32toh(ctr_info->num)));
 			printf(" ctr %d gcov_ctr_info->num %u\n",
 			    ctr, be32toh(ctr_info->num));
 
