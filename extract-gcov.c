@@ -143,6 +143,9 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 	write_u32(fd, GCOV_DATA_MAGIC);
 	write_u32(fd, be32toh(gi->version));
 	write_u32(fd, be32toh(gi->stamp));
+#if TARGET__GNUC__ >= 12
+	write_u32(fd, 0); /* checksum */
+#endif
 
 	printf("version: %x\tstamp: %d\n", be32toh(gi->version), be32toh(gi->stamp));
 	printf("nfunctions: %d \n", be32toh(gi->n_functions));
