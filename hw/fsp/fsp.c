@@ -76,6 +76,7 @@ struct fsp {
 	unsigned int		iopath_count;
 	int			active_iopath;	/* -1: no active IO path */
 	struct fsp_iopath	iopath[FSP_MAX_IOPATH];
+	bool			primary;
 };
 
 enum ipl_state {
@@ -1959,7 +1960,7 @@ static void fsp_update_links_states(struct fsp *fsp)
 	}
 
 	if (fsp->active_iopath >= 0) {
-		if (!active_fsp || (active_fsp != fsp))
+		if (active_fsp && (active_fsp != fsp))
 			active_fsp = fsp;
 
 		fsp_inbound_off = 0;
@@ -2003,8 +2004,12 @@ static void fsp_create_fsp(struct dt_node *fsp_node)
 	fsp->index = index;
 	fsp->active_iopath = -1;
 
+	if (dt_find_property(fsp_node, "primary"))
+		fsp->primary = true;
+
 	count = linksprop->len / 4;
-	prlog(PR_DEBUG, "FSP #%d: Found %d IO PATH\n", index, count);
+	prlog(PR_DEBUG, "FSP #%d: Found %d IO PATH %s\n", index, count,
+			fsp->primary ? "(Primary FSP)" : "");
 	if (count > FSP_MAX_IOPATH) {
 		prerror("FSP #%d: WARNING, limited to %d IO PATH\n",
 			index, FSP_MAX_IOPATH);
@@ -2073,6 +2078,16 @@ int fsp_fatal_msg(struct fsp_msg *msg)
 	return rc;
 }
 
+static void fsp_init_set_active(void)
+{
+	struct fsp *fsp;
+
+	/* Mark primary FSP as active fsp during boot */
+	for (fsp = first_fsp; fsp; fsp = fsp->link)
+		if (fsp->primary)
+			active_fsp = fsp;
+}
+
 static bool fsp_init_one(const char *compat)
 {
 	struct dt_node *fsp_node;
@@ -2104,6 +2119,7 @@ static bool fsp_init_one(const char *compat)
 		/* Create the FSP data structure */
 		fsp_create_fsp(fsp_node);
 	}
+	fsp_init_set_active();
 
 	return inited;
 }
