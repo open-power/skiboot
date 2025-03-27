@@ -190,6 +190,8 @@ static void tpmrel_cvc_init(struct HDIF_common_hdr *hdif_hdr)
 		type = be32_to_cpu(hv->type);
 		offset = be32_to_cpu(hv->offset);
 		version = be32_to_cpu(hv->version);
+		prlog(PR_DEBUG, "entry %d: type=0x%x, version=0x%x, dbob_id=0x%x, offset=0x%x\n",
+				i, type, version, be32_to_cpu(hv->dbob_id), offset);
 
 		compat = cvc_service_map_compat(type);
 
@@ -199,6 +201,11 @@ static void tpmrel_cvc_init(struct HDIF_common_hdr *hdif_hdr)
 		}
 
 		node = dt_new_addr(parent, "ibm,cvc-service", offset);
+		if (!node) {
+			prlog(PR_WARNING, "TPMREL: CVC service entry %d: Couldn't add DT node\n",
+			      i);
+			continue;
+		}
 		dt_add_property_strings(node, "compatible", compat);
 		dt_add_property_cells(node, "reg", offset);
 		dt_add_property_cells(node, "version", version);
