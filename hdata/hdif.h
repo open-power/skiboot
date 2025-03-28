@@ -10,7 +10,7 @@
 
 struct HDIF_common_hdr {
 	__be16	d1f0;		/* 0xd1f0 */
-	char	id[6];		/* eye catcher string */
+	char	id[6] __nonstring;	/* eye catcher string */
 	__be16	instnum;	/* instance number */
 	__be16	version;	/* version */
 	__be32	total_len;	/* total structure length */

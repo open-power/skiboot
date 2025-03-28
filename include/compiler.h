@@ -20,6 +20,13 @@
 #define __warn_unused_result	__attribute__((warn_unused_result))
 #define __noinline		__attribute__((noinline))
 
+/*
+ * GCC 15 introduces errors for "unterminated-string-initialization", mark
+ * character arrays that are not intended to be null-terminated as
+ * 'nonstring', such as eye-catchers
+ */
+#define __nonstring		__attribute((nonstring))
+
 #if 0 /* Provided by gcc stddef.h */
 #define offsetof(type,m)	__builtin_offsetof(type,m)
 #endif

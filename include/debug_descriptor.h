@@ -9,7 +9,7 @@
  * 0x80 in the sapphire binary
  */
 struct debug_descriptor {
-	u8	eye_catcher[8];	/* "OPALdbug" */
+	u8	eye_catcher[8] __nonstring;	/* "OPALdbug" */
 #define DEBUG_DESC_VERSION	1
 	__be32	version;
 	u8	console_log_levels;	/* high 4 bits in memory,
