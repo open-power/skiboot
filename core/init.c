@@ -1017,7 +1017,7 @@ static void mask_pc_system_xstop(void)
          * HID[5] and mask the checkstop that it can cause. CME does
          * the recovery handling for us.
          */
-        for_each_cpu(cpu) {
+	for_each_ungarded_primary(cpu) {
                 chip_id = cpu->chip_id;
                 core_id = pir_to_core_id(cpu->pir);
 
