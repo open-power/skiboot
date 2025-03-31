@@ -42,25 +42,43 @@ void astbmc_ext_irq_serirq_cpld(unsigned int chip_id)
 	lpc_all_interrupts(chip_id);
 }
 
-static void astbmc_ipmi_error(struct ipmi_msg *msg)
-{
-        prlog(PR_DEBUG, "ASTBMC: error sending msg. cc = %02x\n", msg->cc);
-
-        ipmi_free_msg(msg);
-}
-
 #define SET_ENABLE_SEL		0x08
 #define SET_ENABLE_MSGBUF	0x04
 #define SET_ENABLE_RX_MQ_INT	0x01
 
-static void astbmc_ipmi_setenables(void)
+static bool astbmc_ipmi_enable_bits(uint8_t mask)
 {
 	struct ipmi_msg *msg;
 	uint8_t data;
 
-	data = SET_ENABLE_SEL | SET_ENABLE_MSGBUF | SET_ENABLE_RX_MQ_INT;
+	memset(&data, 0, sizeof(data));
 
-	msg = ipmi_mkmsg_simple(IPMI_SET_ENABLES, &data, sizeof(data));
+	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_GET_ENABLES,
+			 NULL, NULL, NULL, 0, sizeof(data));
+	if (!msg) {
+		/**
+		 * @fwts-label ASTBMCFailedSetEnables
+		 * @fwts-advice AST BMC is likely to be non-functional
+		 * when accessed from host.
+		 */
+		prlog(PR_ERR, "ASTBMC: failed to get enables\n");
+		return false;
+	}
+	ipmi_queue_msg_sync(msg);
+	if (msg->cc != IPMI_CC_NO_ERROR) {
+		ipmi_free_msg(msg);
+		prlog(PR_ERR, "ASTBMC: failed to get enables cc=0x%02x\n", msg->cc);
+		return false;
+	}
+	memcpy(&data, msg->data, sizeof(data));
+	ipmi_free_msg(msg);
+
+	if ((data & mask) == mask)
+		return true; /* Already enabled */
+
+	data |= mask;
+	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_SET_ENABLES,
+			 NULL, NULL, &data, sizeof(data), 0);
 	if (!msg) {
 		/**
 		 * @fwts-label ASTBMCFailedSetEnables
@@ -68,12 +86,36 @@ static void astbmc_ipmi_setenables(void)
 		 * when accessed from host.
 		 */
 		prlog(PR_ERR, "ASTBMC: failed to set enables\n");
-		return;
+		return false;
 	}
+	ipmi_queue_msg_sync(msg);
+	if (msg->cc != IPMI_CC_NO_ERROR) {
+		ipmi_free_msg(msg);
+		if (msg->cc == IPMI_INVALID_DATA_FIELD)
+			prlog(PR_INFO, "ASTBMC: unsupported BMC global enable 0x%02x\n", mask);
+		else
+			prlog(PR_ERR, "ASTBMC: failed to set enables cc=0x%02x\n", msg->cc);
+		return false;
+	}
+	ipmi_free_msg(msg);
 
-	msg->error = astbmc_ipmi_error;
+	return true;
+}
 
-	ipmi_queue_msg(msg);
+static void astbmc_ipmi_setenables(void)
+{
+	/*
+	 * OpenBMC's IPMI should have set ENABLE_SEL and RX_MQ_INT. It does
+	 * not support MSGBUF, but there is no harm in trying to enable it.
+	 * QEMU's ipmi_bmc_sim implementation does support MSGBUF, but it
+	 * does not set RX_MQ_INT by default.
+	 *
+	 * Try to enable one-at-a-time because an implementation may reject
+	 * SET_ENABLES if any bits are unsupported.
+	 */
+	astbmc_ipmi_enable_bits(SET_ENABLE_RX_MQ_INT);
+	astbmc_ipmi_enable_bits(SET_ENABLE_MSGBUF);
+	astbmc_ipmi_enable_bits(SET_ENABLE_SEL);
 }
 
 static int astbmc_fru_init(void)
@@ -152,8 +194,8 @@ void astbmc_init(void)
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
 
-        /* Enable IPMI OEM message interrupts */
-        astbmc_ipmi_setenables();
+	/* Enable IPMI OEM message interrupts */
+	astbmc_ipmi_setenables();
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_MOTHERBOARD_INIT);
 
