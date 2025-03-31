@@ -27,7 +27,6 @@ struct timer {
 	timer_func_t		expiry;
 	void *			user_data;
 	void *			running;
-	uint64_t		gen;
 };
 
 extern void init_timer(struct timer *t, timer_func_t expiry, void *data);

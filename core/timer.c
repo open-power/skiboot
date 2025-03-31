@@ -32,7 +32,6 @@ static struct lock timer_lock = LOCK_UNLOCKED;
 static LIST_HEAD(timer_list);
 static LIST_HEAD(timer_poll_list);
 static bool timer_in_poll;
-static uint64_t timer_poll_gen;
 
 static inline bool this_cpu_is_running_timer(void)
 {
@@ -128,7 +127,6 @@ static void __schedule_timer_at(struct timer *t, uint64_t when)
 
 	if (when == TIMER_POLL) {
 		/* It's a poller, add it to the poller list */
-		t->gen = timer_poll_gen;
 		list_add_tail(&timer_poll_list, &t->link);
 	} else {
 		/* It's a real timer, add it in the right spot in the
@@ -174,11 +172,16 @@ uint64_t schedule_timer(struct timer *t, uint64_t how_long)
 static void __check_poll_timers(uint64_t now)
 {
 	struct timer *t;
+	struct list_head list;
 
 	/* Don't call this from multiple CPUs at once */
 	if (timer_in_poll)
 		return;
 	timer_in_poll = true;
+
+	/* Move all poll timers to a private list */
+	list_head_init(&list);
+	list_append_list(&list, &timer_poll_list);
 
 	/*
 	 * Poll timers might re-enqueue themselves and don't have an
@@ -191,22 +194,23 @@ static void __check_poll_timers(uint64_t now)
 	 * because at boot, this can be called quite quickly and I want
 	 * to be safe vs. wraps.
 	 */
-	timer_poll_gen++;
 	for (;;) {
-		t = list_top(&timer_poll_list, struct timer, link);
+		t = list_top(&list, struct timer, link);
 
 		/* Top timer has a different generation than current ? Must
 		 * be older, we are done.
 		 */
-		if (!t || t->gen == timer_poll_gen)
+		if (!t)
 			break;
-
 
 		/* Top of list still running, we have to delay handling
 		 * it. Just skip until the next poll.
 		 */
-		if (t->running)
-			break;
+		if (t->running) {
+			list_del(&t->link);
+			list_add_tail(&timer_poll_list, &t->link);
+			continue;
+		}
 
 		/* Allright, first remove it and mark it running */
 		__remove_timer(t);
