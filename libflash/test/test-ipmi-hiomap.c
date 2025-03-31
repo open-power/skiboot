@@ -148,7 +148,7 @@ void ipmi_free_msg(struct ipmi_msg *msg __attribute__((unused)))
 		free(msg->data);
 }
 
-void ipmi_queue_msg_sync(struct ipmi_msg *msg)
+int ipmi_queue_msg_sync(struct ipmi_msg *msg)
 {
 	struct ipmi_msg_ctx *ctx = container_of(msg, struct ipmi_msg_ctx, msg);
 	const struct scenario_cmd *cmd;
@@ -193,6 +193,8 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 		ctx->sel.fn(ctx->cursor->s.bmc_state, ctx->sel.context);
 		ctx->cursor++;
 	}
+
+	return OPAL_SUCCESS;
 }
 
 int ipmi_sel_register(uint8_t oem_cmd __attribute__((unused)),

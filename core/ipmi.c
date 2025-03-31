@@ -157,16 +157,16 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 	}
 }
 
-void ipmi_queue_msg_sync(struct ipmi_msg *msg)
+int ipmi_queue_msg_sync(struct ipmi_msg *msg)
 {
 	bool (*poll)(void) = msg->backend->poll;
 
 	if (!ipmi_present())
-		return;
+		return OPAL_HARDWARE;
 
 	if (!msg) {
 		prerror("%s: Attempting to queue NULL message\n", __func__);
-		return;
+		return OPAL_PARAMETER;
 	}
 
 	lock(&sync_lock);
@@ -190,6 +190,8 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 			poll();
 		time_wait_ms(10);
 	}
+
+	return OPAL_SUCCESS;
 }
 
 void ipmi_flush(void)

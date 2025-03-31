@@ -218,7 +218,7 @@ int ipmi_queue_msg_head(struct ipmi_msg *msg);
 
 /* Synchronously send an ipmi message. This won't return until the
  * messages callback has been called. */
-void ipmi_queue_msg_sync(struct ipmi_msg *msg);
+int ipmi_queue_msg_sync(struct ipmi_msg *msg);
 
 /* Removes the message from the list, queued previously */
 int ipmi_dequeue_msg(struct ipmi_msg *msg);
