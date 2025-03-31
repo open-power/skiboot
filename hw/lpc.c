@@ -389,9 +389,11 @@ static int64_t lpc_set_fw_rdsz(struct lpcm *lpc, uint8_t rdsz)
 
 static int64_t lpc_opb_prepare(struct lpcm *lpc,
 			       enum OpalLPCAddressType addr_type,
-			       uint32_t addr, uint32_t sz,
-			       uint32_t *opb_base, bool is_write)
+			       uint32_t *addrp, uint32_t sz,
+			       bool is_write)
 {
+	uint32_t addr = *addrp;
+	uint32_t opb_base;
 	uint32_t top = addr + sz;
 	uint8_t fw_idsel;
 	int64_t rc;
@@ -412,7 +414,7 @@ static int64_t lpc_opb_prepare(struct lpcm *lpc,
 		/* And only supports byte accesses */
 		if (sz != 1)
 			return OPAL_PARAMETER;
-		*opb_base = lpc_io_opb_base;
+		opb_base = lpc_io_opb_base;
 		break;
 	case OPAL_LPC_MEM:
 		/* MEM space is 256M */
@@ -421,17 +423,19 @@ static int64_t lpc_opb_prepare(struct lpcm *lpc,
 		/* And only supports byte accesses */
 		if (sz != 1)
 			return OPAL_PARAMETER;
-		*opb_base = lpc_mem_opb_base;
+		opb_base = lpc_mem_opb_base;
 		break;
 	case OPAL_LPC_FW:
 		/*
 		 * FW space is in segments of 256M controlled
 		 * by IDSEL, make sure we don't cross segments
 		 */
-		*opb_base = lpc_fw_opb_base;
 		fw_idsel = (addr >> 28);
 		if (((top - 1) >> 28) != fw_idsel)
 			return OPAL_PARAMETER;
+
+		opb_base = lpc_fw_opb_base;
+		addr = addr & 0x0fffffff;
 
 		/* Set segment */
 		rc = lpc_set_fw_idsel(lpc, fw_idsel);
@@ -447,6 +451,9 @@ static int64_t lpc_opb_prepare(struct lpcm *lpc,
 	default:
 		return OPAL_PARAMETER;
 	}
+
+	*addrp = opb_base + addr;
+
 	return OPAL_SUCCESS;
 }
 
@@ -525,7 +532,6 @@ static int64_t __lpc_write(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 			   uint32_t addr, uint32_t data, uint32_t sz,
 			   bool probe)
 {
-	uint32_t opb_base;
 	int64_t rc;
 
 	lock(&lpc->lock);
@@ -537,14 +543,15 @@ static int64_t __lpc_write(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 
 	/*
 	 * Convert to an OPB access and handle LPC HC configuration
-	 * for FW accesses (IDSEL)
+	 * for FW accesses (IDSEL), and adjust the address to the
+	 * memory space.
 	 */
-	rc = lpc_opb_prepare(lpc, addr_type, addr, sz, &opb_base, true);
+	rc = lpc_opb_prepare(lpc, addr_type, &addr, sz, true);
 	if (rc)
 		goto bail;
 
 	/* Perform OPB access */
-	rc = opb_write(lpc, opb_base + addr, data, sz);
+	rc = opb_write(lpc, addr, data, sz);
 	if (rc)
 		goto bail;
 
@@ -612,7 +619,6 @@ static int64_t __lpc_read(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 			  uint32_t addr, uint32_t *data, uint32_t sz,
 			  bool probe)
 {
-	uint32_t opb_base;
 	int64_t rc;
 
 	lock(&lpc->lock);
@@ -624,14 +630,15 @@ static int64_t __lpc_read(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 
 	/*
 	 * Convert to an OPB access and handle LPC HC configuration
-	 * for FW accesses (IDSEL and read size)
+	 * for FW accesses (IDSEL and read size), and adjust the address
+	 * to the memory space.
 	 */
-	rc = lpc_opb_prepare(lpc, addr_type, addr, sz, &opb_base, false);
+	rc = lpc_opb_prepare(lpc, addr_type, &addr, sz, false);
 	if (rc)
 		goto bail;
 
 	/* Perform OPB access */
-	rc = opb_read(lpc, opb_base + addr, data, sz);
+	rc = opb_read(lpc, addr, data, sz);
 	if (rc)
 		goto bail;
 
