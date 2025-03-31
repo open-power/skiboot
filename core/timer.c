@@ -201,14 +201,12 @@ static void __check_poll_timers(uint64_t now)
 		if (!t || t->gen == timer_poll_gen)
 			break;
 
-		/* Top of list still running, we have to delay handling it,
-		 * let's reprogram the SLW with a small delay. We chose
-		 * arbitrarily 1us.
+
+		/* Top of list still running, we have to delay handling
+		 * it. Just skip until the next poll.
 		 */
-		if (t->running) {
-			update_timer_expiry(now + usecs_to_tb(1));
+		if (t->running)
 			break;
-		}
 
 		/* Allright, first remove it and mark it running */
 		__remove_timer(t);
@@ -242,13 +240,14 @@ static void __check_timers(uint64_t now)
 			break;
 		}
 
-		/* Top of list still running, we have to delay handling
-		 * it. For now just skip until the next poll, when we have
-		 * SLW interrupts, we'll probably want to trip another one
-		 * ASAP
+		/* Top of list still running, we have to delay handling it,
+		 * let's reprogram the SLW/SBE with a small delay. We chose
+		 * arbitrarily 1us.
 		 */
-		if (t->running)
+		if (t->running) {
+			update_timer_expiry(now + usecs_to_tb(1));
 			break;
+		}
 
 		/* Allright, first remove it and mark it running */
 		__remove_timer(t);
