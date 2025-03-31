@@ -2925,6 +2925,27 @@ static void xive_reset_enable_thread(struct cpu_thread *c)
 	}
 }
 
+static void xive2_tima_enable_phys(struct cpu_thread *cpu, void *tm_ring1)
+{
+	struct xive_cpu_state *xs __unused = cpu->xstate;
+	uint8_t old_w2 __unused, w2 __unused;
+
+	/* Set VT to 1 */
+	old_w2 = in_8(tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2);
+	if (old_w2 & 0x80) {
+		/* QEMU can reach here, so don't make it assert yet */
+		xive_cpu_err(cpu, "Error enabling PHYS CAM already enabled\n");
+		backtrace();
+	}
+	out_8(tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
+	w2 = in_8(tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2);
+
+	xive_cpu_vdbg(cpu, "Initialized TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
+		      xs->vp_blk, xs->vp_idx,
+		      in_be64(tm_ring1 + TM_QW3_HV_PHYS),
+		      old_w2, w2);
+}
+
 void xive2_cpu_callin(struct cpu_thread *cpu)
 {
 	struct xive_cpu_state *xs = cpu->xstate;
@@ -2935,16 +2956,7 @@ void xive2_cpu_callin(struct cpu_thread *cpu)
 
 	/* Reset the HW thread context and enable it */
 	xive_reset_enable_thread(cpu);
-
-	/* Set VT to 1 */
-	old_w2 = in_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2);
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
-	w2 = in_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2);
-
-	xive_cpu_vdbg(cpu, "Initialized TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
-		      xs->vp_blk, xs->vp_idx,
-		      in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS),
-		      old_w2, w2);
+	xive2_tima_enable_phys(cpu, xs->tm_ring1);
 }
 
 #ifdef XIVE_EXTRA_CHECK_INIT_CACHE
@@ -3868,19 +3880,9 @@ static void xive_cleanup_cpu_tima(struct cpu_thread *c)
 	void *cpu_tm_base = xive_cpu_get_tima(c);
 	uint8_t old_w2 __unused, w2 __unused;
 
-	/* Reset the HW context */
+	/* Reset the HW thread context and enable it */
 	xive_reset_enable_thread(c);
-
-	/* Set VT to 1 */
-	old_w2 = in_8(cpu_tm_base + TM_QW3_HV_PHYS + TM_WORD2);
-	out_8(cpu_tm_base + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
-	w2 = in_8(cpu_tm_base + TM_QW3_HV_PHYS + TM_WORD2);
-
-	/* Dump HV state */
-	xive_cpu_vdbg(c, "[reset] VP TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
-		      xs->vp_blk, xs->vp_idx,
-		      in_be64(cpu_tm_base + TM_QW3_HV_PHYS),
-		      old_w2, w2);
+	xive2_tima_enable_phys(c, cpu_tm_base);
 }
 
 static int64_t xive_vc_ind_cache_kill(struct xive *x, uint64_t type)
