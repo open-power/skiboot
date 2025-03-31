@@ -149,12 +149,12 @@ static void get_bt_caps_complete(struct ipmi_msg *msg)
 		goto out;
 	}
 
-	if (msg->data[1] != BT_FIFO_LEN) {
+	if (msg->data[1] + 1 != BT_FIFO_LEN) {
 		prlog(PR_DEBUG, "Got a input buffer len (%u) cap which differs from the default\n",
 				msg->data[1]);
 	}
 
-	if (msg->data[2] != BT_FIFO_LEN) {
+	if (msg->data[2] + 1 != BT_FIFO_LEN) {
 		prlog(PR_DEBUG, "Got a output buffer len (%u) cap which differs from the default\n",
 				msg->data[2]);
 	}
@@ -605,6 +605,17 @@ static void bt_irq(uint32_t chip_id __unused, uint32_t irq_mask __unused)
 static struct ipmi_msg *bt_alloc_ipmi_msg(size_t request_size, size_t response_size)
 {
 	struct bt_msg *bt_msg;
+
+	if (request_size + BT_MIN_REQ_LEN + 1 > bt.caps.input_buf_len) {
+		prerror("%s request size too large for BT FIFO (%ld)\n",
+				__func__, request_size);
+		return NULL;
+	}
+	if (response_size + BT_MIN_RESP_LEN + 1 > bt.caps.output_buf_len) {
+		prerror("%s response size too large for BT FIFO  %ld)\n",
+				__func__, response_size);
+		return NULL;
+	}
 
 	bt_msg = zalloc(sizeof(struct bt_msg) + MAX(request_size, response_size));
 	if (!bt_msg)
