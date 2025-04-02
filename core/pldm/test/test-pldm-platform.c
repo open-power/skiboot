@@ -4,6 +4,7 @@
 #include "test-pldm-common.c"
 
 #define STATESENSOR_RECORD_HANDLE 116
+#define STATESENSOR_RECORD_HANDLE_1 187
 
 #define EFFECTER1_RECORD_HANDLE 120
 #define EFFECTER2_RECORD_HANDLE 160
@@ -11,7 +12,8 @@
 enum platform_special_case_code  {
 	NORMAL_CASE = 0x00,
 	PDR_REPLY_ERROR = 0x02,
-	PLATFORM_EVENT_ERROR = 0x03
+	PLATFORM_EVENT_ERROR = 0x03,
+	VERIFY_SHUTDOWN = 0x04
 };
 
 enum platform_special_case_code platform_special_case = NORMAL_CASE;
@@ -40,6 +42,32 @@ struct state_sensor_possible_states possible_states_sensor_0_test = {
 		{.byte = 1}
 	}
 
+};
+
+
+/*
+ * These structure duplicates BMC functionality for Pldm self test
+ * It include PDR entry to be send on behalf of BMC
+ */
+struct pldm_state_sensor_pdr sensor_test_1 = {
+	.hdr = {
+		.record_handle = STATESENSOR_RECORD_HANDLE_1
+	},
+	.terminus_handle = 1,
+	.sensor_id = 3,
+	.entity_type = PLDM_ENTITY_SYSTEM_CHASSIS,
+	.entity_instance = 1,
+	.container_id = 1,
+	.sensor_init = 0,
+	.sensor_auxiliary_names_pdr = false,
+	.composite_sensor_count = 1
+};
+struct state_sensor_possible_states possible_states_sensor_1_test = {
+	.state_set_id = 17,
+	.possible_states_size = 1,
+	.states = {
+		{.byte = 1}
+	}
 };
 
 
@@ -201,8 +229,17 @@ int get_test_pdr_entry(uint32_t record_hndl, uint8_t **pdr,
 		 * if record_handle is equal to first record handle or 0
 		 * then encode next data transfer handle with 1st record handle
 		 */
-		*next_record_hndl = effecter_test_1.hdr.record_handle;
+		*next_record_hndl = sensor_test_1.hdr.record_handle;
 
+	} else if (record_hndl == sensor_test_1.hdr.record_handle) {
+
+		rc = encode_test_state_sensor_pdr(
+				&sensor_test_1,
+				&possible_states_sensor_1_test,
+				pdr, pdr_len);
+		if (rc != PLDM_SUCCESS)
+			return rc;
+		*next_record_hndl = effecter_test_1.hdr.record_handle;
 
 	} else if (record_hndl == effecter_test_1.hdr.record_handle) {
 
@@ -228,6 +265,39 @@ int get_test_pdr_entry(uint32_t record_hndl, uint8_t **pdr,
 		 */
 		*next_record_hndl = 0;
 	} else
+		return OPAL_PARAMETER;
+
+	return OPAL_SUCCESS;
+
+}
+
+
+static int pldm_test_sensor_event_handle(uint8_t *event_data, size_t event_data_length)
+{
+	int rc;
+	uint16_t sensor_id;
+	uint8_t sensor_event_class_type;
+	size_t event_class_data_offset;
+	uint8_t sensor_offset, event_state, previous_event_state;
+
+	rc = decode_sensor_event_data(event_data,
+			event_data_length,
+			&sensor_id,
+			&sensor_event_class_type,
+			&event_class_data_offset);
+	if (rc != PLDM_SUCCESS)
+		return OPAL_PARAMETER;
+
+	rc = decode_state_sensor_data(event_data + event_class_data_offset,
+			event_data_length - event_class_data_offset,
+			&sensor_offset,
+			&event_state,
+			&previous_event_state);
+	if (rc != PLDM_SUCCESS)
+		return OPAL_PARAMETER;
+
+	if (platform_special_case == VERIFY_SHUTDOWN
+			&& event_state != PLDM_SW_TERM_GRACEFUL_SHUTDOWN)
 		return OPAL_PARAMETER;
 
 	return OPAL_SUCCESS;
@@ -308,9 +378,31 @@ int pldm_test_reply_request_platform(void *request_msg, size_t request_len,
 			return OPAL_PARAMETER;
 
 		/* Test: if tid and event class same as that expected */
-		if (tid != HOST_TID || event_class != PLDM_PDR_REPOSITORY_CHG_EVENT)
+		if (tid != HOST_TID)
 			return OPAL_PARAMETER;
 
+		switch (event_class) {
+		case PLDM_PDR_REPOSITORY_CHG_EVENT:
+			/*
+			 * Check if special testcase to reply with
+			 * error completion code.
+			 */
+			if (platform_special_case == PLATFORM_EVENT_ERROR)
+				completion_code = PLDM_ERROR;
+			break;
+
+		case PLDM_SENSOR_EVENT:
+			rc = pldm_test_sensor_event_handle(request_msg +
+					sizeof(struct pldm_msg_hdr) + event_data_offset,
+					payload_len - event_data_offset);
+			if (rc != PLDM_SUCCESS)
+				return OPAL_PARAMETER;
+
+			break;
+
+		default:
+			return OPAL_PARAMETER;
+		}
 		*response_len = sizeof(struct pldm_msg_hdr) +
 			sizeof(struct pldm_platform_event_message_resp);
 		*response_msg = malloc(*response_len);
@@ -319,13 +411,6 @@ int pldm_test_reply_request_platform(void *request_msg, size_t request_len,
 			return OPAL_RESOURCE;
 		}
 
-
-		/*
-		 * Check if special testcase to reply with
-		 * error completion code.
-		 */
-		if (platform_special_case == PLATFORM_EVENT_ERROR)
-			completion_code = PLDM_ERROR;
 		rc = encode_platform_event_message_resp(
 				((struct pldm_msg *)request_msg)->hdr.instance_id,
 				completion_code, 0, *response_msg);
@@ -508,7 +593,22 @@ int test_find_pdr_non_existing_record(void)
 	return OPAL_SUCCESS;
 }
 
+int test_pldm_platform_initiate_shutdown(void)
+{
+	int rc;
 
+	platform_special_case = VERIFY_SHUTDOWN;
+	rc = pldm_platform_initiate_shutdown();
+	if (rc != OPAL_SUCCESS) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_SUCCESS);
+		platform_special_case = NORMAL_CASE;
+		return OPAL_PARAMETER;
+	}
+	platform_special_case = NORMAL_CASE;
+	return OPAL_SUCCESS;
+
+}
 
 struct test_case {
 	const char *name;
@@ -524,6 +624,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_find_pdr_first_record),
 	TEST_CASE(test_find_pdr_existing_record),
 	TEST_CASE(test_find_pdr_non_existing_record),
+	TEST_CASE(test_pldm_platform_initiate_shutdown),
 	{NULL, NULL}
 };
 
