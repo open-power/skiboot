@@ -13,7 +13,9 @@ enum platform_special_case_code  {
 	NORMAL_CASE = 0x00,
 	PDR_REPLY_ERROR = 0x02,
 	PLATFORM_EVENT_ERROR = 0x03,
-	VERIFY_SHUTDOWN = 0x04
+	VERIFY_SHUTDOWN = 0x04,
+	VERIFY_RESTART = 0x05,
+	VERIFY_POWEROFF,
 };
 
 enum platform_special_case_code platform_special_case = NORMAL_CASE;
@@ -325,6 +327,9 @@ int pldm_test_reply_request_platform(void *request_msg, size_t request_len,
 	uint8_t format_version, tid, event_class;
 	size_t event_data_offset;
 	uint32_t next_record_hndl;
+	uint16_t effecter_id;
+	uint8_t comp_effecter_count;
+	set_effecter_state_field field = {0};
 
 	/* check pldm command received and reply with appropriate pldm response message */
 	switch (((struct pldm_msg *)request_msg)->hdr.command) {
@@ -417,6 +422,45 @@ int pldm_test_reply_request_platform(void *request_msg, size_t request_len,
 		if (rc != PLDM_SUCCESS)
 			return OPAL_PARAMETER;
 
+		return PLDM_SUCCESS;
+
+	case PLDM_SET_STATE_EFFECTER_STATES:
+		payload_len = request_len - sizeof(struct pldm_msg_hdr);
+		rc = decode_set_state_effecter_states_req(request_msg, payload_len,
+							&effecter_id,
+							&comp_effecter_count,
+							&field);
+		if (rc != PLDM_SUCCESS)
+			return OPAL_PARAMETER;
+
+		/*
+		 * Verify if the effecter state matches the expected value.
+		 * If it does not, return OPAL_PARAMETER.
+		 */
+		if (platform_special_case == VERIFY_RESTART &&
+				field.effecter_state !=
+				PLDM_SW_TERM_GRACEFUL_RESTART_REQUESTED){
+			return OPAL_PARAMETER;
+		}
+		if (platform_special_case == VERIFY_POWEROFF
+				&& field.effecter_state !=
+				PLDM_STATE_SET_SYS_POWER_STATE_OFF_SOFT_GRACEFUL){
+			return OPAL_PARAMETER;
+		}
+
+
+		*response_len = sizeof(struct pldm_msg);
+		*response_msg = malloc(*response_len);
+		if (*response_msg == NULL) {
+			perror("PLDM_TEST malloc");
+			return OPAL_RESOURCE;
+		}
+
+		rc = encode_set_state_effecter_states_resp(
+				((struct pldm_msg *)request_msg)->hdr.instance_id,
+				completion_code, *response_msg);
+		if (rc != PLDM_SUCCESS)
+			return OPAL_PARAMETER;
 		return PLDM_SUCCESS;
 
 	default:
@@ -610,6 +654,40 @@ int test_pldm_platform_initiate_shutdown(void)
 
 }
 
+int test_pldm_platform_restart(void)
+{
+	int rc;
+
+	platform_special_case = VERIFY_RESTART;
+	rc = pldm_platform_restart();
+	if (rc != OPAL_SUCCESS) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_SUCCESS);
+		platform_special_case = NORMAL_CASE;
+		return OPAL_PARAMETER;
+	}
+	platform_special_case = NORMAL_CASE;
+	return OPAL_SUCCESS;
+
+}
+
+int test_pldm_platform_poweroff(void)
+{
+	int rc;
+
+	platform_special_case = VERIFY_POWEROFF;
+	rc = pldm_platform_power_off();
+	if (rc != OPAL_SUCCESS) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_SUCCESS);
+		platform_special_case = NORMAL_CASE;
+		return OPAL_PARAMETER;
+	}
+	platform_special_case = NORMAL_CASE;
+	return OPAL_SUCCESS;
+
+}
+
 struct test_case {
 	const char *name;
 	int (*fn)(void);
@@ -625,6 +703,8 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_find_pdr_existing_record),
 	TEST_CASE(test_find_pdr_non_existing_record),
 	TEST_CASE(test_pldm_platform_initiate_shutdown),
+	TEST_CASE(test_pldm_platform_restart),
+	TEST_CASE(test_pldm_platform_poweroff),
 	{NULL, NULL}
 };
 
