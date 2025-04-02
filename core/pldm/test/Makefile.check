@@ -1,0 +1,59 @@
+# -*-Makefile-*-
+CUR_DIR := core/pldm/test/
+PLDM_TEST := core/pldm/test/test-pldm-fileio-bios
+LCOV_EXCLUDE += $(PLDM_TEST:%=%.c)
+
+.PHONY : core-pldm-check core-pldm-coverage
+core-pldm-check: $(PLDM_TEST:%=%-check)
+core-pldm-coverage: $(PLDM_TEST:%=%-gcov-run)
+HOSTCFLAG_PLDM:= $(filter-out -Wdeclaration-after-statement,$(HOSTCFLAGS))
+HOSTCFLAG_PLDM:= $(filter-out -Wstrict-prototypes,$(HOSTCFLAG_PLDM))
+HOSTCFLAG_PLDM:= $(filter-out -Wjump-misses-init,$(HOSTCFLAG_PLDM))
+HOSTCFLAG_PLDM:= $(filter-out -Wmissing-prototypes,$(HOSTCFLAG_PLDM))
+HOSTCFLAG_PLDM:= $(filter-out -Wmissing-declarations,$(HOSTCFLAG_PLDM))
+HOSTCFLAG_PLDM += -Wno-type-limits
+HOSTCFLAG_PLDM += -Wno-format
+
+include $(SRC)/libmctp/Makefile.inc
+
+check: core-pldm-check
+coverage: core-pldm-coverage
+
+$(PLDM_TEST:%=%-gcov-run) : %-run: %
+	$(call Q, TEST-COVERAGE ,$< , $<)
+
+
+$(PLDM_TEST:%=%-check) : %-check: %
+	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
+
+$(CUR_DIR)/stubs.o: $(CUR_DIR)/stubs.c
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -I . -I include -Wno-error=attributes -g -c -o $(CUR_DIR)/stubs.o $(CUR_DIR)/stubs.c, $<)
+
+$(PLDM_TEST) : % : %.c $(CUR_DIR)/stubs.o $(CUR_DIR)/libmctptest.a
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAG_PLDM) -O0 -g -I include -I . -I pldm/include/ -I libmctp/ -I pldm/include/libpldm/ -I pldm/include/libpldm/oem/ibm/ -I core/pldm/ -I libfdt -o $@ $< $(CUR_DIR)/stubs.o -L$(CUR_DIR) -Bstatic -lmctptest -lgcov --coverage -lrt -lpthread, $<)
+
+$(PLDM_TEST:%=%-gcov): %-gcov : %.c %
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTFLAG_PLDM) $(HOSTGCOVCFLAGS) -I include -I . -I pldm/libpldm/ -I libfdt -lgcov -o $@ $<, $<)
+
+$(PLDM_TEST:%=%-gcov): % : $(%.d:-gcov=)
+
+$(CUR_DIR)/libmctptest.a: $(LIBMCTP_OBJS:%.o=$(CUR_DIR)/%.o)
+	$(call Q, AR ,ar rc $@ $?, $?)
+
+$(CUR_DIR)/%.o: $(LIBMCTP_DIR)/%.c
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTFLAG_PLDM) $(HOSTGCOVCFLAGS) -O0 -I . -I libmctp/ -D'__unused=__attribute__((unused))' -c $< -o $@, $?)
+
+
+$(LIBMCTP_OBJS): $($@:%.o=$(LIBMCTP_DIR)/%.c)
+	$(call Q, HOSTCC ,$(HOSTCC) $(CFLAGS_libmctp) -O0 -I . -I libmctp/ -c $< -o $@, $?)
+
+-include $(wildcard core/pldm/test/*.d)
+
+clean: pldm-test-clean
+
+pldm-test-clean:
+	$(RM) -f core/pldm/test/*.[od] $(PLDM_TEST) $(PLDM_TEST:%=%-gcov)
+	$(RM) -f core/pldm/test/*.gcda core/pldm/test/*.gcno
+	$(RM) -f $(CUR_DIR)/libmctptest.a
+	$(RM) -f *.gcda *.gcno skiboot.info
+	$(RM) -rf coverage-report
