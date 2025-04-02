@@ -9,6 +9,25 @@
 #define TEST_FILE_IO_LENGTH 50
 #define TEST_FILE_IO_BUF1 "This is Test buffer Open power Foundation"
 
+#define TEST_BIOS_STRING "hb_lid_ids"
+#define TEST_BIOS_STRING_HANDLE 60
+#define TEST_ATTR_HANDLE 1
+#define TEST_ATTR_STRING_MIN_LEN 0
+#define TEST_ATTR_STRING_MAX_LEN 0
+#define TEST_ATTR_STRING_DEFAULT_LEN 4
+#define TEST_ATTR_STRING_DEFAULT "test"
+#define TEST_VALUE_TABLE_CURRENT_STR "ATTR_PERM=81e00663,ATTR_TMP=81e00664,NVRAM=81e0066b"
+#define TEST_VALID_ATTR_NAME "ATTR_TMP"
+
+enum bios_special_case_code  {
+	NORMAL_CASE = 0x00,
+	STRING_TABLE_ERROR = 0x01,
+	ATTR_TABLE_ERROR = 0x02,
+	VALUE_TABLE_ERROR = 0x03
+};
+enum bios_special_case_code bios_special_case = NORMAL_CASE;
+
+
 enum pldm_completion_codes special_reply;
 
 
@@ -246,6 +265,191 @@ static int pldm_test_reply_request_fileio(void *request_msg, size_t request_len,
 
 }
 
+/*
+ * This function duplicates BMC functionality for Pldm self test
+ * It generate bios table for self test based on input parameter tabletype
+ */
+static uint32_t get_test_table_entry_bios(uint8_t tableType, uint8_t **bios_table,
+		uint32_t *bios_table_length, uint8_t *table_response)
+{
+	int pad_len = 0;
+	uint32_t checksum = 0;
+	struct pldm_bios_string_table_entry *string_entry;
+	struct pldm_bios_table_attr_entry_string_info info;
+	*table_response = PLDM_ERROR;
+
+	switch (tableType) {
+
+	case PLDM_BIOS_STRING_TABLE:
+		*bios_table_length = sizeof(struct pldm_bios_string_table_entry)
+			+ strlen(TEST_BIOS_STRING) - 1;
+
+		/* calculate padding length */
+		if (*bios_table_length % 4)
+			pad_len = 4 - (*bios_table_length % 4);
+		else
+			pad_len = 0;
+		*bios_table_length += sizeof(uint32_t) + pad_len;
+
+		*bios_table = malloc(*bios_table_length);
+		if (*bios_table == NULL)
+			return OPAL_RESOURCE;
+
+		memset(*bios_table, 0, *bios_table_length);
+
+		string_entry = (struct pldm_bios_string_table_entry *)(*bios_table);
+		string_entry->string_handle = htole16(TEST_BIOS_STRING_HANDLE);
+		string_entry->string_length = htole16(strlen(TEST_BIOS_STRING));
+		memcpy(string_entry->name, TEST_BIOS_STRING, string_entry->string_length);
+		if (bios_special_case != STRING_TABLE_ERROR)
+			*table_response = PLDM_SUCCESS;
+
+		break;
+	case PLDM_BIOS_ATTR_TABLE:
+
+		*bios_table_length = sizeof(struct pldm_bios_attr_table_entry)
+			+ sizeof(struct attr_table_string_entry_fields)
+			+ strlen(TEST_ATTR_STRING_DEFAULT);
+
+		/* calculate padding length */
+		if (*bios_table_length % 4)
+			pad_len = 4 - (*bios_table_length % 4);
+		else
+			pad_len = 0;
+		*bios_table_length += sizeof(uint32_t) + pad_len;
+
+		*bios_table = malloc(*bios_table_length);
+		if (*bios_table == NULL)
+			return OPAL_RESOURCE;
+
+		memset(*bios_table, 0, *bios_table_length);
+
+		info.name_handle = TEST_BIOS_STRING_HANDLE;
+		info.read_only = 0;
+		info.string_type = PLDM_BIOS_STRING;
+		info.min_length = TEST_ATTR_STRING_MIN_LEN;
+		info.max_length = TEST_ATTR_STRING_MAX_LEN;
+		info.def_length = TEST_ATTR_STRING_DEFAULT_LEN;
+		info.def_string = malloc(strlen(TEST_ATTR_STRING_DEFAULT));
+		if (info.def_string == NULL)
+			return OPAL_RESOURCE;
+
+		memcpy((uint8_t *)info.def_string, TEST_ATTR_STRING_DEFAULT,
+				strlen(TEST_ATTR_STRING_DEFAULT));
+		pldm_bios_table_attr_entry_string_encode(*bios_table, *bios_table_length, &info);
+
+		free((uint8_t *)info.def_string);
+		if (bios_special_case != ATTR_TABLE_ERROR) {
+			*table_response = PLDM_SUCCESS;
+			((struct pldm_bios_attr_table_entry *)*bios_table)->attr_handle =
+				TEST_ATTR_HANDLE;
+		}
+		break;
+
+	case PLDM_BIOS_ATTR_VAL_TABLE:
+		*bios_table_length = sizeof(struct pldm_bios_attr_val_table_entry)
+			+ sizeof(uint16_t) + sizeof(TEST_VALUE_TABLE_CURRENT_STR) - 1;
+
+		/* calculate padding length */
+		if (*bios_table_length % 4)
+			pad_len = 4 - (*bios_table_length % 4);
+		else
+			pad_len = 0;
+		*bios_table_length += sizeof(uint32_t) + pad_len;
+
+		*bios_table = malloc(*bios_table_length);
+		if (*bios_table == NULL)
+			return OPAL_RESOURCE;
+
+		memset(*bios_table, 0, *bios_table_length);
+
+		pldm_bios_table_attr_value_entry_encode_string(*bios_table, *bios_table_length,
+				TEST_ATTR_HANDLE, PLDM_BIOS_STRING,
+				sizeof(TEST_VALUE_TABLE_CURRENT_STR),
+				TEST_VALUE_TABLE_CURRENT_STR);
+		if (bios_special_case != VALUE_TABLE_ERROR)
+			*table_response = PLDM_SUCCESS;
+		break;
+	default:
+		printf("PLDM_TEST Failed: INvalid Table type");
+		return OPAL_PARAMETER;
+
+	}
+
+	/* Add padding data */
+	memset(*bios_table + *bios_table_length - sizeof(uint32_t) - pad_len, 0, pad_len);
+
+
+	checksum = htole32(pldm_crc32(*bios_table, *bios_table_length - sizeof(uint32_t)
+				- pad_len));
+	memcpy(*bios_table + *bios_table_length - sizeof(uint32_t), (void *)&checksum,
+			sizeof(uint32_t));
+
+	return OPAL_SUCCESS;
+
+}
+
+
+/*
+ * This function duplicates BMC functionality for Pldm self test
+ * it handle PLDM_REQUEST for PLDM_BIOS and reply with appropriate
+ * PLDM_RESPONSE message
+ */
+int pldm_test_reply_request_bios(void *request_msg, size_t request_len,
+		void **response_msg, size_t *response_len)
+{
+	int rc;
+	uint32_t transfer_handle;
+	uint8_t transfer_op_flag, table_type;
+	uint8_t *bios_table;
+	uint32_t bios_table_length = 0;
+	size_t payload_length;
+	uint8_t pldm_table_response;
+
+
+
+	/*
+	 * check if command send is PLDM_GET_BIOS_TABLE then only
+	 * reply response message and return PLDM_SUCCESS
+	 * else return error
+	 */
+	if (((struct pldm_msg *)request_msg)->hdr.command == PLDM_GET_BIOS_TABLE) {
+		payload_length = request_len - sizeof(struct pldm_msg_hdr);
+		rc = decode_get_bios_table_req(request_msg, payload_length, &transfer_handle,
+				&transfer_op_flag, &table_type);
+		if (rc != PLDM_SUCCESS)
+			return OPAL_PARAMETER;
+
+		/*  get table entry to reply request on behalf on BMC for PLDM self test */
+		rc = get_test_table_entry_bios(table_type, &bios_table,
+				&bios_table_length, &pldm_table_response);
+		if (rc != OPAL_SUCCESS)
+			return rc;
+
+		payload_length = bios_table_length + sizeof(struct pldm_get_bios_table_resp) - 1;
+
+		*response_len = sizeof(struct pldm_msg_hdr)
+			+ payload_length - 1;
+
+		*response_msg = malloc(*response_len);
+		if (*response_msg == NULL)
+			return OPAL_RESOURCE;
+
+		rc = encode_get_bios_table_resp(((struct pldm_msg *)request_msg)->hdr.instance_id,
+				pldm_table_response, PLDM_GET_NEXTPART, PLDM_START_AND_END,
+				bios_table, payload_length, *response_msg);
+		if (rc != PLDM_SUCCESS)
+			return OPAL_PARAMETER;
+
+		free(bios_table);
+		return OPAL_SUCCESS;
+	} else
+		return OPAL_PARAMETER;
+
+	return OPAL_SUCCESS;
+}
+
+
 int ast_mctp_message_tx(bool tag_owner __unused, uint8_t msg_tag __unused,
 		uint8_t *msg, int len)
 {
@@ -268,6 +472,11 @@ int ast_mctp_message_tx(bool tag_owner __unused, uint8_t msg_tag __unused,
 			rc = pldm_test_reply_request_fileio(pldm_received_msg, len-1,
 					&response_msg, &response_len);
 			break;
+		case PLDM_BIOS:
+			rc = pldm_test_reply_request_bios(pldm_received_msg, len-1,
+					&response_msg, &response_len);
+			break;
+
 		default:
 			return OPAL_PARAMETER;
 		}
@@ -489,6 +698,141 @@ static int test_read_replied_with_error(void)
 
 }
 
+static int test_find_lid_by_attr_name_before_init(void)
+{
+	size_t rc;
+	char *lid;
+
+	/*
+	 * Attempt to call pldm_bios_find_lid_by_attr_name()
+	 * before pldm_bios_init() return error OPAL_HARDWARE
+	 */
+	rc = pldm_bios_find_lid_by_attr_name(TEST_VALID_ATTR_NAME, &lid);
+	if (rc  != OPAL_HARDWARE) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_HARDWARE);
+		return OPAL_PARAMETER;
+
+	}
+	return OPAL_SUCCESS;
+}
+
+static int test_init_pldm_bios_error_string_table(void)
+{
+	size_t rc;
+
+	bios_special_case = STRING_TABLE_ERROR;
+
+	/*
+	 * Attempt to call pldm_bios_init()
+	 * when string table return PLDM_ERROR
+	 * so pldm_bios_int return OPAL_PARAMETER
+	 */
+	rc = pldm_bios_init();
+	if (rc  != OPAL_PARAMETER) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_PARAMETER);
+		bios_special_case = NORMAL_CASE;
+		return OPAL_PARAMETER;
+
+	}
+
+	bios_special_case = NORMAL_CASE;
+	return OPAL_SUCCESS;
+}
+
+
+
+static int test_init_pldm_bios_error_attr_table(void)
+{
+
+	size_t rc;
+
+	bios_special_case = ATTR_TABLE_ERROR;
+
+	/*
+	 * Attempt to call pldm_bios_init()
+	 * when attribute table return PLDM_ERROR
+	 * so pldm_bios_int return OPAL_PARAMETER
+	 */
+	rc = pldm_bios_init();
+	if (rc  != OPAL_PARAMETER) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_PARAMETER);
+		bios_special_case = NORMAL_CASE;
+		return OPAL_PARAMETER;
+
+	}
+
+	bios_special_case = NORMAL_CASE;
+	return OPAL_SUCCESS;
+}
+
+
+static int test_init_pldm_bios_error_value_table(void)
+{
+	size_t rc;
+
+	bios_special_case = VALUE_TABLE_ERROR;
+
+	/*
+	 * Attempt to call pldm_bios_init()
+	 * when value table return PLDM_ERROR
+	 * so pldm_bios_int return OPAL_PARAMETER
+	 */
+	rc = pldm_bios_init();
+	if (rc  != OPAL_PARAMETER) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_PARAMETER);
+		bios_special_case = NORMAL_CASE;
+		return OPAL_PARAMETER;
+
+	}
+
+	bios_special_case = NORMAL_CASE;
+	return OPAL_SUCCESS;
+}
+
+
+static int test_init_pldm_bios(void)
+{
+	size_t rc;
+
+	bios_special_case = NORMAL_CASE;
+	rc = pldm_bios_init();
+	if (rc  != OPAL_SUCCESS) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_PARAMETER);
+		return OPAL_PARAMETER;
+
+	}
+
+	return OPAL_SUCCESS;
+
+}
+
+
+int test_pldm_bios_find_lid_by_invalid_attr_name(void)
+{
+	size_t rc;
+	char *lid;
+	char name[] = "Error";
+	/*
+	 * Attempt to call pldm_bios_find_lid_by_attr_name()
+	 * when name argument not present return error OPAL_PARAMETER
+	 */
+	rc = pldm_bios_find_lid_by_attr_name(name, &lid);
+	if (rc  != OPAL_PARAMETER) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n",
+				__func__, rc, OPAL_PARAMETER);
+		return OPAL_PARAMETER;
+
+	}
+
+	return OPAL_SUCCESS;
+}
+
+
 struct test_case {
 	const char *name;
 	int (*fn)(void);
@@ -507,6 +851,12 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_read_greater_than_file_length),
 	TEST_CASE(test_write_replied_with_error),
 	TEST_CASE(test_read_replied_with_error),
+	TEST_CASE(test_find_lid_by_attr_name_before_init),
+	TEST_CASE(test_init_pldm_bios_error_string_table),
+	TEST_CASE(test_init_pldm_bios_error_attr_table),
+	TEST_CASE(test_init_pldm_bios_error_value_table),
+	TEST_CASE(test_init_pldm_bios),
+	TEST_CASE(test_pldm_bios_find_lid_by_invalid_attr_name),
 	{NULL, NULL}
 };
 
