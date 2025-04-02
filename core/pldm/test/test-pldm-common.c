@@ -44,6 +44,7 @@ static inline unsigned long mftb(void);
 #include <libmctp/libmctp-astlpc.h>
 #undef pr_fmt
 #include "../pldm-bios-requests.c"
+#include "../pldm-lid-files.c"
 #include <pldm/libpldm/base.c>
 #include <pldm/libpldm/pdr.c>
 #include <pldm/libpldm/bios.c>

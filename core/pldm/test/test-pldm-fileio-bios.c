@@ -31,6 +31,7 @@ enum bios_special_case_code bios_special_case = NORMAL_CASE;
 enum pldm_completion_codes special_reply;
 
 
+struct blocklevel_device *bl;
 void *pldm_file_io_buff[TEST_FILE_IO_LENGTH];
 
 /*
@@ -832,6 +833,69 @@ int test_pldm_bios_find_lid_by_invalid_attr_name(void)
 	return OPAL_SUCCESS;
 }
 
+int test_pldm_lid_files_init(void)
+{
+	int rc;
+
+	rc = pldm_lid_files_init(&bl);
+	if (rc  != OPAL_SUCCESS) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n", __func__, rc, OPAL_SUCCESS);
+		return OPAL_PARAMETER;
+
+	}
+	return OPAL_SUCCESS;
+}
+
+int test_pldm_read_invalid_lid(void)
+{
+	int rc;
+	char buff[100] = {'\0'};
+
+	rc = bl->read(bl, VMM_SIZE_RESERVED_PER_SECTION * 5, buff, 20);
+	if (rc  != OPAL_PARAMETER) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n", __func__, rc, OPAL_PARAMETER);
+		return OPAL_PARAMETER;
+
+	}
+	return OPAL_SUCCESS;
+}
+
+int test_pldm_read_valid_lid_size_greter_than_file_size(void)
+{
+	int rc;
+	char buff[100] = {'\0'};
+
+	rc = bl->read(bl, VMM_SIZE_RESERVED_PER_SECTION * 3, buff, 100);
+	if (rc  != OPAL_PARAMETER) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n", __func__, rc, OPAL_PARAMETER);
+		return OPAL_PARAMETER;
+
+	}
+	return OPAL_SUCCESS;
+}
+
+int test_pldm_read_valid_lid_size(void)
+{
+	int rc;
+	char buff[100] = {'\0'};
+	int size = 20;
+
+	rc = bl->read(bl, VMM_SIZE_RESERVED_PER_SECTION * 3,
+			buff, size);
+	if (rc  != OPAL_SUCCESS) {
+		printf("PLDM_TEST: %s failed :: rc = %d exp %d\n", __func__, rc, OPAL_SUCCESS);
+		return OPAL_PARAMETER;
+
+	}
+
+	/* Test if buffer read is correct */
+	if (strncmp(buff, TEST_FILE_IO_BUF1, size) != 0) {
+		printf("PLDM_TEST: %s failed :: pldm read string mismatch\n", __func__);
+		return OPAL_PARAMETER;
+	}
+	return OPAL_SUCCESS;
+}
+
 
 struct test_case {
 	const char *name;
@@ -857,6 +921,10 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_init_pldm_bios_error_value_table),
 	TEST_CASE(test_init_pldm_bios),
 	TEST_CASE(test_pldm_bios_find_lid_by_invalid_attr_name),
+	TEST_CASE(test_pldm_lid_files_init),
+	TEST_CASE(test_pldm_read_invalid_lid),
+	TEST_CASE(test_pldm_read_valid_lid_size_greter_than_file_size),
+	TEST_CASE(test_pldm_read_valid_lid_size),
 	{NULL, NULL}
 };
 
