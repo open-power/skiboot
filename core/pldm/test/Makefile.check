@@ -1,7 +1,8 @@
 # -*-Makefile-*-
 CUR_DIR := core/pldm/test/
 PLDM_TEST := core/pldm/test/test-pldm-fileio-bios \
-	     core/pldm/test/test-pldm-platform
+	     core/pldm/test/test-pldm-platform \
+	     core/pldm/test/test-pldm-fru
 LCOV_EXCLUDE += $(PLDM_TEST:%=%.c)
 
 .PHONY : core-pldm-check core-pldm-coverage
