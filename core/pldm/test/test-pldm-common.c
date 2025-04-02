@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#define HAVE_LITTLE_ENDIAN 1
 #include <stdbool.h>
 #include <types.h>
 #include <stdint.h>
@@ -13,14 +14,14 @@
 #include <time.h>
 #include <timer.h>
 #include <pthread.h>
-#include <ccan/list/list.h>
-#include <ccan/short_types/short_types.h>
 
 #define __LITTLE_ENDIAN_BITFIELD
 #define __TEST__
 #define __SKIBOOT__
 #define zalloc(bytes) calloc(1, (bytes))
 static inline unsigned long mftb(void);
+#include <ccan/list/list.h>
+#include <ccan/short_types/short_types.h>
 #include <timebase.h>
 #include <op-panel.h>
 #include <core/pldm/pldm.h>
