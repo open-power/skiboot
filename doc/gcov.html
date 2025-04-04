@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>GCOV for skiboot &#8212; skiboot 785a5e3
+    <title>GCOV for skiboot &#8212; skiboot eee92af
  documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script src="_static/documentation_options.js?v=fab1c2f4"></script>
+    <script src="_static/documentation_options.js?v=dab2a4cb"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
@@ -31,7 +31,7 @@
         <li class="right" >
           <a href="bmc.html" title="OPAL &lt;–&gt; BMC interactions"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot 785a5e3
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot eee92af
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GCOV for skiboot</a></li> 
       </ul>
@@ -81,8 +81,12 @@ the extract-gcov utility in the skiboot repo.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">getmemproc</span> <span class="mi">30000000</span> <span class="mi">3407872</span> <span class="o">-</span><span class="n">fb</span> <span class="n">skiboot</span><span class="o">.</span><span class="n">dump</span>
 </pre></div>
 </div>
-<p>linux (e.g. petitboot environment):</p>
+<p>linux (e.g. petitboot environment) via <code class="docutils literal notranslate"><span class="pre">proc</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dd</span> <span class="k">if</span><span class="o">=/</span><span class="n">proc</span><span class="o">/</span><span class="n">kcore</span> <span class="n">skip</span><span class="o">=</span><span class="mi">1572864</span> <span class="n">count</span><span class="o">=</span><span class="mi">6656</span>  <span class="n">of</span><span class="o">=</span><span class="n">skiboot</span><span class="o">.</span><span class="n">dump</span>
+</pre></div>
+</div>
+<p>linux (e.g. petitboot environment) via <code class="docutils literal notranslate"><span class="pre">sysfs</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cp</span> <span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">firmware</span><span class="o">/</span><span class="n">opal</span><span class="o">/</span><span class="n">exports</span><span class="o">/</span><span class="n">gcov</span> <span class="n">skiboot</span><span class="o">.</span><span class="n">dump</span>
 </pre></div>
 </div>
 <p>You basically need to dump out the first 3MB of skiboot memory.</p>
@@ -170,7 +174,7 @@ to build skiboot, otherwise you’re likely to get errors.</p>
         <li class="right" >
           <a href="bmc.html" title="OPAL &lt;–&gt; BMC interactions"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">skiboot 785a5e3
+        <li class="nav-item nav-item-0"><a href="index.html">skiboot eee92af
  documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GCOV for skiboot</a></li> 
       </ul>
