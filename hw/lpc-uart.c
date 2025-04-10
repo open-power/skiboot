@@ -98,10 +98,16 @@ static inline void uart_write(unsigned int reg, uint8_t val)
 
 static bool uart_check_tx_room(void)
 {
+	uint8_t reg;
+
 	if (tx_room)
 		return true;
 
-	if (uart_read(REG_LSR) & LSR_THRE) {
+	reg = uart_read(REG_LSR);
+	if (reg == 0xff)
+		return false;
+
+	if (reg & LSR_THRE) {
 		/* FIFO is 16 entries */
 		tx_room = 16;
 		tx_full = false;
