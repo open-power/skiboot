@@ -337,7 +337,7 @@ static int64_t uart_opal_write_buffer_space(int64_t term_number,
 	lock(&uart_lock);
 	tx_buf_len = uart_tx_buf_space();
 
-	if ((tx_buf_len < be64_to_cpu(*__length)) && uart_timed_out(1000))
+	if (uart_timed_out(1000))
 		ret = OPAL_TIMEOUT;
 
 	*__length = cpu_to_be64(tx_buf_len);
