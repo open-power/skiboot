@@ -76,6 +76,7 @@ struct fsp {
 	unsigned int		iopath_count;
 	int			active_iopath;	/* -1: no active IO path */
 	struct fsp_iopath	iopath[FSP_MAX_IOPATH];
+	bool			primary;
 };
 
 enum ipl_state {
@@ -1959,8 +1960,21 @@ static void fsp_update_links_states(struct fsp *fsp)
 	}
 
 	if (fsp->active_iopath >= 0) {
-		if (!active_fsp || (active_fsp != fsp))
-			active_fsp = fsp;
+
+		/*
+		 * Set active_fsp unconditionally to active FSP.
+		 *
+		 * fsp_update_links_states() function is invoked during boot as
+		 * well as FSP reset/reload. During boot, when 2 FSPs are
+		 * detected by opal it will select the last one as active_fsp
+		 * which may not be primary. But that is ok, during boot once
+		 * we are done discovering all FSPs we will set primary FSP as
+		 * active_fsp through fsp_init_set_active() function.
+		 *
+		 * In reset/reload path, we will go over list of all FSPs and
+		 * set one which has active link. see fsp_reinit_fsp().
+		 */
+		active_fsp = fsp;
 
 		fsp_inbound_off = 0;
 		fiop = &fsp->iopath[fsp->active_iopath];
@@ -2003,8 +2017,12 @@ static void fsp_create_fsp(struct dt_node *fsp_node)
 	fsp->index = index;
 	fsp->active_iopath = -1;
 
+	if (dt_find_property(fsp_node, "primary"))
+		fsp->primary = true;
+
 	count = linksprop->len / 4;
-	prlog(PR_DEBUG, "FSP #%d: Found %d IO PATH\n", index, count);
+	prlog(PR_DEBUG, "FSP #%d: Found %d IO PATH %s\n", index, count,
+			fsp->primary ? "(Primary FSP)" : "");
 	if (count > FSP_MAX_IOPATH) {
 		prerror("FSP #%d: WARNING, limited to %d IO PATH\n",
 			index, FSP_MAX_IOPATH);
@@ -2073,6 +2091,16 @@ int fsp_fatal_msg(struct fsp_msg *msg)
 	return rc;
 }
 
+static void fsp_init_set_active(void)
+{
+	struct fsp *fsp;
+
+	/* Mark primary FSP as active fsp during boot */
+	for (fsp = first_fsp; fsp; fsp = fsp->link)
+		if (fsp->primary)
+			active_fsp = fsp;
+}
+
 static bool fsp_init_one(const char *compat)
 {
 	struct dt_node *fsp_node;
@@ -2104,6 +2132,7 @@ static bool fsp_init_one(const char *compat)
 		/* Create the FSP data structure */
 		fsp_create_fsp(fsp_node);
 	}
+	fsp_init_set_active();
 
 	return inited;
 }
