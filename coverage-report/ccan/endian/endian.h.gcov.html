@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-04-04 14:08:39</td>
+            <td class="headerValue">2025-04-22 16:45:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -365,9 +365,9 @@
 <span id="L294"><span class="lineNum">     294</span>                 :             :  * cpu_to_be64 - convert a uint64_t value to big endian.</span>
 <span id="L295"><span class="lineNum">     295</span>                 :             :  * @native: value to convert</span>
 <span id="L296"><span class="lineNum">     296</span>                 :             :  */</span>
-<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">    15005900 : static inline beint64_t cpu_to_be64(uint64_t native)</span></span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">    15005895 : static inline beint64_t cpu_to_be64(uint64_t native)</span></span>
 <span id="L298"><span class="lineNum">     298</span>                 :             : {</span>
-<span id="L299"><span class="lineNum">     299</span>                 :<span class="tlaGNC">    15005900 :         return CPU_TO_BE64(native);</span></span>
+<span id="L299"><span class="lineNum">     299</span>                 :<span class="tlaGNC">    15005895 :         return CPU_TO_BE64(native);</span></span>
 <span id="L300"><span class="lineNum">     300</span>                 :             : }</span>
 <span id="L301"><span class="lineNum">     301</span>                 :             : </span>
 <span id="L302"><span class="lineNum">     302</span>                 :             : /**</span>
@@ -383,36 +383,36 @@
 <span id="L312"><span class="lineNum">     312</span>                 :             :  * cpu_to_be16 - convert a uint16_t value to big endian.</span>
 <span id="L313"><span class="lineNum">     313</span>                 :             :  * @native: value to convert</span>
 <span id="L314"><span class="lineNum">     314</span>                 :             :  */</span>
-<span id="L315"><span class="lineNum">     315</span>                 :<span class="tlaGNC">    13594454 : static inline beint16_t cpu_to_be16(uint16_t native)</span></span>
+<span id="L315"><span class="lineNum">     315</span>                 :<span class="tlaGNC">    13404199 : static inline beint16_t cpu_to_be16(uint16_t native)</span></span>
 <span id="L316"><span class="lineNum">     316</span>                 :             : {</span>
-<span id="L317"><span class="lineNum">     317</span>                 :<span class="tlaGNC">    13594454 :         return CPU_TO_BE16(native);</span></span>
+<span id="L317"><span class="lineNum">     317</span>                 :<span class="tlaGNC">    13404199 :         return CPU_TO_BE16(native);</span></span>
 <span id="L318"><span class="lineNum">     318</span>                 :             : }</span>
 <span id="L319"><span class="lineNum">     319</span>                 :             : </span>
 <span id="L320"><span class="lineNum">     320</span>                 :             : /**</span>
 <span id="L321"><span class="lineNum">     321</span>                 :             :  * be64_to_cpu - convert a big-endian uint64_t value</span>
 <span id="L322"><span class="lineNum">     322</span>                 :             :  * @be_val: big-endian value to convert</span>
 <span id="L323"><span class="lineNum">     323</span>                 :             :  */</span>
-<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">   119762296 : static inline uint64_t be64_to_cpu(beint64_t be_val)</span></span>
+<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">   117408340 : static inline uint64_t be64_to_cpu(beint64_t be_val)</span></span>
 <span id="L325"><span class="lineNum">     325</span>                 :             : {</span>
-<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">   119762296 :         return BE64_TO_CPU(be_val);</span></span>
+<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">   117408340 :         return BE64_TO_CPU(be_val);</span></span>
 <span id="L327"><span class="lineNum">     327</span>                 :             : }</span>
 <span id="L328"><span class="lineNum">     328</span>                 :             : </span>
 <span id="L329"><span class="lineNum">     329</span>                 :             : /**</span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :  * be32_to_cpu - convert a big-endian uint32_t value</span>
 <span id="L331"><span class="lineNum">     331</span>                 :             :  * @be_val: big-endian value to convert</span>
 <span id="L332"><span class="lineNum">     332</span>                 :             :  */</span>
-<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">    38099504 : static inline uint32_t be32_to_cpu(beint32_t be_val)</span></span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">    37158198 : static inline uint32_t be32_to_cpu(beint32_t be_val)</span></span>
 <span id="L334"><span class="lineNum">     334</span>                 :             : {</span>
-<span id="L335"><span class="lineNum">     335</span>                 :<span class="tlaGNC">    38099477 :         return BE32_TO_CPU(be_val);</span></span>
+<span id="L335"><span class="lineNum">     335</span>                 :<span class="tlaGNC">    37158171 :         return BE32_TO_CPU(be_val);</span></span>
 <span id="L336"><span class="lineNum">     336</span>                 :             : }</span>
 <span id="L337"><span class="lineNum">     337</span>                 :             : </span>
 <span id="L338"><span class="lineNum">     338</span>                 :             : /**</span>
 <span id="L339"><span class="lineNum">     339</span>                 :             :  * be16_to_cpu - convert a big-endian uint16_t value</span>
 <span id="L340"><span class="lineNum">     340</span>                 :             :  * @be_val: big-endian value to convert</span>
 <span id="L341"><span class="lineNum">     341</span>                 :             :  */</span>
-<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">    23074208 : static inline uint16_t be16_to_cpu(beint16_t be_val)</span></span>
+<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">    21201184 : static inline uint16_t be16_to_cpu(beint16_t be_val)</span></span>
 <span id="L343"><span class="lineNum">     343</span>                 :             : {</span>
-<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaGNC">    23074208 :         return BE16_TO_CPU(be_val);</span></span>
+<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaGNC">    21201184 :         return BE16_TO_CPU(be_val);</span></span>
 <span id="L345"><span class="lineNum">     345</span>                 :             : }</span>
 <span id="L346"><span class="lineNum">     346</span>                 :             : </span>
 <span id="L347"><span class="lineNum">     347</span>                 :             : /* Whichever they include first, they get these definitions. */</span>

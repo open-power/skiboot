@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-04-04 14:08:39</td>
+            <td class="headerValue">2025-04-22 16:45:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -211,10 +211,10 @@
 <span id="L140"><span class="lineNum">     140</span>                 :             :  *      list_head_init(&amp;parent-&gt;children);</span>
 <span id="L141"><span class="lineNum">     141</span>                 :             :  *      parent-&gt;num_children = 0;</span>
 <span id="L142"><span class="lineNum">     142</span>                 :             :  */</span>
-<span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC tlaBgGNC">        1714 : static inline void list_head_init(struct list_head *h)</span></span>
+<span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC tlaBgGNC">      132646 : static inline void list_head_init(struct list_head *h)</span></span>
 <span id="L144"><span class="lineNum">     144</span>                 :             : {</span>
-<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">        1714 :         h-&gt;n.next = h-&gt;n.prev = &amp;h-&gt;n;</span></span>
-<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">        1714 : }</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">      132646 :         h-&gt;n.next = h-&gt;n.prev = &amp;h-&gt;n;</span></span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">      132646 : }</span></span>
 <span id="L147"><span class="lineNum">     147</span>                 :             : </span>
 <span id="L148"><span class="lineNum">     148</span>                 :             : /**</span>
 <span id="L149"><span class="lineNum">     149</span>                 :             :  * list_node_init - initialize a list_node</span>
@@ -392,16 +392,16 @@
 <span id="L321"><span class="lineNum">     321</span>                 :             :  *      parent-&gt;num_children--;</span>
 <span id="L322"><span class="lineNum">     322</span>                 :             :  */</span>
 <span id="L323"><span class="lineNum">     323</span>                 :             : #define list_del(n) list_del_(n, LIST_LOC)</span>
-<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">       18533 : static inline void list_del_(struct list_node *n, const char* abortstr)</span></span>
+<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">       83999 : static inline void list_del_(struct list_node *n, const char* abortstr)</span></span>
 <span id="L325"><span class="lineNum">     325</span>                 :             : {</span>
-<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">       18533 :         (void)list_debug_node(n, abortstr);</span></span>
-<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC">       18533 :         n-&gt;next-&gt;prev = n-&gt;prev;</span></span>
-<span id="L328"><span class="lineNum">     328</span>                 :<span class="tlaGNC">       18533 :         n-&gt;prev-&gt;next = n-&gt;next;</span></span>
+<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">       83999 :         (void)list_debug_node(n, abortstr);</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC">       83999 :         n-&gt;next-&gt;prev = n-&gt;prev;</span></span>
+<span id="L328"><span class="lineNum">     328</span>                 :<span class="tlaGNC">       83999 :         n-&gt;prev-&gt;next = n-&gt;next;</span></span>
 <span id="L329"><span class="lineNum">     329</span>                 :             : #ifdef CCAN_LIST_DEBUG</span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :         /* Catch use-after-del. */</span>
-<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">       18533 :         n-&gt;next = n-&gt;prev = NULL;</span></span>
+<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">       83999 :         n-&gt;next = n-&gt;prev = NULL;</span></span>
 <span id="L332"><span class="lineNum">     332</span>                 :             : #endif</span>
-<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">       18533 : }</span></span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">       83999 : }</span></span>
 <span id="L334"><span class="lineNum">     334</span>                 :             : </span>
 <span id="L335"><span class="lineNum">     335</span>                 :             : /**</span>
 <span id="L336"><span class="lineNum">     336</span>                 :             :  * list_del_init - delete a node, and reset it so it can be deleted again.</span>
@@ -708,23 +708,23 @@
 <span id="L637"><span class="lineNum">     637</span>                 :             :  */</span>
 <span id="L638"><span class="lineNum">     638</span>                 :             : #define list_append_list(t, f) list_append_list_(t, f,                  \</span>
 <span id="L639"><span class="lineNum">     639</span>                 :             :                                    __FILE__ &quot;:&quot; stringify(__LINE__))</span>
-<span id="L640"><span class="lineNum">     640</span>                 :<span class="tlaGNC">          50 : static inline void list_append_list_(struct list_head *to,</span></span>
+<span id="L640"><span class="lineNum">     640</span>                 :<span class="tlaGNC">       65516 : static inline void list_append_list_(struct list_head *to,</span></span>
 <span id="L641"><span class="lineNum">     641</span>                 :             :                                      struct list_head *from,</span>
 <span id="L642"><span class="lineNum">     642</span>                 :             :                                      const char *abortstr)</span>
 <span id="L643"><span class="lineNum">     643</span>                 :             : {</span>
-<span id="L644"><span class="lineNum">     644</span>                 :<span class="tlaGNC">          50 :         struct list_node *from_tail = list_debug(from, abortstr)-&gt;n.prev;</span></span>
-<span id="L645"><span class="lineNum">     645</span>                 :<span class="tlaGNC">          50 :         struct list_node *to_tail = list_debug(to, abortstr)-&gt;n.prev;</span></span>
+<span id="L644"><span class="lineNum">     644</span>                 :<span class="tlaGNC">       65516 :         struct list_node *from_tail = list_debug(from, abortstr)-&gt;n.prev;</span></span>
+<span id="L645"><span class="lineNum">     645</span>                 :<span class="tlaGNC">       65516 :         struct list_node *to_tail = list_debug(to, abortstr)-&gt;n.prev;</span></span>
 <span id="L646"><span class="lineNum">     646</span>                 :             : </span>
 <span id="L647"><span class="lineNum">     647</span>                 :             :         /* Sew in head and entire list. */</span>
-<span id="L648"><span class="lineNum">     648</span>                 :<span class="tlaGNC">          50 :         to-&gt;n.prev = from_tail;</span></span>
-<span id="L649"><span class="lineNum">     649</span>                 :<span class="tlaGNC">          50 :         from_tail-&gt;next = &amp;to-&gt;n;</span></span>
-<span id="L650"><span class="lineNum">     650</span>                 :<span class="tlaGNC">          50 :         to_tail-&gt;next = &amp;from-&gt;n;</span></span>
-<span id="L651"><span class="lineNum">     651</span>                 :<span class="tlaGNC">          50 :         from-&gt;n.prev = to_tail;</span></span>
+<span id="L648"><span class="lineNum">     648</span>                 :<span class="tlaGNC">       65516 :         to-&gt;n.prev = from_tail;</span></span>
+<span id="L649"><span class="lineNum">     649</span>                 :<span class="tlaGNC">       65516 :         from_tail-&gt;next = &amp;to-&gt;n;</span></span>
+<span id="L650"><span class="lineNum">     650</span>                 :<span class="tlaGNC">       65516 :         to_tail-&gt;next = &amp;from-&gt;n;</span></span>
+<span id="L651"><span class="lineNum">     651</span>                 :<span class="tlaGNC">       65516 :         from-&gt;n.prev = to_tail;</span></span>
 <span id="L652"><span class="lineNum">     652</span>                 :             : </span>
 <span id="L653"><span class="lineNum">     653</span>                 :             :         /* Now remove head. */</span>
-<span id="L654"><span class="lineNum">     654</span>                 :<span class="tlaGNC">          50 :         list_del(&amp;from-&gt;n);</span></span>
-<span id="L655"><span class="lineNum">     655</span>                 :<span class="tlaGNC">          50 :         list_head_init(from);</span></span>
-<span id="L656"><span class="lineNum">     656</span>                 :<span class="tlaGNC">          50 : }</span></span>
+<span id="L654"><span class="lineNum">     654</span>                 :<span class="tlaGNC">       65516 :         list_del(&amp;from-&gt;n);</span></span>
+<span id="L655"><span class="lineNum">     655</span>                 :<span class="tlaGNC">       65516 :         list_head_init(from);</span></span>
+<span id="L656"><span class="lineNum">     656</span>                 :<span class="tlaGNC">       65516 : }</span></span>
 <span id="L657"><span class="lineNum">     657</span>                 :             : </span>
 <span id="L658"><span class="lineNum">     658</span>                 :             : /**</span>
 <span id="L659"><span class="lineNum">     659</span>                 :             :  * list_prepend_list - empty one list into the start of another.</span>
