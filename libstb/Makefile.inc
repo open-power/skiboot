@@ -30,7 +30,7 @@ libstb/print-container: libstb/print-container.c libstb/container-utils.c
 	$(call Q, HOSTCC , $(HOSTCC) $(HOSTCFLAGS) \
 	-O0 -g -I$(SRC) -I$(SRC)/include -o $@ $^ -lssl -lcrypto, $<)
 
-clean: create-container-clean
+clean: container-utils-clean
 
-create-container-clean:
-	$(RM) libstb/create-container
+container-utils-clean:
+	$(RM) libstb/create-container libstb/print-container
