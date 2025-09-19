@@ -721,7 +721,7 @@ static int memory_error_worker(const char *sysfsfile, const char *type,
 			ret = 1;
 		}
 	}
-	pr_log(LOG_CRIT, "MEM: Offlined %016lx,%016lx, type %s: %m\n",
+	pr_log(LOG_CRIT, "MEM: Offlined %016lx,%016lx, type %s\n",
 			i_start_addr, addr, type);
 
 	close(memfd);
