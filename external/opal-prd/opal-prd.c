@@ -755,9 +755,13 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 	/*
 	 * HBRT expects the memory offlining process to happen in the background
 	 * after the notification is delivered.
+	 *
+	 * fork() return value:
+	 * On success, the PID of the child process is returned in the parent,
+	 * and 0 is returned in the child.
 	 */
 	pid = fork();
-	if (pid > 0)
+	if (pid == 0)
 		exit(memory_error_worker(sysfsfile, typestr, i_start_addr, i_endAddr));
 
 	if (pid < 0) {
