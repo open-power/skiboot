@@ -21,6 +21,10 @@ $(CHECK_TOOL):
 	$(call QTEST, RUN-TEST , make CC=$(HOSTCC) CROSS='' CROSS_COMPILE='' \
 		-C external/$(patsubst check-%,%,$@) check, $@)
 
+# Prevent parallel build of $(CHECK_TOOL) targets
+check-gard: check-pflash
+check-pflash: check-ffspart
+
 clean: $(TOOL_TEST_CLEAN)
 
 .PHONY: $(TOOL_COVERAGE)
