@@ -139,9 +139,11 @@
  * |         |         |
  * |____|____|____|____|
  */
+#define P10_DIESPERCHIP 2
 #define P10_PIR2GCID(pir) (((pir) >> 8) & 0xf)
 
 #define P10_PIR2COREID(pir) (((pir) >> 2) & 0x3f)
+#define P10_PIR2DIEID(pir) (((pir) >> 4) & 0x1)
 
 #define P10_PIR2THREADID(pir) ((pir) & 0x3)
 
