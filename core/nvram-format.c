@@ -2,7 +2,7 @@
 /*
  * NVRAM Format as specified in PAPR
  *
- * Copyright 2013-2019 IBM Corp.
+ * Copyright 2013-2026 IBM Corp.
  */
 
 #include <skiboot.h>
@@ -121,9 +121,13 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 				offset, h->cksum, chrp_nv_cksum(h));
 			goto failed;
 		}
-		if (be16_to_cpu(h->len) < 1) {
-			prerror("NVRAM: Partition at offset 0x%x"
-				" has incorrect 0 length\n", offset);
+		/*
+		 * Length can't be zero or 1; need a length of at least 2 to account
+		 * for the size of the chrp_nvram_hdr itself
+		 */
+		if (be16_to_cpu(h->len) < 2) {
+			prerror("NVRAM: Partition at offset 0x%x has incorrect length of 0x%x\n",
+				offset, be16_to_cpu(h->len));
 			goto failed;
 		}
 
@@ -211,6 +215,8 @@ static void nvram_dangerous(const char *key)
  * nvram_query_safe/dangerous() - Searches skiboot NVRAM partition
  * for a key=value pair.
  *
+ * Note: nvram_check() must have already been called to set skiboot_part_hdr
+ *
  * Dangerous means it should only be used for testing as it may
  * mask issues. Safe is ok for long term use.
  *
@@ -245,11 +251,26 @@ static const char *__nvram_query(const char *key, bool dangerous)
 
 	assert(skiboot_part_hdr);
 
+	/*
+	 * The end of the skiboot section is from the start of the section
+	 * to len * 16 - 1
+	 */
 	part_end = (const char *) skiboot_part_hdr
 		+ be16_to_cpu(skiboot_part_hdr->len) * 16 - 1;
 
+	/* Start just past the header */
 	start = (const char *) skiboot_part_hdr
 		+ sizeof(*skiboot_part_hdr);
+
+	/*
+	 * To account for sizeof(*skiboot_part_hdr), the len must be at least 2 to
+	 * put part_end after start
+	 */
+	if ((be16_to_cpu(skiboot_part_hdr->len) < 2) || (start > part_end)) {
+		prlog(PR_WARNING, "NVRAM: skiboot section length 0x%x is too small\n",
+		      be16_to_cpu(skiboot_part_hdr->len));
+		return NULL;
+	}
 
 	if (!key_len) {
 		prlog(PR_WARNING, "NVRAM: search key is empty!\n");
@@ -262,11 +283,10 @@ static const char *__nvram_query(const char *key, bool dangerous)
 	while (start) {
 		int remaining = part_end - start;
 
-		prlog(PR_TRACE, "NVRAM: '%s' (%lu)\n",
-			start, strlen(start));
-
 		if (key_len + 1 > remaining)
 			return NULL;
+
+		prlog(PR_TRACE, "NVRAM: '%s' (%lu)\n", start, strlen(start));
 
 		if (!strncmp(key, start, key_len) && start[key_len] == '=') {
 			const char *value = &start[key_len + 1];
