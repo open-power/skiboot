@@ -66,7 +66,10 @@ static bool astbmc_ipmi_enable_bits(uint8_t mask)
 	}
 	ipmi_queue_msg_sync(msg);
 	if (msg->cc != IPMI_CC_NO_ERROR) {
-		ipmi_free_msg(msg);
+		/*
+		 * No need to free the msg. When 'ipmi_queue_msg_sync' returns with
+		 * error, message already gets freed by msg->error() in ipmi_cmd_done
+		 */
 		prlog(PR_ERR, "ASTBMC: failed to get enables cc=0x%02x\n", msg->cc);
 		return false;
 	}
@@ -90,7 +93,11 @@ static bool astbmc_ipmi_enable_bits(uint8_t mask)
 	}
 	ipmi_queue_msg_sync(msg);
 	if (msg->cc != IPMI_CC_NO_ERROR) {
-		ipmi_free_msg(msg);
+		/*
+		 * No need to free the msg. When 'ipmi_queue_msg_sync' returns with
+		 * error, message already gets freed by msg->error() in ipmi_cmd_done
+		 */
+
 		if (msg->cc == IPMI_INVALID_DATA_FIELD)
 			prlog(PR_INFO, "ASTBMC: unsupported BMC global enable 0x%02x\n", mask);
 		else
