@@ -278,10 +278,19 @@ int pldm_platform_power_off(void)
 	return set_state_effecter_states_req(effecter_id, &field, true);
 }
 
+/* OEM (IBM) Chassis Power Controller entity and state values */
+#ifndef PLDM_OEM_IBM_ENTITY_CHASSIS_POWER_CONTROLLER
+#define PLDM_OEM_IBM_ENTITY_CHASSIS_POWER_CONTROLLER 24580
+#endif
+#ifndef PLDM_STATE_SET_SYSTEM_POWER_STATE
+#define PLDM_STATE_SET_SYSTEM_POWER_STATE 260
+#endif
+#ifndef PLDM_POWER_CYCLE_OFF_SOFT_GRACEFUL
+#define PLDM_POWER_CYCLE_OFF_SOFT_GRACEFUL 7
+#endif
+
 /*
- * entity_type:  System Firmware
- * state_set:    Software Termination Status(129)
- * states:       Graceful Restart Requested(6)
+ * Send system firmware Graceful Restart request
  */
 int pldm_platform_restart(void)
 {
@@ -292,6 +301,28 @@ int pldm_platform_restart(void)
 	if (!pdr_ready)
 		return OPAL_HARDWARE;
 
+	/*
+	 * Try OEM ForceWarmReboot First.
+	 * Prefer an OEM effecter that maps to an immediate, host-scoped
+	 * restart, falling through to the DMTF path below on any system
+	 * that doesn't.
+	 */
+	rc = find_effecter_id_by_state_set_Id(
+				PLDM_OEM_IBM_ENTITY_CHASSIS_POWER_CONTROLLER,
+				PLDM_STATE_SET_SYSTEM_POWER_STATE,
+				&effecter_id, BMC_TID);
+	if (rc == OPAL_SUCCESS) {
+		field.set_request = PLDM_REQUEST_SET;
+		field.effecter_state = PLDM_POWER_CYCLE_OFF_SOFT_GRACEFUL;
+		prlog(PR_INFO, "PLDM: sending OEM Chassis Power Controller restart request (effecter_id: %d)\n",
+		      effecter_id);
+		return set_state_effecter_states_req(effecter_id, &field, true);
+	}
+
+	/*
+	 * Fallback to Standard DMTF Graceful Restart.
+	 * Used for standard OpenBMC systems lacking the OEM ForceWarmReboot PDR.
+	 */
 	rc = find_effecter_id_by_state_set_Id(
 				PLDM_ENTITY_SYS_FIRMWARE,
 				PLDM_STATE_SET_SW_TERMINATION_STATUS,
