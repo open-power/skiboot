@@ -678,7 +678,7 @@ static struct lpc_client bt_lpc_client = {
 	.interrupt = bt_irq,
 };
 
-void bt_init(void)
+int bt_init(void)
 {
 	struct dt_node *n;
 	const struct dt_property *prop;
@@ -695,18 +695,18 @@ void bt_init(void)
 	n = dt_find_compatible_node(dt_root, NULL, "ipmi-bt");
 	if (!n) {
 		prerror("No BT device\n");
-		return;
+		return OPAL_PARAMETER;
 	}
 
 	/* Get IO base */
 	prop = dt_find_property(n, "reg");
 	if (!prop) {
 		prerror("Can't find reg property\n");
-		return;
+		return OPAL_PARAMETER;
 	}
 	if (dt_property_get_cell(prop, 0) != OPAL_LPC_IO) {
 		prerror("Only supports IO addresses\n");
-		return;
+		return OPAL_PARAMETER;
 	}
 	bt.base_addr = dt_property_get_cell(prop, 1);
 	init_timer(&bt.poller, bt_poll, NULL);
@@ -743,4 +743,6 @@ void bt_init(void)
 	get_bt_caps();
 
 	prlog(PR_DEBUG, "Using LPC IRQ %d\n", irq);
+
+	return OPAL_SUCCESS;
 }

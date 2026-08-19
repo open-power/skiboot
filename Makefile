@@ -62,7 +62,7 @@ CONFIG_FSP?=1
 # Try to build without POWER8 support
 CONFIG_P8?=1
 # Try to build without PLDM code
-CONFIG_PLDM?=0
+CONFIG_PLDM?=1
 
 #
 # Where is the source directory, must be a full path (no ~)

@@ -32,6 +32,16 @@ static struct lock mctp_lock = LOCK_UNLOCKED;
 #define KCS_STATUS_BMC_READY 0x80
 #define KCS_STATUS_OBF       0x01
 
+/*
+ * Current OpenBMC systems put the MCTP buffer 1MB down from
+ * the end of the LPC FW range.
+ *
+ * The size of the FW range is: 0x1000_0000 so the window be at:
+ *
+ *   0x1000_0000 - 2**20 == 0xff00000
+ */
+#define MCTP_FW_ADDR 0xff00000
+
 #define HOST_MAX_INCOMING_MESSAGE_ALLOCATION 131072
 #define DESIRED_MTU 32768
 
@@ -170,15 +180,7 @@ static int astlpc_binding(void)
 	if (!ops_data)
 		return OPAL_NO_MEM;
 
-	/*
-	 * Current OpenBMC systems put the MCTP buffer 1MB down from
-	 * the end of the LPC FW range.
-	 *
-	 * The size of the FW range is: 0x1000_0000 so the window be at:
-	 *
-	 *   0x1000_0000 - 2**20 == 0xff00000
-	 */
-	ops_data->lpc_fw_addr = 0xff00000;
+	ops_data->lpc_fw_addr = MCTP_FW_ADDR;
 
 	/* values chosen by the OpenBMC driver */
 	ops_data->kcs_data_addr = KCS_DATA_REG;
@@ -306,6 +308,24 @@ static void message_rx(uint8_t eid, bool tag_owner,
 	}
 }
 
+#define ASTLPC_MCTP_MAGIC	0x4d435450
+
+bool ast_mctp_available(void)
+{
+	uint32_t data;
+
+	if (!dt_find_compatible_node(dt_root, NULL, "mctp"))
+		return false;
+	if (lpc_probe_read(OPAL_LPC_IO, KCS_STATUS_REG, &data, 1))
+		return false;
+	if (lpc_probe_read(OPAL_LPC_FW, MCTP_FW_ADDR, &data, 4))
+		return false;
+	if (data != cpu_to_be32(ASTLPC_MCTP_MAGIC))
+		return false;
+
+	return true;
+}
+
 /*
  * Initialize mctp binding for hbrt and provide interfaces for sending
  * and receiving mctp messages.
@@ -315,9 +335,9 @@ int ast_mctp_init(void)
 	uint32_t kcs_serial_irq;
 	struct dt_node *n;
 
-	/* Search mctp node */
 	n = dt_find_compatible_node(dt_root, NULL, "mctp");
 	if (!n) {
+		/* Caller should have checked available already */
 		prlog(PR_ERR, "No MCTP device\n");
 		return OPAL_PARAMETER;
 	}

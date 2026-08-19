@@ -72,6 +72,13 @@ out:
 	return rc;
 }
 
+static bool using_pldm;
+
+bool use_pldm(void)
+{
+	return using_pldm;
+}
+
 int pldm_mctp_init(void)
 {
 	int nbr_elt = 8, rc = OPAL_SUCCESS;
@@ -107,6 +114,8 @@ int pldm_mctp_init(void)
 			goto out;
 		}
 	}
+
+	using_pldm = true;
 
 out:
 	prlog(PR_NOTICE, "%s - done, rc: %d\n", __func__, rc);

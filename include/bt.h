@@ -5,6 +5,6 @@
 #define __BT_H
 
 /* Initialise the BT interface */
-void bt_init(void);
+int bt_init(void);
 
 #endif

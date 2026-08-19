@@ -563,12 +563,11 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	trustedboot_exit_boot_services();
 
-#ifdef CONFIG_PLDM
-	pldm_platform_send_progress_state_change(
-		PLDM_STATE_SET_BOOT_PROG_STATE_STARTING_OP_SYS);
-#else
-	ipmi_set_fw_progress_sensor(IPMI_FW_OS_BOOT);
-#endif
+	if (use_pldm())
+		pldm_platform_send_progress_state_change(
+			PLDM_STATE_SET_BOOT_PROG_STATE_STARTING_OP_SYS);
+	else
+		ipmi_set_fw_progress_sensor(IPMI_FW_OS_BOOT);
 
 	if (!is_reboot) {
 		/* We wait for the nvram read to complete here so we can
@@ -1413,19 +1412,17 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Setup ibm,firmware-versions if able */
 	if (platform.bmc) {
 		flash_dt_add_fw_version();
-#ifdef CONFIG_PLDM
-		pldm_fru_dt_add_bmc_version();
-#else
-		ipmi_dt_add_bmc_info();
-#endif
+		if (use_pldm())
+			pldm_fru_dt_add_bmc_version();
+		else
+			ipmi_dt_add_bmc_info();
 	}
 
-#ifdef CONFIG_PLDM
-	pldm_platform_send_progress_state_change(
-		PLDM_STATE_SET_BOOT_PROG_STATE_PCI_RESORUCE_CONFIG);
-#else
-	ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
-#endif
+	if (use_pldm())
+		pldm_platform_send_progress_state_change(
+			PLDM_STATE_SET_BOOT_PROG_STATE_PCI_RESORUCE_CONFIG);
+	else
+		ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
 
 	/*
 	 * These last few things must be done as late as possible

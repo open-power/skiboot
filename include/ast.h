@@ -24,6 +24,9 @@
 
 /* LPC registers */
 #define LPC_BASE		0x1e789000
+#define LPC_HICR4		(LPC_BASE + 0x10)
+#define  LPC_HICR4_BT_ENABLE	(1 << 0)
+#define  LPC_HICR4_KCS_ENABLE	(1 << 2)
 #define LPC_HICR6		(LPC_BASE + 0x80)
 #define LPC_HICR7		(LPC_BASE + 0x88)
 #define LPC_HICR8		(LPC_BASE + 0x8c)
@@ -116,6 +119,14 @@ enum mctp_msg_type {
 
 int ast_mctp_message_tx(bool tag_owner, uint8_t msg_tag,
 			uint8_t *msg, int msg_len);
+#ifdef CONFIG_PLDM
+bool ast_mctp_available(void);
+#else
+static inline bool ast_mctp_available(void)
+{
+	return false;
+}
+#endif
 int ast_mctp_init(void);
 void ast_mctp_exit(void);
 
