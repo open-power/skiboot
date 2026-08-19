@@ -97,7 +97,6 @@ extern void astbmc_early_init(void);
 extern int64_t astbmc_ipmi_reboot(void);
 extern int64_t astbmc_ipmi_power_down(uint64_t request);
 #ifdef CONFIG_PLDM
-extern int astbmc_pldm_init(void);
 extern int pnor_pldm_init(void);
 #endif
 extern void astbmc_init(void);

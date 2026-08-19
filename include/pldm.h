@@ -8,6 +8,15 @@
 #include <skiboot.h>
 #include <pldm/include/libpldm/state_set.h>
 
+#ifdef CONFIG_PLDM
+bool use_pldm(void);
+#else
+static inline bool use_pldm(void)
+{
+	return false;
+}
+#endif
+
 /**
  * Handle PLDM messages received from MCTP
  */

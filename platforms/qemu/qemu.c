@@ -10,6 +10,7 @@
 #include <platforms/astbmc/astbmc.h>
 
 static bool bt_device_present;
+static bool kcs_device_present;
 
 ST_PLUGGABLE(qemu_slot0, "pcie.0");
 ST_PLUGGABLE(qemu_slot1, "pcie.1");
@@ -51,6 +52,11 @@ static bool qemu_probe_common(const char *compat)
 		bt_device_present = true;
 	}
 
+	/* check if the KCS device was defined by QEMU */
+	dt_for_each_compatible(dt_root, n, "kcs") {
+		kcs_device_present = true;
+	}
+
 	slot_table_init(qemu_phb_table);
 
 	return true;
@@ -83,16 +89,10 @@ static bool qemu_probe_powernv11(void)
 
 static void qemu_init(void)
 {
-	if (!bt_device_present) {
-		set_opal_console(&uart_opal_con);
-	} else {
-#ifdef CONFIG_PLDM
-		/* need to be checked according platform: P10, P11 ... */
-		astbmc_pldm_init();
-#else
+	if (bt_device_present || kcs_device_present)
 		astbmc_init();
-#endif
-	}
+	else
+		set_opal_console(&uart_opal_con);
 }
 
 DECLARE_PLATFORM(qemu) = {

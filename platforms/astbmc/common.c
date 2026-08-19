@@ -144,9 +144,9 @@ static int astbmc_fru_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_PLDM
-int astbmc_pldm_init(void)
+static int astbmc_pldm_init(void)
 {
+#ifdef CONFIG_PLDM
 	int rc = OPAL_SUCCESS;
 
 	/* PLDM over MCTP */
@@ -172,16 +172,22 @@ int astbmc_pldm_init(void)
 		prlog(PR_WARNING, "Failed to configure PLDM\n");
 
 	return rc;
-}
+#else
+	assert(0); /* Not reached */
 #endif
+}
 
-void astbmc_init(void)
+static int astbmc_ipmi_init(void)
 {
+	int rc;
+
 	/* Register the BT interface with the IPMI layer
 	 *
 	 * Initialise this first to enable PNOR access
 	 */
-	bt_init();
+	rc = bt_init();
+	if (rc)
+		return rc;
 
 	/* Initialize PNOR/NVRAM */
 	pnor_init();
@@ -208,10 +214,31 @@ void astbmc_init(void)
 
 	/* Setup UART console for use by Linux via OPAL API */
 	set_opal_console(&uart_opal_con);
+
+	return OPAL_SUCCESS;
+}
+
+void astbmc_init(void)
+{
+	prlog(PR_ERR, "PLAT: Checking platform management\n");
+	if (ast_mctp_available()) {
+		if (astbmc_pldm_init() == OPAL_SUCCESS) {
+			prlog(PR_NOTICE, "PLAT: Using PLDM for platform management\n");
+			return;
+		}
+	}
+	if (astbmc_ipmi_init() == OPAL_SUCCESS) {
+		prlog(PR_NOTICE, "PLAT: Using IPMI for platform management\n");
+		return;
+	}
+	prlog(PR_ERR, "PLAT: Unable to initialise platform management\n");
 }
 
 int64_t astbmc_ipmi_power_down(uint64_t request)
 {
+	if (use_pldm() && request == IPMI_CHASSIS_PWR_DOWN)
+		return pldm_platform_power_off();
+
 	if (request != IPMI_CHASSIS_PWR_DOWN) {
 		prlog(PR_WARNING, "PLAT: unexpected shutdown request %llx\n",
 				   request);
@@ -222,6 +249,9 @@ int64_t astbmc_ipmi_power_down(uint64_t request)
 
 int64_t astbmc_ipmi_reboot(void)
 {
+	if (use_pldm())
+		return pldm_platform_restart();
+
 	return ipmi_chassis_control(IPMI_CHASSIS_HARD_RESET);
 }
 
@@ -607,9 +637,9 @@ void astbmc_early_init(void)
 
 void astbmc_exit(void)
 {
-#ifdef CONFIG_PLDM
-	return;
-#endif
+	if (use_pldm())
+		return;
+
 	ipmi_wdt_final_reset();
 
 	ipmi_set_boot_count();
