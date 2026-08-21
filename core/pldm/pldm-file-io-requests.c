@@ -249,7 +249,7 @@ int pldm_file_io_read_file(uint32_t file_handle, uint32_t file_length,
 static int write_file_req(uint32_t file_handle, uint32_t pos,
 			  const void *buf, uint64_t len)
 {
-	void *response_msg, *current_ptr, *payload_data;
+	void *response_msg, *payload_data;
 	uint32_t total_write, resp_length, request_length;
 	size_t response_len, payload_len;
 	uint8_t completion_code;
@@ -283,7 +283,6 @@ static int write_file_req(uint32_t file_handle, uint32_t pos,
 			+ offsetof(struct pldm_write_file_req, file_data);
 
 	memcpy(payload_data, buf, len);
-	current_ptr = payload_data;
 	num_transfers = 1;
 	total_write = 0;
 
@@ -344,7 +343,6 @@ static int write_file_req(uint32_t file_handle, uint32_t pos,
 		}
 
 		total_write += resp_length;
-		current_ptr += resp_length;
 		free(response_msg);
 
 		if (total_write == len)
