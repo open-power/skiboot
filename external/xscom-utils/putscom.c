@@ -21,7 +21,6 @@ static void print_usage(int code)
 	printf("\n");
 	printf("       NB: --list-bits shows which PPC bits are set\n");
 	exit(code);
-	exit(code);
 }
 
 extern const char version[];
@@ -39,6 +38,8 @@ int main(int argc, char *argv[])
 			{"chip",	required_argument,	NULL,	'c'},
 			{"help",	no_argument,		NULL,	'h'},
 			{"version",	no_argument,		NULL,	'v'},
+			{"list-bits",	no_argument,		NULL,	'b'},
+			{NULL,		0,			NULL,	0}
 		};
 		int c, oidx = 0;
 

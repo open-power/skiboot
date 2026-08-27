@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include "xscom.h"
 
@@ -42,7 +43,7 @@ void xscom_for_each_chip(void (*cb)(uint32_t chip_id))
 
 static uint32_t xscom_add_chip(const char *base_path, const char *dname)
 {
-	char nbuf[strlen(base_path) + strlen(dname) + 16];
+	char nbuf[PATH_MAX];
 	struct xscom_chip *chip;
 	int fd;
 

@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
 			{"help",	no_argument,		NULL,	'h'},
 			{"version",	no_argument,		NULL,	'v'},
 			{"list-bits",	no_argument,		NULL,	'b'},
+			{NULL,		0,			NULL,	0}
 		};
 		int c, oidx = 0;
 
