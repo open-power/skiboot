@@ -197,6 +197,10 @@ LDFLAGS_FINAL = -m elf64lppc --no-multi-toc -N --build-id=none --whole-archive
 LDFLAGS_FINAL += -static -nostdlib -pie -Ttext-segment=$(LD_TEXT) --oformat=elf64-powerpc
 LDFLAGS_FINAL += --orphan-handling=warn
 LDFLAGS_FINAL += $(call try-ldflag,$(LD),--no-warn-rwx-segments)
+# skiboot is a self-relocating PIE and processes its own relocations at boot,
+# so it legitimately has text relocations. binutils >= 2.39 turns "read-only
+# segment has dynamic relocations" into a hard error by default; allow it.
+LDFLAGS_FINAL += $(call try-ldflag,$(LD),-z notext)
 
 LDRFLAGS=-melf64ppc
 # Debug stuff
