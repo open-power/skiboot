@@ -31,13 +31,13 @@
             <td class="headerValue">skiboot.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryMed">76.9&nbsp;%</td>
-            <td class="headerCovTableEntry">147</td>
-            <td class="headerCovTableEntry">113</td>
+            <td class="headerCovTableEntryMed">76.0&nbsp;%</td>
+            <td class="headerCovTableEntry">150</td>
+            <td class="headerCovTableEntry">114</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-09-04 14:05:05</td>
+            <td class="headerValue">2026-09-11 16:57:43</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryLo">54.5&nbsp;%</td>
@@ -73,7 +73,7 @@
 <span id="L2"><span class="lineNum">       2</span>                 :             : /*</span>
 <span id="L3"><span class="lineNum">       3</span>                 :             :  * NVRAM Format as specified in PAPR</span>
 <span id="L4"><span class="lineNum">       4</span>                 :             :  *</span>
-<span id="L5"><span class="lineNum">       5</span>                 :             :  * Copyright 2013-2019 IBM Corp.</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             :  * Copyright 2013-2026 IBM Corp.</span>
 <span id="L6"><span class="lineNum">       6</span>                 :             :  */</span>
 <span id="L7"><span class="lineNum">       7</span>                 :             : </span>
 <span id="L8"><span class="lineNum">       8</span>                 :             : #include &lt;skiboot.h&gt;</span>
@@ -192,214 +192,234 @@
 <span id="L121"><span class="lineNum">     121</span>                 :             :                                 offset, h-&gt;cksum, chrp_nv_cksum(h));</span>
 <span id="L122"><span class="lineNum">     122</span>                 :<span class="tlaGNC">           2 :                         goto failed;</span></span>
 <span id="L123"><span class="lineNum">     123</span>                 :             :                 }</span>
-<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">          31 :                 if (be16_to_cpu(h-&gt;len) &lt; 1) {</span></span>
-<span id="L125"><span class="lineNum">     125</span>                 :<span class="tlaGNC">           1 :                         prerror(&quot;NVRAM: Partition at offset 0x%x&quot;</span></span>
-<span id="L126"><span class="lineNum">     126</span>                 :             :                                 &quot; has incorrect 0 length\n&quot;, offset);</span>
-<span id="L127"><span class="lineNum">     127</span>                 :<span class="tlaGNC">           1 :                         goto failed;</span></span>
-<span id="L128"><span class="lineNum">     128</span>                 :             :                 }</span>
-<span id="L129"><span class="lineNum">     129</span>                 :             : </span>
-<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">          30 :                 if (h-&gt;sig == NVRAM_SIG_SYSTEM &amp;&amp;</span></span>
-<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">          10 :                     strcmp(h-&gt;name, NVRAM_NAME_COMMON) == 0)</span></span>
-<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">           9 :                         found_common = true;</span></span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :                 /*</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             :                  * Length can't be zero or 1; need a length of at least 2 to account</span>
+<span id="L126"><span class="lineNum">     126</span>                 :             :                  * for the size of the chrp_nvram_hdr itself</span>
+<span id="L127"><span class="lineNum">     127</span>                 :             :                  */</span>
+<span id="L128"><span class="lineNum">     128</span>                 :<span class="tlaGNC">          31 :                 if (be16_to_cpu(h-&gt;len) &lt; 2) {</span></span>
+<span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC">           1 :                         prerror(&quot;NVRAM: Partition at offset 0x%x has incorrect length of 0x%x\n&quot;,</span></span>
+<span id="L130"><span class="lineNum">     130</span>                 :             :                                 offset, be16_to_cpu(h-&gt;len));</span>
+<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">           1 :                         goto failed;</span></span>
+<span id="L132"><span class="lineNum">     132</span>                 :             :                 }</span>
 <span id="L133"><span class="lineNum">     133</span>                 :             : </span>
-<span id="L134"><span class="lineNum">     134</span>                 :<span class="tlaGNC">          30 :                 if (h-&gt;sig == NVRAM_SIG_FW_PRIV &amp;&amp;</span></span>
-<span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaGNC">          11 :                     strcmp(h-&gt;name, NVRAM_NAME_FW_PRIV) == 0)</span></span>
-<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">          10 :                         skiboot_part_hdr = h;</span></span>
+<span id="L134"><span class="lineNum">     134</span>                 :<span class="tlaGNC">          30 :                 if (h-&gt;sig == NVRAM_SIG_SYSTEM &amp;&amp;</span></span>
+<span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaGNC">          10 :                     strcmp(h-&gt;name, NVRAM_NAME_COMMON) == 0)</span></span>
+<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">           9 :                         found_common = true;</span></span>
 <span id="L137"><span class="lineNum">     137</span>                 :             : </span>
-<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">          30 :                 offset += be16_to_cpu(h-&gt;len) &lt;&lt; 4;</span></span>
-<span id="L139"><span class="lineNum">     139</span>                 :<span class="tlaGNC">          30 :                 if (offset &gt; nvram_size) {</span></span>
-<span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">           1 :                         prerror(&quot;NVRAM: Partition at offset 0x%x&quot;</span></span>
-<span id="L141"><span class="lineNum">     141</span>                 :             :                                 &quot; extends beyond end of nvram !\n&quot;, offset);</span>
-<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">           1 :                         goto failed;</span></span>
-<span id="L143"><span class="lineNum">     143</span>                 :             :                 }</span>
-<span id="L144"><span class="lineNum">     144</span>                 :             :         }</span>
-<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">          10 :         if (!found_common) {</span></span>
-<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           1 :                 prlog_once(PR_ERR, &quot;NVRAM: Common partition not found !\n&quot;);</span></span>
-<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaGNC">           1 :                 goto failed;</span></span>
+<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">          30 :                 if (h-&gt;sig == NVRAM_SIG_FW_PRIV &amp;&amp;</span></span>
+<span id="L139"><span class="lineNum">     139</span>                 :<span class="tlaGNC">          11 :                     strcmp(h-&gt;name, NVRAM_NAME_FW_PRIV) == 0)</span></span>
+<span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">          10 :                         skiboot_part_hdr = h;</span></span>
+<span id="L141"><span class="lineNum">     141</span>                 :             : </span>
+<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">          30 :                 offset += be16_to_cpu(h-&gt;len) &lt;&lt; 4;</span></span>
+<span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC">          30 :                 if (offset &gt; nvram_size) {</span></span>
+<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaGNC">           1 :                         prerror(&quot;NVRAM: Partition at offset 0x%x&quot;</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :             :                                 &quot; extends beyond end of nvram !\n&quot;, offset);</span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           1 :                         goto failed;</span></span>
+<span id="L147"><span class="lineNum">     147</span>                 :             :                 }</span>
 <span id="L148"><span class="lineNum">     148</span>                 :             :         }</span>
-<span id="L149"><span class="lineNum">     149</span>                 :             : </span>
-<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">           9 :         if (!skiboot_part_hdr) {</span></span>
-<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">           1 :                 prlog_once(PR_ERR, &quot;NVRAM: Skiboot private partition not found !\n&quot;);</span></span>
-<span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">           1 :                 goto failed;</span></span>
-<span id="L153"><span class="lineNum">     153</span>                 :             :         } else {</span>
-<span id="L154"><span class="lineNum">     154</span>                 :             :                 /*</span>
-<span id="L155"><span class="lineNum">     155</span>                 :             :                  * The OF NVRAM format requires config strings to be NUL</span>
-<span id="L156"><span class="lineNum">     156</span>                 :             :                  * terminated and unused memory to be set to zero. Well behaved</span>
-<span id="L157"><span class="lineNum">     157</span>                 :             :                  * software should ensure this is done for us, but we should</span>
-<span id="L158"><span class="lineNum">     158</span>                 :             :                  * always check.</span>
-<span id="L159"><span class="lineNum">     159</span>                 :             :                  */</span>
-<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">          16 :                 const char *last_byte = (const char *) skiboot_part_hdr +</span></span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           8 :                         be16_to_cpu(skiboot_part_hdr-&gt;len) * 16 - 1;</span></span>
-<span id="L162"><span class="lineNum">     162</span>                 :             : </span>
-<span id="L163"><span class="lineNum">     163</span>                 :<span class="tlaGNC">           8 :                 if (*last_byte != 0) {</span></span>
-<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">           1 :                         prerror(&quot;NVRAM: Skiboot private partition is not NUL terminated&quot;);</span></span>
-<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">           1 :                         goto failed;</span></span>
-<span id="L166"><span class="lineNum">     166</span>                 :             :                 }</span>
-<span id="L167"><span class="lineNum">     167</span>                 :             :         }</span>
-<span id="L168"><span class="lineNum">     168</span>                 :             : </span>
-<span id="L169"><span class="lineNum">     169</span>                 :<span class="tlaGNC">           7 :         prlog(PR_INFO, &quot;NVRAM: Layout appears sane\n&quot;);</span></span>
-<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">           7 :         assert(skiboot_part_hdr);</span></span>
-<span id="L171"><span class="lineNum">     171</span>                 :<span class="tlaGNC">           7 :         return 0;</span></span>
-<span id="L172"><span class="lineNum">     172</span>                 :<span class="tlaGNC">           7 :  failed:</span></span>
-<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">           7 :         return -1;</span></span>
-<span id="L174"><span class="lineNum">     174</span>                 :             : }</span>
-<span id="L175"><span class="lineNum">     175</span>                 :             : </span>
-<span id="L176"><span class="lineNum">     176</span>                 :<span class="tlaGNC">           7 : static const char *find_next_key(const char *start, const char *end)</span></span>
-<span id="L177"><span class="lineNum">     177</span>                 :             : {</span>
-<span id="L178"><span class="lineNum">     178</span>                 :             :         /*</span>
-<span id="L179"><span class="lineNum">     179</span>                 :             :          * Unused parts of the partition are set to NUL. If we hit two</span>
-<span id="L180"><span class="lineNum">     180</span>                 :             :          * NULs in a row then we assume that we have hit the end of the</span>
-<span id="L181"><span class="lineNum">     181</span>                 :             :          * partition.</span>
-<span id="L182"><span class="lineNum">     182</span>                 :             :          */</span>
-<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">           7 :         if (*start == 0)</span></span>
-<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">           3 :                 return NULL;</span></span>
-<span id="L185"><span class="lineNum">     185</span>                 :             : </span>
-<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">           9 :         while (start &lt; end) {</span></span>
-<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">           9 :                 if (*start == 0)</span></span>
-<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">           4 :                         return start + 1;</span></span>
+<span id="L149"><span class="lineNum">     149</span>                 :<span class="tlaGNC">          10 :         if (!found_common) {</span></span>
+<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">           1 :                 prlog_once(PR_ERR, &quot;NVRAM: Common partition not found !\n&quot;);</span></span>
+<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">           1 :                 goto failed;</span></span>
+<span id="L152"><span class="lineNum">     152</span>                 :             :         }</span>
+<span id="L153"><span class="lineNum">     153</span>                 :             : </span>
+<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">           9 :         if (!skiboot_part_hdr) {</span></span>
+<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">           1 :                 prlog_once(PR_ERR, &quot;NVRAM: Skiboot private partition not found !\n&quot;);</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">           1 :                 goto failed;</span></span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :         } else {</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :                 /*</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             :                  * The OF NVRAM format requires config strings to be NUL</span>
+<span id="L160"><span class="lineNum">     160</span>                 :             :                  * terminated and unused memory to be set to zero. Well behaved</span>
+<span id="L161"><span class="lineNum">     161</span>                 :             :                  * software should ensure this is done for us, but we should</span>
+<span id="L162"><span class="lineNum">     162</span>                 :             :                  * always check.</span>
+<span id="L163"><span class="lineNum">     163</span>                 :             :                  */</span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">          16 :                 const char *last_byte = (const char *) skiboot_part_hdr +</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">           8 :                         be16_to_cpu(skiboot_part_hdr-&gt;len) * 16 - 1;</span></span>
+<span id="L166"><span class="lineNum">     166</span>                 :             : </span>
+<span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">           8 :                 if (*last_byte != 0) {</span></span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">           1 :                         prerror(&quot;NVRAM: Skiboot private partition is not NUL terminated&quot;);</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :<span class="tlaGNC">           1 :                         goto failed;</span></span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :                 }</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :         }</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : </span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">           7 :         prlog(PR_INFO, &quot;NVRAM: Layout appears sane\n&quot;);</span></span>
+<span id="L174"><span class="lineNum">     174</span>                 :<span class="tlaGNC">           7 :         assert(skiboot_part_hdr);</span></span>
+<span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">           7 :         return 0;</span></span>
+<span id="L176"><span class="lineNum">     176</span>                 :<span class="tlaGNC">           7 :  failed:</span></span>
+<span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaGNC">           7 :         return -1;</span></span>
+<span id="L178"><span class="lineNum">     178</span>                 :             : }</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             : </span>
+<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaGNC">           7 : static const char *find_next_key(const char *start, const char *end)</span></span>
+<span id="L181"><span class="lineNum">     181</span>                 :             : {</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :         /*</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             :          * Unused parts of the partition are set to NUL. If we hit two</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             :          * NULs in a row then we assume that we have hit the end of the</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             :          * partition.</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             :          */</span>
+<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">           7 :         if (*start == 0)</span></span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">           3 :                 return NULL;</span></span>
 <span id="L189"><span class="lineNum">     189</span>                 :             : </span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">           5 :                 start++;</span></span>
-<span id="L191"><span class="lineNum">     191</span>                 :             :         }</span>
-<span id="L192"><span class="lineNum">     192</span>                 :             : </span>
-<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         return NULL;</span></span>
-<span id="L194"><span class="lineNum">     194</span>                 :             : }</span>
-<span id="L195"><span class="lineNum">     195</span>                 :             : </span>
-<span id="L196"><span class="lineNum">     196</span>                 :<span class="tlaUNC">           0 : static void nvram_dangerous(const char *key)</span></span>
-<span id="L197"><span class="lineNum">     197</span>                 :             : {</span>
-<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot; ___________________________________________________________\n&quot;);</span></span>
-<span id="L199"><span class="lineNum">     199</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;&lt;  Dangerous NVRAM option: %s\n&quot;, key);</span></span>
-<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot; -----------------------------------------------------------\n&quot;);</span></span>
-<span id="L201"><span class="lineNum">     201</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                  \\                         \n&quot;);</span></span>
-<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                   \\   WW                   \n&quot;);</span></span>
-<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                      &lt;^ \\___/|             \n&quot;);</span></span>
-<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                       \\      /             \n&quot;);</span></span>
-<span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                        \\_  _/              \n&quot;);</span></span>
-<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                          }{                 \n&quot;);</span></span>
-<span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaUNC">           0 : }</span></span>
-<span id="L208"><span class="lineNum">     208</span>                 :             : </span>
-<span id="L209"><span class="lineNum">     209</span>                 :             : </span>
-<span id="L210"><span class="lineNum">     210</span>                 :             : /*</span>
-<span id="L211"><span class="lineNum">     211</span>                 :             :  * nvram_query_safe/dangerous() - Searches skiboot NVRAM partition</span>
-<span id="L212"><span class="lineNum">     212</span>                 :             :  * for a key=value pair.</span>
-<span id="L213"><span class="lineNum">     213</span>                 :             :  *</span>
-<span id="L214"><span class="lineNum">     214</span>                 :             :  * Dangerous means it should only be used for testing as it may</span>
-<span id="L215"><span class="lineNum">     215</span>                 :             :  * mask issues. Safe is ok for long term use.</span>
-<span id="L216"><span class="lineNum">     216</span>                 :             :  *</span>
-<span id="L217"><span class="lineNum">     217</span>                 :             :  * Returns a pointer to a NUL terminated string that contains the value</span>
-<span id="L218"><span class="lineNum">     218</span>                 :             :  * associated with the given key.</span>
-<span id="L219"><span class="lineNum">     219</span>                 :             :  */</span>
-<span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC tlaBgGNC">           5 : static const char *__nvram_query(const char *key, bool dangerous)</span></span>
-<span id="L221"><span class="lineNum">     221</span>                 :             : {</span>
-<span id="L222"><span class="lineNum">     222</span>                 :             :         const char *part_end, *start;</span>
-<span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaGNC">           5 :         int key_len = strlen(key);</span></span>
-<span id="L224"><span class="lineNum">     224</span>                 :             : </span>
-<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">           5 :         assert(key);</span></span>
-<span id="L226"><span class="lineNum">     226</span>                 :             : </span>
-<span id="L227"><span class="lineNum">     227</span>                 :<span class="tlaGNC">           5 :         if (!nvram_has_loaded()) {</span></span>
-<span id="L228"><span class="lineNum">     228</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prlog(PR_DEBUG,</span></span>
-<span id="L229"><span class="lineNum">     229</span>                 :             :                         &quot;NVRAM: Query for '%s' must wait for NVRAM to load\n&quot;,</span>
-<span id="L230"><span class="lineNum">     230</span>                 :             :                         key);</span>
-<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaUNC">           0 :                 if (!nvram_wait_for_load()) {</span></span>
-<span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_CRIT, &quot;NVRAM: Failed to load\n&quot;);</span></span>
-<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaUNC">           0 :                         return NULL;</span></span>
-<span id="L234"><span class="lineNum">     234</span>                 :             :                 }</span>
-<span id="L235"><span class="lineNum">     235</span>                 :             :         }</span>
-<span id="L236"><span class="lineNum">     236</span>                 :             : </span>
-<span id="L237"><span class="lineNum">     237</span>                 :             :         /*</span>
-<span id="L238"><span class="lineNum">     238</span>                 :             :          * The running OS can modify the NVRAM as it pleases so we need to be</span>
-<span id="L239"><span class="lineNum">     239</span>                 :             :          * a little paranoid and check that it's ok before we try parse it.</span>
-<span id="L240"><span class="lineNum">     240</span>                 :             :          *</span>
-<span id="L241"><span class="lineNum">     241</span>                 :             :          * NB: nvram_validate() can update skiboot_part_hdr</span>
-<span id="L242"><span class="lineNum">     242</span>                 :             :          */</span>
-<span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC tlaBgGNC">           5 :         if (!nvram_validate())</span></span>
-<span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return NULL;</span></span>
-<span id="L245"><span class="lineNum">     245</span>                 :             : </span>
-<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC tlaBgGNC">           5 :         assert(skiboot_part_hdr);</span></span>
-<span id="L247"><span class="lineNum">     247</span>                 :             : </span>
-<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">          10 :         part_end = (const char *) skiboot_part_hdr</span></span>
-<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC">           5 :                 + be16_to_cpu(skiboot_part_hdr-&gt;len) * 16 - 1;</span></span>
-<span id="L250"><span class="lineNum">     250</span>                 :             : </span>
-<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC">           5 :         start = (const char *) skiboot_part_hdr</span></span>
-<span id="L252"><span class="lineNum">     252</span>                 :             :                 + sizeof(*skiboot_part_hdr);</span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">           9 :         while (start &lt; end) {</span></span>
+<span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaGNC">           9 :                 if (*start == 0)</span></span>
+<span id="L192"><span class="lineNum">     192</span>                 :<span class="tlaGNC">           4 :                         return start + 1;</span></span>
+<span id="L193"><span class="lineNum">     193</span>                 :             : </span>
+<span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">           5 :                 start++;</span></span>
+<span id="L195"><span class="lineNum">     195</span>                 :             :         }</span>
+<span id="L196"><span class="lineNum">     196</span>                 :             : </span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         return NULL;</span></span>
+<span id="L198"><span class="lineNum">     198</span>                 :             : }</span>
+<span id="L199"><span class="lineNum">     199</span>                 :             : </span>
+<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaUNC">           0 : static void nvram_dangerous(const char *key)</span></span>
+<span id="L201"><span class="lineNum">     201</span>                 :             : {</span>
+<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot; ___________________________________________________________\n&quot;);</span></span>
+<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;&lt;  Dangerous NVRAM option: %s\n&quot;, key);</span></span>
+<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot; -----------------------------------------------------------\n&quot;);</span></span>
+<span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                  \\                         \n&quot;);</span></span>
+<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                   \\   WW                   \n&quot;);</span></span>
+<span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                      &lt;^ \\___/|             \n&quot;);</span></span>
+<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                       \\      /             \n&quot;);</span></span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                        \\_  _/              \n&quot;);</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :<span class="tlaUNC">           0 :         prlog(PR_ERR, &quot;                          }{                 \n&quot;);</span></span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaUNC">           0 : }</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :             : </span>
+<span id="L213"><span class="lineNum">     213</span>                 :             : </span>
+<span id="L214"><span class="lineNum">     214</span>                 :             : /*</span>
+<span id="L215"><span class="lineNum">     215</span>                 :             :  * nvram_query_safe/dangerous() - Searches skiboot NVRAM partition</span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :  * for a key=value pair.</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             :  *</span>
+<span id="L218"><span class="lineNum">     218</span>                 :             :  * Note: nvram_check() must have already been called to set skiboot_part_hdr</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             :  *</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :  * Dangerous means it should only be used for testing as it may</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             :  * mask issues. Safe is ok for long term use.</span>
+<span id="L222"><span class="lineNum">     222</span>                 :             :  *</span>
+<span id="L223"><span class="lineNum">     223</span>                 :             :  * Returns a pointer to a NUL terminated string that contains the value</span>
+<span id="L224"><span class="lineNum">     224</span>                 :             :  * associated with the given key.</span>
+<span id="L225"><span class="lineNum">     225</span>                 :             :  */</span>
+<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC tlaBgGNC">           5 : static const char *__nvram_query(const char *key, bool dangerous)</span></span>
+<span id="L227"><span class="lineNum">     227</span>                 :             : {</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             :         const char *part_end, *start;</span>
+<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaGNC">           5 :         int key_len = strlen(key);</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :             : </span>
+<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">           5 :         assert(key);</span></span>
+<span id="L232"><span class="lineNum">     232</span>                 :             : </span>
+<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">           5 :         if (!nvram_has_loaded()) {</span></span>
+<span id="L234"><span class="lineNum">     234</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prlog(PR_DEBUG,</span></span>
+<span id="L235"><span class="lineNum">     235</span>                 :             :                         &quot;NVRAM: Query for '%s' must wait for NVRAM to load\n&quot;,</span>
+<span id="L236"><span class="lineNum">     236</span>                 :             :                         key);</span>
+<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaUNC">           0 :                 if (!nvram_wait_for_load()) {</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaUNC">           0 :                         prlog(PR_CRIT, &quot;NVRAM: Failed to load\n&quot;);</span></span>
+<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaUNC">           0 :                         return NULL;</span></span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :                 }</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             :         }</span>
+<span id="L242"><span class="lineNum">     242</span>                 :             : </span>
+<span id="L243"><span class="lineNum">     243</span>                 :             :         /*</span>
+<span id="L244"><span class="lineNum">     244</span>                 :             :          * The running OS can modify the NVRAM as it pleases so we need to be</span>
+<span id="L245"><span class="lineNum">     245</span>                 :             :          * a little paranoid and check that it's ok before we try parse it.</span>
+<span id="L246"><span class="lineNum">     246</span>                 :             :          *</span>
+<span id="L247"><span class="lineNum">     247</span>                 :             :          * NB: nvram_validate() can update skiboot_part_hdr</span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :          */</span>
+<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC tlaBgGNC">           5 :         if (!nvram_validate())</span></span>
+<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 return NULL;</span></span>
+<span id="L251"><span class="lineNum">     251</span>                 :             : </span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC tlaBgGNC">           5 :         assert(skiboot_part_hdr);</span></span>
 <span id="L253"><span class="lineNum">     253</span>                 :             : </span>
-<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaGNC">           5 :         if (!key_len) {</span></span>
-<span id="L255"><span class="lineNum">     255</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prlog(PR_WARNING, &quot;NVRAM: search key is empty!\n&quot;);</span></span>
-<span id="L256"><span class="lineNum">     256</span>                 :<span class="tlaUNC">           0 :                 return NULL;</span></span>
-<span id="L257"><span class="lineNum">     257</span>                 :             :         }</span>
-<span id="L258"><span class="lineNum">     258</span>                 :             : </span>
-<span id="L259"><span class="lineNum">     259</span>                 :<span class="tlaGNC tlaBgGNC">           5 :         if (key_len &gt; 32)</span></span>
-<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prlog(PR_WARNING, &quot;NVRAM: search key '%s' is longer than 32 chars\n&quot;, key);</span></span>
-<span id="L261"><span class="lineNum">     261</span>                 :             : </span>
-<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC tlaBgGNC">          12 :         while (start) {</span></span>
-<span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">           9 :                 int remaining = part_end - start;</span></span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :         /*</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :          * The end of the skiboot section is from the start of the section</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :          * to len * 16 - 1</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :          */</span>
+<span id="L258"><span class="lineNum">     258</span>                 :<span class="tlaGNC">          10 :         part_end = (const char *) skiboot_part_hdr</span></span>
+<span id="L259"><span class="lineNum">     259</span>                 :<span class="tlaGNC">           5 :                 + be16_to_cpu(skiboot_part_hdr-&gt;len) * 16 - 1;</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :             : </span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :         /* Start just past the header */</span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">           5 :         start = (const char *) skiboot_part_hdr</span></span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :                 + sizeof(*skiboot_part_hdr);</span>
 <span id="L264"><span class="lineNum">     264</span>                 :             : </span>
-<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">           9 :                 prlog(PR_TRACE, &quot;NVRAM: '%s' (%lu)\n&quot;,</span></span>
-<span id="L266"><span class="lineNum">     266</span>                 :             :                         start, strlen(start));</span>
-<span id="L267"><span class="lineNum">     267</span>                 :             : </span>
-<span id="L268"><span class="lineNum">     268</span>                 :<span class="tlaGNC">           9 :                 if (key_len + 1 &gt; remaining)</span></span>
-<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         return NULL;</span></span>
-<span id="L270"><span class="lineNum">     270</span>                 :             : </span>
-<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC tlaBgGNC">           9 :                 if (!strncmp(key, start, key_len) &amp;&amp; start[key_len] == '=') {</span></span>
-<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaGNC">           2 :                         const char *value = &amp;start[key_len + 1];</span></span>
-<span id="L273"><span class="lineNum">     273</span>                 :             : </span>
-<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">           2 :                         prlog(PR_DEBUG, &quot;NVRAM: Searched for '%s' found '%s'\n&quot;,</span></span>
-<span id="L275"><span class="lineNum">     275</span>                 :             :                                 key, value);</span>
-<span id="L276"><span class="lineNum">     276</span>                 :             : </span>
-<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">           2 :                         if (dangerous)</span></span>
-<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                                 nvram_dangerous(start);</span></span>
-<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC tlaBgGNC">           2 :                         return value;</span></span>
-<span id="L280"><span class="lineNum">     280</span>                 :             :                 }</span>
-<span id="L281"><span class="lineNum">     281</span>                 :             : </span>
-<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaGNC">           7 :                 start = find_next_key(start, part_end);</span></span>
-<span id="L283"><span class="lineNum">     283</span>                 :             :         }</span>
-<span id="L284"><span class="lineNum">     284</span>                 :             : </span>
-<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">           3 :         prlog(PR_DEBUG, &quot;NVRAM: '%s' not found\n&quot;, key);</span></span>
-<span id="L286"><span class="lineNum">     286</span>                 :             : </span>
-<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaGNC">           3 :         return NULL;</span></span>
-<span id="L288"><span class="lineNum">     288</span>                 :             : }</span>
-<span id="L289"><span class="lineNum">     289</span>                 :             : </span>
-<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">           5 : const char *nvram_query_safe(const char *key)</span></span>
-<span id="L291"><span class="lineNum">     291</span>                 :             : {</span>
-<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">           5 :         return __nvram_query(key, false);</span></span>
-<span id="L293"><span class="lineNum">     293</span>                 :             : }</span>
-<span id="L294"><span class="lineNum">     294</span>                 :             : </span>
-<span id="L295"><span class="lineNum">     295</span>                 :<span class="tlaUNC tlaBgUNC">           0 : const char *nvram_query_dangerous(const char *key)</span></span>
-<span id="L296"><span class="lineNum">     296</span>                 :             : {</span>
-<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaUNC">           0 :         return __nvram_query(key, true);</span></span>
-<span id="L298"><span class="lineNum">     298</span>                 :             : }</span>
-<span id="L299"><span class="lineNum">     299</span>                 :             : </span>
-<span id="L300"><span class="lineNum">     300</span>                 :             : /*</span>
-<span id="L301"><span class="lineNum">     301</span>                 :             :  * nvram_query_eq_safe/dangerous() - Check if the given 'key' exists</span>
-<span id="L302"><span class="lineNum">     302</span>                 :             :  * and is set to 'value'.</span>
-<span id="L303"><span class="lineNum">     303</span>                 :             :  *</span>
-<span id="L304"><span class="lineNum">     304</span>                 :             :  * Dangerous means it should only be used for testing as it may</span>
-<span id="L305"><span class="lineNum">     305</span>                 :             :  * mask issues. Safe is ok for long term use.</span>
-<span id="L306"><span class="lineNum">     306</span>                 :             :  *</span>
-<span id="L307"><span class="lineNum">     307</span>                 :             :  * Note: Its an error to check for non-existence of a key</span>
-<span id="L308"><span class="lineNum">     308</span>                 :             :  * by passing 'value == NULL' as a key's value can never be</span>
-<span id="L309"><span class="lineNum">     309</span>                 :             :  * NULL in nvram.</span>
-<span id="L310"><span class="lineNum">     310</span>                 :             :  */</span>
-<span id="L311"><span class="lineNum">     311</span>                 :<span class="tlaUNC">           0 : static bool __nvram_query_eq(const char *key, const char *value, bool dangerous)</span></span>
-<span id="L312"><span class="lineNum">     312</span>                 :             : {</span>
-<span id="L313"><span class="lineNum">     313</span>                 :<span class="tlaUNC">           0 :         const char *s = __nvram_query(key, dangerous);</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :             :         /*</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :          * To account for sizeof(*skiboot_part_hdr), the len must be at least 2 to</span>
+<span id="L267"><span class="lineNum">     267</span>                 :             :          * put part_end after start</span>
+<span id="L268"><span class="lineNum">     268</span>                 :             :          */</span>
+<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">           5 :         if ((be16_to_cpu(skiboot_part_hdr-&gt;len) &lt; 2) || (start &gt; part_end)) {</span></span>
+<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prlog(PR_WARNING, &quot;NVRAM: skiboot section length 0x%x is too small\n&quot;,</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :             :                       be16_to_cpu(skiboot_part_hdr-&gt;len));</span>
+<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaUNC">           0 :                 return NULL;</span></span>
+<span id="L273"><span class="lineNum">     273</span>                 :             :         }</span>
+<span id="L274"><span class="lineNum">     274</span>                 :             : </span>
+<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC tlaBgGNC">           5 :         if (!key_len) {</span></span>
+<span id="L276"><span class="lineNum">     276</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prlog(PR_WARNING, &quot;NVRAM: search key is empty!\n&quot;);</span></span>
+<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaUNC">           0 :                 return NULL;</span></span>
+<span id="L278"><span class="lineNum">     278</span>                 :             :         }</span>
+<span id="L279"><span class="lineNum">     279</span>                 :             : </span>
+<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC tlaBgGNC">           5 :         if (key_len &gt; 32)</span></span>
+<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                 prlog(PR_WARNING, &quot;NVRAM: search key '%s' is longer than 32 chars\n&quot;, key);</span></span>
+<span id="L282"><span class="lineNum">     282</span>                 :             : </span>
+<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC tlaBgGNC">          12 :         while (start) {</span></span>
+<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">           9 :                 int remaining = part_end - start;</span></span>
+<span id="L285"><span class="lineNum">     285</span>                 :             : </span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaGNC">           9 :                 if (key_len + 1 &gt; remaining)</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                         return NULL;</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :             : </span>
+<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC tlaBgGNC">           9 :                 prlog(PR_TRACE, &quot;NVRAM: '%s' (%lu)\n&quot;, start, strlen(start));</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :             : </span>
+<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">           9 :                 if (!strncmp(key, start, key_len) &amp;&amp; start[key_len] == '=') {</span></span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">           2 :                         const char *value = &amp;start[key_len + 1];</span></span>
+<span id="L293"><span class="lineNum">     293</span>                 :             : </span>
+<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">           2 :                         prlog(PR_DEBUG, &quot;NVRAM: Searched for '%s' found '%s'\n&quot;,</span></span>
+<span id="L295"><span class="lineNum">     295</span>                 :             :                                 key, value);</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             : </span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">           2 :                         if (dangerous)</span></span>
+<span id="L298"><span class="lineNum">     298</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                                 nvram_dangerous(start);</span></span>
+<span id="L299"><span class="lineNum">     299</span>                 :<span class="tlaGNC tlaBgGNC">           2 :                         return value;</span></span>
+<span id="L300"><span class="lineNum">     300</span>                 :             :                 }</span>
+<span id="L301"><span class="lineNum">     301</span>                 :             : </span>
+<span id="L302"><span class="lineNum">     302</span>                 :<span class="tlaGNC">           7 :                 start = find_next_key(start, part_end);</span></span>
+<span id="L303"><span class="lineNum">     303</span>                 :             :         }</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             : </span>
+<span id="L305"><span class="lineNum">     305</span>                 :<span class="tlaGNC">           3 :         prlog(PR_DEBUG, &quot;NVRAM: '%s' not found\n&quot;, key);</span></span>
+<span id="L306"><span class="lineNum">     306</span>                 :             : </span>
+<span id="L307"><span class="lineNum">     307</span>                 :<span class="tlaGNC">           3 :         return NULL;</span></span>
+<span id="L308"><span class="lineNum">     308</span>                 :             : }</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : </span>
+<span id="L310"><span class="lineNum">     310</span>                 :<span class="tlaGNC">           5 : const char *nvram_query_safe(const char *key)</span></span>
+<span id="L311"><span class="lineNum">     311</span>                 :             : {</span>
+<span id="L312"><span class="lineNum">     312</span>                 :<span class="tlaGNC">           5 :         return __nvram_query(key, false);</span></span>
+<span id="L313"><span class="lineNum">     313</span>                 :             : }</span>
 <span id="L314"><span class="lineNum">     314</span>                 :             : </span>
-<span id="L315"><span class="lineNum">     315</span>                 :<span class="tlaUNC">           0 :         if (!s)</span></span>
-<span id="L316"><span class="lineNum">     316</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
-<span id="L317"><span class="lineNum">     317</span>                 :             : </span>
-<span id="L318"><span class="lineNum">     318</span>                 :<span class="tlaUNC">           0 :         assert(value != NULL);</span></span>
-<span id="L319"><span class="lineNum">     319</span>                 :<span class="tlaUNC">           0 :         return !strcmp(s, value);</span></span>
-<span id="L320"><span class="lineNum">     320</span>                 :             : }</span>
-<span id="L321"><span class="lineNum">     321</span>                 :             : </span>
-<span id="L322"><span class="lineNum">     322</span>                 :<span class="tlaUNC">           0 : bool nvram_query_eq_safe(const char *key, const char *value)</span></span>
-<span id="L323"><span class="lineNum">     323</span>                 :             : {</span>
-<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaUNC">           0 :         return __nvram_query_eq(key, value, false);</span></span>
-<span id="L325"><span class="lineNum">     325</span>                 :             : }</span>
-<span id="L326"><span class="lineNum">     326</span>                 :             : </span>
-<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaUNC">           0 : bool nvram_query_eq_dangerous(const char *key, const char *value)</span></span>
-<span id="L328"><span class="lineNum">     328</span>                 :             : {</span>
-<span id="L329"><span class="lineNum">     329</span>                 :<span class="tlaUNC">           0 :         return __nvram_query_eq(key, value, true);</span></span>
-<span id="L330"><span class="lineNum">     330</span>                 :             : }</span>
-<span id="L331"><span class="lineNum">     331</span>                 :             : </span>
+<span id="L315"><span class="lineNum">     315</span>                 :<span class="tlaUNC tlaBgUNC">           0 : const char *nvram_query_dangerous(const char *key)</span></span>
+<span id="L316"><span class="lineNum">     316</span>                 :             : {</span>
+<span id="L317"><span class="lineNum">     317</span>                 :<span class="tlaUNC">           0 :         return __nvram_query(key, true);</span></span>
+<span id="L318"><span class="lineNum">     318</span>                 :             : }</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             : </span>
+<span id="L320"><span class="lineNum">     320</span>                 :             : /*</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :  * nvram_query_eq_safe/dangerous() - Check if the given 'key' exists</span>
+<span id="L322"><span class="lineNum">     322</span>                 :             :  * and is set to 'value'.</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :  *</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             :  * Dangerous means it should only be used for testing as it may</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             :  * mask issues. Safe is ok for long term use.</span>
+<span id="L326"><span class="lineNum">     326</span>                 :             :  *</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             :  * Note: Its an error to check for non-existence of a key</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             :  * by passing 'value == NULL' as a key's value can never be</span>
+<span id="L329"><span class="lineNum">     329</span>                 :             :  * NULL in nvram.</span>
+<span id="L330"><span class="lineNum">     330</span>                 :             :  */</span>
+<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaUNC">           0 : static bool __nvram_query_eq(const char *key, const char *value, bool dangerous)</span></span>
+<span id="L332"><span class="lineNum">     332</span>                 :             : {</span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaUNC">           0 :         const char *s = __nvram_query(key, dangerous);</span></span>
+<span id="L334"><span class="lineNum">     334</span>                 :             : </span>
+<span id="L335"><span class="lineNum">     335</span>                 :<span class="tlaUNC">           0 :         if (!s)</span></span>
+<span id="L336"><span class="lineNum">     336</span>                 :<span class="tlaUNC">           0 :                 return false;</span></span>
+<span id="L337"><span class="lineNum">     337</span>                 :             : </span>
+<span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaUNC">           0 :         assert(value != NULL);</span></span>
+<span id="L339"><span class="lineNum">     339</span>                 :<span class="tlaUNC">           0 :         return !strcmp(s, value);</span></span>
+<span id="L340"><span class="lineNum">     340</span>                 :             : }</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             : </span>
+<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaUNC">           0 : bool nvram_query_eq_safe(const char *key, const char *value)</span></span>
+<span id="L343"><span class="lineNum">     343</span>                 :             : {</span>
+<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaUNC">           0 :         return __nvram_query_eq(key, value, false);</span></span>
+<span id="L345"><span class="lineNum">     345</span>                 :             : }</span>
+<span id="L346"><span class="lineNum">     346</span>                 :             : </span>
+<span id="L347"><span class="lineNum">     347</span>                 :<span class="tlaUNC">           0 : bool nvram_query_eq_dangerous(const char *key, const char *value)</span></span>
+<span id="L348"><span class="lineNum">     348</span>                 :             : {</span>
+<span id="L349"><span class="lineNum">     349</span>                 :<span class="tlaUNC">           0 :         return __nvram_query_eq(key, value, true);</span></span>
+<span id="L350"><span class="lineNum">     350</span>                 :             : }</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             : </span>
         </pre>
               </td>
             </tr>
